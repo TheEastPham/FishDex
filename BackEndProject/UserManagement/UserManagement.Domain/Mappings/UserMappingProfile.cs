@@ -1,0 +1,83 @@
+﻿using AutoMapper;
+using UserManagement.Domain.DTOs.User;
+using UserManagement.Domain.Models;
+using UserManagement.EFCore.Entities.User;
+using System.Text.Json;
+
+namespace UserManagement.Domain.Mappings;
+
+public class UserMappingProfile : Profile
+{
+    public UserMappingProfile()
+    {
+        // Entity to Domain
+        CreateMap<UserEntity, User>()
+            .ForMember(dest => dest.Profile, opt => opt.MapFrom(src => src.Profile));
+
+        CreateMap<UserProfileEntity, UserProfile>()
+            .ForMember(dest => dest.Preferences, opt => opt.MapFrom(src => 
+                ParsePreferences(src.Preferences)));
+
+        // Domain to Entity
+        CreateMap<User, UserEntity>()
+            .ForMember(dest => dest.Profile, opt => opt.MapFrom(src => src.Profile));
+
+        CreateMap<UserProfile, UserProfileEntity>()
+            .ForMember(dest => dest.Preferences, opt => opt.MapFrom(src => 
+                SerializePreferences(src.Preferences)));
+
+        // Domain to DTO
+        CreateMap<User, UserDto>()
+            .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.FullName));
+        
+        // DTO to Domain
+        CreateMap<CreateUserRequest, User>()
+            .ForMember(dest => dest.Id, opt => opt.Ignore())
+            .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
+            .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
+            .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true));
+
+        CreateMap<UpdateUserRequest, User>()
+            .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
+    }
+
+    private static Dictionary<string, object> ParsePreferences(string? json)
+    {
+        if (string.IsNullOrEmpty(json))
+            return new Dictionary<string, object>();
+        
+        try
+        {
+            return JsonSerializer.Deserialize<Dictionary<string, object>>(json) ?? new Dictionary<string, object>();
+        }
+        catch
+        {
+            return new Dictionary<string, object>();
+        }
+    }
+
+    private static Dictionary<string, object> ParseDetails(string? json)
+    {
+        if (string.IsNullOrEmpty(json))
+            return new Dictionary<string, object>();
+        
+        try
+        {
+            return JsonSerializer.Deserialize<Dictionary<string, object>>(json) ?? new Dictionary<string, object>();
+        }
+        catch
+        {
+            return new Dictionary<string, object>();
+        }
+    }
+
+    private static string SerializePreferences(Dictionary<string, object> preferences)
+    {
+        return JsonSerializer.Serialize(preferences);
+    }
+
+    private static string SerializeDetails(Dictionary<string, object> details)
+    {
+        return JsonSerializer.Serialize(details);
+    }
+}

@@ -1,0 +1,32 @@
+<!-- UserManagement.Domain/Resources/EmailTemplates/en/WelcomeEmail.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #28a745; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+        .content { padding: 30px; background: #f9f9f9; }
+        .footer { text-align: center; padding: 20px; font-size: 12px; color: #666; background: #f0f0f0; border-radius: 0 0 5px 5px; }
+    </style>
+</head>
+<body>
+<div class='container'>
+    <div class='header'>
+        <h1>🐠 Welcome to FishLover!</h1>
+    </div>
+    <div class='content'>
+        <h2>Hello {{FirstName}}!</h2>
+        <p>Welcome to our user management system!</p>
+        <p>Your account has been successfully activated. You can now start using all the features of our system.</p>
+        <p>If you have any questions, please don't hesitate to contact us.</p>
+        <p>Have a great experience!</p>
+    </div>
+    <div class='footer'>
+        <p>© {{Year}} FishLover System. All rights reserved.</p>
+    </div>
+</div>
+</body>
+</html>

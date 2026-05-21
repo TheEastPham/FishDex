@@ -1,0 +1,115 @@
+# ─── Build outputs ────────────────────────────────────────────
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Ll]og/
+[Ll]ogs/
+
+# ─── .NET ─────────────────────────────────────────────────────
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+.vs/
+.idea/
+*.DotSettings.user
+
+# Rider / JetBrains
+.idea/
+*.sln.iml
+
+# NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# EF Core Migrations snapshot (giữ lại migrations, bỏ snapshot build)
+# Không ignore Migrations/ folder — cần commit migrations
+
+# ─── Secrets & Config nhạy cảm ────────────────────────────────
+appsettings.Production.json
+appsettings.Local.json
+**/secrets.json
+**/.env
+**/.env.local
+**/.env.production
+!**/.env.example
+
+# ─── Docker ───────────────────────────────────────────────────
+# Giữ lại docker-compose.yml và Dockerfile
+# Bỏ override files chứa secrets
+docker-compose.override.yml
+docker-compose.local.yml
+
+# ─── Python ETL ───────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+.pytest_cache/
+
+# Parquet & data files (thường rất nặng)
+*.parquet
+*.csv
+*.xlsx
+/parquet/
+/data/
+
+# ─── OS ───────────────────────────────────────────────────────
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+
+# ─── Editors ──────────────────────────────────────────────────
+*.swp
+*.swo
+*~
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# ─── Test & Coverage ──────────────────────────────────────────
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+*.trx
+
+# ─── Publish outputs ──────────────────────────────────────────
+**/publish/
+**/PublishProfiles/
+
+# ─── MinIO / S3 local ─────────────────────────────────────────
+/minio-data/
+/storage/
+
+# ─── Backup files ─────────────────────────────────────────────
+*.bak
+*.sql.bak
+fishdex_seed_*.sql

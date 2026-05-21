@@ -1,4 +1,6 @@
-﻿namespace FishDex.EFCore.Entity.Ecologies;
+﻿using System;
+
+namespace FishDex.EFCore.Entity.Ecologies;
 
 public class Ecology
 {

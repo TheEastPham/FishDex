@@ -1,5 +1,6 @@
 ﻿// Bảng Audit log (Thông tin quản trị)
 
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 

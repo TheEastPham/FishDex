@@ -1,4 +1,7 @@
-﻿namespace FishDex.EFCore.Entity.Species;
+﻿using System;
+using System.Collections.Generic;
+
+namespace FishDex.EFCore.Entity.Species;
 
 public class Family
 {

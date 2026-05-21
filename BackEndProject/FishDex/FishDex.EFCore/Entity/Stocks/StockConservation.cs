@@ -1,5 +1,6 @@
 ﻿// Bảng thông tin về tình trạng bảo tồn và pháp lý
 
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 

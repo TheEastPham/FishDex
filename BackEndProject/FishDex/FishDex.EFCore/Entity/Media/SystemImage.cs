@@ -1,4 +1,6 @@
-﻿namespace FishDex.EFCore.Entity.Media;
+﻿using System;
+
+namespace FishDex.EFCore.Entity.Media;
 
 public class SystemImage
 {

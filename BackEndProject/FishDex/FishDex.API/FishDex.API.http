@@ -1,0 +1,6 @@
+@FishDex.API_HostAddress = http://localhost:5147
+
+GET {{FishDex.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

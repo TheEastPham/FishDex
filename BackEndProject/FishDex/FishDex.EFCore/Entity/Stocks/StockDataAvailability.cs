@@ -16,7 +16,7 @@ public class StockDataAvailability
     public string SCRFA_data { get; set; } // Spawning Aggregations
 
     // --- Biological Characteristics (Morphology & Physiology) ---
-    public string Morphology { get; set; }
+    public bool? Morphology { get; set; }
     public string Vision { get; set; }
     public string Brains { get; set; }
     public string Gillarea { get; set; }

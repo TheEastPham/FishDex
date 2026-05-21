@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using FishDex.EFCore.Enum;
 
 // Bảng thông tin địa lý và điều kiện môi trường sống
 namespace FishDex.EFCore.Entity.Stocks;
@@ -38,7 +39,7 @@ public class StockEnvironment
     public double? DHMin { get; set; }
     public double? DHMax { get; set; }
 
-    public string Resilience { get; set; }
+    public ResilienceLevel? Resilience { get; set; }
     public string ResilienceRemark { get; set; }
 
     public virtual Stock Stock { get; set; }

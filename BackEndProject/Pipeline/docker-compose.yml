@@ -1,0 +1,47 @@
+version: "3.9"
+
+# ─────────────────────────────────────────────────────────────
+# FishLover — Local Dev Stack
+# FishDex: PostgreSQL 16 + pgvector
+# UserManagement: giữ nguyên SQL Server LocalDB
+# ─────────────────────────────────────────────────────────────
+
+services:
+
+  fishdex-db:
+    image: pgvector/pgvector:pg16
+    container_name: fishdex_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER:     fishdex
+      POSTGRES_PASSWORD: fishdex_local_pwd
+      POSTGRES_DB:       fishdex
+    ports:
+      - "5433:5432"
+    volumes:
+      - fishdex_pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fishdex -d fishdex"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: fishdex_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL:    admin@fishdex.local
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    depends_on:
+      fishdex-db:
+        condition: service_healthy
+    volumes:
+      - fishdex_pgadmin:/var/lib/pgadmin
+
+volumes:
+  fishdex_pgdata:
+  fishdex_pgadmin:

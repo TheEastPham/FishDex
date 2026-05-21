@@ -43,6 +43,5 @@ public class Species
     public virtual Family Family { get; set; }
     // public ICollection<CommonNameEntity> CommonNames { get; set; }
     public ICollection<Stock> Stocks { get; set; } = [];
-    public ICollection<MorphData.MorphData> MorphData { get; set; }
     public ICollection<SystemImage> Pictures { get; set; }
 }

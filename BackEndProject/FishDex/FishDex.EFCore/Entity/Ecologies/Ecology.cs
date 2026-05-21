@@ -3,7 +3,7 @@
 public class Ecology
 {
     public int EcologyId { get; set; }
-    public string SpecCode { get; set; }
+    public int SpecCode { get; set; }
     public string StockCode { get; set; }
     public string EcologyRefNo { get; set; }
     public int autoctr { get; set; }

@@ -29,10 +29,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="DTOs\Security\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Update="Helper\EmailTemplates\en\EmailVerification.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

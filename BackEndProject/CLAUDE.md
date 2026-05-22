@@ -80,6 +80,7 @@ DI is wired via **Autofac modules** (`UserManagementModule` in Domain, a matchin
 - `JwtAuthenticationExtensions` / `AuthorizationExtensions` — shared JWT setup consumed by every API service
 - `CurrentUserSession` / `ICurrentUserSession` — scoped service that exposes the authenticated user's claims to domain services
 - `OpenTelemetryExtensions` — wires traces + Prometheus metrics; export endpoint is configured via `appsettings.json`
+- `PagedResult<T>` — generic pagination wrapper shared across all services
 
 ### API Gateway Routing (`ApiGateway/ocelot.json`)
 
@@ -103,7 +104,7 @@ JWT Bearer tokens; configuration in `appsettings.json` under `JwtSettings` (Secr
 | DB (FishDex) | PostgreSQL 16 + pgvector (Npgsql EF provider) |
 | Gateway | Ocelot 24 |
 | DI | Autofac 9 |
-| Mapping | AutoMapper 13 |
+| Mapping | Static `ToDto()` extension methods (no AutoMapper) |
 | Validation | FluentValidation 11 |
 | Logging | Serilog (file rotation) |
 | Tracing/Metrics | OpenTelemetry 1.10 + Prometheus |

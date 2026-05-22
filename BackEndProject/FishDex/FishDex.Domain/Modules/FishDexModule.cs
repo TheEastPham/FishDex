@@ -1,8 +1,6 @@
 using Autofac;
 using FishDex.Domain.Services;
 using FishDex.Domain.Services.Interfaces;
-using FishDex.EFCore.Repository;
-using FishDex.EFCore.Repository.Interface;
 
 namespace FishDex.Domain.Modules;
 
@@ -15,8 +13,6 @@ public class FishDexModule : Module
         builder.RegisterType<StockService>().As<IStockService>().InstancePerLifetimeScope();
         builder.RegisterType<MorphDataService>().As<IMorphDataService>().InstancePerLifetimeScope();
         builder.RegisterType<EcosystemService>().As<IEcosystemService>().InstancePerLifetimeScope();
-        builder.RegisterType<EcosystemRepository>().As<IEcosystemRepository>().InstancePerLifetimeScope();
-        builder.RegisterType<EcosystemRefRepository>().As<IEcosystemRefRepository>().InstancePerLifetimeScope();
         builder.RegisterType<OccurrenceService>().As<IOccurrenceService>().InstancePerLifetimeScope();
         builder.RegisterType<MediaService>().As<IMediaService>().InstancePerLifetimeScope();
     }

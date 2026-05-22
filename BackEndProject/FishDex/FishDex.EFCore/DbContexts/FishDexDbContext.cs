@@ -1,4 +1,5 @@
 ﻿using FishDex.EFCore.Entity.Ecologies;
+using FishDex.EFCore.Entity.Ecosystem;
 using FishDex.EFCore.Entity.Media;
 using FishDex.EFCore.Entity.MorphData;
 using FishDex.EFCore.Entity.Occurrence;
@@ -44,11 +45,13 @@ public class FishDexDbContext : DbContext
     public DbSet<SpecialHabitat>   SpecialHabitats  { get; set; }
     public DbSet<CircadianBehavior>CircadianBehaviors{ get; set; }
 
+    // Ecosystem
+    public DbSet<EcosystemRef> EcosystemRefs { get; set; }
+    public DbSet<Ecosystem>    Ecosystems    { get; set; }
+
     // Other
     public DbSet<Occurrence>  Occurrences  { get; set; }
     public DbSet<SystemImage> SystemImages { get; set; }
-    // NOTE: Ecosystem bị xoá khỏi DbSet vì entity rỗng.
-    //       Thêm lại khi entity có đủ properties.
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -229,6 +232,25 @@ public class FishDexDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.SpecCode);
+        });
+
+        // ── EcosystemRef ─────────────────────────────────────────
+        modelBuilder.Entity<EcosystemRef>(entity =>
+        {
+            entity.HasKey(e => e.E_CODE);
+
+            entity.HasMany(e => e.Occurrences)
+                .WithOne(o => o.EcosystemRef)
+                .HasForeignKey(o => o.E_CODE)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ── Ecosystem ─────────────────────────────────────────────
+        modelBuilder.Entity<Ecosystem>(entity =>
+        {
+            entity.HasKey(e => e.AutoCtr);
+            entity.HasIndex(e => e.SpecCode);
+            entity.HasIndex(e => e.E_CODE);
         });
 
         // ── StockDataAvailability: bool? thay vì string ──────────

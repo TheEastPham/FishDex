@@ -3,7 +3,6 @@ using FishDex.EFCore.Repository.BaseGeneric;
 
 namespace FishDex.EFCore.Repository.Interface;
 
-public interface IEcosystemRepository : IGenericRepository<Ecosystem>
+public interface IEcosystemRefRepository : IGenericRepository<EcosystemRef>
 {
 }
-

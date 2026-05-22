@@ -5,8 +5,7 @@ using FishDex.EFCore.Repository.Interface;
 
 namespace FishDex.EFCore.Repository;
 
-public class EcosystemRepository(FishDexDbContext context)
-    : GenericRepository<Ecosystem>(context), IEcosystemRepository
+public class EcosystemRefRepository(FishDexDbContext context)
+    : GenericRepository<EcosystemRef>(context), IEcosystemRefRepository
 {
 }
-

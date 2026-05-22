@@ -11,50 +11,100 @@ sao cho data này có thể dùng thẳng cho PROD sau khi verify.
 
 | Hạng mục | Trạng thái |
 |---|---|
-| PostgreSQL Docker Compose | ✅ Sẵn sàng (`docker compose up -d` trong thư mục này) |
-| EF Core migration `InitialCreate` | ✅ Đã tạo — chạy `dotnet ef database update` để apply |
-| pgvector extension | ✅ `init.sql` sẽ enable tự động khi container khởi tạo lần đầu |
+| PostgreSQL Docker Compose | ✅ `docker compose up -d` trong thư mục này |
+| EF Core migrations (`InitialCreate` + `AddCommonName`) | ✅ Chạy `dotnet ef database update` để apply |
+| pgvector extension | ✅ `init.sql` enable tự động khi container khởi tạo lần đầu |
+| ETL scripts (Python + polars + psycopg2) | ✅ Đã có ở `etl/` |
 | Parquet data files | ⏳ **Chờ bổ sung vào `parquetData/`** |
-| ETL script | ⏳ Chờ confirm data source → viết sau |
 
 ---
 
-## Bước 0 — Cần làm trước khi ETL
+## Cách chạy step by step
 
 ```bash
-# 1. Khởi động PostgreSQL
+# ── Setup môi trường ────────────────────────────────────────────────────
 cd BackEndProject/Pipeline/FishDexLocal
+
+# 1. Khởi động PostgreSQL container
 docker compose up -d
 
-# 2. Apply migration (chạy từ BackEndProject/)
+# 2. Apply EF Core migrations (chạy từ BackEndProject/)
 cd ../..
 dotnet ef database update --project FishDex/FishDex.EFCore --startup-project FishDex/FishDex.API
+cd Pipeline/FishDexLocal
 
-# 3. Bỏ parquet files vào:
-#    BackEndProject/Pipeline/FishDexLocal/parquetData/
-#    Các file cần thiết: species.parquet, stocks.parquet, ecology.parquet,
-#    habitat.parquet, feeding.parquet, morphdat.parquet,
-#    occurrence.parquet, ecosystemref.parquet, ecosystem.parquet,
-#    families.parquet, genera.parquet, comnames.parquet,
-#    speciesimages.parquet (optional)
+# 3. Bỏ file parquet vào parquetData/  (xem danh sách bên dưới)
+
+# 4. Tạo virtualenv & cài dependencies
+python -m venv .venv
+.venv\Scripts\activate           # Windows PowerShell
+# source .venv/bin/activate      # macOS/Linux
+pip install -r requirements.txt
+
+# ── ETL pipeline ────────────────────────────────────────────────────────
+
+# Step 0: kiểm tra giá trị Aquarium thực tế trong parquet trước khi load
+python inspect.py
+#   → in ra value_counts của Aquarium và AquariumFishII
+#   → cho biết số loài sẽ pass filter
+
+# (tuỳ chỉnh nếu cần)
+# Edit etl/config.py:
+#   AQUARIUM_VALUES   = {"highly commercial", "commercial", ...}
+#   INCLUDE_BRACKISH  = False
+
+# Step 1: dry-run xác nhận spec_codes
+python -m etl.run --dry-run
+
+# Step 2: chạy full ETL
+python -m etl.run
+
+# (hoặc chạy theo từng bước nhỏ — debug từng bảng)
+python -m etl.run --only 1      # chỉ load Families
+python -m etl.run --steps 1,2,3 # Families + Genuses + Species
+python -m etl.run --from 5      # từ Ecology trở đi
+
+# Step 3: reset sequences sau ETL (cần thiết vì insert explicit PK)
+docker exec -i fishdex-postgres psql -U fishdex -d fishdex < post_etl.sql
 ```
 
-> **EF tools version warning**: Local machine đang dùng `dotnet-ef 8.x`, nên update:
+> **EF tools version warning**: Local đang dùng `dotnet-ef 8.x`, nên update:
 > `dotnet tool update --global dotnet-ef`
+
+---
+
+## Parquet files cần có trong `parquetData/`
+
+| File | Bảng đích | Bắt buộc? |
+|---|---|---|
+| `families.parquet` | Families | ✅ |
+| `genera.parquet` | Genuses | ✅ |
+| `species.parquet` | Species | ✅ **(filter at this step)** |
+| `stocks.parquet` | Stocks + Conservation + Environment + ExternalRef + Metadata | ✅ |
+| `ecology.parquet` | Ecologies + HabitatZones + FeedingAndDiets + Associations + Substrates + SpecialHabitats + CircadianBehaviors | ✅ |
+| `morphdat.parquet` | MorphData + Teeth + Pigmentation + Fins + Meristics + Metrics | ⚠️ Optional |
+| `ecosystemref.parquet` | EcosystemRefs (load TOÀN BỘ, không filter) | ⚠️ Optional |
+| `ecosystem.parquet` | Ecosystems (junction, filter spec_codes) | ⚠️ Optional |
+| `occurrence.parquet` | Occurrences | ⚠️ Optional — file rất lớn |
+| `comnames.parquet` | CommonNames | ✅ |
+| `pictures.parquet` | SystemImages | ⚠️ Optional |
+
+> Nếu thiếu file optional, loader sẽ in `SKIP` và tiếp tục — không crash.
 
 ---
 
 ## Bộ lọc — Freshwater Aquarium Fish
 
-### Field lọc chính trong `species.csv`
+### Field lọc chính trong `species.parquet`
 
 | Column | Mô tả | Filter logic |
 |---|---|---|
 | `Fresh` | Cá nước ngọt (0/1) | `== 1` |
-| `Aquarium` | Mức độ phổ biến thủy sinh (text \| null) | Xem giá trị bên dưới |
-| `AquariumFishII` | Trạng thái thứ 2 (text \| null) | Optional refinement |
+| `Brack` | Cá nước lợ (0/1) | optional via `INCLUDE_BRACKISH` |
+| `Aquarium` | Mức độ phổ biến thủy sinh (text \| null) | xem giá trị bên dưới |
+| `AquariumFishII` | Trạng thái thứ 2 | refinement (không filter chính) |
 
-### Giá trị `Aquarium` field (cần verify khi có data)
+### Giá trị `Aquarium` field
 
 FishBase thường dùng các giá trị:
 
@@ -62,66 +112,53 @@ FishBase thường dùng các giá trị:
 |---|---|---|
 | `'highly commercial'` | Rất phổ biến trong thủy sinh | ✅ |
 | `'commercial'` | Phổ biến | ✅ |
-| `'of minor importance'` | Ít phổ biến hơn | ⚠️ Tùy quyết định |
+| `'of minor importance'` | Ít phổ biến hơn | ⚠️ Tùy quyết định trong `config.py` |
+| `'never/rarely'` | Không phải cá thủy sinh | ❌ Bỏ |
 | `'potential'` | Tiềm năng | ❌ Bỏ |
 | `null` / empty | Không phải cá thủy sinh | ❌ Bỏ |
 
-> **TODO**: Khi có parquet, chạy `species['Aquarium'].value_counts()` để xem các giá trị thực tế,
-> sau đó chốt filter. Có thể giá trị là `1`/`0`, hoặc text khác.
+> **Verify**: chạy `python inspect.py` để xem value_counts thực tế trong parquet bạn đang dùng.
 
-### Filter query tổng hợp (pseudocode)
-
-```python
-aquarium_species = species[
-    (species['Fresh'] == 1) &
-    (species['Aquarium'].isin(['highly commercial', 'commercial']))
-]
-spec_codes = set(aquarium_species['SpecCode'])
-# Dùng spec_codes này để filter TẤT CẢ bảng còn lại
-```
-
-**Ước tính**: Freshwater + popular aquarium → khoảng 2,000–3,500 loài
-(so với tổng ~35,000 loài trong FishBase).
+**Ước tính**: Freshwater + popular aquarium → khoảng **2,000–3,500 loài** (so với tổng ~35,000 loài FishBase).
 
 ---
 
 ## Thứ tự load (FK dependency order)
 
-Phải load theo thứ tự này để tránh FK violation:
-
 ```
-1.  families          → Family        (không có FK)
-2.  genera            → Genus         (FK: FamCode → families)
-3.  species           → Species       (FK: GenCode → genera, FamCode → families)
-                                       *** LỌC spec_codes TẠI ĐÂY ***
-4.  stocks            → Stock         (FK: SpecCode → species)
-5.  stock_conservation→ StockConservation (FK: StockCode → stocks)
-6.  stock_environment → StockEnvironment  (FK: StockCode → stocks)
-7.  stock_externalref → StockExternalRef  (FK: StockCode → stocks)
-8.  ecology           → Ecology       (FK: SpecCode → species)
-9.  habitat           → HabitatZone   (FK: EcologyId → ecology)
-10. feeding           → FeedingAndDiet(FK: EcologyId → ecology)
-11. morphdat          → MorphData     (FK: StockCode → stocks)
-12. ecosystemref      → EcosystemRef  (không có FK species — load độc lập)
-13. ecosystem         → Ecosystem     (FK: E_CODE → ecosystemref, SpecCode → species)
-14. occurrence        → Occurrence    (FK: SpecCode → species)
-15. speciesimages     → SystemImage   (FK: SpecCode → species)
-16. comnames          → CommonName    (FK: SpecCode → species)
+1.  families      → "Families"          (không có FK)
+2.  genera        → "Genuses"           (FK: FamCode → Families)
+3.  species       → "Species"           (FK: GenCode → Genuses, FamCode → Families)
+                                         *** LỌC spec_codes TẠI ĐÂY ***
+4.  stocks        → "Stocks" + StockConservations + StockEnvironments
+                  + StockExternalRefs + StockMetadatas
+                                         (FK: SpecCode → Species)
+5.  ecology       → "Ecologies" + HabitatZones + FeedingAndDiets + Associations
+                  + Substrates + SpecialHabitats + CircadianBehaviors
+                                         (FK: SpecCode → Species)
+6.  morphdat      → "MorphData" + MorphTeeth + MorphPigmentations + MorphFins
+                  + MorphMeristics + MorphMetrics
+                                         (FK: StockCode → Stocks)
+7.  ecosystemref  → "EcosystemRefs"      (load TOÀN BỘ, không filter)
+8.  ecosystem     → "Ecosystems"         (FK: E_CODE → EcosystemRefs, SpecCode → Species)
+9.  occurrence    → "Occurrences"        (FK: SpecCode → Species)
+10. comnames      → "CommonNames"        (FK: SpecCode → Species)
+11. images        → "SystemImages"       (FK: SpecCode → Species) — optional
 ```
 
 ---
 
-## Column mapping quan trọng (parquet → entity)
+## Column mapping (parquet → entity)
 
-### `species.csv` → `Species` entity
+### `species.parquet` → `Species`
 
 | Parquet column | Entity property | Ghi chú |
 |---|---|---|
 | `SpecCode` | `SpecCode` | |
-| `Genus` + `" "` + `Species` | `SpeciesName` | Ghép tên đầy đủ |
+| `Genus` + `" "` + `Species` | `SpeciesName` | Ghép trong loader |
 | `FamCode` | `FamCode` | |
 | `GenCode` | `GenusCode` | |
-| `Fresh`=1, `Brack`=1, `Saltwater`=1 | `WaterType` (enum) | Ưu tiên Fresh > Brack > Salt |
+| `Fresh`/`Brack`/`Saltwater` | `WaterType` (enum) | Fresh→1, Brack→3, Salt→2 |
 | `BodyShapeI` | `BodyShapeI` | |
 | `LongevityWild` | `LongevityWild` | |
 | `LengthFemale` | `LengthFemale` | |
@@ -129,8 +166,11 @@ Phải load theo thứ tự này để tránh FK violation:
 | `PicPreferredNameF` | `PicPreferredNameF` | |
 | `DemersPelag` | `DemersPelag` | |
 | `MaxLengthRef` | `MaxLengthRef` | |
+| `Source`, `Author`, `AuthorRef`, `Remark`, `TaxIssue` | giống tên | |
+| `Length`, `Weight`, `Vulnerability`, `VulnerabilityClimate` | giống tên | |
+| `AirBreathing`, `LifeCycle`, `Dangerous`, `Comments` | giống tên | |
 
-### `comnames.csv` → `CommonName` entity
+### `comnames.parquet` → `CommonNames`
 
 | Parquet column | Entity property | Ghi chú |
 |---|---|---|
@@ -138,87 +178,82 @@ Phải load theo thứ tự này để tránh FK violation:
 | `SpecCode` | `SpecCode` | FK → Species |
 | `StockCode` | `StockCode` | nullable |
 | `ComName` | `ComName` | tên cần tìm kiếm |
-| `Transliteration` | `Transliteration` | romanized (cho tên tiếng Á) |
-| `C_Code` | `CountryCode` | mã quốc gia |
-| `Language` | `Language` | e.g. "English", "Vietnamese" |
+| `Transliteration` | `Transliteration` | romanized |
+| `C_Code` | `CountryCode` | |
+| `Language` | `Language` | "English", "Vietnamese", ... |
 | `NameType` | `NameType` | "Vernacular" / "Trade" |
 | `PreferredName` | `IsPreferred` | 0/1 → bool |
-| `Rank` | `Rank` | thứ tự ưu tiên hiển thị |
-| `Remarks` | `Remarks` | optional |
+| `Rank` | `Rank` | thứ tự ưu tiên |
+| `Remarks` | `Remarks` | |
 
-> **Filter khi ETL**: chỉ load các row có `SpecCode IN spec_codes`.
-> Có thể filter thêm `NameType = 'Vernacular'` để bỏ tên thương mại nếu muốn gọn.
+### `families.parquet` → `Families`
 
----
+| Parquet column | Entity property | Ghi chú |
+|---|---|---|
+| (generated UUID) | `Id` (Guid) | `uuid.uuid4()` trong loader |
+| `FamCode` | `FamCode` | |
+| `Family` | `Name` | |
+| `CommonName` / `FBname` | `CommonName` | fallback |
+| `BodyShapeI` | `BodyShapeI` | |
+| `SwimMode` | `SwimMode` | |
+| `ReprGuild` | `ReproductiveGuild` | |
 
-### `families.csv` → `Family` entity
+### `genera.parquet` → `Genuses`
 
-| Parquet column | Entity property |
-|---|---|
-| `FamCode` | `FamCode` |
-| `Family` | `Name` |
-| `CommonName` | `CommonName` |
-| `BodyShapeI` | `BodyShapeI` |
-| `SwimMode` | `SwimMode` |
-| `ReprGuild` | `ReproductiveGuild` |
-> `Id` (Guid) → **tạo mới** `Guid.NewGuid()` trong ETL script
+| Parquet column | Entity property | Ghi chú |
+|---|---|---|
+| `GenCode` | `GenusCode` | PK |
+| `FamCode` | `FamId` | **lookup Family.Id** từ DB sau khi load step 1 |
+| `Genus` | `GenusName` | |
 
-### `genera.csv` → `Genus` entity
-
-| Parquet column | Entity property |
-|---|---|
-| `GenCode` | `GenusCode` |
-| `FamCode` | `FamId` — **join với Family để lấy Guid** |
-| `Genus` | `GenusName` |
+> Chi tiết các bảng còn lại (Stocks, Ecology, Morph, Ecosystem...) — xem trực tiếp source `etl/loaders/*.py`,
+> các SQL INSERT đã liệt kê đầy đủ tên cột.
 
 ---
 
-## Công cụ ETL — Python script
-
-### Lý do chọn Python
-
-- `polars` đọc parquet nhanh, zero-copy
-- `psycopg2` / `sqlalchemy` upsert native vào PostgreSQL
-- Dễ debug filter logic interactively
-- Script chạy lại được (idempotent qua UPSERT)
-
-### Cấu trúc thư mục
+## Cấu trúc thư mục ETL
 
 ```
 Pipeline/FishDexLocal/
-├── parquetData/          ← đặt file .parquet ở đây
+├── parquetData/                ← bỏ file .parquet ở đây
 ├── etl/
-│   ├── config.py         ← connection string, paths, filter config
-│   ├── filter.py         ← logic lọc spec_codes
+│   ├── __init__.py
+│   ├── config.py               ← DB_URL, filter config
+│   ├── db.py                   ← connect + upsert helpers + type coercion
+│   ├── filter.py               ← compute_spec_codes()
 │   ├── loaders/
+│   │   ├── __init__.py
 │   │   ├── families.py
+│   │   ├── genera.py
 │   │   ├── species.py
-│   │   ├── stocks.py
-│   │   ├── ecology.py
-│   │   ├── morph.py
-│   │   ├── ecosystem.py
+│   │   ├── stocks.py           ← Stock + 4 sub-tables từ 1 parquet
+│   │   ├── ecology.py          ← Ecology + 6 sub-tables từ 1 parquet
+│   │   ├── morph.py            ← MorphData + 5 sub-tables từ 1 parquet
+│   │   ├── ecosystem.py        ← EcosystemRef + Ecosystem junction
 │   │   ├── occurrence.py
+│   │   ├── common_names.py
 │   │   └── images.py
-│   └── run.py            ← entry point, gọi theo thứ tự FK
-├── requirements.txt      ← polars, psycopg2-binary, sqlalchemy
-├── init.sql              ← pgvector extension
-├── ETL_STRATEGY.md       ← file này
+│   └── run.py                  ← entry point, gọi theo FK order
+├── inspect.py                  ← step 0: check Aquarium values
+├── post_etl.sql                ← reset sequences sau khi insert explicit PK
+├── requirements.txt
+├── init.sql                    ← pgvector extension
+├── ETL_STRATEGY.md             ← file này
 └── docker-compose.yml
 ```
 
-### Nguyên tắc script
+---
 
-```python
-# Mỗi loader dùng UPSERT để idempotent
-INSERT INTO "Species" (...) VALUES (...)
-ON CONFLICT ("SpecCode") DO UPDATE SET ...
+## Nguyên tắc thiết kế script
 
-# Wrap mỗi table trong transaction riêng
-# → fail ở table nào thì rollback table đó, không cần rollback toàn bộ
-
-# Log rõ ràng
-print(f"[Species] Inserted: 2341, Skipped: 12, Errors: 0")
-```
+| Nguyên tắc | Cách triển khai |
+|---|---|
+| **Idempotent** | UPSERT (`ON CONFLICT DO UPDATE`) cho mọi bảng có natural PK. Bảng PK auto-gen (Occurrence, SystemImage) dùng `DELETE WHERE SpecCode IN spec_codes` rồi INSERT lại. |
+| **Defensive column access** | `row.get("col")` — không crash khi parquet thiếu cột. |
+| **Batch insert** | `executemany` batch 500 rows; fail batch → fallback row-by-row, log skipped. |
+| **Transaction per table** | Commit sau mỗi bảng — fail bảng nào chỉ rollback bảng đó. |
+| **Step-by-step** | `--only N`, `--steps N,M`, `--from N` cho phép chạy lại từng phần. |
+| **Logging rõ ràng** | `[Species] Inserted/Updated: 2341 | Skipped: 12` cho mỗi bảng. |
 
 ---
 
@@ -227,25 +262,34 @@ print(f"[Species] Inserted: 2341, Skipped: 12, Errors: 0")
 Sau khi verify data trên local:
 
 ```bash
-# Dump data-only (không dump schema — PROD sẽ dùng EF migrations)
+# Dump data-only (PROD sẽ tự chạy migrations để có schema)
 pg_dump \
   --host=localhost --port=5433 \
   --username=fishdex --dbname=fishdex \
   --data-only --no-owner --no-acl \
   --file=fishdex_seed_data.sql
 
-# Restore lên PROD (sau khi chạy migrations trên PROD)
+# Restore lên PROD (sau khi PROD đã chạy `dotnet ef database update`)
 psql -h <prod-host> -U fishdex -d fishdex -f fishdex_seed_data.sql
+psql -h <prod-host> -U fishdex -d fishdex -f post_etl.sql
 ```
 
-**Hoặc** chạy ETL script thẳng lên PROD DB bằng cách đổi connection string trong `config.py`.
+**Hoặc** chạy ETL script thẳng lên PROD bằng cách set env var:
+```bash
+DB_URL=postgresql://user:pass@prod-host:5432/fishdex python -m etl.run
+```
 
 ---
 
-## Checklist trước khi viết ETL script
+## Checklist khi chạy
 
-- [ ] Bổ sung file parquet vào `parquetData/`
-- [ ] Chạy `species['Aquarium'].value_counts()` → xác nhận giá trị filter
-- [ ] Confirm: lấy `'of minor importance'` không?
-- [ ] Confirm: có lấy brackish water không (nếu cá phổ biến thủy sinh)?
-- [ ] `docker compose up -d` và `dotnet ef database update` đã xong
+- [ ] `docker compose up -d` → PostgreSQL running trên port 5433
+- [ ] `dotnet ef database update` → schema đã apply
+- [ ] Bỏ tất cả parquet files vào `parquetData/`
+- [ ] `pip install -r requirements.txt`
+- [ ] `python inspect.py` → xác nhận giá trị `Aquarium` thực tế
+- [ ] Edit `etl/config.py` nếu cần (filter values, brackish, DB url)
+- [ ] `python -m etl.run --dry-run` → xem số spec_codes match
+- [ ] `python -m etl.run` → full ETL
+- [ ] `psql ... < post_etl.sql` → reset sequences
+- [ ] Verify trên DB: `SELECT COUNT(*) FROM "Species";` …

@@ -32,6 +32,7 @@
 
     <ItemGroup>
         <!-- Projects trong solution -->
+        <ProjectReference Include="..\FishDex.Domain\FishDex.Domain.csproj" />
         <ProjectReference Include="..\FishDex.EFCore\FishDex.EFCore.csproj" />
         <ProjectReference Include="..\..\Share\FishLover.Shared\FishLover.Shared.csproj" />
     </ItemGroup>

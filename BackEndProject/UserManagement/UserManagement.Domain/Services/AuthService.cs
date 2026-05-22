@@ -1,8 +1,6 @@
-﻿using AutoMapper;
-using UserManagement.Domain.DTOs.Auth;
+﻿using UserManagement.Domain.DTOs.Auth;
 using UserManagement.Domain.DTOs.Account;
-using UserManagement.Domain.DTOs.User;
-using UserManagement.Domain.Models;
+using UserManagement.Domain.Mappings;
 using UserManagement.Domain.Services.Interfaces;
 using UserManagement.EFCore.Entities.User;
 using UserManagement.EFCore.Repositories.Interfaces;
@@ -24,7 +22,6 @@ public class AuthService(
     UserManager<UserEntity> userManager,
     SignInManager<UserEntity> signInManager,
     IConfiguration configuration,
-    IMapper mapper,
     ILogger<AuthService> logger,
     IEmailService emailService,
     IInvitationRepository invitationRepository,
@@ -66,9 +63,7 @@ public class AuthService(
             user.LastLoginAt = DateTime.UtcNow;
             await userManager.UpdateAsync(user);
 
-            var userModel = mapper.Map<User>(user);
-            userModel.Roles = roles.ToList();
-            var userDto = mapper.Map<UserDto>(userModel);
+            var userDto = user.ToUser(roles).ToDto();
 
             return new LoginResponse(
                 true,

@@ -1,0 +1,172 @@
+using FishDex.Domain.DTOs.Ecologies;
+using FishDex.Domain.DTOs.Ecosystem;
+using FishDex.Domain.DTOs.Media;
+using FishDex.Domain.DTOs.MorphData;
+using FishDex.Domain.DTOs.Occurrence;
+using FishDex.Domain.DTOs.Species;
+using FishDex.Domain.DTOs.Stocks;
+using FishDex.EFCore.Entity.Ecologies;
+using FishDex.EFCore.Entity.Ecosystem;
+using FishDex.EFCore.Entity.Media;
+using FishDex.EFCore.Entity.MorphData;
+using FishDex.EFCore.Entity.Occurrence;
+using FishDex.EFCore.Entity.Species;
+using FishDex.EFCore.Entity.Stocks;
+
+namespace FishDex.Domain.Mappings;
+
+internal static class EntityToDtoExtensions
+{
+    internal static FamilyDto ToDto(this Family e) => new()
+    {
+        Id        = e.Id,
+        FamCode   = e.FamCode,
+        Name      = e.Name,
+        CommonName = e.CommonName
+    };
+
+    internal static GenusDto ToDto(this Genus e) => new()
+    {
+        GenusCode = e.GenusCode,
+        GenusName = e.GenusName,
+        FamId     = e.FamId
+    };
+
+    internal static SpeciesDto ToDto(this Species e) => new()
+    {
+        Id          = e.Id,
+        SpecCode    = e.SpecCode,
+        SpeciesName = e.SpeciesName,
+        GenusCode   = e.GenusCode,
+        GenusName   = null,   // not stored on entity; resolved by join if needed
+        FamilyName  = null
+    };
+
+    internal static EcologyDto ToDto(this Ecology e) => new()
+    {
+        EcologyId = e.EcologyId,
+        SpecCode  = e.SpecCode,
+        StockCode = e.StockCode
+    };
+
+    internal static FeedingAndDietDto ToDto(this FeedingAndDiet e) => new()
+    {
+        FeedingId   = e.FeedingId,
+        EcologyId   = e.EcologyId,
+        FeedingType = e.FeedingType,
+        DietTroph   = e.DietTroph,
+        FoodTroph   = e.FoodTroph
+    };
+
+    internal static HabitatZoneDto ToDto(this HabitatZone e) => new()
+    {
+        HabitatZoneId = e.HabitatZoneId,
+        EcologyId     = e.EcologyId,
+        Neritic       = e.Neritic,
+        Estuaries     = e.Estuaries,
+        Mangroves     = e.Mangroves,
+        Stream        = e.Stream,
+        Lakes         = e.Lakes
+    };
+
+    internal static MorphDataDto ToDto(this MorphData e) => new()
+    {
+        StockCode   = e.StockCode,
+        Speccode    = e.Speccode,
+        BodyShapeI  = e.BodyShapeI,
+        BodyShapeII = e.BodyShapeII,
+        TypeofMouth = e.TypeofMouth
+    };
+
+    internal static OccurrenceDto ToDto(this Occurrence e) => new()
+    {
+        Id           = e.Id,
+        SpecCode     = e.SpecCode,
+        CountryCode  = e.CountryCode,
+        Locality     = e.Locality,
+        LatitudeDec  = e.LatitudeDec,
+        LongitudeDec = e.LongitudeDec,
+        Province     = e.Province
+    };
+
+    internal static StockDto ToDto(this Stock e) => new()
+    {
+        StockCode = e.StockCode,
+        SpecCode  = e.SpecCode,
+        StockDefs = e.StockDefs,
+        Level     = e.Level
+    };
+
+    internal static StockConservationDto ToDto(this StockConservation e) => new()
+    {
+        StockCode         = e.StockCode,
+        IUCN_Code         = e.IUCN_Code,
+        IUCN_Assessment   = e.IUCN_Assessment,
+        IUCN_DateAssessed = e.IUCN_DateAssessed,
+        CITES_Code        = e.CITES_Code
+    };
+
+    internal static StockEnvironmentDto ToDto(this StockEnvironment e) => new()
+    {
+        StockCode = e.StockCode,
+        TempMin   = e.TempMin,
+        TempMax   = e.TempMax,
+        PHMin     = e.PHMin,
+        PHMax     = e.PHMax
+    };
+
+    internal static EcosystemRefDto ToDto(this EcosystemRef e) => new()
+    {
+        E_CODE        = e.E_CODE,
+        EcosystemName = e.EcosystemName,
+        EcosystemType = e.EcosystemType,
+        Location      = e.Location,
+        NorthernLat   = e.NorthernLat,
+        SouthernLat   = e.SouthernLat,
+        WesternLat    = e.WesternLat,
+        EasternLat    = e.EasternLat,
+        Area          = e.Area,
+        DrainageArea  = e.DrainageArea,
+        RiverLength   = e.RiverLength,
+        Salinity      = e.Salinity,
+        AverageDepth  = e.AverageDepth,
+        MaxDepth      = e.MaxDepth,
+        TempSurface   = e.TempSurface,
+        TempDepth     = e.TempDepth,
+        Polar         = e.Polar,
+        Boreal        = e.Boreal,
+        Temperate     = e.Temperate,
+        Subtropical   = e.Subtropical,
+        Tropical      = e.Tropical,
+        MEOW          = e.MEOW,
+        LME           = e.LME,
+        MPA           = e.MPA,
+        TotalCount    = e.TotalCount,
+        TotalFamCount = e.TotalFamCount,
+        Description   = e.Description,
+        Comments      = e.Comments,
+        LastUpdate    = e.LastUpdate
+    };
+
+    internal static EcosystemDto ToDto(this FishDex.EFCore.Entity.Ecosystem.Ecosystem e) => new()
+    {
+        AutoCtr         = e.AutoCtr,
+        E_CODE          = e.E_CODE,
+        SpecCode        = e.SpecCode,
+        StockCode       = e.StockCode,
+        Status          = e.Status,
+        CurrentPresence = e.CurrentPresence,
+        Abundance       = e.Abundance,
+        LifeStage       = e.LifeStage,
+        Remarks         = e.Remarks
+    };
+
+    internal static SystemImageDto ToDto(this SystemImage e) => new()
+    {
+        Id          = e.Id,
+        SpecCode    = e.SpecCode,
+        Name        = e.Name,
+        PictureType = e.PictureType,
+        PicPreferred = e.PicPreferred
+    };
+}

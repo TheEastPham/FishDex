@@ -52,9 +52,6 @@ try
     builder.Services.AddControllers();
     builder.Services.AddOpenApi();
 
-    // ── AutoMapper ────────────────────────────────────────────
-    builder.Services.AddAutoMapper(typeof(Program).Assembly);
-
     // ── CORS (cho FE gọi trực tiếp nếu không qua Gateway) ─────
     builder.Services.AddCors(options =>
     {

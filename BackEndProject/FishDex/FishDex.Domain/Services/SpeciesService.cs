@@ -1,16 +1,15 @@
-using AutoMapper;
 using FishDex.Domain.DTOs.Species;
-using FishLover.Shared.Common;
+using FishDex.Domain.Mappings;
 using FishDex.Domain.Services.Interfaces;
 using FishDex.EFCore.Repository.Interface;
+using FishLover.Shared.Common;
 
 namespace FishDex.Domain.Services;
 
 public class SpeciesService(
     ISpeciesRepository speciesRepo,
     IFamiliesRepository familyRepo,
-    IGenusRepository genusRepo,
-    IMapper mapper) : ISpeciesService
+    IGenusRepository genusRepo) : ISpeciesService
 {
     public async Task<PagedResult<SpeciesDto>> GetSpeciesAsync(GetSpeciesRequest request, CancellationToken ct = default)
     {
@@ -22,14 +21,15 @@ public class SpeciesService(
         var items = list
             .Skip((request.Page - 1) * request.PageSize)
             .Take(request.PageSize)
+            .Select(s => s.ToDto())
             .ToList();
 
         return new PagedResult<SpeciesDto>
         {
-            Items = mapper.Map<List<SpeciesDto>>(items),
+            Items      = items,
             TotalCount = list.Count,
-            Page = request.Page,
-            PageSize = request.PageSize
+            Page       = request.Page,
+            PageSize   = request.PageSize
         };
     }
 
@@ -37,18 +37,18 @@ public class SpeciesService(
     {
         var results = await speciesRepo.FindAsync(s => s.SpecCode == specCode);
         var entity = results.FirstOrDefault();
-        return entity is null ? null : mapper.Map<SpeciesDto>(entity);
+        return entity?.ToDto();
     }
 
     public async Task<IReadOnlyList<FamilyDto>> GetFamiliesAsync(CancellationToken ct = default)
     {
         var families = await familyRepo.FindAsync(_ => true);
-        return mapper.Map<List<FamilyDto>>(families.ToList());
+        return families.Select(f => f.ToDto()).ToList();
     }
 
     public async Task<IReadOnlyList<GenusDto>> GetGenusByFamilyAsync(Guid famId, CancellationToken ct = default)
     {
         var genera = await genusRepo.FindAsync(g => g.FamId == famId);
-        return mapper.Map<List<GenusDto>>(genera.ToList());
+        return genera.Select(g => g.ToDto()).ToList();
     }
 }

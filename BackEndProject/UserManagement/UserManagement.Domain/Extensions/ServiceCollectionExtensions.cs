@@ -1,5 +1,4 @@
-﻿using UserManagement.Domain.Mappings;
-using UserManagement.Domain.Services;
+﻿using UserManagement.Domain.Services;
 using UserManagement.Domain.Services.Interfaces;
 using UserManagement.EFCore.Data;
 using UserManagement.EFCore.Entities.User;
@@ -45,9 +44,6 @@ public static class ServiceCollectionExtensions
                 options.SignIn.RequireConfirmedPhoneNumber = false;
             }).AddEntityFrameworkStores<UserManagementDbContext>()
             .AddDefaultTokenProviders();
-
-        // Add AutoMapper
-        services.AddAutoMapper(typeof(UserMappingProfile));
 
         // Email Services
         services.AddSingleton<EmailTemplateHelper>();

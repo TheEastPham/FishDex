@@ -1,4 +1,4 @@
-namespace FishDex.Domain.DTOs.Common;
+namespace FishLover.Shared.Common;
 
 public class PagedResult<T>
 {

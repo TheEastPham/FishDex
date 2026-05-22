@@ -1,6 +1,6 @@
 using AutoMapper;
-using FishDex.Domain.DTOs.Common;
 using FishDex.Domain.DTOs.Species;
+using FishLover.Shared.Common;
 using FishDex.Domain.Services.Interfaces;
 using FishDex.EFCore.Repository.Interface;
 

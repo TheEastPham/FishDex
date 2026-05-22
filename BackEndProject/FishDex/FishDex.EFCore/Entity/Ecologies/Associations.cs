@@ -1,7 +1,10 @@
-﻿namespace FishDex.EFCore.Entity.Ecologies;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace FishDex.EFCore.Entity.Ecologies;
 
 public class Associations
 {
+    [Key]
     public int AssociationId { get; set; }
     public int EcologyId { get; set; }
     public string AssociationRef { get; set; }

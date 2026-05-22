@@ -11,6 +11,12 @@
         <!-- DI -->
         <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="10.0.0" />
 
+        <!-- EF Core Design (required for dotnet ef migrations) -->
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.4">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+
         <!-- Logging -->
         <PackageReference Include="Serilog.AspNetCore"                     Version="9.0.0" />
         <PackageReference Include="Serilog.Sinks.File"                     Version="6.0.0" />

@@ -1,7 +1,10 @@
-﻿namespace FishDex.EFCore.Entity.Ecologies;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace FishDex.EFCore.Entity.Ecologies;
 
 public class CircadianBehavior
 {
+    [Key]
     public int CircadianId { get; set; }
     public int EcologyId { get; set; }
     public string Circadian1 { get; set; }

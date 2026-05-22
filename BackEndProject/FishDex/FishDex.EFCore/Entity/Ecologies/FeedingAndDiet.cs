@@ -1,7 +1,10 @@
-﻿namespace FishDex.EFCore.Entity.Ecologies;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace FishDex.EFCore.Entity.Ecologies;
 
 public class FeedingAndDiet
 {
+    [Key]
     public int FeedingId { get; set; }
     public int EcologyId { get; set; }
     public bool Herbivory2 { get; set; }

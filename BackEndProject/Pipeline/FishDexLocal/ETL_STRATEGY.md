@@ -35,7 +35,8 @@ dotnet ef database update --project FishDex/FishDex.EFCore --startup-project Fis
 #    Các file cần thiết: species.parquet, stocks.parquet, ecology.parquet,
 #    habitat.parquet, feeding.parquet, morphdat.parquet,
 #    occurrence.parquet, ecosystemref.parquet, ecosystem.parquet,
-#    families.parquet, genera.parquet, speciesimages.parquet (optional)
+#    families.parquet, genera.parquet, comnames.parquet,
+#    speciesimages.parquet (optional)
 ```
 
 > **EF tools version warning**: Local machine đang dùng `dotnet-ef 8.x`, nên update:
@@ -105,6 +106,7 @@ Phải load theo thứ tự này để tránh FK violation:
 13. ecosystem         → Ecosystem     (FK: E_CODE → ecosystemref, SpecCode → species)
 14. occurrence        → Occurrence    (FK: SpecCode → species)
 15. speciesimages     → SystemImage   (FK: SpecCode → species)
+16. comnames          → CommonName    (FK: SpecCode → species)
 ```
 
 ---
@@ -127,6 +129,27 @@ Phải load theo thứ tự này để tránh FK violation:
 | `PicPreferredNameF` | `PicPreferredNameF` | |
 | `DemersPelag` | `DemersPelag` | |
 | `MaxLengthRef` | `MaxLengthRef` | |
+
+### `comnames.csv` → `CommonName` entity
+
+| Parquet column | Entity property | Ghi chú |
+|---|---|---|
+| `autoctr` | `AutoCtr` | PK |
+| `SpecCode` | `SpecCode` | FK → Species |
+| `StockCode` | `StockCode` | nullable |
+| `ComName` | `ComName` | tên cần tìm kiếm |
+| `Transliteration` | `Transliteration` | romanized (cho tên tiếng Á) |
+| `C_Code` | `CountryCode` | mã quốc gia |
+| `Language` | `Language` | e.g. "English", "Vietnamese" |
+| `NameType` | `NameType` | "Vernacular" / "Trade" |
+| `PreferredName` | `IsPreferred` | 0/1 → bool |
+| `Rank` | `Rank` | thứ tự ưu tiên hiển thị |
+| `Remarks` | `Remarks` | optional |
+
+> **Filter khi ETL**: chỉ load các row có `SpecCode IN spec_codes`.
+> Có thể filter thêm `NameType = 'Vernacular'` để bỏ tên thương mại nếu muốn gọn.
+
+---
 
 ### `families.csv` → `Family` entity
 

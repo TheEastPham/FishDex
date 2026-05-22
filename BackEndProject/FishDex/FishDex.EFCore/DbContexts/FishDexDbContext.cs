@@ -16,9 +16,10 @@ public class FishDexDbContext : DbContext
     }
 
     // Species
-    public DbSet<Family>  Families { get; set; }
-    public DbSet<Genus>   Genuses  { get; set; }
-    public DbSet<Species> Species  { get; set; }
+    public DbSet<Family>     Families    { get; set; }
+    public DbSet<Genus>      Genuses     { get; set; }
+    public DbSet<Species>    Species     { get; set; }
+    public DbSet<CommonName> CommonNames { get; set; }
 
     // Stocks
     public DbSet<Stock>                 Stocks                 { get; set; }
@@ -108,6 +109,13 @@ public class FishDexDbContext : DbContext
             entity.HasMany(e => e.Pictures)
                 .WithOne()
                 .HasForeignKey(p => p.SpecCode)
+                .HasPrincipalKey(e => e.SpecCode)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // CommonName -> Species via SpecCode
+            entity.HasMany(e => e.CommonNames)
+                .WithOne(c => c.Species)
+                .HasForeignKey(c => c.SpecCode)
                 .HasPrincipalKey(e => e.SpecCode)
                 .OnDelete(DeleteBehavior.Restrict);
         });
@@ -218,6 +226,14 @@ public class FishDexDbContext : DbContext
                 .WithOne(c => c.Ecology)
                 .HasForeignKey<CircadianBehavior>(c => c.EcologyId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── CommonName ───────────────────────────────────────────
+        modelBuilder.Entity<CommonName>(entity =>
+        {
+            entity.HasKey(e => e.AutoCtr);
+            entity.HasIndex(e => e.SpecCode);
+            entity.HasIndex(e => new { e.Language, e.IsPreferred });
         });
 
         // ── Occurrence ───────────────────────────────────────────

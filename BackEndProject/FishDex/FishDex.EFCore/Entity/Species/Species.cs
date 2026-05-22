@@ -43,7 +43,7 @@ public class Species
     
     public virtual Genus Genus { get; set; }
     public virtual Family Family { get; set; }
-    // public ICollection<CommonNameEntity> CommonNames { get; set; }
+    public ICollection<CommonName> CommonNames { get; set; } = [];
     public ICollection<Stock> Stocks { get; set; } = [];
     public ICollection<SystemImage> Pictures { get; set; }
 }

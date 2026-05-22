@@ -9,4 +9,6 @@ public interface ISpeciesService
     Task<SpeciesDto?> GetBySpecCodeAsync(int specCode, CancellationToken ct = default);
     Task<IReadOnlyList<FamilyDto>> GetFamiliesAsync(CancellationToken ct = default);
     Task<IReadOnlyList<GenusDto>> GetGenusByFamilyAsync(Guid famId, CancellationToken ct = default);
+    Task<IReadOnlyList<CommonNameDto>> GetCommonNamesBySpecCodeAsync(int specCode, CancellationToken ct = default);
+    Task<IReadOnlyList<CommonNameDto>> SearchCommonNamesAsync(string term, string? language = null, CancellationToken ct = default);
 }

@@ -17,6 +17,19 @@ namespace FishDex.Domain.Mappings;
 
 internal static class EntityToDtoExtensions
 {
+    internal static CommonNameDto ToDto(this CommonName e) => new()
+    {
+        AutoCtr        = e.AutoCtr,
+        SpecCode       = e.SpecCode,
+        ComName        = e.ComName,
+        Transliteration = e.Transliteration,
+        Language       = e.Language,
+        CountryCode    = e.CountryCode,
+        NameType       = e.NameType,
+        IsPreferred    = e.IsPreferred,
+        Rank           = e.Rank
+    };
+
     internal static FamilyDto ToDto(this Family e) => new()
     {
         Id        = e.Id,

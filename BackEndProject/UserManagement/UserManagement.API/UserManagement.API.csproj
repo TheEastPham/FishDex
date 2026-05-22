@@ -40,7 +40,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Share\FishLover.Shared\FishLover.Shared.csproj" />
-    <ProjectReference Include="..\FishLover.Shared\FishLover.Shared.csproj" />
     <ProjectReference Include="..\UserManagement.Domain\UserManagement.Domain.csproj" />
   </ItemGroup>
 

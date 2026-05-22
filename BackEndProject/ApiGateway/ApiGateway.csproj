@@ -15,7 +15,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Share\FishLover.Shared\FishLover.Shared.csproj" />
-    <ProjectReference Include="..\UserManagement\FishLover.Shared\FishLover.Shared.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,41 @@
+version: "3.9"
+
+# ─────────────────────────────────────────────────────────────
+# AquaHome — Local Dev Stack
+# SQL Server 2022 + Redis 7
+# Ports offset +1 để chạy song song với UserManagementLocal
+# ─────────────────────────────────────────────────────────────
+
+services:
+
+  aquahome-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: aquahome_sqlserver
+    restart: unless-stopped
+    environment:
+      SA_PASSWORD: "AquaHome_Local_Pwd1!"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1434:1433"
+    volumes:
+      - aquahome_sqldata:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'AquaHome_Local_Pwd1!' -Q 'SELECT 1' -No"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  aquahome-redis:
+    image: redis:7-alpine
+    container_name: aquahome_redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  aquahome_sqldata:

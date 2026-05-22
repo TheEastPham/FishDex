@@ -1,0 +1,83 @@
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - BackEndProject/FishDex/**
+      - BackEndProject/Share/**
+
+variables:
+  dotnetVersion: '9.0.x'
+  buildConfiguration: 'Release'
+  apiProject: 'BackEndProject/FishDex/FishDex.API/FishDex.API.csproj'
+  solution: 'BackEndProject/FishDex.sln'
+  dockerImageName: 'fishdex-api'
+
+stages:
+
+- stage: Build
+  displayName: Build & Test
+  jobs:
+  - job: BuildTest
+    displayName: Build & Test
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: UseDotNet@2
+      displayName: Setup .NET
+      inputs:
+        version: $(dotnetVersion)
+
+    - script: dotnet restore $(solution)
+      displayName: Restore
+
+    - script: dotnet build $(apiProject) --no-restore -c $(buildConfiguration)
+      displayName: Build
+
+    - script: dotnet test $(solution) --no-build -c $(buildConfiguration)
+      displayName: Test
+
+    - task: Docker@2
+      displayName: Build Docker image
+      inputs:
+        command: build
+        dockerfile: 'BackEndProject/FishDex/FishDex.API/Dockerfile'
+        buildContext: 'BackEndProject/'
+        tags: |
+          $(Build.BuildId)
+          latest
+    # TODO: push to Azure Container Registry
+
+- stage: Deploy_Dev
+  displayName: Deploy → Development
+  dependsOn: Build
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'))
+  jobs:
+  - deployment: DeployDev
+    displayName: Deploy to Dev
+    environment: development
+    pool:
+      vmImage: 'ubuntu-latest'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - script: echo "TODO: deploy fishdex-api:$(Build.BuildId) to dev"
+
+- stage: Deploy_Prod
+  displayName: Deploy → Production
+  dependsOn: Build
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  jobs:
+  - deployment: DeployProd
+    displayName: Deploy to Production
+    environment: production
+    pool:
+      vmImage: 'ubuntu-latest'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - script: echo "TODO: deploy fishdex-api:$(Build.BuildId) to production"

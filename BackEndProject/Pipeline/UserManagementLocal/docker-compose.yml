@@ -1,0 +1,40 @@
+version: "3.9"
+
+# ─────────────────────────────────────────────────────────────
+# UserManagement — Local Dev Stack
+# SQL Server 2022 + Redis 7
+# ─────────────────────────────────────────────────────────────
+
+services:
+
+  usermanagement-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: usermanagement_sqlserver
+    restart: unless-stopped
+    environment:
+      SA_PASSWORD: "UserMgmt_Local_Pwd1!"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    volumes:
+      - usermanagement_sqldata:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'UserMgmt_Local_Pwd1!' -Q 'SELECT 1' -No"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  usermanagement-redis:
+    image: redis:7-alpine
+    container_name: usermanagement_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  usermanagement_sqldata:

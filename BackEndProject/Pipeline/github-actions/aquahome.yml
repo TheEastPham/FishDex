@@ -1,0 +1,70 @@
+# Copy file này sang .github/workflows/aquahome.yml để GitHub tự trigger
+
+name: AquaHome CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'BackEndProject/AquaHome/**'
+      - 'BackEndProject/Share/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'BackEndProject/AquaHome/**'
+      - 'BackEndProject/Share/**'
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  API_PROJECT: 'BackEndProject/AquaHome/AquaHome.API/AquaHome.API.csproj'
+  SOLUTION: 'BackEndProject/FishDex.sln'
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore ${{ env.SOLUTION }}
+
+      - name: Build
+        run: dotnet build ${{ env.API_PROJECT }} --no-restore -c Release
+
+      - name: Test
+        run: dotnet test ${{ env.SOLUTION }} --no-build -c Release
+
+  docker:
+    name: Docker Build & Push
+    needs: build-and-test
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve environment tag
+        id: meta
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "env=production" >> $GITHUB_OUTPUT
+            echo "tag=latest"    >> $GITHUB_OUTPUT
+          else
+            echo "env=development" >> $GITHUB_OUTPUT
+            echo "tag=dev"         >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build image
+        run: |
+          docker build \
+            -f BackEndProject/AquaHome/AquaHome.API/Dockerfile \
+            -t aquahome-api:${{ steps.meta.outputs.tag }} \
+            BackEndProject/
+
+      # TODO: login to registry (ACR / GHCR / ECR) and push
+      # TODO: deploy to target environment (${{ steps.meta.outputs.env }})

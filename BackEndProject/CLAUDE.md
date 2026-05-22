@@ -4,18 +4,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-FishLover is a microservices-based backend for a fish species management and aquarium tracking platform. It targets .NET 9 / C# 13 and currently contains two services behind an Ocelot API Gateway.
+FishLover is a microservices-based backend for a fish species management and aquarium tracking platform. It targets .NET 9 / C# 13 and contains three services behind an Ocelot API Gateway.
 
 ## Commands
 
+Run all commands from `BackEndProject/` (solution root).
+
 **Build the solution:**
 ```
-dotnet build UserManagement/FishDex.sln
+dotnet build FishDex.sln
 ```
 
 **Run individual services:**
 ```
 dotnet run --project UserManagement/UserManagement.API/UserManagement.API.csproj
+dotnet run --project FishDex/FishDex.API/FishDex.API.csproj
 dotnet run --project ApiGateway/ApiGateway.csproj
 ```
 
@@ -24,31 +27,45 @@ dotnet run --project ApiGateway/ApiGateway.csproj
 dotnet watch --project UserManagement/UserManagement.API/UserManagement.API.csproj
 ```
 
-**EF Core migrations (run from solution root):**
+**EF Core migrations:**
 ```
+# UserManagement (SQL Server)
 dotnet ef migrations add <MigrationName> --project UserManagement/UserManagement.EFCore
 dotnet ef database update --project UserManagement/UserManagement.EFCore
+
+# FishDex (PostgreSQL)
+dotnet ef migrations add <MigrationName> --project FishDex/FishDex.EFCore
+dotnet ef database update --project FishDex/FishDex.EFCore
 ```
 
-**Local dev prerequisites:**
-- SQL Server LocalDB (`(localdb)\mssqllocaldb`) — database `baseUserManagement`
-- Redis on `localhost:6379`
-- ApiGateway → port 5000; UserManagement.API → port 8080
+**Local dev — start infrastructure via Docker:**
+```
+cd Pipeline/FishDexLocal       && docker compose up -d   # PostgreSQL 5433
+cd Pipeline/UserManagementLocal && docker compose up -d  # SQL Server 1433, Redis 6379
+cd Pipeline/AquaHomeLocal       && docker compose up -d  # SQL Server 1434, Redis 6380
+```
+
+**Default service ports:**
+- ApiGateway → `5000`
+- UserManagement.API → `8080`
+- FishDex.API → (TBD)
 
 ## Architecture
 
 ### Service Layout
 
 ```
-ApiGateway/          – Ocelot gateway; routes /api/** → user-management:8080
-UserManagement/      – User auth/management microservice (FishDex.sln)
-FishDex/             – Fish species data service (EFCore layer only, no API yet)
+ApiGateway/          – Ocelot gateway; routes /api/** → downstream services
+UserManagement/      – User auth/management microservice (SQL Server + Redis)
+FishDex/             – Fish species data service (PostgreSQL + pgvector)
+AquaHome/            – Aquarium tracking service (SQL Server + Redis) [in progress]
 Share/               – Cross-service shared library (JWT, OpenTelemetry, CurrentUserSession)
+Pipeline/            – Docker Compose stacks + CI/CD pipeline templates
 ```
 
 ### UserManagement Layers
 
-The service follows a strict three-layer split inside the solution:
+The service follows a strict three-layer split:
 
 | Project | Role |
 |---|---|
@@ -75,13 +92,15 @@ JWT Bearer tokens; configuration in `appsettings.json` under `JwtSettings` (Secr
 
 ### FishDex Data Model
 
-`FishDex/FishDex.EFCore/Entity/` is organized by subdomain: `Species/`, `Ecologies/`, `Ecosystem/`, `MorphData/`, `Occurrence/`, `Stocks/`, `Media/`. No API layer exists yet for this service.
+`FishDex/FishDex.EFCore/Entity/` is organized by subdomain: `Species/`, `Ecologies/`, `Ecosystem/`, `MorphData/`, `Occurrence/`, `Stocks/`, `Media/`. Uses PostgreSQL 16 with pgvector extension.
 
 ### Key Libraries
 
 | Concern | Library |
 |---|---|
-| ORM | Entity Framework Core 9 (SQL Server) |
+| ORM | Entity Framework Core 9 |
+| DB (UserManagement / AquaHome) | SQL Server (EF Core SqlServer provider) |
+| DB (FishDex) | PostgreSQL 16 + pgvector (Npgsql EF provider) |
 | Gateway | Ocelot 24 |
 | DI | Autofac 9 |
 | Mapping | AutoMapper 13 |
@@ -91,8 +110,16 @@ JWT Bearer tokens; configuration in `appsettings.json` under `JwtSettings` (Secr
 | Caching | StackExchange.Redis 2.8 |
 | Auth | ASP.NET Core Identity + JWT Bearer |
 
+## NuGet
+
+Project-level `nuget.config` forces restore từ `nuget.org` only. Không dùng private feed trong repo này.
+
 ## Configuration Notes
 
 - `appsettings.Development.json` enables test data seeding and debug logging; use it locally.
 - `appsettings.Docker.json` is the Docker-optimized profile.
 - Initial admin credentials are supplied via environment variables at first run.
+
+## Pipeline
+
+Xem `Pipeline/README.md` để biết cách chạy local Docker stacks và CI/CD templates.

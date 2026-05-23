@@ -42,8 +42,7 @@ try
     builder.Services.AddFishDexDatabase(builder.Configuration);
 
     // OpenTelemetry Configuration
-    builder.Services.AddFishLoverTelemetry(builder.Configuration, "FishDex.API");
-// JWT Authentication
+    builder.Services.AddFishLoverTelemetry(builder.Configuration, "FishDex.API");   // JWT Authentication
     builder.Services.AddFishLoverJwtAuthentication(builder.Configuration);
     builder.Services.AddFishLoverAuthorization();
 
@@ -65,7 +64,10 @@ try
         options.AddSecurityRequirement(new()
         {
             {
-                new() { Reference = new() { Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme, Id = "Bearer" } },
+                new()
+                {
+                    Reference = new() { Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme, Id = "Bearer" }
+                },
                 []
             }
         });
@@ -96,7 +98,7 @@ try
     var app = builder.Build();
 
     // ── Middleware pipeline ────────────────────────────────────
-    if (app.Environment.IsDevelopment())
+    if (!app.Environment.IsProduction())
     {
         app.UseSwagger();
         app.UseSwaggerUI(options =>

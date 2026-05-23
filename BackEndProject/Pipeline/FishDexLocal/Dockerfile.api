@@ -18,5 +18,5 @@ RUN dotnet publish "FishDex.API.csproj" -c Release -o /app/publish /p:UseAppHost
 
 FROM base AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "FishDex.API.dll"]

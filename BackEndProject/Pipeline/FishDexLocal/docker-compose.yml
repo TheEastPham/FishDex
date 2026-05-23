@@ -13,16 +13,16 @@ services:
     container_name: fishdex_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER:     fishdex
-      POSTGRES_PASSWORD: fishdex_local_pwd
-      POSTGRES_DB:       fishdex
+      POSTGRES_USER:     ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB:       ${POSTGRES_DB}
     ports:
       - "5433:5432"
     volumes:
       - fishdex_pgdata:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U fishdex -d fishdex"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -32,8 +32,8 @@ services:
     container_name: fishdex_pgadmin
     restart: unless-stopped
     environment:
-      PGADMIN_DEFAULT_EMAIL:    admin@fishdex.com
-      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_DEFAULT_EMAIL:    ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
     ports:
       - "5050:80"
     depends_on:
@@ -41,6 +41,26 @@ services:
         condition: service_healthy
     volumes:
       - fishdex_pgadmin:/var/lib/pgadmin
+
+  fishdex-api:
+    build:
+      context: ../../
+      dockerfile: Pipeline/FishDexLocal/Dockerfile.api
+    container_name: fishdex_api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__FishDexDb: ${FISHDEX_DB_CONN}
+      JwtSettings__SecretKey:       ${JWT_SECRET_KEY}
+      JwtSettings__Issuer:          ${JWT_ISSUER}
+      JwtSettings__Audience:        ${JWT_AUDIENCE}
+      JwtSettings__ExpiryMinutes:   ${JWT_EXPIRY_MINUTES}
+    ports:
+      - "8081:8080"
+    depends_on:
+      fishdex-db:
+        condition: service_healthy
 
 volumes:
   fishdex_pgdata:

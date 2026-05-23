@@ -1,0 +1,22 @@
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
+WORKDIR /app
+EXPOSE 8080
+
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src
+
+COPY ["nuget.config", "nuget.config"]
+COPY ["FishDex/FishDex.API/FishDex.API.csproj",         "FishDex/FishDex.API/"]
+COPY ["FishDex/FishDex.Domain/FishDex.Domain.csproj",   "FishDex/FishDex.Domain/"]
+COPY ["FishDex/FishDex.EFCore/FishDex.EFCore.csproj",   "FishDex/FishDex.EFCore/"]
+COPY ["Share/FishLover.Shared/FishLover.Shared.csproj", "Share/FishLover.Shared/"]
+RUN dotnet restore "FishDex/FishDex.API/FishDex.API.csproj"
+
+COPY . .
+WORKDIR "/src/FishDex/FishDex.API"
+RUN dotnet publish "FishDex.API.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "FishDex.API.dll"]

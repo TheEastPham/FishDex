@@ -1,10 +1,10 @@
-﻿namespace FishDex.EFCore.Entity.Ecologies;
+namespace FishDex.EFCore.Entity.Ecologies;
 
 public class Substrate
 {
     public int SubstrateId { get; set; }
     public int EcologyId { get; set; }
-    public string SubstrateRef { get; set; }
+    public string? SubstrateRef { get; set; }
     public bool Benthic { get; set; }
     public bool Sessile { get; set; }
     public bool Mobile { get; set; }
@@ -29,7 +29,6 @@ public class Substrate
     public bool Rocky { get; set; }
     public bool Rubble { get; set; }
     public bool Gravel { get; set; }
-    
-    // Foreign key reference
+
     public Ecology Ecology { get; set; }
 }

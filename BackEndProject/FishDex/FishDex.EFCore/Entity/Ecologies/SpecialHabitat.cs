@@ -1,10 +1,10 @@
-﻿namespace FishDex.EFCore.Entity.Ecologies;
+namespace FishDex.EFCore.Entity.Ecologies;
 
 public class SpecialHabitat
 {
     public int SpecialHabitatId { get; set; }
     public int EcologyId { get; set; }
-    public string SpecialHabitatRef { get; set; }
+    public string? SpecialHabitatRef { get; set; }
     public bool Macrophyte { get; set; }
     public bool BedsBivalve { get; set; }
     public bool BedsRock { get; set; }
@@ -29,9 +29,9 @@ public class SpecialHabitat
     public bool Roots { get; set; }
     public bool Driftwood { get; set; }
     public bool OInverterbrates { get; set; }
-    public string OIRemarks { get; set; }
+    public string? OIRemarks { get; set; }
     public bool Verterbrates { get; set; }
-    public string VRemarks { get; set; }
+    public string? VRemarks { get; set; }
     public bool Pilings { get; set; }
     public bool RicePaddies { get; set; }
     public bool BoatHulls { get; set; }
@@ -42,7 +42,6 @@ public class SpecialHabitat
     public bool HardCorals { get; set; }
     public bool OnExoskeleton { get; set; }
     public bool InterstitialSpaces { get; set; }
-    
-    // Foreign key reference
+
     public Ecology Ecology { get; set; }
 }

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FishDex.EFCore.Entity.MorphData;
@@ -9,13 +9,11 @@ public class MorphMeristics
     [Key, ForeignKey("MorphData")]
     public int StockCode { get; set; }
 
-    // --- Scales & Lateral Line (Vảy & Đường bên) ---
-    public string TypeofScales { get; set; }
-    public string Scutes { get; set; }
-    public string Keels { get; set; }
+    public string? TypeofScales { get; set; }
+    public string? Scutes { get; set; }
+    public string? Keels { get; set; }
     public int? LateralLinesNo { get; set; }
-    public string LLinterrupted { get; set; }
-    
+    public string? LLinterrupted { get; set; }
     public int? ScalesLateralmin { get; set; }
     public int? ScalesLateralmax { get; set; }
     public int? PoredScalesMin { get; set; }
@@ -28,23 +26,17 @@ public class MorphMeristics
     public int? ScaleRowsBelowMax { get; set; }
     public int? ScalesPeduncMin { get; set; }
     public int? ScalesPeduncMax { get; set; }
-
-    // --- Barbels (Râu) ---
     public int? BarbelsNo { get; set; }
-    public string BarbelsType { get; set; }
-
-    // --- Gills (Mang) ---
+    public string? BarbelsType { get; set; }
     public int? GillCleftsNo { get; set; }
-    public string Spiracle { get; set; }
+    public string? Spiracle { get; set; }
     public int? GillRakersLowMin { get; set; }
     public int? GillRakersLowMax { get; set; }
     public int? GillRakersUpMin { get; set; }
     public int? GillRakersUpMax { get; set; }
     public int? GillRakersTotalMin { get; set; }
     public int? GillRakersTotalMax { get; set; }
-
-    // --- Vertebrae (Đốt sống) ---
-    public string Vertebrae { get; set; }
+    public string? Vertebrae { get; set; }
     public int? VertebraePreanMin { get; set; }
     public int? VertebraePreanMax { get; set; }
     public int? VertebraeTotalMin { get; set; }

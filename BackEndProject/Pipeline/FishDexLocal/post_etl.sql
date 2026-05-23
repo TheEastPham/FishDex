@@ -34,8 +34,8 @@ SELECT setval(
     GREATEST(COALESCE((SELECT MAX("CircadianId") FROM "CircadianBehaviors"), 0), 1)
 );
 SELECT setval(
-    pg_get_serial_sequence('"Ecosystems"', 'AutoCtr'),
-    GREATEST(COALESCE((SELECT MAX("AutoCtr") FROM "Ecosystems"), 0), 1)
+    pg_get_serial_sequence('"Ecosystem"', 'AutoCtr'),
+    GREATEST(COALESCE((SELECT MAX("AutoCtr") FROM "Ecosystem"), 0), 1)
 );
 SELECT setval(
     pg_get_serial_sequence('"CommonNames"', 'AutoCtr'),

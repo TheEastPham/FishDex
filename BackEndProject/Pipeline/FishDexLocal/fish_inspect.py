@@ -24,7 +24,7 @@ def main():
         print("        Bỏ file species.parquet vào parquetData/ rồi chạy lại.")
         return
 
-    print(f"📂 Đọc {path.name} ...")
+    print(f"[*] Doc {path.name} ...")
     df = pl.read_parquet(
         path,
         columns=[
@@ -78,7 +78,7 @@ def main():
     print(f"\n=== Nếu lấy thêm 'of minor importance' ===")
     print(f"Số loài match: {matched2.height:,}")
 
-    print("\n💡 Sau khi kiểm tra:")
+    print("\n[!] Sau khi kiem tra:")
     print("   - Edit etl/config.py → cập nhật AQUARIUM_VALUES")
     print("   - Chạy: python -m etl.run --dry-run  để xác nhận spec_codes")
     print("   - Chạy: python -m etl.run            để load thật")

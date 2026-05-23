@@ -1,10 +1,10 @@
-﻿namespace FishDex.EFCore.Entity.Ecologies;
+namespace FishDex.EFCore.Entity.Ecologies;
 
 public class HabitatZone
 {
     public int HabitatZoneId { get; set; }
     public int EcologyId { get; set; }
-    public string HabitatsRef { get; set; }
+    public string? HabitatsRef { get; set; }
     public bool Neritic { get; set; }
     public bool SupraLittoralZone { get; set; }
     public bool Saltmarshes { get; set; }
@@ -27,7 +27,6 @@ public class HabitatZone
     public bool Lakes { get; set; }
     public bool Cave { get; set; }
     public bool Cave2 { get; set; }
-    
-    // Foreign key reference
+
     public Ecology Ecology { get; set; }
 }

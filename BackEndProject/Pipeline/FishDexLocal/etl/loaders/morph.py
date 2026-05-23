@@ -34,7 +34,7 @@ SQL_TEETH = """
 """
 
 SQL_PIG = """
-    INSERT INTO "MorphPigmentations" ("StockCode","SexColors","StrikingFeatures",
+    INSERT INTO "MorphPigmentation" ("StockCode","SexColors","StrikingFeatures",
         "HorStripesTTI","HorStripesTTII","VerStripesTTI","VerStripesTTII","VerStripesTTIII",
         "DiaStripesTTI","DiaStripesTTII","DiaStripesTTIII",
         "CurStripesTTI","CurStripesTTII","CurStripesTTIII",

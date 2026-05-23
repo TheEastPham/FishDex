@@ -17,7 +17,10 @@ def to_bool(val) -> bool:
         return False
     if isinstance(val, bool):
         return val
-    return int(val or 0) != 0
+    try:
+        return int(val or 0) != 0
+    except (ValueError, TypeError):
+        return False
 
 
 def to_float(val) -> float | None:
@@ -71,6 +74,8 @@ def execute_upsert(conn, sql: str, rows: list, table: str) -> tuple[int, int]:
                         cur.execute(sql, row)
                         inserted += 1
                     except Exception as e:
+                        if skipped == 0:
+                            print(f"  [{table}] First skip error: {e}")
                         skipped += 1
                         conn.rollback()
     conn.commit()

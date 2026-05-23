@@ -8,7 +8,7 @@ from ..config import PARQUET_DIR, PARQUET_FILES
 from ..db import connect, to_str, to_float, to_int, to_bool, execute_upsert
 
 SQL_REF = """
-    INSERT INTO "EcosystemRefs" ("E_CODE","EcosystemName","EcosystemType","Location",
+    INSERT INTO "EcosystemRef" ("E_CODE","EcosystemName","EcosystemType","Location",
         "NorthernLat","SouthernLat","WesternLat","EasternLat",
         "Area","DrainageArea","RiverLength","Salinity","AverageDepth","MaxDepth",
         "TempSurface","TempDepth",
@@ -24,7 +24,7 @@ SQL_REF = """
 """
 
 SQL_ECO = """
-    INSERT INTO "Ecosystems" ("AutoCtr","E_CODE","SpecCode","StockCode",
+    INSERT INTO "Ecosystem" ("AutoCtr","E_CODE","SpecCode","StockCode",
         "Status","CurrentPresence","Abundance","LifeStage","Remarks",
         "EcosystemRefNo","Entered","Dateentered","Modified","Datemodified","TS")
     VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
@@ -80,28 +80,28 @@ def load_junction(spec_codes: set[int]):
         return
 
     df = pl.read_parquet(path)
-    df = df.filter(pl.col("SpecCode").is_in(list(spec_codes)))
+    df = df.filter(pl.col("Speccode").is_in(list(spec_codes)))
 
     rows = []
     for r in df.iter_rows(named=True):
-        auto = to_int(r.get("AutoCtr") or r.get("autoctr"))
+        auto = to_int(r.get("autoctr") or r.get("AutoCtr"))
         if auto is None:
             continue
         rows.append((
             auto,
             to_int(r.get("E_CODE")),
-            to_int(r.get("SpecCode")),
-            to_int(r.get("StockCode")),
+            to_int(r.get("Speccode")),
+            to_int(r.get("Stockcode")),
             to_str(r.get("Status")),
             to_str(r.get("CurrentPresence")),
             to_str(r.get("Abundance")),
             to_str(r.get("LifeStage")),
             to_str(r.get("Remarks")),
-            to_int(r.get("EcosystemRefNo")),
+            to_int(r.get("EcosystemRefno")),
             to_str(r.get("Entered")),
-            r.get("DateEntered") or r.get("Dateentered"),
+            r.get("Dateentered") or r.get("DateEntered"),
             to_str(r.get("Modified")),
-            r.get("DateModified") or r.get("Datemodified"),
+            r.get("Datemodified") or r.get("DateModified"),
             r.get("TS"),
         ))
 

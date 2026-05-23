@@ -8,7 +8,7 @@ from pathlib import Path
 # Override bằng env var: DB_URL=postgresql://user:pass@host:port/db
 DB_URL = os.getenv(
     "DB_URL",
-    "postgresql://fishdex:fishdex@localhost:5433/fishdex",
+    "postgresql://fishdex:fishdex_local_pwd@localhost:5433/fishdex",
 )
 
 # ── Parquet file paths ────────────────────────────────────────────────────────
@@ -26,7 +26,7 @@ PARQUET_FILES = {
     "ecosystem":   "ecosystem.parquet",
     "occurrence":  "occurrence.parquet",
     "comnames":    "comnames.parquet",
-    "images":      "pictures.parquet",   # đổi thành speciesimages.parquet nếu cần
+    "images":      "picturesmain.parquet",
 }
 
 # ── Aquarium filter ──────────────────────────────────────────────────────────

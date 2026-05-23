@@ -10,7 +10,7 @@ from ..db import connect, to_str, to_float, to_int, to_bool, execute_upsert
 
 # ── Stock ─────────────────────────────────────────────────────────────────────
 SQL_STOCK = """
-    INSERT INTO "Stocks" ("StockCode", "SpecCode", "SynOC", "StockDefs", "StockDefsGeneral", "Level", "LocalUnique")
+    INSERT INTO "Stock" ("StockCode", "SpecCode", "SynOC", "StockDefs", "StockDefsGeneral", "Level", "LocalUnique")
     VALUES (%s,%s,%s,%s,%s,%s,%s)
     ON CONFLICT ("StockCode") DO UPDATE SET
         "SpecCode"         = EXCLUDED."SpecCode",
@@ -23,11 +23,11 @@ SQL_STOCK = """
 
 # ── StockConservation ─────────────────────────────────────────────────────────
 SQL_CONSERVATION = """
-    INSERT INTO "StockConservations" ("StockCode","IUCN_Code","IUCN_Assessment","IUCN_DateAssessed",
+    INSERT INTO "StockConservation" ("StockCode","IUCN_Code","IUCN_Assessment","IUCN_DateAssessed",
         "IUCN_ID","IUCN_IDAssess","Protected","CITES_Code","CITES_Date","CITES_Ref","CITES_Remarks","CMS")
     VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
     ON CONFLICT ("StockCode") DO UPDATE SET
-        "IUCN_Code"         = EXCLUDED."IUCN_Code",
+        "IUCN_Code"        = EXCLUDED."IUCN_Code",
         "IUCN_Assessment"   = EXCLUDED."IUCN_Assessment",
         "IUCN_DateAssessed" = EXCLUDED."IUCN_DateAssessed",
         "IUCN_ID"           = EXCLUDED."IUCN_ID",
@@ -42,7 +42,7 @@ SQL_CONSERVATION = """
 
 # ── StockEnvironment ──────────────────────────────────────────────────────────
 SQL_ENVIRONMENT = """
-    INSERT INTO "StockEnvironments" ("StockCode",
+    INSERT INTO "StockEnvironment" ("StockCode",
         "Northernmost","NorthSouthN","Southermost","NorthSouthS",
         "Westernmost","WestEastW","Easternmost","WestEastE",
         "TempMin","TempMax","TempPreferred","PHMin","PHMax","DHMin","DHMax",
@@ -75,7 +75,7 @@ SQL_EXTERNAL = """
 
 # ── StockMetadata ─────────────────────────────────────────────────────────────
 SQL_METADATA = """
-    INSERT INTO "StockMetadatas" ("StockCode","Entered","DateEntered","Modified","DateModified","Expert","DateChecked")
+    INSERT INTO "StockMetadata" ("StockCode","Entered","DateEntered","Modified","DateModified","Expert","DateChecked")
     VALUES (%s,%s,%s,%s,%s,%s,%s)
     ON CONFLICT ("StockCode") DO UPDATE SET
         "Modified"    = EXCLUDED."Modified",

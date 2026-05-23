@@ -1,7 +1,10 @@
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using FishDex.Domain.Modules;
+using FishDex.Domain.Settings;
 using FishDex.EFCore.Extensions;
-using FishLover.Shared.Extensions; // JwtAuthenticationExtensions, OpenTelemetryExtensions
+using FishDex.EFCore.Modules;
+using FishLover.Shared.Extensions;
 using Serilog;
 using Serilog.Events;
 
@@ -33,13 +36,15 @@ try
     builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
     builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
     {
-        // TODO: thêm FishDexEFCoreModule khi có Domain layer
-        // containerBuilder.RegisterModule<FishDexEFCoreModule>();
-        // containerBuilder.RegisterModule<FishDexDomainModule>();
+        containerBuilder.RegisterModule<FishDexEFCoreModule>();
+        containerBuilder.RegisterModule<FishDexModule>();
     });
 
     // ── Database — PostgreSQL ──────────────────────────────────
     builder.Services.AddFishDexDatabase(builder.Configuration);
+    builder.Services.AddMemoryCache();
+    builder.Services.Configure<FishDexSettings>(
+        builder.Configuration.GetSection(FishDexSettings.SectionName));
 
     // OpenTelemetry Configuration
     builder.Services.AddFishLoverTelemetry(builder.Configuration, "FishDex.API");   // JWT Authentication

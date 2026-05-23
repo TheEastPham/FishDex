@@ -51,8 +51,21 @@ internal static class EntityToDtoExtensions
         SpecCode    = e.SpecCode,
         SpeciesName = e.SpeciesName,
         GenusCode   = e.GenusCode,
-        GenusName   = null,   // not stored on entity; resolved by join if needed
+        GenusName   = null,
         FamilyName  = null
+    };
+
+    internal static SpeciesSearchResultDto ToSearchResultDto(this Species e, string? language = null) => new()
+    {
+        SpecCode             = e.SpecCode,
+        SpeciesName          = e.SpeciesName,
+        PreferredCommonName  = e.CommonNames
+            .Where(c => language == null || c.Language == language)
+            .OrderByDescending(c => c.IsPreferred)
+            .ThenBy(c => c.Rank)
+            .FirstOrDefault()?.ComName,
+        GenusName   = e.Genus?.GenusName,
+        FamilyName  = e.Family?.Name
     };
 
     internal static EcologyDto ToDto(this Ecology e) => new()

@@ -13,12 +13,24 @@ public static class ServiceCollectionExtensions
     {
         // Add DbContext
         services.AddDbContext<UserManagementDbContext>(options =>
-            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+        {
+            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
+            options.UseOpenIddict();
+        });
 
         // Add Repositories
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IInvitationRepository, InvitationRepository>();
         services.AddScoped<IInvitationUsedRepository, InvitationUsedRepository>();
+
+        // AddCore ở đây vì cần DbContext — AddServer/AddValidation ở API layer
+        services.AddOpenIddict()
+            .AddCore(options =>
+            {
+                options.UseEntityFrameworkCore()
+                       .UseDbContext<UserManagementDbContext>();
+            });
+
         return services;
     }
 }

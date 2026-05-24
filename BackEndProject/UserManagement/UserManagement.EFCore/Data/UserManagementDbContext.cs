@@ -16,6 +16,7 @@ public class UserManagementDbContext(DbContextOptions<UserManagementDbContext> o
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+        builder.UseOpenIddict();
 
         // Configure UserEntity
         builder.Entity<UserEntity>(entity =>
@@ -63,10 +64,15 @@ public class UserManagementDbContext(DbContextOptions<UserManagementDbContext> o
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.Code).IsUnique();
             entity.Property(e => e.Code).HasMaxLength(50).IsRequired();
-    
+
             entity.HasMany(e => e.UsedBy)
                 .WithOne()
                 .HasForeignKey(u => u.InvitationId);
+        });
+
+        builder.Entity<InvitationUsed>(entity =>
+        {
+            entity.HasKey(e => new { e.InvitationId, e.UserId });
         });
 
         // Seed default data
@@ -79,27 +85,27 @@ public class UserManagementDbContext(DbContextOptions<UserManagementDbContext> o
         {
             new RoleEntity
             {
-                Id = Guid.NewGuid(),
+                Id = new Guid("a1b2c3d4-e5f6-7890-abcd-ef1234567801"),
                 Name = "SystemAdmin",
                 NormalizedName = "SYSTEMADMIN",
                 Description = "System Administrator with full system access",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             },
             new RoleEntity
             {
-                Id = Guid.NewGuid(),
+                Id = new Guid("a1b2c3d4-e5f6-7890-abcd-ef1234567802"),
                 Name = "ContentAdmin",
                 NormalizedName = "CONTENTADMIN",
                 Description = "Content Administrator with content management permissions",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             },
             new RoleEntity
             {
-                Id = Guid.NewGuid(),
+                Id = new Guid("a1b2c3d4-e5f6-7890-abcd-ef1234567803"),
                 Name = "Member",
                 NormalizedName = "MEMBER",
                 Description = "Regular user with basic permissions",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             }
         };
 

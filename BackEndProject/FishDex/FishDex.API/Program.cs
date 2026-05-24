@@ -55,9 +55,12 @@ try
     // ── Controllers + OpenAPI ──────────────────────────────────
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
+    var authServerUrl = builder.Configuration["AuthServer:Url"] ?? "http://localhost:8080";
     builder.Services.AddSwaggerGen(options =>
     {
         options.SwaggerDoc("v1", new() { Title = "FishDex API", Version = "v1" });
+
+        // Bearer — manual paste for quick testing
         options.AddSecurityDefinition("Bearer", new()
         {
             Name = "Authorization",
@@ -66,14 +69,44 @@ try
             BearerFormat = "JWT",
             In = Microsoft.OpenApi.Models.ParameterLocation.Header,
         });
+
+        // OAuth2 — Authorization Code + PKCE via UserManagement
+        options.AddSecurityDefinition("OAuth2", new()
+        {
+            Type = Microsoft.OpenApi.Models.SecuritySchemeType.OAuth2,
+            Flows = new()
+            {
+                AuthorizationCode = new()
+                {
+                    AuthorizationUrl = new Uri($"{authServerUrl}/connect/authorize"),
+                    TokenUrl = new Uri($"{authServerUrl}/connect/token"),
+                    Scopes = new Dictionary<string, string>
+                    {
+                        ["openid"] = "OpenID Connect",
+                        ["profile"] = "Profile",
+                        ["email"] = "Email",
+                        ["roles"] = "Roles",
+                        ["fishdex"] = "FishDex API"
+                    }
+                }
+            }
+        });
+
+        options.AddSecurityRequirement(new()
+        {
+            {
+                new() { Reference = new() { Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme, Id = "Bearer" } },
+                []
+            }
+        });
         options.AddSecurityRequirement(new()
         {
             {
                 new()
                 {
-                    Reference = new() { Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme, Id = "Bearer" }
+                    Reference = new() { Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme, Id = "OAuth2" }
                 },
-                []
+                ["openid", "profile", "email", "roles", "fishdex"]
             }
         });
     });
@@ -110,6 +143,9 @@ try
         {
             options.SwaggerEndpoint("/swagger/v1/swagger.json", "FishDex API v1");
             options.RoutePrefix = "swagger";
+            options.OAuthClientId("FishDex_Swagger");
+            options.OAuthUsePkce();
+            options.OAuthScopes("openid", "profile", "email", "roles", "fishdex");
         });
     }
 

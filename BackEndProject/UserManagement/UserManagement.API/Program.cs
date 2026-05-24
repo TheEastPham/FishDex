@@ -2,6 +2,8 @@
 using Serilog;
 using System.Diagnostics;
 using UserManagement.API.Middleware;
+using UserManagement.API.Extensions;
+using UserManagement.API.Services;
 using FishLover.Shared.Extensions;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
@@ -33,10 +35,30 @@ builder.Host.UseSerilog();
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new() { Title = "UserManagement API", Version = "v1" });
+    options.AddSecurityDefinition("Bearer", new()
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+    });
+    options.AddSecurityRequirement(new()
+    {
+        {
+            new() { Reference = new() { Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme, Id = "Bearer" } },
+            []
+        }
+    });
+});
 
-// Add UserManagement Domain services (includes EFCore)
+// Add UserManagement Domain services (includes EFCore + OpenIddict Core)
 builder.Services.AddUserManagementDomain(builder.Configuration);
+builder.Services.AddOpenIddictServer(builder.Configuration);
+builder.Services.AddHostedService<OpenIddictSeeder>();
 
 // OpenTelemetry Configuration
 builder.Services.AddFishLoverTelemetry(builder.Configuration, "UserManagement.API");
@@ -55,6 +77,21 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod()
               .AllowCredentials();
     });
+    // Allow FishDex Swagger to call /connect/* for OAuth2 PKCE flow
+    options.AddPolicy("AllowOAuth", policy =>
+    {
+        policy.WithOrigins("http://localhost:8081", "http://localhost:8080")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
+// Configure Identity cookie to point to our custom login page
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/connect/login";
+    options.LogoutPath = "/connect/logout";
 });
 
 // Redis (Optional)
@@ -71,10 +108,14 @@ builder.Services.AddHealthChecks()
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (!app.Environment.IsProduction())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "UserManagement API v1");
+        options.RoutePrefix = "swagger";
+    });
 }
 
 app.UseHttpsRedirection();

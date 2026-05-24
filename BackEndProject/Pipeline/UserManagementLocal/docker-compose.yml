@@ -2,7 +2,7 @@ version: "3.9"
 
 # ─────────────────────────────────────────────────────────────
 # UserManagement — Local Dev Stack
-# SQL Server 2022 + Redis 7
+# SQL Server 2022 + Redis 7 + UserManagement.API
 # ─────────────────────────────────────────────────────────────
 
 services:
@@ -12,14 +12,14 @@ services:
     container_name: usermanagement_sqlserver
     restart: unless-stopped
     environment:
-      SA_PASSWORD: "UserMgmt_Local_Pwd1!"
+      SA_PASSWORD: ${SA_PASSWORD}
       ACCEPT_EULA: "Y"
     ports:
       - "1433:1433"
     volumes:
       - usermanagement_sqldata:/var/opt/mssql
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'UserMgmt_Local_Pwd1!' -Q 'SELECT 1' -No"]
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P '${SA_PASSWORD}' -Q 'SELECT 1' -No"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -35,6 +35,34 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  usermanagement-api:
+    build:
+      context: ../../
+      dockerfile: Pipeline/UserManagementLocal/Dockerfile.api
+    container_name: usermanagement_api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__DefaultConnection: ${UM_DB_CONN}
+      ConnectionStrings__Redis:             ${REDIS_CONN}
+      JwtSettings__SecretKey:               ${JWT_SECRET_KEY}
+      JwtSettings__Issuer:                  ${JWT_ISSUER}
+      JwtSettings__Audience:                ${JWT_AUDIENCE}
+      JwtSettings__ExpiryInDays:            ${JWT_EXPIRY_DAYS}
+      Seeding__SeedInitialAdmin:            ${SEED_INITIAL_ADMIN}
+      EmailSettings__Resend__ApiKey:        ${EMAIL_API_KEY}
+      RequireInvitation:                    ${REQUIRE_INVITATION}
+      InitialAdmin__Email:                  ${INITIAL_ADMIN_EMAIL}
+      InitialAdmin__Password:               ${INITIAL_ADMIN_PASSWORD}
+    ports:
+      - "8080:8080"
+    depends_on:
+      usermanagement-db:
+        condition: service_healthy
+      usermanagement-redis:
+        condition: service_healthy
 
 volumes:
   usermanagement_sqldata:

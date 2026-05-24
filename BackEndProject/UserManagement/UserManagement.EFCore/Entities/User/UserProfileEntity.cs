@@ -5,8 +5,8 @@
 /// </summary>
 public class UserProfileEntity
 {
-    public string Id { get; set; } = Guid.NewGuid().ToString();
-    public string UserId { get; set; } = string.Empty;
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid UserId { get; set; }
     public string? PhoneNumber { get; set; }
     public string? Address { get; set; }
     public string? Bio { get; set; }

@@ -124,3 +124,16 @@ Project-level `nuget.config` forces restore từ `nuget.org` only. Không dùng 
 ## Pipeline
 
 Xem `Pipeline/README.md` để biết cách chạy local Docker stacks và CI/CD templates.
+
+## Production Deployment Checklist
+
+Các shortcuts được cố ý để lại cho local dev — **phải đổi trước khi lên PROD**:
+
+| # | File | Vấn đề | Fix |
+|---|------|---------|-----|
+| 1 | `UserManagement.API/Extensions/OpenIddictServerExtensions.cs` | `AddEphemeralEncryptionKey()` + `AddEphemeralSigningKey()` — key mất sau restart, multi-instance sẽ lỗi | Dùng X.509 cert từ Key Vault: `AddEncryptionCertificate()` + `AddSigningCertificate()` |
+| 2 | Same file | `DisableTransportSecurityRequirement()` — cho phép HTTP | Xóa dòng này; PROD phải chạy HTTPS |
+| 3 | `UserManagement.API/Program.cs` | `AutoMigrate:OnStartup` — auto-migrate khi startup, race condition nếu multi-instance | Tắt flag, chạy `dotnet ef database update` như một bước riêng trong CI/CD trước deploy |
+| 4 | `FishDex.API/Program.cs` | `ValidateAudience = false` trong scheme "OpenIddict" | Đăng ký FishDex như resource server trong OpenIddict, validate audience đúng |
+| 5 | `UserManagement.API/appsettings.Docker.json` | `OpenIddict:Issuer = http://localhost:8080` | Đổi thành HTTPS domain thật của production |
+| 6 | Docker Compose | DataProtection Keys không được persist ngoài container | Mount volume hoặc dùng Azure Key Vault / AWS KMS |

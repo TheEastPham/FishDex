@@ -110,11 +110,14 @@ builder.Services.AddHealthChecks()
 
 var app = builder.Build();
 
-// Auto-migrate on startup (safe for Docker local dev; idempotent)
-using (var scope = app.Services.CreateScope())
+// Auto-migrate: chỉ chạy khi AutoMigrate:OnStartup=true (local/Docker dev)
+// Production nên chạy migration qua CI/CD pipeline thay vì khi startup
+if (app.Configuration.GetValue<bool>("AutoMigrate:OnStartup"))
 {
+    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<UserManagementDbContext>();
     await db.Database.MigrateAsync();
+    Log.Information("Database migration completed");
 }
 
 // Configure the HTTP request pipeline.

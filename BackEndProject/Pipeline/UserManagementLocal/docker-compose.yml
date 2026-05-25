@@ -40,6 +40,7 @@ services:
     build:
       context: ../../
       dockerfile: Pipeline/UserManagementLocal/Dockerfile.api
+    image: usermanagement-api:local
     container_name: usermanagement_api
     restart: unless-stopped
     environment:

@@ -92,8 +92,8 @@ public class AuthController(IAuthService authService, ICurrentUserSession curren
     /// <summary>
     /// User registration
     /// </summary>
-    [HttpGet("valid-email/{email}?invitationCode={invitationCode}")]
-    public async Task<ActionResult<EmailVerificationResponse>> GetVerificationCode(string email, string? invitationCode)
+    [HttpGet("valid-email/{email}")]
+    public async Task<ActionResult<EmailVerificationResponse>> GetVerificationCode(string email, [FromQuery] string? invitationCode)
     {
         var response = await authService.GetVerificationCode(email, invitationCode);
             

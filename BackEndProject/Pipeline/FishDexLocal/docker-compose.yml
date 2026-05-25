@@ -57,6 +57,7 @@ services:
       JwtSettings__Audience:        ${JWT_AUDIENCE}
       JwtSettings__ExpiryMinutes:   ${JWT_EXPIRY_MINUTES}
       AuthServer__Url:              ${AUTH_SERVER_URL}
+      AuthServer__Authority:        ${AUTH_SERVER_AUTHORITY}
     ports:
       - "8081:8080"
     depends_on:

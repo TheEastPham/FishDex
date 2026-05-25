@@ -8,6 +8,8 @@ using FishLover.Shared.Extensions;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using UserManagement.Domain.Modules;
+using UserManagement.EFCore.Data;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,6 +61,7 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddUserManagementDomain(builder.Configuration);
 builder.Services.AddOpenIddictServer(builder.Configuration);
 builder.Services.AddHostedService<OpenIddictSeeder>();
+builder.Services.AddHostedService<AdminSeeder>();
 
 // OpenTelemetry Configuration
 builder.Services.AddFishLoverTelemetry(builder.Configuration, "UserManagement.API");
@@ -106,6 +109,13 @@ builder.Services.AddHealthChecks()
     .AddRedis(builder.Configuration.GetConnectionString("Redis") ?? string.Empty);
 
 var app = builder.Build();
+
+// Auto-migrate on startup (safe for Docker local dev; idempotent)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<UserManagementDbContext>();
+    await db.Database.MigrateAsync();
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsProduction())

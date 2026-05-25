@@ -1,8 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Abstractions;
-using System.Text;
 
 namespace UserManagement.API.Extensions;
 
@@ -11,9 +9,6 @@ public static class OpenIddictServerExtensions
     public static IServiceCollection AddOpenIddictServer(
         this IServiceCollection services, IConfiguration configuration)
     {
-        var secretKey = configuration["JwtSettings:SecretKey"]
-            ?? throw new InvalidOperationException("JwtSettings:SecretKey not configured.");
-
         services.AddOpenIddict()
             .AddServer(options =>
             {
@@ -31,15 +26,22 @@ public static class OpenIddictServerExtensions
                     OpenIddictConstants.Scopes.Roles,
                     "fishdex");
 
-                // Dùng cùng symmetric key với FishDex — không cần đổi validation ở FishDex
-                options.AddSigningKey(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)));
+                // Ephemeral keys — phù hợp local dev, restart sẽ gen key mới
+                options.AddEphemeralEncryptionKey();
+                options.AddEphemeralSigningKey();
                 options.DisableAccessTokenEncryption();
+
+                // Cố định issuer để OIDC discovery và token iss nhất quán dù request đến từ browser hay Docker internal
+                var issuer = configuration["OpenIddict:Issuer"];
+                if (!string.IsNullOrEmpty(issuer))
+                    options.SetIssuer(new Uri(issuer));
 
                 options.UseAspNetCore()
                        .EnableAuthorizationEndpointPassthrough()
                        .EnableTokenEndpointPassthrough()
                        .EnableLogoutEndpointPassthrough()
-                       .EnableUserinfoEndpointPassthrough();
+                       .EnableUserinfoEndpointPassthrough()
+                       .DisableTransportSecurityRequirement();
             })
             .AddValidation(options =>
             {

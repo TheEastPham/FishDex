@@ -47,9 +47,39 @@ try
         builder.Configuration.GetSection(FishDexSettings.SectionName));
 
     // OpenTelemetry Configuration
-    builder.Services.AddFishLoverTelemetry(builder.Configuration, "FishDex.API");   // JWT Authentication
+    builder.Services.AddFishLoverTelemetry(builder.Configuration, "FishDex.API");
+
+    // JWT Authentication — symmetric scheme (direct-login tokens từ UserManagement)
     builder.Services.AddFishLoverJwtAuthentication(builder.Configuration);
+
+    // OAuth2 PKCE scheme — validate OpenIddict-issued tokens qua JWKS discovery
+    var authServerPublicUrl = builder.Configuration["AuthServer:Url"] ?? "http://localhost:8080";
+    var authServerInternalUrl = builder.Configuration["AuthServer:Authority"] ?? authServerPublicUrl;
+    builder.Services.AddAuthentication()
+        .AddJwtBearer("OpenIddict", options =>
+        {
+            options.MetadataAddress = $"{authServerInternalUrl}/.well-known/openid-configuration";
+            options.RequireHttpsMetadata = false;
+            options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+            {
+                ValidIssuer = authServerPublicUrl,
+                ValidateIssuer = true,
+                ValidateAudience = false,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+            };
+        });
+
     builder.Services.AddFishLoverAuthorization();
+    // [Authorize] chấp nhận cả Bearer (direct login) lẫn OpenIddict (OAuth2 PKCE)
+    builder.Services.AddAuthorization(options =>
+    {
+        options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder(
+            Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme,
+            "OpenIddict")
+            .RequireAuthenticatedUser()
+            .Build();
+    });
 
 
     // ── Controllers + OpenAPI ──────────────────────────────────

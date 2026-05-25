@@ -60,6 +60,9 @@ services:
       InitialAdmin__Password:               ${INITIAL_ADMIN_PASSWORD}
     ports:
       - "8080:8080"
+    networks:
+      - default
+      - fishlover_local
     depends_on:
       usermanagement-db:
         condition: service_healthy
@@ -68,3 +71,7 @@ services:
 
 volumes:
   usermanagement_sqldata:
+
+networks:
+  fishlover_local:
+    external: true

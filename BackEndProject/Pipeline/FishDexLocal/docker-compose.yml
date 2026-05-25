@@ -60,6 +60,9 @@ services:
       AuthServer__Authority:        ${AUTH_SERVER_AUTHORITY}
     ports:
       - "8081:8080"
+    networks:
+      - default
+      - fishlover_local
     depends_on:
       fishdex-db:
         condition: service_healthy
@@ -67,3 +70,7 @@ services:
 volumes:
   fishdex_pgdata:
   fishdex_pgadmin:
+
+networks:
+  fishlover_local:
+    external: true

@@ -60,9 +60,11 @@ try
         {
             options.MetadataAddress = $"{authServerInternalUrl}/.well-known/openid-configuration";
             options.RequireHttpsMetadata = false;
+            var issuer = authServerPublicUrl.TrimEnd('/');
             options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
             {
-                ValidIssuer = authServerPublicUrl,
+                // Accept cả "http://host" lẫn "http://host/" — OpenIddict thêm trailing slash
+                ValidIssuers = [issuer, issuer + "/"],
                 ValidateIssuer = true,
                 ValidateAudience = false,
                 ValidateLifetime = true,

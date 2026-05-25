@@ -77,7 +77,7 @@ public class SpeciesService(
         GetSpeciesSearchRequest request, CancellationToken ct = default)
     {
         var (items, total) = await speciesRepo.SearchWithCountAsync(
-            request.Q, request.FamId, request.GenusCode, request.Language,
+            request.Query, request.FamId, request.GenusCode, request.Language,
             request.Page, request.PageSize, ct);
 
         return new PagedResult<SpeciesSearchResultDto>

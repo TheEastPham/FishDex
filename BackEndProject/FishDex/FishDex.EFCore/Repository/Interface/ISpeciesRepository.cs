@@ -6,7 +6,7 @@ namespace FishDex.EFCore.Repository.Interface;
 public interface ISpeciesRepository : IGenericRepository<Species>
 {
     Task<(IReadOnlyList<Species> Items, int TotalCount)> SearchWithCountAsync(
-        string q, Guid? famId, int? genusCode, string? language,
+        string? query, Guid? famId, int? genusCode, string? language,
         int page, int pageSize, CancellationToken ct = default);
 }
 

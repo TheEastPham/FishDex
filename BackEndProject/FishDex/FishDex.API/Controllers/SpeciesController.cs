@@ -27,9 +27,6 @@ public class SpeciesController(ISpeciesService speciesService) : ControllerBase
     [HttpGet("search")]
     public async Task<IActionResult> Search([FromQuery] GetSpeciesSearchRequest request, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(request.Q))
-            return BadRequest("Query parameter 'q' is required.");
-
         var result = await speciesService.SearchSpeciesAsync(request, ct);
         return Ok(result);
     }

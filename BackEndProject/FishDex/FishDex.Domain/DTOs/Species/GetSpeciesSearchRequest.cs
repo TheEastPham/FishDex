@@ -2,7 +2,7 @@ namespace FishDex.Domain.DTOs.Species;
 
 public class GetSpeciesSearchRequest
 {
-    public string Q { get; init; } = string.Empty;
+    public string? Query { get; init; }
     public Guid? FamId { get; init; }
     public int? GenusCode { get; init; }
     public string? Language { get; init; }

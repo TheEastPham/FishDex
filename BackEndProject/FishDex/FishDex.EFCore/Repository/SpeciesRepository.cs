@@ -12,24 +12,26 @@ public class SpeciesRepository(FishDexDbContext context)
     private readonly FishDexDbContext _db = context;
 
     public async Task<(IReadOnlyList<Species> Items, int TotalCount)> SearchWithCountAsync(
-        string q, Guid? famId, int? genusCode, string? language,
+        string? query, Guid? famId, int? genusCode, string? language,
         int page, int pageSize, CancellationToken ct = default)
     {
-        var query = _db.Species
+        var hasQuery = !string.IsNullOrWhiteSpace(query);
+        var q = _db.Species
             .Include(s => s.Genus)
             .Include(s => s.Family)
             .Include(s => s.CommonNames)
             .Where(s =>
-                EF.Functions.ILike(s.SpeciesName, $"%{q}%") ||
+                !hasQuery ||
+                EF.Functions.ILike(s.SpeciesName, $"%{query}%") ||
                 s.CommonNames.Any(c =>
-                    EF.Functions.ILike(c.ComName, $"%{q}%") &&
+                    EF.Functions.ILike(c.ComName, $"%{query}%") &&
                     (language == null || c.Language == language)));
 
-        if (famId.HasValue)    query = query.Where(s => s.FamId == famId.Value);
-        if (genusCode.HasValue) query = query.Where(s => s.GenusCode == genusCode.Value);
+        if (famId.HasValue)    q = q.Where(s => s.FamId == famId.Value);
+        if (genusCode.HasValue) q = q.Where(s => s.GenusCode == genusCode.Value);
 
-        var total = await query.CountAsync(ct);
-        var items = await query
+        var total = await q.CountAsync(ct);
+        var items = await q
             .OrderBy(s => s.SpeciesName)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)

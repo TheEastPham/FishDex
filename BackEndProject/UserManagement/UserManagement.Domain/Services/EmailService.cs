@@ -9,7 +9,7 @@ public class EmailService(
     IConfiguration configuration,
     ILogger<EmailService> logger,
     EmailTemplateHelper templateHelper,
-    ResendEmailProvider emailProvider)
+    IEmailProvider emailProvider)
     : IEmailService
 {
     private readonly IEmailProvider _emailProvider = emailProvider;

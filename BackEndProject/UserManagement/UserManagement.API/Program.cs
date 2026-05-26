@@ -45,6 +45,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 // Add UserManagement Domain services (includes EFCore + OpenIddict Core)
+builder.Services.AddMemoryCache();
 builder.Services.AddUserManagementDomain(builder.Configuration);
 builder.Services.AddOpenIddictServer(builder.Configuration);
 builder.Services.AddHostedService<OpenIddictSeeder>();

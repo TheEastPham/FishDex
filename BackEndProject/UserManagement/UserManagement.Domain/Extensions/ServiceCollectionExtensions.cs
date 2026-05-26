@@ -54,8 +54,12 @@ public static class ServiceCollectionExtensions
             client.DefaultRequestHeaders.Add("User-Agent", "FishLover-EmailService/1.0");
         });
 
-        // Note: Domain services (IUserService, IAuthService, etc.) are now registered via Autofac
-        // See UserManagementModule for auto-registration using conventions
+        // Domain services
+        services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IRoleService, RoleService>();
+        services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<IEmailProvider, ResendEmailProvider>();
 
         return services;
     }

@@ -5,9 +5,6 @@ using UserManagement.API.Middleware;
 using UserManagement.API.Extensions;
 using UserManagement.API.Services;
 using FishLover.Shared.Extensions;
-using Autofac;
-using Autofac.Extensions.DependencyInjection;
-using UserManagement.Domain.Modules;
 using UserManagement.EFCore.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,16 +13,6 @@ var builder = WebApplication.CreateBuilder(args);
 // Service Information
 const string serviceName = "UserManagement.API";
 const string serviceVersion = "1.0.0";
-
-// Configure Autofac as the service provider factory
-builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
-
-// Configure Autofac container
-builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
-{
-    // Register Autofac modules
-    containerBuilder.RegisterModule<UserManagementModule>();
-});
 
 // Serilog Configuration
 Log.Logger = new LoggerConfiguration()

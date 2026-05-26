@@ -94,7 +94,7 @@ public class FishDexDbContext : DbContext
             entity.HasIndex(e => e.SpecCode).IsUnique();
 
             entity.HasOne(e => e.Family)
-                .WithMany()
+                .WithMany(f => f.Species)
                 .HasForeignKey(e => e.FamId)
                 .OnDelete(DeleteBehavior.Restrict);
 

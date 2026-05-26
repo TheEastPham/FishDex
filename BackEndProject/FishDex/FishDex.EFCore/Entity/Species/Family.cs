@@ -14,4 +14,5 @@ public class Family
     public string? ReproductiveGuild { get; set; }
 
     public virtual ICollection<Genus> Genuses { get; set; }
+    public virtual ICollection<Species> Species { get; set; }
 }

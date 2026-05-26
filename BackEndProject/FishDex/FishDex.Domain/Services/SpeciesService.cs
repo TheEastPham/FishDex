@@ -49,7 +49,7 @@ public class SpeciesService(
 
     public async Task<IReadOnlyList<FamilyDto>> GetFamiliesAsync(CancellationToken ct = default)
     {
-        var families = await familyRepo.FindAsync(_ => true);
+        var families = await familyRepo.FindAsync(x => x.Species.Any());
         return families.Select(f => f.ToDto()).ToList();
     }
 

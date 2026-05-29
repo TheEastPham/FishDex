@@ -63,15 +63,21 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigins", policy =>
     {
-        policy.WithOrigins("http://localhost:3000", "http://localhost:5000")
+        policy.WithOrigins(
+                "http://localhost:3000",
+                "http://localhost:5000",
+                "http://localhost:5173")   // AquaHome FE (Vite)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
     });
-    // Allow FishDex Swagger to call /connect/* for OAuth2 PKCE flow
+    // Allow FishDex Swagger + AquaHome FE to call /connect/* for OAuth2 PKCE flow
     options.AddPolicy("AllowOAuth", policy =>
     {
-        policy.WithOrigins("http://localhost:8081", "http://localhost:8080")
+        policy.WithOrigins(
+                "http://localhost:8081",
+                "http://localhost:8080",
+                "http://localhost:5173")   // AquaHome FE token/revoke requests
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();

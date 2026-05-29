@@ -35,5 +35,38 @@ public class OpenIddictSeeder(IServiceProvider serviceProvider) : IHostedService
         }
     }
 
+        if (await manager.FindByClientIdAsync("aquahome-fe", cancellationToken) is null)
+        {
+            await manager.CreateAsync(new OpenIddictApplicationDescriptor
+            {
+                ClientId = "aquahome-fe",
+                ClientType = OpenIddictConstants.ClientTypes.Public,
+                DisplayName = "AquaHome FE",
+                RedirectUris =
+                {
+                    new Uri("http://localhost:5173/callback")
+                },
+                PostLogoutRedirectUris =
+                {
+                    new Uri("http://localhost:5173")
+                },
+                Permissions =
+                {
+                    OpenIddictConstants.Permissions.Endpoints.Authorization,
+                    OpenIddictConstants.Permissions.Endpoints.Token,
+                    OpenIddictConstants.Permissions.Endpoints.Revocation,
+                    OpenIddictConstants.Permissions.Endpoints.Logout,
+                    OpenIddictConstants.Permissions.GrantTypes.AuthorizationCode,
+                    OpenIddictConstants.Permissions.GrantTypes.RefreshToken,
+                    OpenIddictConstants.Permissions.ResponseTypes.Code,
+                    OpenIddictConstants.Permissions.Scopes.OpenId,
+                    OpenIddictConstants.Permissions.Scopes.Email,
+                    OpenIddictConstants.Permissions.Scopes.Profile,
+                    OpenIddictConstants.Permissions.Scopes.Roles,
+                }
+            }, cancellationToken);
+        }
+    }
+
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }

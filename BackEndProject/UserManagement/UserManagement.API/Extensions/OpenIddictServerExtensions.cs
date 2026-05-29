@@ -15,12 +15,15 @@ public static class OpenIddictServerExtensions
                 options.SetAuthorizationEndpointUris("/connect/authorize")
                        .SetTokenEndpointUris("/connect/token")
                        .SetUserinfoEndpointUris("/connect/userinfo")
-                       .SetLogoutEndpointUris("/connect/logout");
+                       .SetLogoutEndpointUris("/connect/logout")
+                       .SetRevocationEndpointUris("/connect/revoke");
 
                 options.AllowAuthorizationCodeFlow()
-                       .RequireProofKeyForCodeExchange();
+                       .RequireProofKeyForCodeExchange()
+                       .AllowRefreshTokenFlow();
 
                 options.RegisterScopes(
+                    OpenIddictConstants.Scopes.OpenId,
                     OpenIddictConstants.Scopes.Email,
                     OpenIddictConstants.Scopes.Profile,
                     OpenIddictConstants.Scopes.Roles,
@@ -41,6 +44,7 @@ public static class OpenIddictServerExtensions
                        .EnableTokenEndpointPassthrough()
                        .EnableLogoutEndpointPassthrough()
                        .EnableUserinfoEndpointPassthrough()
+                       .EnableRevocationEndpointPassthrough()
                        .DisableTransportSecurityRequirement();
             })
             .AddValidation(options =>

@@ -8,4 +8,6 @@ public class SystemImageDto
     public string PictureType { get; init; } = string.Empty;
     public bool? PicPreferred { get; init; }
     public ImageGender Gender { get; init; }
+    /// <summary>Presigned URL từ object storage. Null nếu storage chưa được cấu hình.</summary>
+    public string? Url { get; init; }
 }

@@ -6,17 +6,31 @@ using FishDex.EFCore.Repository.Interface;
 namespace FishDex.Domain.Services;
 
 public class MediaService(
-    ISystemImageRepository imageRepo) : IMediaService
+    ISystemImageRepository imageRepo,
+    IStorageService storage) : IMediaService
 {
     public async Task<IReadOnlyList<SystemImageDto>> GetBySpecCodeAsync(int specCode, CancellationToken ct = default)
     {
         var items = await imageRepo.FindAsync(i => i.SpecCode == specCode);
-        return items.Select(i => i.ToDto()).ToList();
+
+        var tasks = items.Select(async i =>
+        {
+            var dto = i.ToDto();
+            var url = await storage.GetPresignedUrlAsync(i.Name, ct);
+            return dto with { Url = url };
+        });
+
+        return await Task.WhenAll(tasks);
     }
 
     public async Task<SystemImageDto?> GetPreferredImageAsync(int specCode, CancellationToken ct = default)
     {
         var items = await imageRepo.FindAsync(i => i.SpecCode == specCode && i.PicPreferred == true);
-        return items.FirstOrDefault()?.ToDto();
+        var entity = items.FirstOrDefault();
+        if (entity is null) return null;
+
+        var dto = entity.ToDto();
+        var url = await storage.GetPresignedUrlAsync(entity.Name, ct);
+        return dto with { Url = url };
     }
 }

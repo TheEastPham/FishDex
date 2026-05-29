@@ -1,7 +1,7 @@
 import axios from 'axios';
-import type { PagedResult } from '@/types/common';
-import type { SpeciesSearchResult, SearchSpeciesParams } from '@/types/species';
-import { useAuthStore } from '@/store/authStore';
+import type { PagedResult } from '../../types/common';
+import type { SpeciesSearchResult, SearchSpeciesParams } from '../../types/species';
+import { useAuthStore } from '../../store/authStore';
 
 const fishDexClient = axios.create({
   baseURL: import.meta.env.VITE_FISHDEX_API_URL,

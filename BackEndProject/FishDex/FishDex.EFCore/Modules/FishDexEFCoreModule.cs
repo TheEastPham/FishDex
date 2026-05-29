@@ -1,6 +1,8 @@
 using Autofac;
+using FishDex.Domain.Services.Interfaces;
 using FishDex.EFCore.Repository;
 using FishDex.EFCore.Repository.Interface;
+using FishDex.EFCore.Storage;
 
 namespace FishDex.EFCore.Modules;
 
@@ -35,5 +37,6 @@ public class FishDexEFCoreModule : Module
         builder.RegisterType<EcosystemRepository>()          .As<IEcosystemRepository>()          .InstancePerLifetimeScope();
         builder.RegisterType<EcosystemRefRepository>()       .As<IEcosystemRefRepository>()       .InstancePerLifetimeScope();
         builder.RegisterType<SystemImageRepository>()        .As<ISystemImageRepository>()        .InstancePerLifetimeScope();
+        builder.RegisterType<S3StorageService>()              .As<IStorageService>()               .SingleInstance();
     }
 }

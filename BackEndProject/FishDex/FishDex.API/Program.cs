@@ -45,6 +45,8 @@ try
     builder.Services.AddMemoryCache();
     builder.Services.Configure<FishDexSettings>(
         builder.Configuration.GetSection(FishDexSettings.SectionName));
+    builder.Services.Configure<StorageSettings>(
+        builder.Configuration.GetSection(StorageSettings.SectionName));
 
     // OpenTelemetry Configuration
     builder.Services.AddFishLoverTelemetry(builder.Configuration, "FishDex.API");

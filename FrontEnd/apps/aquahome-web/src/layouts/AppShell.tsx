@@ -1,7 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { LayoutDashboard, Search, MessageCircle, Camera, Fish, LogOut } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useLogout } from '@/hooks/useLogout';
+import { cn, useLogout } from '@fishlover/shared';
 
 const navItems = [
   { to: '/dashboard',     icon: LayoutDashboard, label: 'Dashboard' },

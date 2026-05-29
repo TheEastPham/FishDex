@@ -1,8 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../../store/authStore';
-import { buildAuthorizeUrl } from '../../lib/auth/oidc';
-import { generateCodeVerifier, generateState } from '../../lib/auth/pkce';
+import { useAuthStore, buildAuthorizeUrl, generateCodeVerifier, generateState } from '@fishlover/shared';
 
 export default function LoginPage() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);

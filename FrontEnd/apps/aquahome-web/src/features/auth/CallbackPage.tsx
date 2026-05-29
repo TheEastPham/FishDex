@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../../store/authStore';
-import { exchangeCode } from '../../lib/auth/oidc';
+import { useAuthStore, exchangeCode } from '@fishlover/shared';
 
 export default function CallbackPage() {
   const { setTokens } = useAuthStore();

@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
-import { useDebounce } from '@/hooks/useDebounce';
-import { searchSpecies } from '@/lib/api/fishDex';
-import type { PagedResult } from '@/types/common';
-import type { SpeciesSearchResult } from '@/types/species';
+import { useDebounce, searchSpecies } from '@fishlover/shared';
+import type { PagedResult, SpeciesSearchResult } from '@fishlover/shared';
 import SpeciesCard from './components/SpeciesCard';
 import SpeciesCardSkeleton from './components/SpeciesCardSkeleton';
 

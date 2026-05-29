@@ -1,5 +1,5 @@
-import type { SpeciesSearchResult } from '@/types/species';
-import { cn } from '@/lib/utils';
+import type { SpeciesSearchResult } from '@fishlover/shared';
+import { cn } from '@fishlover/shared';
 
 interface Props {
   species: SpeciesSearchResult;

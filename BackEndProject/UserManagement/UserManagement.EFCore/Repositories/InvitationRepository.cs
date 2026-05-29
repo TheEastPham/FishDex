@@ -9,6 +9,8 @@ public class InvitationRepository(UserManagementDbContext context) : IInvitation
 {
     public Task<Invitation?> GetByCodeAsync(string code)
     {
-        return context.Invitations.FirstOrDefaultAsync(i => i.Code == code);
+        return context.Invitations
+            .Include(i => i.UsedBy)
+            .FirstOrDefaultAsync(i => i.Code == code);
     }
 }

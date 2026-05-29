@@ -113,3 +113,5 @@ coverage/
 *.bak
 *.sql.bak
 fishdex_seed_*.sql
+# Local dev launch profiles
+**/Properties/launchSettings.json

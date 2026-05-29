@@ -5,7 +5,7 @@ services:
       dockerfile: apps/aquahome-web/Dockerfile
       args:
         VITE_AUTH_ISSUER:         ${VITE_AUTH_ISSUER:-http://localhost:8080}
-        VITE_AUTH_CLIENT_ID:      ${VITE_AUTH_CLIENT_ID:-aquahome-web}
+        VITE_AUTH_CLIENT_ID:      ${VITE_AUTH_CLIENT_ID:-aquahome-fe}
         VITE_AUTH_REDIRECT_URI:   ${VITE_AUTH_REDIRECT_URI:-http://localhost:3000/callback}
         VITE_AUTH_POST_LOGOUT_URI: ${VITE_AUTH_POST_LOGOUT_URI:-http://localhost:3000}
         VITE_AQUAHOME_API_URL:    ${VITE_AQUAHOME_API_URL:-http://localhost:8082}

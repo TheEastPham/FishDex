@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
-import { useDebounce, searchSpecies } from '@fishlover/shared';
+import { useDebounce, searchSpecies, useTranslation } from '@fishlover/shared';
 import type { PagedResult, SpeciesSearchResult } from '@fishlover/shared';
 import SpeciesCard from './components/SpeciesCard';
 import SpeciesCardSkeleton from './components/SpeciesCardSkeleton';
@@ -8,11 +8,12 @@ import SpeciesCardSkeleton from './components/SpeciesCardSkeleton';
 const PAGE_SIZE = 18;
 
 export default function FishSearchPage() {
-  const [query, setQuery]               = useState('');
-  const [page, setPage]                 = useState(1);
-  const [loading, setLoading]           = useState(false);
-  const [result, setResult]             = useState<PagedResult<SpeciesSearchResult> | null>(null);
-  const [error, setError]               = useState<string | null>(null);
+  const { t } = useTranslation();
+  const [query, setQuery]     = useState('');
+  const [page, setPage]       = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult]   = useState<PagedResult<SpeciesSearchResult> | null>(null);
+  const [error, setError]     = useState<string | null>(null);
 
   const debouncedQuery = useDebounce(query, 400);
 
@@ -21,7 +22,6 @@ export default function FishSearchPage() {
   }, [debouncedQuery]);
 
   useEffect(() => {
-    // Không search khi query rỗng — hiển thị empty state
     if (!debouncedQuery.trim()) {
       setResult(null);
       setError(null);
@@ -34,11 +34,11 @@ export default function FishSearchPage() {
 
     searchSpecies({ query: debouncedQuery.trim(), language: 'en', page, pageSize: PAGE_SIZE })
       .then((data) => { if (!cancelled) setResult(data); })
-      .catch(() => { if (!cancelled) setError('Không thể tải kết quả. Kiểm tra FishDex Service.'); })
+      .catch(() => { if (!cancelled) setError(t('fish.error')); })
       .finally(() => { if (!cancelled) setLoading(false); });
 
     return () => { cancelled = true; };
-  }, [debouncedQuery, page]);
+  }, [debouncedQuery, page, t]);
 
   const totalPages = result?.totalPages ?? 0;
 
@@ -47,10 +47,8 @@ export default function FishSearchPage() {
 
       {/* Header */}
       <div>
-        <h1 className="text-xl font-semibold text-foreground">Fish Search</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Tìm kiếm trong ~8,883 loài cá aquarium từ FishBase
-        </p>
+        <h1 className="text-xl font-semibold text-foreground">{t('fish.title')}</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">{t('fish.subtitle')}</p>
       </div>
 
       {/* Search input */}
@@ -60,7 +58,7 @@ export default function FishSearchPage() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Tên khoa học hoặc tên thường gọi..."
+          placeholder={t('fish.placeholder')}
           className="w-full rounded-xl border border-input bg-background pl-9 pr-4 py-2.5 text-sm
                      placeholder:text-muted-foreground
                      focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent
@@ -73,7 +71,7 @@ export default function FishSearchPage() {
       {result && !loading && (
         <p className="text-sm text-muted-foreground">
           <span className="font-medium text-foreground">{result.totalCount.toLocaleString()}</span>
-          {' '}kết quả cho{' '}
+          {' '}{t('fish.results')}{' '}
           <span className="font-medium text-foreground">"{debouncedQuery}"</span>
         </p>
       )}
@@ -111,18 +109,19 @@ export default function FishSearchPage() {
       {!loading && result && result.items.length === 0 && (
         <div className="flex flex-col items-center py-16 text-center">
           <p className="text-muted-foreground text-sm">
-            Không tìm thấy loài nào cho <span className="font-medium">"{debouncedQuery}"</span>
+            {t('fish.emptyResult')}{' '}
+            <span className="font-medium">"{debouncedQuery}"</span>
           </p>
         </div>
       )}
 
-      {/* Empty state — chưa nhập */}
+      {/* Empty state */}
       {!loading && !result && !error && (
         <div className="flex flex-col items-center py-16 text-center">
           <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
             <Search className="h-5 w-5 text-muted-foreground" />
           </div>
-          <p className="text-sm text-muted-foreground">Nhập tên loài để bắt đầu tìm kiếm</p>
+          <p className="text-sm text-muted-foreground">{t('fish.emptyState')}</p>
         </div>
       )}
 
@@ -135,10 +134,12 @@ export default function FishSearchPage() {
             className="rounded-lg border border-border px-4 py-2 text-sm font-medium
                        hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            ← Trước
+            {t('pagination.prev')}
           </button>
           <span className="text-sm text-muted-foreground">
-            Trang <span className="font-medium text-foreground">{page}</span> / {totalPages}
+            {t('pagination.page')}{' '}
+            <span className="font-medium text-foreground">{page}</span>
+            {' '}{t('pagination.of')}{' '}{totalPages}
           </span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
@@ -146,7 +147,7 @@ export default function FishSearchPage() {
             className="rounded-lg border border-border px-4 py-2 text-sm font-medium
                        hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            Tiếp →
+            {t('pagination.next')}
           </button>
         </div>
       )}

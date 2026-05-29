@@ -1,14 +1,16 @@
 import type { SpeciesSearchResult } from '@fishlover/shared';
-import { cn } from '@fishlover/shared';
+import { cn, useTranslation } from '@fishlover/shared';
 
 interface Props {
   species: SpeciesSearchResult;
   onAddToAquarium?: (species: SpeciesSearchResult) => void;
-  /** AquaHome Service chưa sẵn sàng — disable button cho đến Story 5.2 */
+  /** AquaHome Service not ready — disabled until Story 5.2 */
   aquariumReady?: boolean;
 }
 
 export default function SpeciesCard({ species, onAddToAquarium, aquariumReady = false }: Props) {
+  const { t } = useTranslation();
+
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-sm hover:shadow-md transition-shadow">
 
@@ -32,7 +34,7 @@ export default function SpeciesCard({ species, onAddToAquarium, aquariumReady = 
       {/* Genus */}
       {species.genusName && (
         <p className="text-xs text-muted-foreground">
-          Genus: <span className="italic">{species.genusName}</span>
+          {t('fish.genus')}: <span className="italic">{species.genusName}</span>
         </p>
       )}
 
@@ -46,9 +48,9 @@ export default function SpeciesCard({ species, onAddToAquarium, aquariumReady = 
             ? 'bg-primary text-primary-foreground hover:bg-primary/90'
             : 'bg-muted text-muted-foreground cursor-not-allowed',
         )}
-        title={aquariumReady ? undefined : 'Cần AquaHome Service (Story 5.2)'}
+        title={aquariumReady ? undefined : t('fish.addToAquariumDisabledTip')}
       >
-        + Thêm vào bể
+        {t('fish.addToAquarium')}
       </button>
 
     </div>

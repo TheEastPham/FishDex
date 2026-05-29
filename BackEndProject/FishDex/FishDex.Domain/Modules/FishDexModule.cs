@@ -15,5 +15,6 @@ public class FishDexModule : Module
         builder.RegisterType<EcosystemService>().As<IEcosystemService>().InstancePerLifetimeScope();
         builder.RegisterType<OccurrenceService>().As<IOccurrenceService>().InstancePerLifetimeScope();
         builder.RegisterType<MediaService>().As<IMediaService>().InstancePerLifetimeScope();
+        builder.RegisterType<S3StorageService>().As<IStorageService>().SingleInstance();
     }
 }

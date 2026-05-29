@@ -33,7 +33,6 @@ public class OpenIddictSeeder(IServiceProvider serviceProvider) : IHostedService
                 }
             }, cancellationToken);
         }
-    }
 
         if (await manager.FindByClientIdAsync("aquahome-fe", cancellationToken) is null)
         {
@@ -59,7 +58,7 @@ public class OpenIddictSeeder(IServiceProvider serviceProvider) : IHostedService
                     OpenIddictConstants.Permissions.GrantTypes.AuthorizationCode,
                     OpenIddictConstants.Permissions.GrantTypes.RefreshToken,
                     OpenIddictConstants.Permissions.ResponseTypes.Code,
-                    OpenIddictConstants.Permissions.Scopes.OpenId,
+                    OpenIddictConstants.Permissions.Prefixes.Scope + OpenIddictConstants.Scopes.OpenId,
                     OpenIddictConstants.Permissions.Scopes.Email,
                     OpenIddictConstants.Permissions.Scopes.Profile,
                     OpenIddictConstants.Permissions.Scopes.Roles,

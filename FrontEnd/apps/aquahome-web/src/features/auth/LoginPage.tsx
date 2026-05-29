@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore, buildAuthorizeUrl, generateCodeVerifier, generateState } from '@fishlover/shared';
+import { useAuthStore, buildAuthorizeUrl, generateCodeVerifier, generateState, useTranslation } from '@fishlover/shared';
 
 export default function LoginPage() {
+  const { t } = useTranslation();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const navigate = useNavigate();
 
@@ -23,13 +24,13 @@ export default function LoginPage() {
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 w-full max-w-sm">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-slate-800">AquaHome 🐠</h1>
-          <p className="text-slate-500 text-sm mt-1">Quản lý bể cá của bạn</p>
+          <p className="text-slate-500 text-sm mt-1">{t('login.subtitle')}</p>
         </div>
         <button
           onClick={handleLogin}
           className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-medium py-2.5 rounded-xl transition-colors"
         >
-          Đăng nhập
+          {t('login.button')}
         </button>
       </div>
     </div>

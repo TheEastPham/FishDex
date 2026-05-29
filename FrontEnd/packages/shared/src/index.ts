@@ -29,3 +29,7 @@ export { useLogout }                               from './hooks/useLogout';
 
 // ── Utils ─────────────────────────────────────────────────
 export { cn }                                      from './lib/utils';
+
+// ── i18n ──────────────────────────────────────────────────
+export { i18n, setLanguage, useTranslation }       from './i18n';
+export { LanguageSwitcher }                        from './components/LanguageSwitcher';

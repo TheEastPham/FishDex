@@ -67,9 +67,33 @@ services:
       fishdex-db:
         condition: service_healthy
 
+  minio:
+    image: quay.io/minio/minio
+    container_name: fishdex_minio
+    restart: unless-stopped
+    command: server /data --console-address :9001
+    environment:
+      MINIO_ROOT_USER:     ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - fishdex_minio:/data
+      - C:\minio-backup:/minio-backup:ro
+    networks:
+      - default
+      - fishlover_local
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   fishdex_pgdata:
   fishdex_pgadmin:
+  fishdex_minio:
 
 networks:
   fishlover_local:

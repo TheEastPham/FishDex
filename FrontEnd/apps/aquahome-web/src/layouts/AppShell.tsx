@@ -1,16 +1,17 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { LayoutDashboard, Search, MessageCircle, Camera, Fish, LogOut } from 'lucide-react';
-import { cn, useLogout } from '@fishlover/shared';
-
-const navItems = [
-  { to: '/dashboard',     icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/fish',          icon: Search,          label: 'Fish Search' },
-  { to: '/ai-chat',       icon: MessageCircle,   label: 'AI Chat' },
-  { to: '/image-search',  icon: Camera,          label: 'Image Search' },
-];
+import { cn, useLogout, useTranslation, LanguageSwitcher } from '@fishlover/shared';
 
 export default function AppShell() {
   const logout = useLogout();
+  const { t } = useTranslation();
+
+  const navItems = [
+    { to: '/dashboard',    icon: LayoutDashboard, label: t('nav.dashboard') },
+    { to: '/fish',         icon: Search,          label: t('nav.fishSearch') },
+    { to: '/ai-chat',      icon: MessageCircle,   label: t('nav.aiChat') },
+    { to: '/image-search', icon: Camera,          label: t('nav.imageSearch') },
+  ];
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
@@ -47,14 +48,17 @@ export default function AppShell() {
           ))}
         </nav>
 
-        {/* Logout */}
-        <div className="px-3 py-3 border-t border-sidebar-border">
+        {/* Footer: language switcher + logout */}
+        <div className="px-3 py-3 border-t border-sidebar-border space-y-0.5">
+          <LanguageSwitcher
+            className="flex w-full items-center justify-center rounded-lg px-3 py-2 text-xs font-semibold tracking-wider text-muted-foreground hover:bg-slate-100 hover:text-sidebar-foreground transition-colors"
+          />
           <button
             onClick={logout}
             className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-slate-100 hover:text-sidebar-foreground transition-colors"
           >
             <LogOut className="h-4 w-4 flex-shrink-0" />
-            Đăng xuất
+            {t('nav.logout')}
           </button>
         </div>
       </aside>

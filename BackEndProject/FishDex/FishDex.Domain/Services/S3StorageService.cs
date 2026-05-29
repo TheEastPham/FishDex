@@ -7,7 +7,7 @@ using FishDex.Domain.Settings;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace FishDex.EFCore.Storage;
+namespace FishDex.Domain.Services;
 
 public class S3StorageService : IStorageService
 {

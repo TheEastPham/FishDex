@@ -44,7 +44,6 @@ public static class OpenIddictServerExtensions
                        .EnableTokenEndpointPassthrough()
                        .EnableLogoutEndpointPassthrough()
                        .EnableUserinfoEndpointPassthrough()
-                       .EnableRevocationEndpointPassthrough()
                        .DisableTransportSecurityRequirement();
             })
             .AddValidation(options =>

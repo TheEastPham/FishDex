@@ -1,6 +1,6 @@
 namespace FishDex.Domain.DTOs.Media;
 
-public class SystemImageDto
+public record SystemImageDto
 {
     public Guid Id { get; init; }
     public int SpecCode { get; init; }

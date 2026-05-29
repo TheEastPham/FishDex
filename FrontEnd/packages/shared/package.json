@@ -5,10 +5,13 @@
   "type": "module",
   "main": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./i18n": "./src/i18n/index.ts"
   },
   "dependencies": {
     "axios": "^1.7.7",
+    "i18next": "^24.0.0",
+    "react-i18next": "^15.0.0",
     "zustand": "^5.0.1"
   },
   "peerDependencies": {

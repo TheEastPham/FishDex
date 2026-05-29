@@ -14,6 +14,8 @@ Frontend duy nhất của hệ thống FishLover — giao tiếp **chỉ với A
 | HTTP | Axios | Interceptor dễ xử lý token refresh |
 | Charts | Recharts | Story 5.2 — water parameter chart |
 | Styling | Tailwind CSS | Utility-first, không cần setup nhiều |
+| Components | shadcn/ui | Copy-paste components, Tailwind-based, không vendor lock-in |
+| Map | react-leaflet + OpenStreetMap | Free, không API key, hỗ trợ lat/lng pin cho fish occurrence data |
 
 ## Folder Structure
 
@@ -124,3 +126,17 @@ Redux có boilerplate nặng không cần thiết ở scale này. Zustand ~1KB, 
 
 **Tại sao không dùng Next.js?**
 AquaHome FE là SPA thuần — không cần SSR/SSG. Next.js thêm complexity (server components, routing conventions) không mang lại lợi ích ở đây. Vite + React Router đủ.
+
+**Tại sao shadcn/ui?**
+Tích hợp trực tiếp với Tailwind đã có sẵn. Copy-paste components (không bundle toàn bộ library), dễ customize, không vendor lock-in. Chuẩn thực tế cho React 2024-2026.
+
+**Design reference: kaiadmin-lite**
+Layout, màu sắc, card style lấy cảm hứng từ [kaiadmin-lite](https://themewagon.github.io/kaiadmin-lite/) nhưng implement bằng shadcn/ui + Tailwind (không dùng Bootstrap của template gốc để tránh conflict).
+
+**Tại sao react-leaflet thay vì Google Maps / jsvectormap?**
+- Google Maps: cần API key, có thể mất phí
+- jsvectormap (dùng trong kaiadmin): chỉ hiển thị choropleth theo region/country — không hỗ trợ lat/lng pin marker, không phù hợp với fish occurrence data từ FishBase
+- react-leaflet + OpenStreetMap: free, không API key, hỗ trợ đầy đủ lat/lng markers, plugin ecosystem phong phú
+
+**Mobile porting strategy**
+Kiến trúc tách biệt `lib/` (API, auth) + `store/` + `hooks/` khỏi UI layer. Khi port sang React Native: giữ nguyên toàn bộ logic, viết lại UI với React Native components + NativeWind. Map: thay react-leaflet bằng react-native-maps.

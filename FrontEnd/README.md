@@ -23,6 +23,8 @@ Frontend duy nhất của hệ thống FishLover — giao tiếp **chỉ với A
 FrontEnd/
 ├── public/
 ├── src/
+│   ├── layouts/               # App Shell và các layout wrapper
+│   │   └── AppShell.tsx       # Sidebar + <Outlet /> — bọc toàn bộ protected routes
 │   ├── features/              # Feature-based — mỗi Story là 1 folder
 │   │   ├── auth/              # Story 5.1: PKCE login, token, logout
 │   │   ├── aquarium/          # Story 5.2: dashboard, fish inventory, water chart
@@ -88,8 +90,8 @@ Browser                UserManagement (port 8080)      AquaHome (port 8082)
 ```
 
 - **Access token**: lưu trong memory (JS variable) — không lưu localStorage, tránh XSS
-- **Refresh token**: httpOnly cookie — JS không đọc được, auto gửi khi request `/auth/refresh`
-- **Token refresh**: Axios interceptor tự động retry khi nhận 401
+- **Refresh token**: `sessionStorage` (key `_rt`) — mất khi đóng tab, user re-login mỗi session. TODO: upgrade lên BFF httpOnly cookie cho production
+- **Token refresh**: Axios interceptor tự động retry khi nhận 401, deduplicate concurrent calls
 
 ## Stories & Dependencies
 
@@ -126,6 +128,9 @@ Redux có boilerplate nặng không cần thiết ở scale này. Zustand ~1KB, 
 
 **Tại sao không dùng Next.js?**
 AquaHome FE là SPA thuần — không cần SSR/SSG. Next.js thêm complexity (server components, routing conventions) không mang lại lợi ích ở đây. Vite + React Router đủ.
+
+**Layout: App Shell với sidebar**
+Toàn bộ protected routes (`/dashboard`, `/fish`, `/ai-chat`, `/image-search`) được bọc trong `AppShell` — sidebar cố định bên trái, content area bên phải. Login/Callback là standalone full-screen (không có sidebar). 4 feature sections ngang nhau về tầm quan trọng nên sidebar phù hợp hơn top navbar.
 
 **Tại sao shadcn/ui?**
 Tích hợp trực tiếp với Tailwind đã có sẵn. Copy-paste components (không bundle toàn bộ library), dễ customize, không vendor lock-in. Chuẩn thực tế cho React 2024-2026.

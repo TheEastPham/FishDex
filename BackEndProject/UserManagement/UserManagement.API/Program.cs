@@ -77,7 +77,8 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(
                 "http://localhost:8081",
                 "http://localhost:8080",
-                "http://localhost:5173")   // AquaHome FE token/revoke requests
+                "http://localhost:5173",   // AquaHome FE (Vite dev)
+                "http://localhost:3000")   // AquaHome FE (Docker)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();

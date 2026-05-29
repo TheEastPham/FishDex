@@ -70,11 +70,7 @@ public class OpenIddictSeeder(IServiceProvider serviceProvider) : IHostedService
         OpenIddictApplicationDescriptor descriptor,
         CancellationToken cancellationToken)
     {
-        // UpdateAsync via interface doesn't reliably update all fields (e.g. RedirectUris),
-        // so we delete-then-create to guarantee the registration is always in sync with code.
-        var existing = await manager.FindByClientIdAsync(descriptor.ClientId!, cancellationToken);
-        if (existing is not null)
-            await manager.DeleteAsync(existing, cancellationToken);
-        await manager.CreateAsync(descriptor, cancellationToken);
+        if (await manager.FindByClientIdAsync(descriptor.ClientId!, cancellationToken) is null)
+            await manager.CreateAsync(descriptor, cancellationToken);
     }
 }

@@ -44,8 +44,8 @@ services:
 
   fishdex-api:
     build:
-      context: ../../
-      dockerfile: Pipeline/FishDexLocal/Dockerfile.api
+      context: ../../BackEndProject
+      dockerfile: ../Pipeline/FishDexLocal/Dockerfile.api
     container_name: fishdex_api
     restart: unless-stopped
     environment:

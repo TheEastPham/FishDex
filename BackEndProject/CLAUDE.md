@@ -8,7 +8,8 @@ FishLover is a microservices-based backend for a fish species management and aqu
 
 ## Commands
 
-Run all commands from `BackEndProject/` (solution root).
+Run .NET commands from `BackEndProject/` (solution root).
+Run Docker commands from repo root `D:\Workspace\Practice\FishDex\` — Pipeline/ đã được chuyển ra ngang hàng với BackEndProject/.
 
 **Build the solution:**
 ```
@@ -40,9 +41,9 @@ dotnet ef database update --project FishDex/FishDex.EFCore
 
 **Local dev — start infrastructure via Docker:**
 ```
-cd Pipeline/FishDexLocal       && docker compose up -d   # PostgreSQL 5433
-cd Pipeline/UserManagementLocal && docker compose up -d  # SQL Server 1433, Redis 6379
-cd Pipeline/AquaHomeLocal       && docker compose up -d  # SQL Server 1434, Redis 6380
+cd Pipeline/FishDexLocal        && docker compose up -d   # PostgreSQL 5433
+cd Pipeline/UserManagementLocal && docker compose up -d   # SQL Server 1433, Redis 6379
+cd Pipeline/AquaHomeLocal       && docker compose up -d   # SQL Server 1434, Redis 6380
 ```
 
 **Default service ports:**
@@ -60,7 +61,7 @@ UserManagement/      – User auth/management microservice (SQL Server + Redis)
 FishDex/             – Fish species data service (PostgreSQL + pgvector)
 AquaHome/            – Aquarium tracking service (SQL Server + Redis) [in progress]
 Share/               – Cross-service shared library (JWT, OpenTelemetry, CurrentUserSession)
-Pipeline/            – Docker Compose stacks + CI/CD pipeline templates
+../Pipeline/         – Docker Compose stacks + CI/CD pipeline templates (repo root)
 ```
 
 ### UserManagement Layers
@@ -123,7 +124,7 @@ Project-level `nuget.config` forces restore từ `nuget.org` only. Không dùng 
 
 ## Pipeline
 
-Xem `Pipeline/README.md` để biết cách chạy local Docker stacks và CI/CD templates.
+Xem `../Pipeline/README.md` để biết cách chạy local Docker stacks và CI/CD templates.
 
 ## Production Deployment Checklist
 

@@ -7,4 +7,5 @@ public class SystemImageDto
     public string Name { get; init; } = string.Empty;
     public string PictureType { get; init; } = string.Empty;
     public bool? PicPreferred { get; init; }
+    public ImageGender Gender { get; init; }
 }

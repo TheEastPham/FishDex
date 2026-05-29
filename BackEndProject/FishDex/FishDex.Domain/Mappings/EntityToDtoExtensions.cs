@@ -189,10 +189,14 @@ internal static class EntityToDtoExtensions
 
     internal static SystemImageDto ToDto(this SystemImage e) => new()
     {
-        Id          = e.Id,
-        SpecCode    = e.SpecCode,
-        Name        = e.Name,
-        PictureType = e.PictureType,
-        PicPreferred = e.PicPreferred
+        Id           = e.Id,
+        SpecCode     = e.SpecCode,
+        Name         = e.Name,
+        PictureType  = e.PictureType,
+        PicPreferred = e.PicPreferred,
+        Gender       = e.PicPreferredMale == true ? ImageGender.Male
+                     : e.PicPreferredFem  == true ? ImageGender.Female
+                     : e.PicPreferredJuv  == true ? ImageGender.Juvenile
+                     : ImageGender.Unknown
     };
 }

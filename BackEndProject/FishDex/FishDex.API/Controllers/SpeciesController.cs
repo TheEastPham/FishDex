@@ -8,7 +8,9 @@ namespace FishDex.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class SpeciesController(ISpeciesService speciesService) : ControllerBase
+public class SpeciesController(
+    ISpeciesService speciesService,
+    IMediaService mediaService) : ControllerBase
 {
     [HttpGet("families")]
     public async Task<IActionResult> GetFamilies(CancellationToken ct)
@@ -35,6 +37,13 @@ public class SpeciesController(ISpeciesService speciesService) : ControllerBase
     public async Task<IActionResult> GetTopLanguages(CancellationToken ct)
     {
         var result = await speciesService.GetTopLanguagesAsync(ct);
+        return Ok(result);
+    }
+
+    [HttpGet("{specCode:int}/media")]
+    public async Task<IActionResult> GetMedia(int specCode, CancellationToken ct)
+    {
+        var result = await mediaService.GetBySpecCodeAsync(specCode, ct);
         return Ok(result);
     }
 }

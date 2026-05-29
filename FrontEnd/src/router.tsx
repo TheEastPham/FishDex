@@ -1,15 +1,14 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
-import LoginPage from './features/auth/LoginPage';
-import CallbackPage from './features/auth/CallbackPage';
-import ProtectedRoute from './components/ProtectedRoute';
+import LoginPage from '@/features/auth/LoginPage';
+import CallbackPage from '@/features/auth/CallbackPage';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import AppShell from '@/layouts/AppShell';
 
-// Placeholders — replaced in Stories 5.2 / 5.3 / 5.4 / 5.5
-const DashboardPage = () => (
-  <div className="p-8">
-    <h1 className="text-xl font-semibold text-slate-800">Dashboard</h1>
-    <p className="text-sm text-slate-500 mt-1">Story 5.2 — coming soon</p>
-  </div>
-);
+// Placeholders — replaced story by story
+const DashboardPage    = () => <p className="text-muted-foreground text-sm">Dashboard — Story 5.2</p>;
+const FishSearchPage   = () => <p className="text-muted-foreground text-sm">Fish Search — Story 5.3</p>;
+const AIChatPage       = () => <p className="text-muted-foreground text-sm">AI Chat — Story 5.4</p>;
+const ImageSearchPage  = () => <p className="text-muted-foreground text-sm">Image Search — Story 5.5</p>;
 
 export const router = createBrowserRouter([
   { path: '/login',    element: <LoginPage /> },
@@ -17,8 +16,16 @@ export const router = createBrowserRouter([
   {
     element: <ProtectedRoute />,
     children: [
-      { index: true,         element: <Navigate to="/dashboard" replace /> },
-      { path: '/dashboard',  element: <DashboardPage /> },
+      {
+        element: <AppShell />,
+        children: [
+          { index: true,          element: <Navigate to="/dashboard" replace /> },
+          { path: '/dashboard',   element: <DashboardPage /> },
+          { path: '/fish',        element: <FishSearchPage /> },
+          { path: '/ai-chat',     element: <AIChatPage /> },
+          { path: '/image-search',element: <ImageSearchPage /> },
+        ],
+      },
     ],
   },
 ]);

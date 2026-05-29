@@ -10,7 +10,8 @@ namespace FishDex.API.Controllers;
 [Authorize]
 public class SpeciesController(
     ISpeciesService speciesService,
-    IMediaService mediaService) : ControllerBase
+    IMediaService mediaService,
+    IOccurrenceService occurrenceService) : ControllerBase
 {
     [HttpGet("families")]
     public async Task<IActionResult> GetFamilies(CancellationToken ct)
@@ -44,6 +45,13 @@ public class SpeciesController(
     public async Task<IActionResult> GetMedia(int specCode, CancellationToken ct)
     {
         var result = await mediaService.GetBySpecCodeAsync(specCode, ct);
+        return Ok(result);
+    }
+
+    [HttpGet("{specCode:int}/occurrences")]
+    public async Task<IActionResult> GetOccurrences(int specCode, [FromQuery] int limit = 500, CancellationToken ct = default)
+    {
+        var result = await occurrenceService.GetBySpecCodeAsync(specCode, limit, ct);
         return Ok(result);
     }
 }

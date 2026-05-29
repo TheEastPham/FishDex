@@ -4,9 +4,10 @@ import CallbackPage from '@/features/auth/CallbackPage';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import AppShell from '@/layouts/AppShell';
 
+import FishSearchPage from '@/features/fish-search/FishSearchPage';
+
 // Placeholders — replaced story by story
 const DashboardPage    = () => <p className="text-muted-foreground text-sm">Dashboard — Story 5.2</p>;
-const FishSearchPage   = () => <p className="text-muted-foreground text-sm">Fish Search — Story 5.3</p>;
 const AIChatPage       = () => <p className="text-muted-foreground text-sm">AI Chat — Story 5.4</p>;
 const ImageSearchPage  = () => <p className="text-muted-foreground text-sm">Image Search — Story 5.5</p>;
 

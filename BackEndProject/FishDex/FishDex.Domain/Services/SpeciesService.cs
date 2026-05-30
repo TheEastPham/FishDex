@@ -114,39 +114,28 @@ public class SpeciesService(
         var species = await speciesRepo.GetWithDetailsAsync(specCode, ct);
         if (species == null) return null;
 
-        // Parallel fetch ecology + stocks
-        var ecologyTask = ecologyService.GetBySpecCodeAsync(specCode, ct);
-        var stocksTask  = stockService.GetBySpecCodeAsync(specCode, ct);
-        await Task.WhenAll(ecologyTask, stocksTask);
-
-        var ecology = await ecologyTask;
-        var stocks  = await stocksTask;
+        // Sequential — EF Core DbContext không thread-safe, không dùng Task.WhenAll với cùng scope
+        var ecology    = await ecologyService.GetBySpecCodeAsync(specCode, ct);
+        var stocks     = await stockService.GetBySpecCodeAsync(specCode, ct);
         var firstStock = stocks.FirstOrDefault();
 
-        // Parallel fetch feeding/habitat/conservation/environment
-        var feedingTask      = ecology    != null ? ecologyService.GetFeedingAsync(ecology.EcologyId, ct)         : Task.FromResult<FeedingAndDietDto?>(null);
-        var habitatTask      = ecology    != null ? ecologyService.GetHabitatZoneAsync(ecology.EcologyId, ct)     : Task.FromResult<HabitatZoneDto?>(null);
-        var conservationTask = firstStock != null ? stockService.GetConservationAsync(firstStock.StockCode, ct)   : Task.FromResult<StockConservationDto?>(null);
-        var environmentTask  = firstStock != null ? stockService.GetEnvironmentAsync(firstStock.StockCode, ct)    : Task.FromResult<StockEnvironmentDto?>(null);
-        await Task.WhenAll(feedingTask, habitatTask, conservationTask, environmentTask);
+        FeedingAndDietDto?      feeding      = ecology    != null ? await ecologyService.GetFeedingAsync(ecology.EcologyId, ct)       : null;
+        HabitatZoneDto?         habitat      = ecology    != null ? await ecologyService.GetHabitatZoneAsync(ecology.EcologyId, ct)   : null;
+        StockConservationDto?   conservation = firstStock != null ? await stockService.GetConservationAsync(firstStock.StockCode, ct) : null;
+        StockEnvironmentDto?    environment  = firstStock != null ? await stockService.GetEnvironmentAsync(firstStock.StockCode, ct)  : null;
 
-        var feeding      = await feedingTask;
-        var habitat      = await habitatTask;
-        var conservation = await conservationTask;
-        var environment  = await environmentTask;
-
-        // Presign images
-        async Task<string?> Presign(FishDex.EFCore.Entity.Media.SystemImage? pic) =>
-            pic != null ? await storage.GetPresignedUrlAsync($"{specCode}/{pic.Id}{Path.GetExtension(pic.Name)}", ct) : null;
-
-        var preferredPic = species.Pictures?.FirstOrDefault(p => p.PicPreferred   == true);
+        // Presigned URLs — S3 không dùng DbContext, an toàn chạy song song
+        var preferredPic = species.Pictures?.FirstOrDefault(p => p.PicPreferred    == true);
         var malePic      = species.Pictures?.FirstOrDefault(p => p.PicPreferredMale == true);
         var femalePic    = species.Pictures?.FirstOrDefault(p => p.PicPreferredFem  == true);
 
-        var preferredUrlTask = Presign(preferredPic);
-        var maleUrlTask      = Presign(malePic);
-        var femaleUrlTask    = Presign(femalePic);
-        await Task.WhenAll(preferredUrlTask, maleUrlTask, femaleUrlTask);
+        async Task<string?> Presign(FishDex.EFCore.Entity.Media.SystemImage? pic) =>
+            pic != null ? await storage.GetPresignedUrlAsync($"{specCode}/{pic.Id}{Path.GetExtension(pic.Name)}", ct) : null;
+
+        var (preferredUrl, maleUrl, femaleUrl) = (
+            await Presign(preferredPic),
+            await Presign(malePic),
+            await Presign(femalePic));
 
         return new SpeciesDetailDto
         {
@@ -162,9 +151,9 @@ public class SpeciesService(
             DemersPelag         = species.DemersPelag,
             LifeCycle           = species.LifeCycle,
             Remark              = species.Remark,
-            PreferredImageUrl   = await preferredUrlTask,
-            MaleImageUrl        = await maleUrlTask,
-            FemaleImageUrl      = await femaleUrlTask,
+            PreferredImageUrl   = preferredUrl,
+            MaleImageUrl        = maleUrl,
+            FemaleImageUrl      = femaleUrl,
             Ecology = feeding != null || habitat != null ? new SpeciesDetailEcologyDto
             {
                 FeedingType  = feeding?.FeedingType,

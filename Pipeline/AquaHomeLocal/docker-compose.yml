@@ -37,5 +37,33 @@ services:
       timeout: 5s
       retries: 5
 
+  aquahome-api:
+    build:
+      context: ../../BackEndProject
+      dockerfile: ../Pipeline/AquaHomeLocal/Dockerfile.api
+    image: aquahome-api:local
+    container_name: aquahome_api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__DefaultConnection: ${AQUAHOME_DB_CONN}
+      JwtSettings__SecretKey:  ${JWT_SECRET_KEY}
+      JwtSettings__Issuer:     ${JWT_ISSUER}
+      JwtSettings__Audience:   ${JWT_AUDIENCE}
+      JwtSettings__ExpiryMinutes: ${JWT_EXPIRY_MINUTES}
+    ports:
+      - "8082:8080"
+    networks:
+      - default
+      - fishlover_local
+    depends_on:
+      aquahome-db:
+        condition: service_healthy
+
 volumes:
   aquahome_sqldata:
+
+networks:
+  fishlover_local:
+    external: true

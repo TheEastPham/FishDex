@@ -1,4 +1,6 @@
 using Autofac;
+using AquaHome.Domain.Services;
+using AquaHome.Domain.Services.Interfaces;
 
 namespace AquaHome.Domain.Modules;
 
@@ -6,6 +8,7 @@ public class AquaHomeModule : Module
 {
     protected override void Load(ContainerBuilder builder)
     {
-        // Services will be registered here in Stories 3.2 + 3.3
+        builder.RegisterType<AquariumService>().As<IAquariumService>().InstancePerLifetimeScope();
+        builder.RegisterType<FavoriteService>().As<IFavoriteService>().InstancePerLifetimeScope();
     }
 }

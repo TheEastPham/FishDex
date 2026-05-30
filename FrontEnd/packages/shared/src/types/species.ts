@@ -28,6 +28,12 @@ export interface SpeciesDetail {
   preferredCommonName: string | null;
   genusName: string | null;
   familyName: string | null;
+
+  kingdom: string;
+  phylum: string;
+  className: string | null;
+  orderName: string | null;
+
   waterType: string;
   length: number | null;
   weight: number | null;
@@ -35,6 +41,9 @@ export interface SpeciesDetail {
   demersPelag: string | null;
   lifeCycle: string | null;
   remark: string | null;
+
+  longevityWild: number | null;
+  longevityCaptive: number | null;
 
   preferredImageUrl: string | null;
   maleImageUrl: string | null;
@@ -44,6 +53,9 @@ export interface SpeciesDetail {
     feedingType: string | null;
     dietTroph: number | null;
     habitatZones: string[];
+    schooling: boolean | null;
+    shoaling: boolean | null;
+    solitary: boolean | null;
   } | null;
 
   conservation: {
@@ -58,6 +70,8 @@ export interface SpeciesDetail {
     tempMax: number | null;
     phMin: number | null;
     phMax: number | null;
+    dHMin: number | null;
+    dHMax: number | null;
   } | null;
 }
 
@@ -79,4 +93,9 @@ export interface OccurrenceDto {
   latitudeDec: number | null;
   longitudeDec: number | null;
   province: string | null;
+}
+
+export interface CountryDto {
+  code: string;
+  name: string;
 }

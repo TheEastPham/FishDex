@@ -1,15 +1,22 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useTranslation, cn, getSpeciesDetail, getSpeciesMedia, getSpeciesOccurrences } from '@fishlover/shared';
-import type { SpeciesDetail, SystemImageDto, OccurrenceDto } from '@fishlover/shared';
+import { 
+  useTranslation, cn, getSpeciesDetail, getSpeciesMedia, 
+  getSpeciesOccurrences, getSpeciesCountries, getRelatedSpecies 
+} from '@fishlover/shared';
+import type { 
+  SpeciesDetail, SystemImageDto, OccurrenceDto, 
+  CountryDto, SpeciesSearchResult 
+} from '@fishlover/shared';
 import {
   ArrowLeft, Share2, Heart, Fish, Ruler, Droplets, Map as MapIcon,
-  Image as ImageIcon, Scale, AlertTriangle, Layers, Shield, Leaf,
-  Thermometer, TestTube, BookOpen, FileText,
+  Image as ImageIcon, Scale, AlertTriangle, Shield,
+  Thermometer, TestTube, BookOpen, FileText, Activity, Clock
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import SpeciesCard from '../fish-search/components/SpeciesCard';
 
 // Fix leaflet default icon issue
 import iconUrl from 'leaflet/dist/images/marker-icon.png';
@@ -88,6 +95,8 @@ export default function FishProfilePage() {
   const [detail, setDetail] = useState<SpeciesDetail | null>(null);
   const [media, setMedia] = useState<SystemImageDto[]>([]);
   const [occurrences, setOccurrences] = useState<OccurrenceDto[]>([]);
+  const [countries, setCountries] = useState<CountryDto[]>([]);
+  const [relatedSpecies, setRelatedSpecies] = useState<SpeciesSearchResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
 
@@ -97,14 +106,18 @@ export default function FishProfilePage() {
       setLoading(true);
       try {
         const id = parseInt(specCode, 10);
-        const [detailData, mediaData, occData] = await Promise.all([
+        const [detailData, mediaData, occData, countryData, relatedData] = await Promise.all([
           getSpeciesDetail(id, i18n.language),
           getSpeciesMedia(id),
           getSpeciesOccurrences(id),
+          getSpeciesCountries(id),
+          getRelatedSpecies(id, 6, i18n.language),
         ]);
         setDetail(detailData);
         setMedia(mediaData);
         setOccurrences(occData);
+        setCountries(countryData);
+        setRelatedSpecies(relatedData);
       } catch (err) {
         console.error(err);
       } finally {
@@ -146,7 +159,16 @@ export default function FishProfilePage() {
   const dangerousColor = DANGEROUS_COLORS[rawDangerous] || 'text-amber-400';
   const dangerousLabel = rawDangerous ? t(`dangerous.${dangerousKey}`) : t('dangerous.unknown');
 
-  const uniqueCountries = [...new Set(occurrences.map(o => o.countryCode).filter(Boolean))];
+  const getSocialBehavior = () => {
+    if (!detail.ecology) return null;
+    const { schooling, shoaling, solitary } = detail.ecology;
+    const behaviors = [];
+    if (schooling) behaviors.push(t('fish.schooling'));
+    if (shoaling) behaviors.push(t('fish.shoaling'));
+    if (solitary) behaviors.push(t('fish.solitary'));
+    return behaviors.length > 0 ? behaviors.join(', ') : null;
+  };
+  const socialBehavior = getSocialBehavior();
 
   /* ── Render ───────────────────────────────────────────────── */
   return (
@@ -180,9 +202,13 @@ export default function FishProfilePage() {
 
         {/* Title overlay */}
         <div className="absolute bottom-8 w-full px-6 md:px-12 text-center max-w-5xl mx-auto left-0 right-0">
-          {/* Taxonomy breadcrumb */}
-          <div className="inline-flex items-center gap-1.5 mb-4 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 text-xs font-semibold text-slate-300 uppercase tracking-wider">
+          {/* Full Taxonomy breadcrumb */}
+          <div className="inline-flex flex-wrap justify-center items-center gap-1.5 mb-4 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 text-xs font-semibold text-slate-300 uppercase tracking-wider max-w-full">
             <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+            {detail.kingdom && <><span className="hidden sm:inline">{detail.kingdom}</span><span className="text-slate-500 hidden sm:inline">›</span></>}
+            {detail.phylum && <><span className="hidden sm:inline">{detail.phylum}</span><span className="text-slate-500 hidden sm:inline">›</span></>}
+            {detail.className && <><span className="hidden md:inline">{detail.className}</span><span className="text-slate-500 hidden md:inline">›</span></>}
+            {detail.orderName && <><span className="hidden lg:inline">{detail.orderName}</span><span className="text-slate-500 hidden lg:inline">›</span></>}
             {detail.familyName && <><span>{detail.familyName}</span><span className="text-slate-500">›</span></>}
             {detail.genusName && <><span>{detail.genusName}</span><span className="text-slate-500">›</span></>}
             <span className="text-white normal-case italic">{detail.speciesName.split(' ').pop()}</span>
@@ -206,7 +232,7 @@ export default function FishProfilePage() {
           <StatCard icon={<Droplets className="w-7 h-7 text-sky-400" />}   label={t('fish.waterType')} value={detail.waterType || '—'} />
           <StatCard icon={<Ruler className="w-7 h-7 text-emerald-400" />}   label={t('fish.length')}    value={detail.length ? `${detail.length} cm` : '—'} />
           <StatCard icon={<Scale className="w-7 h-7 text-orange-400" />}    label={t('fish.weight')}    value={detail.weight ? `${detail.weight} kg` : '—'} />
-          <StatCard icon={<Layers className="w-7 h-7 text-indigo-400" />}   label={t('fish.lifeCycle')} value={detail.lifeCycle || '—'} />
+          <StatCard icon={<Clock className="w-7 h-7 text-indigo-400" />}    label={t('fish.longevityWild')} value={detail.longevityWild ? `${detail.longevityWild} Yrs` : '—'} />
         </div>
 
         {/* ─── Row 2: Water Params + Ecology ─── */}
@@ -214,7 +240,7 @@ export default function FishProfilePage() {
           {/* Water Parameters */}
           <div className="bg-[#202226] rounded-2xl p-6 shadow-lg border border-slate-800/80">
             <SectionHeader icon={<Droplets className="w-5 h-5 text-sky-400" />} title={t('fish.waterParameters')} />
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div className="bg-[#141518] rounded-xl p-4 border border-slate-800/50 text-center">
                 <Thermometer className="w-5 h-5 text-red-400 mx-auto mb-2" />
                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Temp</p>
@@ -231,6 +257,14 @@ export default function FishProfilePage() {
                 </p>
                 <p className="text-xs text-slate-500">Level</p>
               </div>
+              <div className="bg-[#141518] rounded-xl p-4 border border-slate-800/50 text-center">
+                <Activity className="w-5 h-5 text-cyan-400 mx-auto mb-2" />
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">{t('fish.waterHardness')}</p>
+                <p className="text-xl font-black text-slate-200">
+                  {detail.environment?.dHMin ?? '?'} – {detail.environment?.dHMax ?? '?'}
+                </p>
+                <p className="text-xs text-slate-500">dGH</p>
+              </div>
             </div>
           </div>
 
@@ -240,8 +274,8 @@ export default function FishProfilePage() {
             <div className="space-y-3">
               <InfoRow label={t('fish.feedingType')} value={detail.ecology?.feedingType} />
               <InfoRow label={t('fish.trophicLevel')} value={detail.ecology?.dietTroph ? `${detail.ecology.dietTroph.toFixed(1)}` : null} />
-              <InfoRow label={t('fish.habitatZones')} value={detail.ecology?.habitatZones?.length ? detail.ecology.habitatZones.join(', ') : null} />
               <InfoRow label={t('fish.demerspelagic')} value={detail.demersPelag} />
+              <InfoRow label={t('fish.socialBehavior')} value={socialBehavior} />
             </div>
           </div>
         </div>
@@ -352,13 +386,13 @@ export default function FishProfilePage() {
               </MapContainer>
             </div>
             
-            {uniqueCountries.length > 0 && (
+            {countries.length > 0 && (
               <div className="pt-2 border-t border-slate-800/50">
                 <p className="text-sm font-semibold text-slate-400 mb-3">{t('fish.countriesOfOrigin')}</p>
                 <div className="flex flex-wrap gap-2">
-                  {uniqueCountries.map(code => (
-                    <span key={code} className="inline-flex items-center gap-1.5 bg-[#141518] border border-slate-800/50 rounded-lg px-3 py-1.5 text-sm font-semibold text-slate-300">
-                      <span className="text-xs">🌍</span> {code}
+                  {countries.map(c => (
+                    <span key={c.code} className="inline-flex items-center gap-1.5 bg-[#141518] border border-slate-800/50 rounded-lg px-3 py-1.5 text-sm font-semibold text-slate-300">
+                      <span className="text-xs">🌍</span> {c.name}
                     </span>
                   ))}
                 </div>
@@ -391,7 +425,18 @@ export default function FishProfilePage() {
           </div>
         )}
 
-        {/* (Map section was combined above, end of file) */}
+        {/* ─── Row 8: Related Species ─── */}
+        {relatedSpecies.length > 0 && (
+          <div className="pt-6 mt-8 border-t border-slate-800/50">
+            <SectionHeader icon={<Fish className="w-5 h-5 text-fuchsia-400" />} title={t('fish.relatedSpecies')} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+              {relatedSpecies.map((species, i) => (
+                <SpeciesCard key={species.specCode} species={species} index={i} />
+              ))}
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );

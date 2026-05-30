@@ -1,6 +1,6 @@
 import axios from 'axios';
 import type { PagedResult } from '../../types/common';
-import type { SpeciesSearchResult, SearchSpeciesParams, SpeciesDetail, SystemImageDto, OccurrenceDto } from '../../types/species';
+import type { SpeciesSearchResult, SearchSpeciesParams, SpeciesDetail, SystemImageDto, OccurrenceDto, CountryDto } from '../../types/species';
 import { useAuthStore } from '../../store/authStore';
 
 const fishDexClient = axios.create({
@@ -45,5 +45,16 @@ export async function getSpeciesOccurrences(specCode: number): Promise<Occurrenc
   const { data } = await fishDexClient.get<OccurrenceDto[]>(`/api/species/${specCode}/occurrences`, {
     params: { limit: 500 }
   });
+  return data;
+}
+
+export async function getSpeciesCountries(specCode: number): Promise<CountryDto[]> {
+  const { data } = await fishDexClient.get<CountryDto[]>(`/api/species/${specCode}/countries`);
+  return data;
+}
+
+export async function getRelatedSpecies(specCode: number, limit: number = 6, language?: string): Promise<SpeciesSearchResult[]> {
+  const params = language ? { limit, language } : { limit };
+  const { data } = await fishDexClient.get<SpeciesSearchResult[]>(`/api/species/${specCode}/related`, { params });
   return data;
 }

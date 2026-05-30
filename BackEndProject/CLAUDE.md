@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Rules
+
+- **Khi làm task BE**: chỉ `git add` và commit các file trong `BackEndProject/` và `Pipeline/`. KHÔNG bao giờ stage hoặc commit file trong `FrontEnd/` — đó là phần của team FE, họ tự quản lý commit riêng.
+
 ## Project Overview
 
 FishLover is a microservices-based backend for a fish species management and aquarium tracking platform. It targets .NET 9 / C# 13 and contains three services behind an Ocelot API Gateway.

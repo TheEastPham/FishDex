@@ -59,6 +59,7 @@ public class OpenIddictSeeder(IServiceProvider serviceProvider) : IHostedService
                 OpenIddictConstants.Permissions.Scopes.Email,
                 OpenIddictConstants.Permissions.Scopes.Profile,
                 OpenIddictConstants.Permissions.Scopes.Roles,
+                OpenIddictConstants.Permissions.Prefixes.Scope + OpenIddictConstants.Scopes.OfflineAccess,
             }
         }, cancellationToken);
     }
@@ -70,7 +71,15 @@ public class OpenIddictSeeder(IServiceProvider serviceProvider) : IHostedService
         OpenIddictApplicationDescriptor descriptor,
         CancellationToken cancellationToken)
     {
-        if (await manager.FindByClientIdAsync(descriptor.ClientId!, cancellationToken) is null)
+        var existing = await manager.FindByClientIdAsync(descriptor.ClientId!, cancellationToken);
+        if (existing is null)
+        {
             await manager.CreateAsync(descriptor, cancellationToken);
+        }
+        else
+        {
+            await manager.PopulateAsync(existing, descriptor, cancellationToken);
+            await manager.UpdateAsync(existing, cancellationToken);
+        }
     }
 }

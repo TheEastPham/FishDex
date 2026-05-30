@@ -1,0 +1,16 @@
+# Environments
+.env
+.env.*
+!.env.example
+
+# Data files
+*.parquet
+parquetData/
+
+# Python caches
+__pycache__/
+*.pyc
+
+# IDEs
+.idea/
+.vscode/

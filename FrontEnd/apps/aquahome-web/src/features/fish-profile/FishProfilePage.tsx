@@ -31,9 +31,22 @@ const IUCN_COLORS: Record<string, { bg: string; text: string; border: string }> 
   EX: { bg: 'bg-slate-500/15', text: 'text-slate-400', border: 'border-slate-500/30' },
 };
 
-const IUCN_LABELS: Record<string, string> = {
-  LC: 'Least Concern', NT: 'Near Threatened', VU: 'Vulnerable',
-  EN: 'Endangered', CR: 'Critically Endangered', EW: 'Extinct in Wild', EX: 'Extinct',
+const DANGEROUS_COLORS: Record<string, string> = {
+  harmless: 'text-emerald-400',
+  venomous: 'text-rose-500',
+  traumatogenic: 'text-orange-500',
+  'poisonous to eat': 'text-purple-500',
+  ciguatera: 'text-red-500',
+  'reports of ciguatera poisoning': 'text-red-500',
+};
+
+const DANGEROUS_KEYS: Record<string, string> = {
+  harmless: 'harmless',
+  venomous: 'venomous',
+  traumatogenic: 'traumatogenic',
+  'poisonous to eat': 'poisonous_to_eat',
+  ciguatera: 'ciguatera',
+  'reports of ciguatera poisoning': 'ciguatera',
 };
 
 function InfoRow({ label, value, icon }: { label: string; value: string | null | undefined; icon?: React.ReactNode }) {
@@ -125,7 +138,13 @@ export default function FishProfilePage() {
 
   const iucnCode = detail.conservation?.iucnCode?.toUpperCase() ?? '';
   const iucnStyle = IUCN_COLORS[iucnCode] ?? IUCN_COLORS['LC'];
-  const iucnLabel = IUCN_LABELS[iucnCode] ?? 'Not Evaluated';
+  const iucnLabel = iucnCode ? t(`iucn.${iucnCode}`) : t('iucn.NE');
+  const isEndangered = ['VU', 'EN', 'CR', 'EW'].includes(iucnCode);
+
+  const rawDangerous = detail.dangerous?.toLowerCase() || '';
+  const dangerousKey = DANGEROUS_KEYS[rawDangerous] || 'unknown';
+  const dangerousColor = DANGEROUS_COLORS[rawDangerous] || 'text-amber-400';
+  const dangerousLabel = rawDangerous ? t(`dangerous.${dangerousKey}`) : t('dangerous.unknown');
 
   const uniqueCountries = [...new Set(occurrences.map(o => o.countryCode).filter(Boolean))];
 
@@ -220,9 +239,9 @@ export default function FishProfilePage() {
             <SectionHeader icon={<Fish className="w-5 h-5 text-teal-400" />} title={t('fish.ecology')} />
             <div className="space-y-3">
               <InfoRow label={t('fish.feedingType')} value={detail.ecology?.feedingType} />
-              <InfoRow label="Trophic Level" value={detail.ecology?.dietTroph ? `${detail.ecology.dietTroph.toFixed(1)}` : null} />
+              <InfoRow label={t('fish.trophicLevel')} value={detail.ecology?.dietTroph ? `${detail.ecology.dietTroph.toFixed(1)}` : null} />
               <InfoRow label={t('fish.habitatZones')} value={detail.ecology?.habitatZones?.length ? detail.ecology.habitatZones.join(', ') : null} />
-              <InfoRow label="Demerspelagic" value={detail.demersPelag} />
+              <InfoRow label={t('fish.demerspelagic')} value={detail.demersPelag} />
             </div>
           </div>
         </div>
@@ -232,6 +251,12 @@ export default function FishProfilePage() {
           {/* IUCN Status — larger card */}
           <div className="md:col-span-2 bg-[#202226] rounded-2xl p-6 shadow-lg border border-slate-800/80">
             <SectionHeader icon={<Shield className="w-5 h-5 text-rose-400" />} title={t('fish.conservation')} />
+            {isEndangered && (
+              <div className="mb-4 bg-rose-500/10 border border-rose-500/30 p-3.5 rounded-xl flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+                <p className="text-sm text-rose-200/90 leading-relaxed font-medium">{t('fish.endangeredWarning')}</p>
+              </div>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* IUCN Badge */}
               <div className={cn("rounded-xl p-5 border flex flex-col items-center justify-center text-center", iucnStyle.bg, iucnStyle.border)}>
@@ -243,10 +268,10 @@ export default function FishProfilePage() {
               </div>
               {/* Conservation details */}
               <div className="space-y-3">
-                <InfoRow label={t('fish.citesCode')} value={detail.conservation?.citesCode || 'Not Listed'} />
+                <InfoRow label={t('fish.citesCode')} value={detail.conservation?.citesCode || t('fish.notListed')} />
                 {detail.conservation?.iucnAssessment && (
                   <div className="bg-[#141518] p-4 rounded-xl border border-slate-800/50">
-                    <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mb-2">Assessment</p>
+                    <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mb-2">{t('fish.assessment')}</p>
                     <p className="text-sm text-slate-300 leading-relaxed line-clamp-3">{detail.conservation.iucnAssessment}</p>
                   </div>
                 )}
@@ -256,15 +281,12 @@ export default function FishProfilePage() {
 
           {/* Dangerous */}
           <div className="bg-[#202226] rounded-2xl p-6 shadow-lg border border-slate-800/80 flex flex-col">
-            <SectionHeader icon={<AlertTriangle className="w-5 h-5 text-amber-400" />} title="Dangerous" />
+            <SectionHeader icon={<AlertTriangle className="w-5 h-5 text-amber-400" />} title={t('fish.dangerous')} />
             <div className="flex-1 flex flex-col items-center justify-center text-center">
-              <span className={cn(
-                "text-2xl font-black mb-1",
-                detail.dangerous && detail.dangerous !== 'harmless' ? 'text-amber-400' : 'text-emerald-400'
-              )}>
-                {detail.dangerous ? detail.dangerous.charAt(0).toUpperCase() + detail.dangerous.slice(1) : 'Harmless'}
+              <span className={cn("text-2xl font-black mb-1 text-center", dangerousColor)}>
+                {dangerousLabel}
               </span>
-              <span className="text-xs text-slate-500">Safety rating</span>
+              <span className="text-xs text-slate-500">{t('fish.safetyRating')}</span>
             </div>
           </div>
         </div>
@@ -272,7 +294,7 @@ export default function FishProfilePage() {
         {/* ─── Row 4: Remark / Description ─── */}
         {detail.remark && (
           <div className="bg-[#202226] rounded-2xl p-6 shadow-lg border border-slate-800/80">
-            <SectionHeader icon={<BookOpen className="w-5 h-5 text-amber-400" />} title="Description" />
+            <SectionHeader icon={<BookOpen className="w-5 h-5 text-amber-400" />} title={t('fish.description')} />
             <p className="text-slate-300 text-[15px] leading-relaxed whitespace-pre-line">{detail.remark}</p>
           </div>
         )}
@@ -280,14 +302,14 @@ export default function FishProfilePage() {
         {/* ─── Row 5: Male vs Female Comparison ─── */}
         {(detail.maleImageUrl || detail.femaleImageUrl) && (
           <div className="bg-[#202226] rounded-2xl p-6 shadow-lg border border-slate-800/80">
-            <SectionHeader icon={<FileText className="w-5 h-5 text-pink-400" />} title="Sexual Dimorphism" />
+            <SectionHeader icon={<FileText className="w-5 h-5 text-pink-400" />} title={t('fish.sexualDimorphism')} />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {detail.maleImageUrl && (
                 <div className="relative rounded-xl overflow-hidden border border-slate-800/50 group">
                   <img src={detail.maleImageUrl} alt="Male" className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500" />
                   <div className="absolute bottom-0 w-full bg-gradient-to-t from-black/80 to-transparent p-3">
                     <span className="text-white font-bold text-sm flex items-center gap-1.5">
-                      <span className="w-3 h-3 rounded-full bg-sky-400" /> Male
+                      <span className="w-3 h-3 rounded-full bg-sky-400" /> {t('fish.male')}
                     </span>
                   </div>
                 </div>
@@ -297,7 +319,7 @@ export default function FishProfilePage() {
                   <img src={detail.femaleImageUrl} alt="Female" className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500" />
                   <div className="absolute bottom-0 w-full bg-gradient-to-t from-black/80 to-transparent p-3">
                     <span className="text-white font-bold text-sm flex items-center gap-1.5">
-                      <span className="w-3 h-3 rounded-full bg-pink-400" /> Female
+                      <span className="w-3 h-3 rounded-full bg-pink-400" /> {t('fish.female')}
                     </span>
                   </div>
                 </div>
@@ -306,17 +328,42 @@ export default function FishProfilePage() {
           </div>
         )}
 
-        {/* ─── Row 6: Countries of Origin ─── */}
-        {uniqueCountries.length > 0 && (
+        {/* ─── Row 6: Map & Countries Combined ─── */}
+        {occurrences.length > 0 && (
           <div className="bg-[#202226] rounded-2xl p-6 shadow-lg border border-slate-800/80">
-            <SectionHeader icon={<Leaf className="w-5 h-5 text-green-400" />} title="Countries of Origin" />
-            <div className="flex flex-wrap gap-2">
-              {uniqueCountries.map(code => (
-                <span key={code} className="inline-flex items-center gap-1.5 bg-[#141518] border border-slate-800/50 rounded-lg px-3 py-2 text-sm font-semibold text-slate-300">
-                  <span className="text-xs">🌍</span> {code}
-                </span>
-              ))}
+            <SectionHeader icon={<MapIcon className="w-5 h-5 text-green-400" />} title={`${t('fish.occurrencesMap')} (${occurrences.length} records)`} />
+            <div className="h-[400px] w-full rounded-xl overflow-hidden border border-slate-800/50 relative z-0 mb-4">
+              <MapContainer center={mapCenter} zoom={3} scrollWheelZoom={false} className="h-full w-full z-0" style={{ background: '#141518' }}>
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                  url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                />
+                {occurrences.map(occ => occ.latitudeDec && occ.longitudeDec && (
+                  <Marker key={occ.id} position={[occ.latitudeDec, occ.longitudeDec]}>
+                    <Popup>
+                      <div className="text-slate-800">
+                        <p className="font-bold">{occ.locality || 'Unknown'}</p>
+                        {occ.province && <p className="text-xs text-slate-600">{occ.province}</p>}
+                        {occ.countryCode && <p className="text-xs text-slate-500">{occ.countryCode}</p>}
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))}
+              </MapContainer>
             </div>
+            
+            {uniqueCountries.length > 0 && (
+              <div className="pt-2 border-t border-slate-800/50">
+                <p className="text-sm font-semibold text-slate-400 mb-3">{t('fish.countriesOfOrigin')}</p>
+                <div className="flex flex-wrap gap-2">
+                  {uniqueCountries.map(code => (
+                    <span key={code} className="inline-flex items-center gap-1.5 bg-[#141518] border border-slate-800/50 rounded-lg px-3 py-1.5 text-sm font-semibold text-slate-300">
+                      <span className="text-xs">🌍</span> {code}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -344,31 +391,7 @@ export default function FishProfilePage() {
           </div>
         )}
 
-        {/* ─── Row 8: Map ─── */}
-        {occurrences.length > 0 && (
-          <div className="bg-[#202226] rounded-2xl p-6 shadow-lg border border-slate-800/80">
-            <SectionHeader icon={<MapIcon className="w-5 h-5 text-green-400" />} title={`${t('fish.occurrencesMap')} (${occurrences.length} records)`} />
-            <div className="h-[400px] w-full rounded-xl overflow-hidden border border-slate-800/50 relative z-0">
-              <MapContainer center={mapCenter} zoom={3} scrollWheelZoom={false} className="h-full w-full z-0" style={{ background: '#141518' }}>
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                  url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                />
-                {occurrences.map(occ => occ.latitudeDec && occ.longitudeDec && (
-                  <Marker key={occ.id} position={[occ.latitudeDec, occ.longitudeDec]}>
-                    <Popup>
-                      <div className="text-slate-800">
-                        <p className="font-bold">{occ.locality || 'Unknown'}</p>
-                        {occ.province && <p className="text-xs text-slate-600">{occ.province}</p>}
-                        {occ.countryCode && <p className="text-xs text-slate-500">{occ.countryCode}</p>}
-                      </div>
-                    </Popup>
-                  </Marker>
-                ))}
-              </MapContainer>
-            </div>
-          </div>
-        )}
+        {/* (Map section was combined above, end of file) */}
       </div>
     </div>
   );

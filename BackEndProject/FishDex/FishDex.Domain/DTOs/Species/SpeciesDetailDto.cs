@@ -15,6 +15,16 @@ public class SpeciesDetailDto
     public string? LifeCycle { get; init; }
     public string? Remark { get; init; }
 
+    // Taxonomy
+    public string Kingdom { get; init; } = "Animalia";
+    public string Phylum { get; init; } = "Chordata";
+    public string? ClassName { get; init; }
+    public string? OrderName { get; init; }
+
+    // Lifespan
+    public double? LongevityWild { get; init; }
+    public double? LongevityCaptive { get; init; }
+
     public string? PreferredImageUrl { get; init; }
     public string? MaleImageUrl { get; init; }
     public string? FemaleImageUrl { get; init; }
@@ -29,6 +39,9 @@ public class SpeciesDetailEcologyDto
     public string? FeedingType { get; init; }
     public decimal? DietTroph { get; init; }
     public IReadOnlyList<string> HabitatZones { get; init; } = [];
+    public bool? Schooling { get; init; }
+    public bool? Shoaling { get; init; }
+    public bool? Solitary { get; init; }
 }
 
 public class SpeciesDetailConservationDto
@@ -45,4 +58,7 @@ public class SpeciesDetailEnvironmentDto
     public double? TempMax { get; init; }
     public double? PhMin { get; init; }
     public double? PhMax { get; init; }
+    /// <summary>Water hardness in dGH (German degrees). GH ≈ dGH × 17.8 ppm.</summary>
+    public double? DHMin { get; init; }
+    public double? DHMax { get; init; }
 }

@@ -18,6 +18,10 @@ public class Ecology
     public DateTime? Datechecked { get; set; }
     public DateTime? TS { get; set; }
 
+    public bool? Schooling { get; set; }
+    public bool? Shoaling { get; set; }
+    public bool? Solitary { get; set; }
+
     public HabitatZone? HabitatZone { get; set; }
     public FeedingAndDiet? FeedingAndDiet { get; set; }
     public Associations? Associations { get; set; }

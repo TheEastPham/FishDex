@@ -152,28 +152,39 @@ public class SpeciesService(
             DemersPelag         = species.DemersPelag,
             LifeCycle           = species.LifeCycle,
             Remark              = species.Remark,
+            // Taxonomy
+            ClassName           = species.Family?.Class,
+            OrderName           = species.Family?.Order,
+            // Lifespan
+            LongevityWild       = species.LongevityWild,
+            LongevityCaptive    = species.LongevityCaptive,
             PreferredImageUrl   = preferredUrl,
             MaleImageUrl        = maleUrl,
             FemaleImageUrl      = femaleUrl,
-            Ecology = feeding != null || habitat != null ? new SpeciesDetailEcologyDto
+            Ecology = feeding != null || habitat != null || ecology != null ? new SpeciesDetailEcologyDto
             {
                 FeedingType  = feeding?.FeedingType,
                 DietTroph    = feeding?.DietTroph,
-                HabitatZones = ExtractHabitatZones(habitat)
+                HabitatZones = ExtractHabitatZones(habitat),
+                Schooling    = ecology?.Schooling,
+                Shoaling     = ecology?.Shoaling,
+                Solitary     = ecology?.Solitary
             } : null,
             Conservation = conservation != null ? new SpeciesDetailConservationDto
             {
-                IucnCode        = conservation.IUCN_Code,
-                IucnAssessment  = conservation.IUCN_Assessment,
+                IucnCode         = conservation.IUCN_Code,
+                IucnAssessment   = conservation.IUCN_Assessment,
                 IucnDateAssessed = conservation.IUCN_DateAssessed,
-                CitesCode       = conservation.CITES_Code
+                CitesCode        = conservation.CITES_Code
             } : null,
             Environment = environment != null ? new SpeciesDetailEnvironmentDto
             {
                 TempMin = environment.TempMin,
                 TempMax = environment.TempMax,
                 PhMin   = environment.PHMin,
-                PhMax   = environment.PHMax
+                PhMax   = environment.PHMax,
+                DHMin   = environment.DHMin,
+                DHMax   = environment.DHMax
             } : null
         };
     }

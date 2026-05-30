@@ -9,6 +9,8 @@ public class Family
     public int FamCode { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? CommonName { get; set; }
+    public string? Order { get; set; }
+    public string? Class { get; set; }
     public string? BodyShapeI { get; set; }
     public string? SwimMode { get; set; }
     public string? ReproductiveGuild { get; set; }

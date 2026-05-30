@@ -34,6 +34,7 @@ public class Species
     public string? MaxLengthRef { get; set; }
     public double? LengthFemale { get; set; }
     public double? LongevityWild { get; set; }
+    public double? LongevityCaptive { get; set; }
     public string? PicPreferredNameM { get; set; }
     public string? PicPreferredNameF { get; set; }
 

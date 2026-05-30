@@ -7,4 +7,6 @@ public class StockEnvironmentDto
     public double? TempMax { get; init; }
     public double? PHMin { get; init; }
     public double? PHMax { get; init; }
+    public double? DHMin { get; init; }
+    public double? DHMax { get; init; }
 }

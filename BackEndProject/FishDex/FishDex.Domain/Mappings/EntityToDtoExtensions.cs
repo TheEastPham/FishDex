@@ -85,7 +85,10 @@ internal static class EntityToDtoExtensions
     {
         EcologyId = e.EcologyId,
         SpecCode  = e.SpecCode,
-        StockCode = e.StockCode
+        StockCode = e.StockCode,
+        Schooling = e.Schooling,
+        Shoaling  = e.Shoaling,
+        Solitary  = e.Solitary
     };
 
     internal static FeedingAndDietDto ToDto(this FeedingAndDiet e) => new()
@@ -151,7 +154,9 @@ internal static class EntityToDtoExtensions
         TempMin   = e.TempMin,
         TempMax   = e.TempMax,
         PHMin     = e.PHMin,
-        PHMax     = e.PHMax
+        PHMax     = e.PHMax,
+        DHMin     = e.DHMin,
+        DHMax     = e.DHMax
     };
 
     internal static EcosystemRefDto ToDto(this EcosystemRef e) => new()

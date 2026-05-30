@@ -1,3 +1,4 @@
+using System.IO;
 using FishDex.Domain.DTOs.Media;
 using FishDex.Domain.Mappings;
 using FishDex.Domain.Services.Interfaces;
@@ -17,7 +18,7 @@ public class MediaService(
         foreach (var i in items)
         {
             var dto = i.ToDto();
-            var url = await storage.GetPresignedUrlAsync(i.Name, ct);
+            var url = await storage.GetPresignedUrlAsync($"{i.SpecCode}/{i.Id}{Path.GetExtension(i.Name)}", ct);
             result.Add(dto with { Url = url });
         }
         return result;
@@ -30,7 +31,7 @@ public class MediaService(
         if (entity is null) return null;
 
         var dto = entity.ToDto();
-        var url = await storage.GetPresignedUrlAsync(entity.Name, ct);
+        var url = await storage.GetPresignedUrlAsync($"{entity.SpecCode}/{entity.Id}{Path.GetExtension(entity.Name)}", ct);
         return dto with { Url = url };
     }
 }

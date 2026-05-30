@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Rules
 
 - **Khi làm task BE**: chỉ `git add` và commit các file trong `BackEndProject/` và `Pipeline/`. KHÔNG bao giờ stage hoặc commit file trong `FrontEnd/` — đó là phần của team FE, họ tự quản lý commit riêng.
-- **MinIO object key convention**: key truyền vào `IStorageService.GetPresignedUrlAsync` PHẢI theo pattern `{specCode}/{pic.Id}{Path.GetExtension(pic.Name)}` (ví dụ: `50683/3445f3c1-524e-4bdb-999b-1f9808a35ecc.jpg`). KHÔNG dùng `pic.Name` trực tiếp làm key — đó là tên file gốc, không phải đường dẫn trên MinIO.
+- **MinIO object key cho SystemImage**: LUÔN dùng `pic.ObjectKey` (computed property trên entity `SystemImage`) khi gọi `IStorageService.GetPresignedUrlAsync`. KHÔNG tự ghép path thủ công, KHÔNG dùng `pic.Name` trực tiếp. `ObjectKey` trả về `{SpecCode}/{Id}{ext}` — đây là nguồn sự thật duy nhất cho đường dẫn ảnh trên MinIO.
 
 ## Project Overview
 

@@ -94,7 +94,7 @@ public class SpeciesService(
         {
             var pic      = s.Pictures.FirstOrDefault(p => p.PicPreferred == true);
             var imageUrl = pic != null
-                ? await storage.GetPresignedUrlAsync($"{s.SpecCode}/{pic.Id}{Path.GetExtension(pic.Name)}", ct)
+                ? await storage.GetPresignedUrlAsync(pic.ObjectKey, ct)
                 : null;
             mapped.Add(s.ToSearchResultDto(language, imageUrl));
         }
@@ -131,7 +131,7 @@ public class SpeciesService(
         var femalePic    = species.Pictures?.FirstOrDefault(p => p.PicPreferredFem  == true);
 
         async Task<string?> Presign(FishDex.EFCore.Entity.Media.SystemImage? pic) =>
-            pic != null ? await storage.GetPresignedUrlAsync($"{specCode}/{pic.Id}{Path.GetExtension(pic.Name)}", ct) : null;
+            pic != null ? await storage.GetPresignedUrlAsync(pic.ObjectKey, ct) : null;
 
         var (preferredUrl, maleUrl, femaleUrl) = (
             await Presign(preferredPic),

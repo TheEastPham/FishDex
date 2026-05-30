@@ -8,5 +8,7 @@ public interface ISpeciesRepository : IGenericRepository<Species>
     Task<(IReadOnlyList<Species> Items, int TotalCount)> SearchWithCountAsync(
         string? query, Guid? famId, int? genusCode, string? language,
         int page, int pageSize, CancellationToken ct = default);
+
+    Task<Species?> GetWithDetailsAsync(int specCode, CancellationToken ct = default);
 }
 

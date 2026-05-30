@@ -40,4 +40,14 @@ public class SpeciesRepository(FishDexDbContext context)
 
         return (items, total);
     }
+
+    public async Task<Species?> GetWithDetailsAsync(int specCode, CancellationToken ct = default)
+    {
+        return await _db.Species
+            .Include(s => s.Genus)
+            .Include(s => s.Family)
+            .Include(s => s.CommonNames)
+            .Include(s => s.Pictures)
+            .FirstOrDefaultAsync(s => s.SpecCode == specCode, ct);
+    }
 }

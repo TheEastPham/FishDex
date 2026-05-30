@@ -1,5 +1,8 @@
 using System.IO;
+using FishDex.Domain.DTOs.Ecologies;
 using FishDex.Domain.DTOs.Species;
+using FishDex.Domain.DTOs.Stocks;
+using FishDex.Domain.Mappings;
 using FishDex.Domain.Mappings;
 using FishDex.Domain.Services.Interfaces;
 using FishDex.Domain.Settings;
@@ -16,6 +19,8 @@ public class SpeciesService(
     IGenusRepository genusRepo,
     ICommonNameRepository commonNameRepo,
     IStorageService storage,
+    IEcologyService ecologyService,
+    IStockService stockService,
     IMemoryCache cache,
     IOptions<FishDexSettings> settings) : ISpeciesService
 {
@@ -100,6 +105,99 @@ public class SpeciesService(
             Page       = request.Page,
             PageSize   = request.PageSize
         };
+    }
+
+    public async Task<SpeciesDetailDto?> GetDetailAsync(int specCode, string? language = null, CancellationToken ct = default)
+    {
+        language = NormalizeLanguage(language);
+
+        var species = await speciesRepo.GetWithDetailsAsync(specCode, ct);
+        if (species == null) return null;
+
+        // Parallel fetch ecology + stocks
+        var ecologyTask = ecologyService.GetBySpecCodeAsync(specCode, ct);
+        var stocksTask  = stockService.GetBySpecCodeAsync(specCode, ct);
+        await Task.WhenAll(ecologyTask, stocksTask);
+
+        var ecology = await ecologyTask;
+        var stocks  = await stocksTask;
+        var firstStock = stocks.FirstOrDefault();
+
+        // Parallel fetch feeding/habitat/conservation/environment
+        var feedingTask      = ecology    != null ? ecologyService.GetFeedingAsync(ecology.EcologyId, ct)         : Task.FromResult<FeedingAndDietDto?>(null);
+        var habitatTask      = ecology    != null ? ecologyService.GetHabitatZoneAsync(ecology.EcologyId, ct)     : Task.FromResult<HabitatZoneDto?>(null);
+        var conservationTask = firstStock != null ? stockService.GetConservationAsync(firstStock.StockCode, ct)   : Task.FromResult<StockConservationDto?>(null);
+        var environmentTask  = firstStock != null ? stockService.GetEnvironmentAsync(firstStock.StockCode, ct)    : Task.FromResult<StockEnvironmentDto?>(null);
+        await Task.WhenAll(feedingTask, habitatTask, conservationTask, environmentTask);
+
+        var feeding      = await feedingTask;
+        var habitat      = await habitatTask;
+        var conservation = await conservationTask;
+        var environment  = await environmentTask;
+
+        // Presign images
+        async Task<string?> Presign(FishDex.EFCore.Entity.Media.SystemImage? pic) =>
+            pic != null ? await storage.GetPresignedUrlAsync($"{specCode}/{pic.Id}{Path.GetExtension(pic.Name)}", ct) : null;
+
+        var preferredPic = species.Pictures?.FirstOrDefault(p => p.PicPreferred   == true);
+        var malePic      = species.Pictures?.FirstOrDefault(p => p.PicPreferredMale == true);
+        var femalePic    = species.Pictures?.FirstOrDefault(p => p.PicPreferredFem  == true);
+
+        var preferredUrlTask = Presign(preferredPic);
+        var maleUrlTask      = Presign(malePic);
+        var femaleUrlTask    = Presign(femalePic);
+        await Task.WhenAll(preferredUrlTask, maleUrlTask, femaleUrlTask);
+
+        return new SpeciesDetailDto
+        {
+            SpecCode            = species.SpecCode,
+            SpeciesName         = species.SpeciesName,
+            PreferredCommonName = species.CommonNames.PickPreferredName(language),
+            GenusName           = species.Genus?.GenusName,
+            FamilyName          = species.Family?.Name,
+            WaterType           = species.WaterType.ToString(),
+            Length              = species.Length,
+            Weight              = species.Weight,
+            Dangerous           = species.Dangerous,
+            DemersPelag         = species.DemersPelag,
+            LifeCycle           = species.LifeCycle,
+            Remark              = species.Remark,
+            PreferredImageUrl   = await preferredUrlTask,
+            MaleImageUrl        = await maleUrlTask,
+            FemaleImageUrl      = await femaleUrlTask,
+            Ecology = feeding != null || habitat != null ? new SpeciesDetailEcologyDto
+            {
+                FeedingType  = feeding?.FeedingType,
+                DietTroph    = feeding?.DietTroph,
+                HabitatZones = ExtractHabitatZones(habitat)
+            } : null,
+            Conservation = conservation != null ? new SpeciesDetailConservationDto
+            {
+                IucnCode        = conservation.IUCN_Code,
+                IucnAssessment  = conservation.IUCN_Assessment,
+                IucnDateAssessed = conservation.IUCN_DateAssessed,
+                CitesCode       = conservation.CITES_Code
+            } : null,
+            Environment = environment != null ? new SpeciesDetailEnvironmentDto
+            {
+                TempMin = environment.TempMin,
+                TempMax = environment.TempMax,
+                PhMin   = environment.PHMin,
+                PhMax   = environment.PHMax
+            } : null
+        };
+    }
+
+    private static IReadOnlyList<string> ExtractHabitatZones(HabitatZoneDto? hz)
+    {
+        if (hz == null) return [];
+        var zones = new List<string>();
+        if (hz.Neritic)   zones.Add("Neritic");
+        if (hz.Estuaries) zones.Add("Estuaries");
+        if (hz.Mangroves) zones.Add("Mangroves");
+        if (hz.Stream)    zones.Add("Stream");
+        if (hz.Lakes)     zones.Add("Lakes");
+        return zones;
     }
 
     public async Task<IReadOnlyList<LanguageCountDto>> GetTopLanguagesAsync(CancellationToken ct = default)

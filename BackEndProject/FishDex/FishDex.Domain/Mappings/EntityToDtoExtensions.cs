@@ -65,7 +65,7 @@ internal static class EntityToDtoExtensions
         ImageUrl            = imageUrl
     };
 
-    private static string? PickPreferredName(this ICollection<CommonName> names, string? language)
+    internal static string? PickPreferredName(this ICollection<CommonName> names, string? language)
     {
         static string? Best(IEnumerable<CommonName> pool) =>
             pool.OrderByDescending(c => c.IsPreferred).ThenBy(c => c.Rank).FirstOrDefault()?.ComName;

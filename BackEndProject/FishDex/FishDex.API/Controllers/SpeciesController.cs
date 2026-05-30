@@ -41,6 +41,13 @@ public class SpeciesController(
         return Ok(result);
     }
 
+    [HttpGet("{specCode:int}/detail")]
+    public async Task<IActionResult> GetDetail(int specCode, [FromQuery] string? language, CancellationToken ct)
+    {
+        var result = await speciesService.GetDetailAsync(specCode, language, ct);
+        return result is null ? NotFound() : Ok(result);
+    }
+
     [HttpGet("{specCode:int}/media")]
     public async Task<IActionResult> GetMedia(int specCode, CancellationToken ct)
     {

@@ -5,6 +5,6 @@ namespace FishDex.EFCore.Repository.Interface;
 
 public interface IOccurrenceRepository : IGenericRepository<Occurrence>
 {
-    
+    Task<IReadOnlyList<string>> GetDistinctCountryCodesAsync(int specCode, CancellationToken ct = default);
 }
 

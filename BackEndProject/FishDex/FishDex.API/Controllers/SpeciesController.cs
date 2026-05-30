@@ -61,4 +61,11 @@ public class SpeciesController(
         var result = await occurrenceService.GetBySpecCodeAsync(specCode, limit, ct);
         return Ok(result);
     }
+
+    [HttpGet("{specCode:int}/countries")]
+    public async Task<IActionResult> GetCountries(int specCode, CancellationToken ct)
+    {
+        var result = await occurrenceService.GetCountriesAsync(specCode, ct);
+        return Ok(result);
+    }
 }

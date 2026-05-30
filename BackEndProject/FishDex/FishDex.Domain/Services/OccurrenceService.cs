@@ -1,4 +1,5 @@
 using FishDex.Domain.DTOs.Occurrence;
+using FishDex.Domain.Helpers;
 using FishDex.Domain.Mappings;
 using FishDex.Domain.Services.Interfaces;
 using FishDex.EFCore.Repository.Interface;
@@ -15,5 +16,13 @@ public class OccurrenceService(
               && o.LatitudeDec  != 0
               && o.LongitudeDec != 0);
         return items.Take(limit).Select(o => o.ToDto()).ToList();
+    }
+
+    public async Task<IReadOnlyList<CountryDto>> GetCountriesAsync(int specCode, CancellationToken ct = default)
+    {
+        var codes = await occurrenceRepo.GetDistinctCountryCodesAsync(specCode, ct);
+        return codes
+            .Select(code => new CountryDto(code, CountryCodeMap.Resolve(code)))
+            .ToList();
     }
 }

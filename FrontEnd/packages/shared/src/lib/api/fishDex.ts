@@ -1,6 +1,6 @@
 import axios from 'axios';
 import type { PagedResult } from '../../types/common';
-import type { SpeciesSearchResult, SearchSpeciesParams } from '../../types/species';
+import type { SpeciesSearchResult, SearchSpeciesParams, SpeciesDetail, SystemImageDto, OccurrenceDto } from '../../types/species';
 import { useAuthStore } from '../../store/authStore';
 
 const fishDexClient = axios.create({
@@ -27,5 +27,23 @@ export async function getFamilies(): Promise<import('../../types/species').Famil
   const { data } = await fishDexClient.get<import('../../types/species').Family[]>(
     '/api/species/families'
   );
+  return data;
+}
+
+export async function getSpeciesDetail(specCode: number, language?: string): Promise<SpeciesDetail> {
+  const params = language ? { language } : {};
+  const { data } = await fishDexClient.get<SpeciesDetail>(`/api/species/${specCode}/detail`, { params });
+  return data;
+}
+
+export async function getSpeciesMedia(specCode: number): Promise<SystemImageDto[]> {
+  const { data } = await fishDexClient.get<SystemImageDto[]>(`/api/species/${specCode}/media`);
+  return data;
+}
+
+export async function getSpeciesOccurrences(specCode: number): Promise<OccurrenceDto[]> {
+  const { data } = await fishDexClient.get<OccurrenceDto[]>(`/api/species/${specCode}/occurrences`, {
+    params: { limit: 500 }
+  });
   return data;
 }

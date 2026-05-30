@@ -5,6 +5,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import AppShell from '@/layouts/AppShell';
 
 import FishSearchPage from '@/features/fish-search/FishSearchPage';
+import FishProfilePage from '@/features/fish-profile/FishProfilePage';
 
 // Placeholders — replaced story by story
 const DashboardPage    = () => <p className="text-muted-foreground text-sm">Dashboard — Story 5.2</p>;
@@ -23,6 +24,7 @@ export const router = createBrowserRouter([
           { index: true,          element: <Navigate to="/dashboard" replace /> },
           { path: '/dashboard',   element: <DashboardPage /> },
           { path: '/fish',        element: <FishSearchPage /> },
+          { path: '/fish/:specCode', element: <FishProfilePage /> },
           { path: '/ai-chat',     element: <AIChatPage /> },
           { path: '/image-search',element: <ImageSearchPage /> },
         ],

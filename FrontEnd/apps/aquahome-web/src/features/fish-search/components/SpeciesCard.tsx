@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { SpeciesSearchResult } from '@fishlover/shared';
 import { cn, useTranslation } from '@fishlover/shared';
 import { Fish, Heart, Folder, ExternalLink, Share2, Eye } from 'lucide-react';
@@ -17,6 +18,7 @@ const GRADIENTS = [
 
 export default function SpeciesCard({ species, index = 0, onFamilyClick }: Props) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [isFavorite, setIsFavorite] = useState(false);
   const bgGradient = GRADIENTS[index % GRADIENTS.length];
 
@@ -94,12 +96,14 @@ export default function SpeciesCard({ species, index = 0, onFamilyClick }: Props
         {/* Action Button Row */}
         <div className="flex mt-auto overflow-hidden rounded-lg border border-[#1a1c20]">
           <button
+            onClick={() => navigate(`/fish/${species.specCode}`)}
             className="flex-1 flex items-center justify-center bg-[#2a2d32] hover:bg-[#32363c] text-white py-2 px-3 text-sm font-bold transition-colors"
           >
             {t('fish.viewProfile')}
           </button>
           <div className="w-[1px] bg-[#1a1c20]" />
           <button
+            onClick={() => navigate(`/fish/${species.specCode}`)}
             className="flex items-center justify-center bg-[#1a1c20] hover:bg-black py-2 px-3 transition-colors text-white"
             title={t('fish.viewProfileDetails')}
           >

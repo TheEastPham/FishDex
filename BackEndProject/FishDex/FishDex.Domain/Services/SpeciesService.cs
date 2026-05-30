@@ -1,3 +1,4 @@
+using System.IO;
 using FishDex.Domain.DTOs.Species;
 using FishDex.Domain.Mappings;
 using FishDex.Domain.Services.Interfaces;
@@ -77,15 +78,19 @@ public class SpeciesService(
     public async Task<PagedResult<SpeciesSearchResultDto>> SearchSpeciesAsync(
         GetSpeciesSearchRequest request, CancellationToken ct = default)
     {
+        var language = NormalizeLanguage(request.Language);
+
         var (items, total) = await speciesRepo.SearchWithCountAsync(
-            request.Query, request.FamId, request.GenusCode, request.Language,
+            request.Query, request.FamId, request.GenusCode, language,
             request.Page, request.PageSize, ct);
 
         var mapped = await Task.WhenAll(items.Select(async s =>
         {
-            var imageName = s.Pictures.FirstOrDefault(p => p.PicPreferred == true)?.Name;
-            var imageUrl  = imageName != null ? await storage.GetPresignedUrlAsync(imageName, ct) : null;
-            return s.ToSearchResultDto(request.Language, imageUrl);
+            var pic = s.Pictures.FirstOrDefault(p => p.PicPreferred == true);
+            var imageUrl = pic != null
+                ? await storage.GetPresignedUrlAsync($"{s.SpecCode}/{pic.Id}{Path.GetExtension(pic.Name)}", ct)
+                : null;
+            return s.ToSearchResultDto(language, imageUrl);
         }));
 
         return new PagedResult<SpeciesSearchResultDto>
@@ -111,4 +116,12 @@ public class SpeciesService(
 
         return result;
     }
+
+    private static string? NormalizeLanguage(string? lang) => lang?.ToLowerInvariant() switch
+    {
+        "vn" or "vi" or "vietnamese" => "Vietnamese",
+        "en" or "eng" or "english"   => "English",
+        null                          => null,
+        var other                     => other
+    };
 }

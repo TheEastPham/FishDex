@@ -54,7 +54,13 @@ public class S3StorageService : IStorageService
                 Verb       = HttpVerb.GET,
             };
 
-            return await Task.FromResult(_s3.GetPreSignedURL(request));
+            var url = _s3.GetPreSignedURL(request);
+
+            // AWS SDK luôn generate https:// — fix lại về http:// nếu endpoint là HTTP (local MinIO)
+            if (_settings.ServiceUrl?.StartsWith("http://") == true)
+                url = url.Replace("https://", "http://", StringComparison.Ordinal);
+
+            return await Task.FromResult(url);
         }
         catch (Exception ex)
         {

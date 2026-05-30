@@ -25,16 +25,24 @@ export default function SpeciesCard({ species, onAddToAquarium, aquariumReady = 
   return (
     <div className="group relative flex flex-col rounded-2xl bg-white shadow-sm border border-slate-200/60 overflow-hidden hover:shadow-xl hover:-translate-y-1 hover:border-primary/30 transition-all duration-300">
 
-      {/* Image Placeholder */}
-      <div className={cn("h-40 w-full bg-gradient-to-br relative overflow-hidden", bgGradient)}>
-        <div className="absolute inset-0 bg-white/10 backdrop-blur-sm" />
-        {/* Abstract shapes */}
-        <div className="absolute -bottom-8 -right-8 w-24 h-24 rounded-full bg-white/20 blur-xl group-hover:scale-150 transition-transform duration-700" />
-        <div className="absolute top-4 left-4 w-12 h-12 rounded-full bg-white/10 blur-md" />
-        
-        <div className="absolute inset-0 flex items-center justify-center opacity-30 group-hover:opacity-50 transition-opacity duration-300">
-          <Fish className="w-16 h-16 text-white stroke-[1.5]" />
-        </div>
+      {/* Image */}
+      <div className={cn("h-40 w-full relative overflow-hidden", !species.imageUrl && `bg-gradient-to-br ${bgGradient}`)}>
+        {species.imageUrl ? (
+          <img
+            src={species.imageUrl}
+            alt={species.speciesName}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        ) : (
+          <>
+            <div className="absolute inset-0 bg-white/10 backdrop-blur-sm" />
+            <div className="absolute -bottom-8 -right-8 w-24 h-24 rounded-full bg-white/20 blur-xl group-hover:scale-150 transition-transform duration-700" />
+            <div className="absolute top-4 left-4 w-12 h-12 rounded-full bg-white/10 blur-md" />
+            <div className="absolute inset-0 flex items-center justify-center opacity-30 group-hover:opacity-50 transition-opacity duration-300">
+              <Fish className="w-16 h-16 text-white stroke-[1.5]" />
+            </div>
+          </>
+        )}
       </div>
 
       <div className="flex flex-col flex-1 p-5 gap-3">

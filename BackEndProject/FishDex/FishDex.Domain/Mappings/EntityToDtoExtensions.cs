@@ -57,17 +57,29 @@ internal static class EntityToDtoExtensions
 
     internal static SpeciesSearchResultDto ToSearchResultDto(this Species e, string? language = null, string? imageUrl = null) => new()
     {
-        SpecCode             = e.SpecCode,
-        SpeciesName          = e.SpeciesName,
-        PreferredCommonName  = e.CommonNames
-            .Where(c => language == null || c.Language == language)
-            .OrderByDescending(c => c.IsPreferred)
-            .ThenBy(c => c.Rank)
-            .FirstOrDefault()?.ComName,
-        GenusName   = e.Genus?.GenusName,
-        FamilyName  = e.Family?.Name,
-        ImageUrl    = imageUrl
+        SpecCode            = e.SpecCode,
+        SpeciesName         = e.SpeciesName,
+        PreferredCommonName = e.CommonNames.PickPreferredName(language),
+        GenusName           = e.Genus?.GenusName,
+        FamilyName          = e.Family?.Name,
+        ImageUrl            = imageUrl
     };
+
+    private static string? PickPreferredName(this ICollection<CommonName> names, string? language)
+    {
+        static string? Best(IEnumerable<CommonName> pool) =>
+            pool.OrderByDescending(c => c.IsPreferred).ThenBy(c => c.Rank).FirstOrDefault()?.ComName;
+
+        // 1. Ưu tiên ngôn ngữ yêu cầu
+        if (language != null)
+        {
+            var inLang = Best(names.Where(c => c.Language == language));
+            if (inLang != null) return inLang;
+        }
+
+        // 2. Fallback về English
+        return Best(names.Where(c => c.Language == "English"));
+    }
 
     internal static EcologyDto ToDto(this Ecology e) => new()
     {

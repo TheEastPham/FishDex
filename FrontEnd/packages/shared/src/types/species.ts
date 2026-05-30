@@ -4,6 +4,7 @@ export interface SpeciesSearchResult {
   preferredCommonName: string | null;
   genusName: string | null;
   familyName: string | null;
+  imageUrl?: string | null;
 }
 
 export interface Family {

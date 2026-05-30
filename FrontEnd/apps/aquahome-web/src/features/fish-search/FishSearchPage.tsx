@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, Sparkles } from 'lucide-react';
+import { Search, Sparkles } from 'lucide-react';
 import { useDebounce, searchSpecies, getFamilies, useTranslation } from '@fishlover/shared';
 import type { PagedResult, SpeciesSearchResult, Family } from '@fishlover/shared';
 import SpeciesCard from './components/SpeciesCard';
 import SpeciesCardSkeleton from './components/SpeciesCardSkeleton';
+import FamilySelect from './components/FamilySelect';
 
 const PAGE_SIZE = 12;
 
@@ -85,29 +86,11 @@ export default function FishSearchPage() {
       {/* Search controls - Floating Bar */}
       <div className="relative -mt-10 z-20 mx-auto w-full max-w-4xl flex flex-col sm:flex-row gap-2 rounded-2xl bg-white p-2 shadow-lg shadow-slate-200/50 border border-slate-100">
         
-        <div className="relative w-full sm:w-1/3 flex items-center bg-slate-50/50 rounded-xl border border-transparent hover:bg-slate-100/50 transition-colors">
-          <Filter className="absolute left-4 h-4 w-4 text-primary pointer-events-none" />
-          <select
-            value={selectedFamily}
-            onChange={(e) => setSelectedFamily(e.target.value)}
-            className="w-full rounded-xl bg-transparent pl-11 pr-8 py-3 text-sm font-medium text-slate-700
-                       focus:outline-none focus:ring-2 focus:ring-primary/20 
-                       transition-all appearance-none cursor-pointer"
-          >
-            <option value="">{t('fish.allFamilies') || 'All Families'}</option>
-            {families.map(f => (
-              <option key={f.id} value={f.id}>
-                {f.name} {f.commonName ? `(${f.commonName})` : ''}
-              </option>
-            ))}
-          </select>
-          {/* Custom dropdown arrow */}
-          <div className="absolute right-4 pointer-events-none text-slate-400">
-             <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-             </svg>
-          </div>
-        </div>
+        <FamilySelect 
+          families={families} 
+          value={selectedFamily} 
+          onChange={setSelectedFamily} 
+        />
 
         <div className="relative w-full sm:w-2/3 group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 pointer-events-none transition-colors group-focus-within:text-primary" />

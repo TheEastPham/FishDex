@@ -9,7 +9,7 @@ import FamilySelect from './components/FamilySelect';
 const PAGE_SIZE = 12;
 
 export default function FishSearchPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [query, setQuery]     = useState('');
   const [page, setPage]       = useState(1);
   const [loading, setLoading] = useState(false);
@@ -46,7 +46,7 @@ export default function FishSearchPage() {
     searchSpecies({ 
       query: debouncedQuery.trim() || undefined, 
       famId: selectedFamily || undefined,
-      language: 'en', 
+      language: i18n.language, 
       page, 
       pageSize: PAGE_SIZE 
     })
@@ -55,7 +55,16 @@ export default function FishSearchPage() {
       .finally(() => { if (!cancelled) setLoading(false); });
 
     return () => { cancelled = true; };
-  }, [debouncedQuery, selectedFamily, page, t]);
+  }, [debouncedQuery, selectedFamily, page, t, i18n.language]);
+
+  const handleFamilyClick = (familyName: string) => {
+    const family = families.find(f => f.name.toLowerCase() === familyName.toLowerCase());
+    if (family) {
+      setSelectedFamily(family.id);
+      setQuery(''); // Optional: clear search if they just want the family
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   const totalPages = result?.totalPages ?? 0;
 
@@ -147,8 +156,8 @@ export default function FishSearchPage() {
             <SpeciesCard
               key={species.specCode}
               species={species}
-              aquariumReady={false}
               index={index}
+              onFamilyClick={handleFamilyClick}
             />
           ))}
         </div>

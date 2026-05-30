@@ -2,9 +2,11 @@ using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using FishDex.Domain.Modules;
 using FishDex.Domain.Settings;
+using FishDex.EFCore.DbContexts;
 using FishDex.EFCore.Extensions;
 using FishDex.EFCore.Modules;
 using FishLover.Shared.Extensions;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Events;
 
@@ -168,6 +170,15 @@ try
             tags: ["db", "postgres"]);
 
     var app = builder.Build();
+
+    // ── Auto-migrate — chỉ chạy khi AutoMigrate:OnStartup=true (Docker/Dev) ──
+    if (app.Configuration.GetValue<bool>("AutoMigrate:OnStartup"))
+    {
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<FishDexDbContext>();
+        await db.Database.MigrateAsync();
+        Log.Information("FishDex database migration completed");
+    }
 
     // ── Middleware pipeline ────────────────────────────────────
     if (!app.Environment.IsProduction())

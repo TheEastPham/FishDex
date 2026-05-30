@@ -9,6 +9,10 @@ import polars as pl
 from ..config import PARQUET_DIR, PARQUET_FILES
 from ..db import connect, to_str, to_float, to_int, execute_upsert
 
+# TODO(Story 1.9a): Thêm "LongevityCaptive" vào SQL + rows khi re-run ETL
+#   SQL: thêm "LongevityCaptive" vào INSERT list (sau "LongevityWild") và ON CONFLICT DO UPDATE
+#   rows: thêm to_float(r.get("LongevityCapt") or r.get("LongevityCaptive"))
+#   Parquet cols: species.parquet — kiểm tra tên cột bằng: pl.read_parquet(path).columns
 SQL = """
     INSERT INTO "Species" (
         "Id", "SpecCode", "GenusCode", "FamCode", "FamId",

@@ -8,6 +8,11 @@ import polars as pl
 from ..config import PARQUET_DIR, PARQUET_FILES
 from ..db import connect, to_str, execute_upsert
 
+# TODO(Story 1.9b): Thêm "Order" và "Class" vào SQL + rows khi re-run ETL
+#   SQL: thêm "Order", "Class" vào INSERT và ON CONFLICT DO UPDATE
+#   rows: thêm to_str(r.get("Order")), to_str(r.get("Class"))
+#   Parquet cols: families.parquet — cột "Order" (tên bộ) và "Class" (tên lớp)
+#   Sau khi cập nhật, SpeciesDetailDto.orderName và className sẽ có data thật.
 SQL = """
     INSERT INTO "Families" ("Id", "FamCode", "Name", "CommonName", "BodyShapeI", "SwimMode", "ReproductiveGuild")
     VALUES (%s, %s, %s, %s, %s, %s, %s)

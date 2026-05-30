@@ -4,6 +4,11 @@ Step 7-9: ecology.parquet → Ecology + HabitatZone + FeedingAndDiet
 
 Tất cả từ một parquet rộng. Dùng autoctr (từ parquet) làm shared key cho mọi
 sub-table (EcologyId = autoctr, HabitatZoneId = autoctr, ...).
+
+NOTE(Story 1.9c — Schooling/Shoaling/Solitary):
+  Các trường này ĐÃ được load vào bảng "Associations" qua SQL_ASSOC (xem bên dưới).
+  BE đọc từ Associations.Schooling/Shoaling/Solitary — KHÔNG cần thêm vào SQL_ECOLOGY.
+  (Ecology entity có 3 cột nullable này nhưng luôn NULL — đó là schema debt, không ảnh hưởng data.)
 """
 from __future__ import annotations
 import polars as pl

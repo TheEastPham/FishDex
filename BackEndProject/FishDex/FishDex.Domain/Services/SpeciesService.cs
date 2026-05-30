@@ -3,7 +3,6 @@ using FishDex.Domain.DTOs.Ecologies;
 using FishDex.Domain.DTOs.Species;
 using FishDex.Domain.DTOs.Stocks;
 using FishDex.Domain.Mappings;
-using FishDex.Domain.Mappings;
 using FishDex.Domain.Services.Interfaces;
 using FishDex.Domain.Settings;
 using FishDex.EFCore.Repository.Interface;
@@ -120,10 +119,11 @@ public class SpeciesService(
         var stocks     = await stockService.GetBySpecCodeAsync(specCode, ct);
         var firstStock = stocks.FirstOrDefault();
 
-        FeedingAndDietDto?      feeding      = ecology    != null ? await ecologyService.GetFeedingAsync(ecology.EcologyId, ct)       : null;
-        HabitatZoneDto?         habitat      = ecology    != null ? await ecologyService.GetHabitatZoneAsync(ecology.EcologyId, ct)   : null;
-        StockConservationDto?   conservation = firstStock != null ? await stockService.GetConservationAsync(firstStock.StockCode, ct) : null;
-        StockEnvironmentDto?    environment  = firstStock != null ? await stockService.GetEnvironmentAsync(firstStock.StockCode, ct)  : null;
+        FeedingAndDietDto?      feeding      = ecology    != null ? await ecologyService.GetFeedingAsync(ecology.EcologyId, ct)        : null;
+        HabitatZoneDto?         habitat      = ecology    != null ? await ecologyService.GetHabitatZoneAsync(ecology.EcologyId, ct)    : null;
+        AssociationsDto?        associations = ecology    != null ? await ecologyService.GetAssociationsAsync(ecology.EcologyId, ct)   : null;
+        StockConservationDto?   conservation = firstStock != null ? await stockService.GetConservationAsync(firstStock.StockCode, ct)  : null;
+        StockEnvironmentDto?    environment  = firstStock != null ? await stockService.GetEnvironmentAsync(firstStock.StockCode, ct)   : null;
 
         // Presigned URLs — S3 không dùng DbContext, an toàn chạy song song
         var preferredPic = species.Pictures?.FirstOrDefault(p => p.PicPreferred    == true);
@@ -161,14 +161,15 @@ public class SpeciesService(
             PreferredImageUrl   = preferredUrl,
             MaleImageUrl        = maleUrl,
             FemaleImageUrl      = femaleUrl,
-            Ecology = feeding != null || habitat != null || ecology != null ? new SpeciesDetailEcologyDto
+            Ecology = feeding != null || habitat != null || associations != null ? new SpeciesDetailEcologyDto
             {
                 FeedingType  = feeding?.FeedingType,
                 DietTroph    = feeding?.DietTroph,
                 HabitatZones = ExtractHabitatZones(habitat),
-                Schooling    = ecology?.Schooling,
-                Shoaling     = ecology?.Shoaling,
-                Solitary     = ecology?.Solitary
+                // Đọc từ Associations (nguồn đúng trong FishBase) — không phải Ecology entity
+                Schooling    = associations?.Schooling,
+                Shoaling     = associations?.Shoaling,
+                Solitary     = associations?.Solitary
             } : null,
             Conservation = conservation != null ? new SpeciesDetailConservationDto
             {

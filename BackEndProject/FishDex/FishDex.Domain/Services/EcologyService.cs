@@ -8,7 +8,8 @@ namespace FishDex.Domain.Services;
 public class EcologyService(
     IEcologyRepository ecologyRepo,
     IFeedingAndDietRepository feedingRepo,
-    IHabitatZoneRepository habitatRepo) : IEcologyService
+    IHabitatZoneRepository habitatRepo,
+    IAssociationsRepository associationsRepo) : IEcologyService
 {
     public async Task<EcologyDto?> GetBySpecCodeAsync(int specCode, CancellationToken ct = default)
     {
@@ -26,5 +27,19 @@ public class EcologyService(
     {
         var results = await habitatRepo.FindAsync(h => h.EcologyId == ecologyId);
         return results.FirstOrDefault()?.ToDto();
+    }
+
+    public async Task<AssociationsDto?> GetAssociationsAsync(int ecologyId, CancellationToken ct = default)
+    {
+        var results = await associationsRepo.FindAsync(a => a.EcologyId == ecologyId);
+        var a = results.FirstOrDefault();
+        if (a is null) return null;
+        return new AssociationsDto
+        {
+            EcologyId = a.EcologyId,
+            Schooling = a.Schooling,
+            Shoaling  = a.Shoaling,
+            Solitary  = a.Solitary
+        };
     }
 }

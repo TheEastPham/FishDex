@@ -60,6 +60,9 @@ export default function AppShell() {
             <LogOut className="h-4 w-4 flex-shrink-0" />
             {t('nav.logout')}
           </button>
+          <div className="pt-2 text-center">
+            <span className="text-[10px] text-muted-foreground/50 font-mono">v1.0.124</span>
+          </div>
         </div>
       </aside>
 

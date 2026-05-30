@@ -22,3 +22,10 @@ export async function searchSpecies(
   );
   return data;
 }
+
+export async function getFamilies(): Promise<import('../../types/species').Family[]> {
+  const { data } = await fishDexClient.get<import('../../types/species').Family[]>(
+    '/api/species/families'
+  );
+  return data;
+}

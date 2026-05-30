@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
-import { useDebounce, searchSpecies, useTranslation } from '@fishlover/shared';
-import type { PagedResult, SpeciesSearchResult } from '@fishlover/shared';
+import { useDebounce, searchSpecies, getFamilies, useTranslation } from '@fishlover/shared';
+import type { PagedResult, SpeciesSearchResult, Family } from '@fishlover/shared';
 import SpeciesCard from './components/SpeciesCard';
 import SpeciesCardSkeleton from './components/SpeciesCardSkeleton';
 
@@ -14,15 +14,25 @@ export default function FishSearchPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult]   = useState<PagedResult<SpeciesSearchResult> | null>(null);
   const [error, setError]     = useState<string | null>(null);
+  const [families, setFamilies] = useState<Family[]>([]);
+  const [selectedFamily, setSelectedFamily] = useState<string>('');
 
   const debouncedQuery = useDebounce(query, 400);
 
   useEffect(() => {
-    setPage(1);
-  }, [debouncedQuery]);
+    let cancelled = false;
+    getFamilies().then(data => {
+      if (!cancelled) setFamilies(data);
+    }).catch(console.error);
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
-    if (!debouncedQuery.trim()) {
+    setPage(1);
+  }, [debouncedQuery, selectedFamily]);
+
+  useEffect(() => {
+    if (!debouncedQuery.trim() && !selectedFamily) {
       setResult(null);
       setError(null);
       return;
@@ -32,13 +42,19 @@ export default function FishSearchPage() {
     setLoading(true);
     setError(null);
 
-    searchSpecies({ query: debouncedQuery.trim(), language: 'en', page, pageSize: PAGE_SIZE })
+    searchSpecies({ 
+      query: debouncedQuery.trim() || undefined, 
+      famId: selectedFamily || undefined,
+      language: 'en', 
+      page, 
+      pageSize: PAGE_SIZE 
+    })
       .then((data) => { if (!cancelled) setResult(data); })
       .catch(() => { if (!cancelled) setError(t('fish.error')); })
       .finally(() => { if (!cancelled) setLoading(false); });
 
     return () => { cancelled = true; };
-  }, [debouncedQuery, page, t]);
+  }, [debouncedQuery, selectedFamily, page, t]);
 
   const totalPages = result?.totalPages ?? 0;
 
@@ -51,20 +67,36 @@ export default function FishSearchPage() {
         <p className="text-sm text-muted-foreground mt-0.5">{t('fish.subtitle')}</p>
       </div>
 
-      {/* Search input */}
-      <div className="relative max-w-lg">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={t('fish.placeholder')}
-          className="w-full rounded-xl border border-input bg-background pl-9 pr-4 py-2.5 text-sm
-                     placeholder:text-muted-foreground
+      {/* Search controls */}
+      <div className="flex flex-col sm:flex-row gap-3 max-w-2xl">
+        <select
+          value={selectedFamily}
+          onChange={(e) => setSelectedFamily(e.target.value)}
+          className="w-full sm:w-1/3 rounded-xl border border-input bg-background px-4 py-2.5 text-sm
                      focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent
-                     transition-shadow"
-          autoFocus
-        />
+                     transition-shadow text-foreground appearance-none"
+        >
+          <option value="">{t('fish.allFamilies') || 'All Families'}</option>
+          {families.map(f => (
+            <option key={f.id} value={f.id}>
+              {f.name} {f.commonName ? `(${f.commonName})` : ''}
+            </option>
+          ))}
+        </select>
+        <div className="relative w-full sm:w-2/3">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={t('fish.placeholder')}
+            className="w-full rounded-xl border border-input bg-background pl-9 pr-4 py-2.5 text-sm
+                       placeholder:text-muted-foreground
+                       focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent
+                       transition-shadow"
+            autoFocus
+          />
+        </div>
       </div>
 
       {/* Results count */}

@@ -3,6 +3,8 @@ import { create } from 'zustand';
 interface AuthState {
   accessToken: string | null;
   isAuthenticated: boolean;
+  isInitializing: boolean;
+  setInitializing: (val: boolean) => void;
   setTokens: (access: string, refresh?: string) => void;
   clearTokens: () => void;
   getRefreshToken: () => string | null;
@@ -13,6 +15,11 @@ interface AuthState {
 export const useAuthStore = create<AuthState>(() => ({
   accessToken: null,
   isAuthenticated: false,
+  isInitializing: true,
+
+  setInitializing: (val) => {
+    useAuthStore.setState({ isInitializing: val });
+  },
 
   setTokens: (access, refresh) => {
     if (refresh) sessionStorage.setItem('_rt', refresh);

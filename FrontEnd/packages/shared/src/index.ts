@@ -1,7 +1,7 @@
 // ── Types ────────────────────────────────────────────────
 export type { TokenResponse, UserInfo }           from './types/auth';
 export type { PagedResult }                        from './types/common';
-export type { SpeciesSearchResult, SearchSpeciesParams } from './types/species';
+export type { SpeciesSearchResult, SearchSpeciesParams, Family } from './types/species';
 
 // ── Store ─────────────────────────────────────────────────
 export { useAuthStore }                            from './store/authStore';
@@ -20,12 +20,13 @@ export {
 // TODO(mobile): client.ts uses window.location — wrap in platform-specific impl
 export { apiClient }                               from './lib/api/client';
 // TODO(mobile): fishDex.ts uses import.meta.env — pass baseUrl via config object
-export { searchSpecies }                           from './lib/api/fishDex';
+export { searchSpecies, getFamilies }                           from './lib/api/fishDex';
 
 // ── Hooks ─────────────────────────────────────────────────
 export { useDebounce }                             from './hooks/useDebounce';
 // TODO(mobile): useLogout uses useNavigate (react-router-dom) + window.location
 export { useLogout }                               from './hooks/useLogout';
+export { useAuthRestore }                          from './hooks/useAuthRestore';
 
 // ── Utils ─────────────────────────────────────────────────
 export { cn }                                      from './lib/utils';

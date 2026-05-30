@@ -13,7 +13,7 @@ const endpoints = {
   logout:    `${authority}/connect/logout`,
 } as const;
 
-const SCOPES = 'openid profile email roles';
+const SCOPES = 'openid profile email roles offline_access';
 
 export async function buildAuthorizeUrl(verifier: string, state: string): Promise<string> {
   const challenge = await generateCodeChallenge(verifier);
@@ -42,7 +42,14 @@ export async function exchangeCode(code: string, verifier: string): Promise<Toke
     }),
   });
   if (!res.ok) throw new Error(`Token exchange failed: ${res.status}`);
-  return res.json();
+  const data = await res.json();
+  console.log('[DEBUG Auth] Token Exchange Response:', {
+    hasAccessToken: !!data.access_token,
+    hasRefreshToken: !!data.refresh_token,
+    expiresIn: data.expires_in,
+    scopes: data.scope || data.scopes
+  });
+  return data;
 }
 
 export async function refreshAccessToken(refreshToken: string): Promise<TokenResponse> {

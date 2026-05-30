@@ -7,4 +7,5 @@ public class SpeciesSearchResultDto
     public string? PreferredCommonName { get; init; }
     public string? GenusName { get; init; }
     public string? FamilyName { get; init; }
+    public string? ImageUrl { get; init; }
 }

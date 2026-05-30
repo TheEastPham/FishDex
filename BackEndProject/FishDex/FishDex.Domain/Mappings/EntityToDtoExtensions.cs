@@ -55,7 +55,7 @@ internal static class EntityToDtoExtensions
         FamilyName  = null
     };
 
-    internal static SpeciesSearchResultDto ToSearchResultDto(this Species e, string? language = null) => new()
+    internal static SpeciesSearchResultDto ToSearchResultDto(this Species e, string? language = null, string? imageUrl = null) => new()
     {
         SpecCode             = e.SpecCode,
         SpeciesName          = e.SpeciesName,
@@ -65,7 +65,8 @@ internal static class EntityToDtoExtensions
             .ThenBy(c => c.Rank)
             .FirstOrDefault()?.ComName,
         GenusName   = e.Genus?.GenusName,
-        FamilyName  = e.Family?.Name
+        FamilyName  = e.Family?.Name,
+        ImageUrl    = imageUrl
     };
 
     internal static EcologyDto ToDto(this Ecology e) => new()

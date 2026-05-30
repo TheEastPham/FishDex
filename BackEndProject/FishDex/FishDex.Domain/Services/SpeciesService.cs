@@ -14,6 +14,7 @@ public class SpeciesService(
     IFamiliesRepository familyRepo,
     IGenusRepository genusRepo,
     ICommonNameRepository commonNameRepo,
+    IStorageService storage,
     IMemoryCache cache,
     IOptions<FishDexSettings> settings) : ISpeciesService
 {
@@ -80,9 +81,16 @@ public class SpeciesService(
             request.Query, request.FamId, request.GenusCode, request.Language,
             request.Page, request.PageSize, ct);
 
+        var mapped = await Task.WhenAll(items.Select(async s =>
+        {
+            var imageName = s.Pictures.FirstOrDefault(p => p.PicPreferred == true)?.Name;
+            var imageUrl  = imageName != null ? await storage.GetPresignedUrlAsync(imageName, ct) : null;
+            return s.ToSearchResultDto(request.Language, imageUrl);
+        }));
+
         return new PagedResult<SpeciesSearchResultDto>
         {
-            Items      = items.Select(s => s.ToSearchResultDto(request.Language)).ToList(),
+            Items      = mapped,
             TotalCount = total,
             Page       = request.Page,
             PageSize   = request.PageSize

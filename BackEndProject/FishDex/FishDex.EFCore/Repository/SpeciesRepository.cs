@@ -20,6 +20,7 @@ public class SpeciesRepository(FishDexDbContext context)
             .Include(s => s.Genus)
             .Include(s => s.Family)
             .Include(s => s.CommonNames)
+            .Include(s => s.Pictures.Where(p => p.PicPreferred == true))
             .Where(s =>
                 !hasQuery ||
                 EF.Functions.ILike(s.SpeciesName, $"%{query}%") ||

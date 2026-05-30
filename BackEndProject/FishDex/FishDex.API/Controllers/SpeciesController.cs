@@ -62,6 +62,13 @@ public class SpeciesController(
         return Ok(result);
     }
 
+    [HttpGet("{specCode:int}/related")]
+    public async Task<IActionResult> GetRelated(int specCode, [FromQuery] int limit = 6, [FromQuery] string? language = null, CancellationToken ct = default)
+    {
+        var result = await speciesService.GetRelatedAsync(specCode, limit, language, ct);
+        return Ok(result);
+    }
+
     [HttpGet("{specCode:int}/countries")]
     public async Task<IActionResult> GetCountries(int specCode, CancellationToken ct)
     {

@@ -50,4 +50,37 @@ public class SpeciesRepository(FishDexDbContext context)
             .Include(s => s.Pictures)
             .FirstOrDefaultAsync(s => s.SpecCode == specCode, ct);
     }
+
+    public async Task<IReadOnlyList<Species>> GetRelatedAsync(
+        int specCode, int? genusCode, Guid famId, int limit, CancellationToken ct = default)
+    {
+        var baseQuery = _db.Species
+            .Include(s => s.Genus)
+            .Include(s => s.Family)
+            .Include(s => s.CommonNames)
+            .Include(s => s.Pictures.Where(p => p.PicPreferred == true))
+            .Where(s => s.SpecCode != specCode);
+
+        // Ưu tiên cùng Genus
+        var sameGenus = genusCode.HasValue
+            ? await baseQuery
+                .Where(s => s.GenusCode == genusCode.Value)
+                .OrderBy(s => s.SpeciesName)
+                .Take(limit)
+                .ToListAsync(ct)
+            : new List<Species>();
+
+        if (sameGenus.Count >= limit)
+            return sameGenus;
+
+        // Backfill bằng cùng Family
+        var alreadyFound = sameGenus.Select(s => s.SpecCode).ToHashSet();
+        var fromFamily = await baseQuery
+            .Where(s => s.FamId == famId && !alreadyFound.Contains(s.SpecCode))
+            .OrderBy(s => s.SpeciesName)
+            .Take(limit - sameGenus.Count)
+            .ToListAsync(ct);
+
+        return sameGenus.Concat(fromFamily).ToList();
+    }
 }

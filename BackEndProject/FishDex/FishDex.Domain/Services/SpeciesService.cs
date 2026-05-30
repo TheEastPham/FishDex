@@ -201,6 +201,30 @@ public class SpeciesService(
         return zones;
     }
 
+    public async Task<IReadOnlyList<SpeciesSearchResultDto>> GetRelatedAsync(
+        int specCode, int limit = 6, string? language = null, CancellationToken ct = default)
+    {
+        language = NormalizeLanguage(language);
+        limit    = Math.Clamp(limit, 3, 6);
+
+        var species = await speciesRepo.GetWithDetailsAsync(specCode, ct);
+        if (species == null) return [];
+
+        var related = await speciesRepo.GetRelatedAsync(
+            specCode, species.GenusCode, species.FamId, limit, ct);
+
+        var result = new List<SpeciesSearchResultDto>(related.Count);
+        foreach (var s in related)
+        {
+            var pic      = s.Pictures?.FirstOrDefault(p => p.PicPreferred == true);
+            var imageUrl = pic != null
+                ? await storage.GetPresignedUrlAsync(pic.ObjectKey, ct)
+                : null;
+            result.Add(s.ToSearchResultDto(language, imageUrl));
+        }
+        return result;
+    }
+
     public async Task<IReadOnlyList<LanguageCountDto>> GetTopLanguagesAsync(CancellationToken ct = default)
     {
         var cacheKey = $"languages:top:{_languageTopCount}";

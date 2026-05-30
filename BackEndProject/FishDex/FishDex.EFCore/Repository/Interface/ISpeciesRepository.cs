@@ -10,5 +10,7 @@ public interface ISpeciesRepository : IGenericRepository<Species>
         int page, int pageSize, CancellationToken ct = default);
 
     Task<Species?> GetWithDetailsAsync(int specCode, CancellationToken ct = default);
+
+    Task<IReadOnlyList<Species>> GetRelatedAsync(int specCode, int? genusCode, Guid famId, int limit, CancellationToken ct = default);
 }
 

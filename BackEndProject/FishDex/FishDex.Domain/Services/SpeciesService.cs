@@ -89,14 +89,15 @@ public class SpeciesService(
             request.Query, request.FamId, request.GenusCode, language,
             request.Page, request.PageSize, ct);
 
-        var mapped = await Task.WhenAll(items.Select(async s =>
+        var mapped = new List<SpeciesSearchResultDto>(items.Count);
+        foreach (var s in items)
         {
-            var pic = s.Pictures.FirstOrDefault(p => p.PicPreferred == true);
+            var pic      = s.Pictures.FirstOrDefault(p => p.PicPreferred == true);
             var imageUrl = pic != null
                 ? await storage.GetPresignedUrlAsync($"{s.SpecCode}/{pic.Id}{Path.GetExtension(pic.Name)}", ct)
                 : null;
-            return s.ToSearchResultDto(language, imageUrl);
-        }));
+            mapped.Add(s.ToSearchResultDto(language, imageUrl));
+        }
 
         return new PagedResult<SpeciesSearchResultDto>
         {

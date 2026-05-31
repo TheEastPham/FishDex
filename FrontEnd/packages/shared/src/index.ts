@@ -29,7 +29,7 @@ export { useLogout }                               from './hooks/useLogout';
 export { useAuthRestore }                          from './hooks/useAuthRestore';
 
 // ── Utils ─────────────────────────────────────────────────
-export { cn }                                      from './lib/utils';
+export { cn, getCountryCode }                       from './lib/utils';
 
 // ── i18n ──────────────────────────────────────────────────
 export { i18n, setLanguage, useTranslation }       from './i18n';

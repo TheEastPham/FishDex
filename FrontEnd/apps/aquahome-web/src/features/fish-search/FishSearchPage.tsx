@@ -72,28 +72,26 @@ export default function FishSearchPage() {
     <div className="flex flex-col gap-8 pb-10">
 
       {/* Hero Header */}
-      <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-r from-primary to-blue-600 px-6 py-8 sm:py-12 shadow-sm">
-        {/* Decorative background elements */}
-        <div className="absolute top-0 right-0 h-full w-1/2 bg-gradient-to-l from-white/10 to-transparent pointer-events-none" />
-        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-white/10 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-blue-400/20 blur-3xl pointer-events-none" />
+      <div className="relative overflow-hidden bg-transparent pt-8 pb-16">
+        {/* Subtle glowing accents instead of a solid blue block */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 h-64 w-2/3 bg-primary/10 blur-[100px] pointer-events-none rounded-full" />
         
-        <div className="relative z-10 flex flex-col items-center text-center max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/90 backdrop-blur-md mb-4 border border-white/10">
-            <Sparkles className="h-3.5 w-3.5 text-blue-200" />
+        <div className="relative z-10 flex flex-col items-center text-center max-w-2xl mx-auto px-4">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-xs font-semibold text-primary mb-6 shadow-inner">
+            <Sparkles className="h-3.5 w-3.5" />
             <span>Discover Aquatic Life</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">
+          <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight mb-4 leading-tight">
             {t('fish.title')}
           </h1>
-          <p className="text-blue-100 text-sm sm:text-base max-w-lg">
+          <p className="text-slate-400 text-sm sm:text-base max-w-xl leading-relaxed">
             {t('fish.subtitle')}
           </p>
         </div>
       </div>
 
       {/* Search controls - Floating Bar */}
-      <div className="relative -mt-10 z-20 mx-auto w-full max-w-4xl flex flex-col sm:flex-row gap-2 rounded-2xl bg-white p-2 shadow-lg shadow-slate-200/50 border border-slate-100">
+      <div className="relative -mt-10 z-20 mx-auto w-full max-w-4xl flex flex-col sm:flex-row gap-2 rounded-2xl bg-[#202226] p-2 shadow-2xl shadow-black/50 border border-slate-700/50">
         
         <FamilySelect 
           families={families} 
@@ -108,9 +106,9 @@ export default function FishSearchPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t('fish.placeholder')}
-            className="w-full rounded-xl bg-slate-50/50 pl-12 pr-4 py-3 text-sm text-slate-700 font-medium
-                       placeholder:text-slate-400 placeholder:font-normal
-                       focus:outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 hover:bg-slate-100/50
+            className="w-full rounded-xl bg-[#141518] pl-12 pr-4 py-3 text-sm text-slate-200 font-medium
+                       placeholder:text-slate-500 placeholder:font-normal border border-transparent
+                       focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/20 hover:bg-[#1a1c20]
                        transition-all"
             autoFocus
           />
@@ -120,8 +118,8 @@ export default function FishSearchPage() {
       {/* Results count */}
       {result && !loading && (
         <div className="px-2">
-          <p className="text-sm text-slate-500 font-medium">
-            <span className="text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md mr-1">{result.totalCount.toLocaleString()}</span>
+          <p className="text-sm text-slate-400 font-medium">
+            <span className="text-white bg-slate-800 px-2 py-0.5 rounded-md mr-1">{result.totalCount.toLocaleString()}</span>
             {t('fish.results')}{' '}
             {debouncedQuery && (
               <>
@@ -134,7 +132,7 @@ export default function FishSearchPage() {
 
       {/* Error */}
       {error && (
-        <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600 shadow-sm flex items-center gap-3">
+        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-4 text-sm text-red-400 shadow-sm flex items-center gap-3">
           <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
           {error}
         </div>
@@ -165,26 +163,26 @@ export default function FishSearchPage() {
 
       {/* Empty result */}
       {!loading && result && result.items.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-3xl border border-dashed border-slate-200">
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-50 ring-8 ring-slate-50/50">
-            <Search className="h-6 w-6 text-slate-400" />
+        <div className="flex flex-col items-center justify-center py-20 text-center bg-[#202226] rounded-3xl border border-dashed border-slate-700/50">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#141518] ring-8 ring-[#141518]/50">
+            <Search className="h-6 w-6 text-slate-500" />
           </div>
-          <h3 className="text-lg font-semibold text-slate-900 mb-1">No results found</h3>
-          <p className="text-slate-500 text-sm max-w-sm">
+          <h3 className="text-lg font-semibold text-slate-200 mb-1">No results found</h3>
+          <p className="text-slate-400 text-sm max-w-sm">
             {t('fish.emptyResult')}{' '}
-            <span className="font-medium text-slate-700">"{debouncedQuery}"</span>. Try adjusting your search or filters.
+            <span className="font-medium text-slate-300">"{debouncedQuery}"</span>. Try adjusting your search or filters.
           </p>
         </div>
       )}
 
       {/* Empty state */}
       {!loading && !result && !error && (
-        <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-3xl border border-dashed border-slate-200">
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 rotate-3 transition-transform hover:rotate-6">
+        <div className="flex flex-col items-center justify-center py-20 text-center bg-[#202226] rounded-3xl border border-dashed border-slate-700/50 shadow-lg">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/20 rotate-3 transition-transform hover:rotate-6 border border-primary/30 shadow-inner">
             <Search className="h-6 w-6 text-primary" />
           </div>
-          <h3 className="text-lg font-semibold text-slate-900 mb-1">Search the FishDex</h3>
-          <p className="text-sm text-slate-500 max-w-sm">{t('fish.emptyState')}</p>
+          <h3 className="text-lg font-semibold text-white mb-1">Search the FishDex</h3>
+          <p className="text-sm text-slate-400 max-w-sm">{t('fish.emptyState')}</p>
         </div>
       )}
 
@@ -194,26 +192,26 @@ export default function FishSearchPage() {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700
-                       hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50 disabled:bg-slate-50 disabled:cursor-not-allowed transition-all shadow-sm"
+            className="rounded-xl border border-slate-700/50 bg-[#202226] px-4 py-2.5 text-sm font-medium text-slate-300
+                       hover:bg-slate-700/50 hover:text-white disabled:opacity-50 disabled:bg-[#202226] disabled:cursor-not-allowed transition-all shadow-sm"
           >
             {t('pagination.prev')}
           </button>
           
           <div className="flex items-center gap-1 px-4 text-sm font-medium text-slate-500">
             {t('pagination.page')}{' '}
-            <span className="inline-flex items-center justify-center min-w-[2rem] h-8 rounded-lg bg-primary/10 text-primary font-bold">
+            <span className="inline-flex items-center justify-center min-w-[2rem] h-8 rounded-lg bg-primary/20 text-primary font-bold border border-primary/30">
               {page}
             </span>
             {' '}{t('pagination.of')}{' '}
-            <span className="font-semibold text-slate-700">{totalPages}</span>
+            <span className="font-semibold text-slate-300">{totalPages}</span>
           </div>
           
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700
-                       hover:bg-slate-50 hover:text-slate-900 disabled:opacity-50 disabled:bg-slate-50 disabled:cursor-not-allowed transition-all shadow-sm"
+            className="rounded-xl border border-slate-700/50 bg-[#202226] px-4 py-2.5 text-sm font-medium text-slate-300
+                       hover:bg-slate-700/50 hover:text-white disabled:opacity-50 disabled:bg-[#202226] disabled:cursor-not-allowed transition-all shadow-sm"
           >
             {t('pagination.next')}
           </button>

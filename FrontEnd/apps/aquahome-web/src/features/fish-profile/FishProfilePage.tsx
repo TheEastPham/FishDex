@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   useTranslation, cn, getSpeciesDetail, getSpeciesMedia, 
-  getSpeciesOccurrences, getSpeciesCountries, getRelatedSpecies 
+  getSpeciesOccurrences, getSpeciesCountries, getRelatedSpecies, getCountryCode 
 } from '@fishlover/shared';
 import type { 
   SpeciesDetail, SystemImageDto, OccurrenceDto, 
@@ -390,11 +390,19 @@ export default function FishProfilePage() {
               <div className="pt-2 border-t border-slate-800/50">
                 <p className="text-sm font-semibold text-slate-400 mb-3">{t('fish.countriesOfOrigin')}</p>
                 <div className="flex flex-wrap gap-2">
-                  {countries.map(c => (
-                    <span key={c.code} className="inline-flex items-center gap-1.5 bg-[#141518] border border-slate-800/50 rounded-lg px-3 py-1.5 text-sm font-semibold text-slate-300">
-                      <span className="text-xs">🌍</span> {c.name}
-                    </span>
-                  ))}
+                  {countries.map(c => {
+                    const alpha2 = getCountryCode(c.code);
+                    return (
+                      <span key={c.code} className="inline-flex items-center gap-1.5 bg-[#141518] border border-slate-800/50 rounded-lg px-3 py-1.5 text-sm font-semibold text-slate-300 shadow-sm">
+                        {alpha2 ? (
+                          <span className={`fi fi-${alpha2} rounded-sm shadow-sm`} style={{ fontSize: '1.2em' }} />
+                        ) : (
+                          <span className="text-base leading-none">🌍</span>
+                        )}
+                        {c.name}
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
             )}

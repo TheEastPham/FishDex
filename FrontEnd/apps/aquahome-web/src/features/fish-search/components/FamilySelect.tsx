@@ -45,8 +45,8 @@ export default function FamilySelect({ families, value, onChange }: Props) {
     <div ref={wrapperRef} className="relative w-full sm:w-1/3">
       <div
         className={cn(
-          "relative flex items-center bg-slate-50/50 rounded-xl border transition-colors cursor-text h-full",
-          isOpen ? "border-primary/30 bg-white ring-4 ring-primary/10" : "border-transparent hover:bg-slate-100/50"
+          "relative flex items-center rounded-xl border transition-colors cursor-text h-full",
+          isOpen ? "border-primary/50 bg-[#1a1c20] ring-4 ring-primary/20" : "bg-[#141518] border-slate-700/50 hover:bg-[#1a1c20]"
         )}
         onClick={() => setIsOpen(true)}
       >
@@ -54,7 +54,7 @@ export default function FamilySelect({ families, value, onChange }: Props) {
         
         <input
           type="text"
-          className="w-full bg-transparent pl-11 pr-10 py-3 text-sm font-medium text-slate-700 focus:outline-none placeholder:text-slate-700"
+          className="w-full bg-transparent pl-11 pr-10 py-3 text-sm font-medium text-slate-200 focus:outline-none placeholder:text-slate-400"
           placeholder={displayText}
           value={isOpen ? searchTerm : ''}
           onChange={(e) => {
@@ -71,7 +71,7 @@ export default function FamilySelect({ families, value, onChange }: Props) {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute z-50 mt-2 w-[300px] max-h-64 overflow-y-auto rounded-xl border border-slate-100 bg-white p-1 shadow-xl shadow-slate-200/50">
+        <div className="absolute z-50 mt-2 w-[300px] max-h-64 overflow-y-auto rounded-xl border border-slate-700/50 bg-[#202226] p-1 shadow-2xl shadow-black/50 custom-scrollbar">
           {/* "All Families" Option */}
           <button
             onClick={() => {
@@ -81,7 +81,7 @@ export default function FamilySelect({ families, value, onChange }: Props) {
             }}
             className={cn(
               "w-full flex items-center justify-between px-3 py-2.5 text-sm rounded-lg text-left transition-colors",
-              !value ? "bg-primary/5 text-primary font-semibold" : "text-slate-700 hover:bg-slate-50"
+              !value ? "bg-primary/20 text-primary font-semibold" : "text-slate-300 hover:bg-slate-700/50"
             )}
           >
             {allFamiliesText}
@@ -105,11 +105,11 @@ export default function FamilySelect({ families, value, onChange }: Props) {
                   }}
                   className={cn(
                     "w-full flex items-center justify-between px-3 py-2.5 text-sm rounded-lg text-left transition-colors mt-0.5",
-                    isSelected ? "bg-primary/5 text-primary font-semibold" : "text-slate-700 hover:bg-slate-50"
+                    isSelected ? "bg-primary/20 text-primary font-semibold" : "text-slate-300 hover:bg-slate-700/50"
                   )}
                 >
                   <span>
-                    {f.name} {f.commonName && <span className="text-slate-400 font-normal ml-1">({f.commonName})</span>}
+                    {f.name} {f.commonName && <span className="text-slate-500 font-normal ml-1">({f.commonName})</span>}
                   </span>
                   {isSelected && <Check className="h-4 w-4" />}
                 </button>

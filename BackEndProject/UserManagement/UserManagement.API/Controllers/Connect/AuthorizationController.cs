@@ -147,7 +147,7 @@ public class AuthorizationController(
         var request = HttpContext.GetOpenIddictServerRequest()
             ?? throw new InvalidOperationException("The OpenIddict server request cannot be retrieved.");
 
-        if (!request.IsAuthorizationCodeGrantType())
+        if (!request.IsAuthorizationCodeGrantType() && !request.IsRefreshTokenGrantType())
             throw new InvalidOperationException("The specified grant type is not supported.");
 
         var result = await HttpContext.AuthenticateAsync(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);

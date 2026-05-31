@@ -1,5 +1,7 @@
+using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Abstractions;
 
 namespace UserManagement.API.Extensions;
@@ -29,9 +31,17 @@ public static class OpenIddictServerExtensions
                     OpenIddictConstants.Scopes.Roles,
                     "fishdex");
 
-                // Ephemeral keys — phù hợp local dev, restart sẽ gen key mới
-                options.AddEphemeralEncryptionKey();
-                options.AddEphemeralSigningKey();
+                // Keys: dùng fixed key từ config để token sống qua container restart.
+                // Production: thay bằng X.509 cert (xem CLAUDE.md → Production checklist).
+                var secret = configuration["JwtSettings:SecretKey"]
+                    ?? throw new InvalidOperationException("JwtSettings:SecretKey not configured");
+                var keyBytes = Encoding.UTF8.GetBytes(secret.PadRight(32)[..32]);
+
+                // Signing: ký token (access token, refresh token)
+                options.AddSigningKey(new SymmetricSecurityKey(keyBytes));
+                // Encryption: mã hoá refresh token — dùng key đủ 256-bit
+                var encBytes = Encoding.UTF8.GetBytes((secret + "_enc").PadRight(32)[..32]);
+                options.AddEncryptionKey(new SymmetricSecurityKey(encBytes));
                 options.DisableAccessTokenEncryption();
 
                 // Cố định issuer để OIDC discovery và token iss nhất quán dù request đến từ browser hay Docker internal

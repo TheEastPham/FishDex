@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,17 +33,13 @@ public static class OpenIddictServerExtensions
                     OpenIddictConstants.Scopes.Roles,
                     "fishdex");
 
-                // Signing: BẮT BUỘC asymmetric (RSA) theo OIDC spec để ký ID token.
-                // Ephemeral RSA vẫn ổn vì access token ngắn hạn (60 phút), FE tự refresh.
-                options.AddEphemeralSigningKey();
-
-                // Encryption: dùng fixed symmetric key từ config để refresh token
-                // sống qua container restart (ephemeral encryption key là nguyên nhân F5 lỗi).
-                // Production: thay bằng X.509 cert (xem CLAUDE.md → Production checklist).
-                var secret = configuration["JwtSettings:SecretKey"]
-                    ?? throw new InvalidOperationException("JwtSettings:SecretKey not configured");
-                var encBytes = Encoding.UTF8.GetBytes((secret + "_oidc_enc").PadRight(32)[..32]);
-                options.AddEncryptionKey(new SymmetricSecurityKey(encBytes));
+                // Signing + Encryption: dùng self-signed cert persistent trên disk.
+                // Cert được tạo 1 lần, lưu vào keyDir, load lại khi restart → token sống qua deploy.
+                // Production: thay bằng X.509 cert thật (xem CLAUDE.md → Production checklist).
+                var keyDir  = configuration["OpenIddict:KeyDir"] ?? "/tmp/openiddict-keys";
+                var cert    = GetOrCreateDevCert(keyDir);
+                options.AddSigningCertificate(cert);
+                options.AddEncryptionCertificate(cert);
                 options.DisableAccessTokenEncryption();
 
                 // Cố định issuer để OIDC discovery và token iss nhất quán dù request đến từ browser hay Docker internal
@@ -63,5 +61,20 @@ public static class OpenIddictServerExtensions
             });
 
         return services;
+    }
+
+    private static X509Certificate2 GetOrCreateDevCert(string keyDir)
+    {
+        Directory.CreateDirectory(keyDir);
+        var pfxPath = Path.Combine(keyDir, "openiddict-dev.pfx");
+
+        if (File.Exists(pfxPath))
+            return new X509Certificate2(pfxPath, (string?)null, X509KeyStorageFlags.PersistKeySet);
+
+        using var rsa = RSA.Create(2048);
+        var req  = new CertificateRequest("CN=OpenIddict Dev", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        var cert = req.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddYears(10));
+        File.WriteAllBytes(pfxPath, cert.Export(X509ContentType.Pkcs12));
+        return cert;
     }
 }

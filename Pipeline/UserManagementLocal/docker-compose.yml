@@ -58,6 +58,9 @@ services:
       RequireInvitation:                    ${REQUIRE_INVITATION}
       InitialAdmin__Email:                  ${INITIAL_ADMIN_EMAIL}
       InitialAdmin__Password:               ${INITIAL_ADMIN_PASSWORD}
+      OpenIddict__KeyDir:                   /openiddict-keys
+    volumes:
+      - openiddict_keys:/openiddict-keys
     ports:
       - "8080:8080"
     networks:
@@ -71,6 +74,7 @@ services:
 
 volumes:
   usermanagement_sqldata:
+  openiddict_keys:
 
 networks:
   fishlover_local:

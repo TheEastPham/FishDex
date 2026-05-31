@@ -126,6 +126,8 @@ if (!app.Environment.IsProduction())
     });
 }
 
+app.UseMiddleware<PerformanceLoggingMiddleware>();
+app.UseMiddleware<OpenIddictExceptionMiddleware>();
 app.UseHttpsRedirection();
 
 // Performance logging middleware

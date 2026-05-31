@@ -31,16 +31,16 @@ public static class OpenIddictServerExtensions
                     OpenIddictConstants.Scopes.Roles,
                     "fishdex");
 
-                // Keys: dùng fixed key từ config để token sống qua container restart.
+                // Signing: BẮT BUỘC asymmetric (RSA) theo OIDC spec để ký ID token.
+                // Ephemeral RSA vẫn ổn vì access token ngắn hạn (60 phút), FE tự refresh.
+                options.AddEphemeralSigningKey();
+
+                // Encryption: dùng fixed symmetric key từ config để refresh token
+                // sống qua container restart (ephemeral encryption key là nguyên nhân F5 lỗi).
                 // Production: thay bằng X.509 cert (xem CLAUDE.md → Production checklist).
                 var secret = configuration["JwtSettings:SecretKey"]
                     ?? throw new InvalidOperationException("JwtSettings:SecretKey not configured");
-                var keyBytes = Encoding.UTF8.GetBytes(secret.PadRight(32)[..32]);
-
-                // Signing: ký token (access token, refresh token)
-                options.AddSigningKey(new SymmetricSecurityKey(keyBytes));
-                // Encryption: mã hoá refresh token — dùng key đủ 256-bit
-                var encBytes = Encoding.UTF8.GetBytes((secret + "_enc").PadRight(32)[..32]);
+                var encBytes = Encoding.UTF8.GetBytes((secret + "_oidc_enc").PadRight(32)[..32]);
                 options.AddEncryptionKey(new SymmetricSecurityKey(encBytes));
                 options.DisableAccessTokenEncryption();
 

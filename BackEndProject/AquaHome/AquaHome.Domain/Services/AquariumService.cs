@@ -26,13 +26,15 @@ public class AquariumService(
     {
         var entity = new Aquarium
         {
-            Id           = Guid.NewGuid(),
-            UserId       = currentUser.UserId,
-            Name         = request.Name,
-            VolumeLiters = request.VolumeLiters,
-            Type         = request.Type,
-            Description  = request.Description,
-            CreatedAt    = DateTime.UtcNow
+            Id          = Guid.NewGuid(),
+            UserId      = currentUser.UserId,
+            Name        = request.Name,
+            LengthCm    = request.LengthCm,
+            WidthCm     = request.WidthCm,
+            HeightCm    = request.HeightCm,
+            Type        = request.Type,
+            Description = request.Description,
+            CreatedAt   = DateTime.UtcNow
         };
 
         await aquariumRepo.AddAsync(entity);
@@ -44,10 +46,12 @@ public class AquariumService(
         var entity = await aquariumRepo.GetByIdAndUserAsync(id, currentUser.UserId, ct);
         if (entity is null) return null;
 
-        if (request.Name        is not null) entity.Name         = request.Name;
-        if (request.VolumeLiters.HasValue)   entity.VolumeLiters = request.VolumeLiters;
-        if (request.Type        is not null) entity.Type         = request.Type;
-        if (request.Description is not null) entity.Description  = request.Description;
+        if (request.Name        is not null) entity.Name        = request.Name;
+        if (request.LengthCm.HasValue)       entity.LengthCm    = request.LengthCm;
+        if (request.WidthCm.HasValue)        entity.WidthCm     = request.WidthCm;
+        if (request.HeightCm.HasValue)       entity.HeightCm    = request.HeightCm;
+        if (request.Type        is not null) entity.Type        = request.Type;
+        if (request.Description is not null) entity.Description = request.Description;
 
         await aquariumRepo.UpdateAsync(entity);
         return ToDto(entity);
@@ -63,6 +67,6 @@ public class AquariumService(
     }
 
     private static AquariumDto ToDto(Aquarium a) => new(
-        a.Id, a.Name, a.VolumeLiters, a.Type, a.Description, a.CreatedAt,
-        a.Fish?.Count ?? 0);
+        a.Id, a.Name, a.LengthCm, a.WidthCm, a.HeightCm, a.VolumeLiters,
+        a.Type, a.Description, a.CreatedAt, a.Fish?.Count ?? 0);
 }

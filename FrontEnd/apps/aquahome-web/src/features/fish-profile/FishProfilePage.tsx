@@ -67,10 +67,10 @@ function InfoRow({ label, value, icon }: { label: string; value: string | null |
 
 function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub?: string }) {
   return (
-    <div className="bg-[#202226] rounded-2xl p-5 shadow-lg border border-slate-800/80 flex flex-col items-center justify-center text-center hover:bg-[#25282d] transition-colors min-h-[130px]">
+    <div className="bg-[#1e2024]/80 backdrop-blur-xl rounded-2xl p-5 shadow-xl border border-slate-700/50 flex flex-col items-center justify-center text-center hover:bg-[#25282d]/90 transition-all min-h-[130px] hover:-translate-y-1 hover:shadow-2xl">
       {icon}
-      <span className="text-[11px] text-slate-500 uppercase tracking-widest font-bold mt-3 mb-1">{label}</span>
-      <span className="text-lg font-bold text-slate-200">{value}</span>
+      <span className="text-[11px] text-slate-400 uppercase tracking-widest font-bold mt-3 mb-1">{label}</span>
+      <span className="text-lg font-black text-slate-100">{value}</span>
       {sub && <span className="text-xs text-slate-500 mt-0.5">{sub}</span>}
     </div>
   );
@@ -175,49 +175,50 @@ export default function FishProfilePage() {
     <div className="flex flex-col min-h-screen bg-[#141518] pb-20 font-sans">
 
       {/* ═══════════════════ HERO HEADER ═══════════════════ */}
-      <div className="relative h-[420px] md:h-[480px] bg-slate-900 w-full overflow-hidden">
+      <div className="relative h-[380px] md:h-[440px] bg-[#0e0f11] w-full overflow-hidden flex flex-col justify-end pb-[110px]">
         {detail.preferredImageUrl ? (
-          <img src={detail.preferredImageUrl} alt={detail.speciesName} className="w-full h-full object-cover opacity-50" />
+          <img src={detail.preferredImageUrl} alt={detail.speciesName} className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-luminosity" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center opacity-20 bg-gradient-to-br from-slate-700 to-slate-900">
-            <Fish className="w-24 h-24 text-white" />
+          <div className="absolute inset-0 w-full h-full flex items-center justify-center opacity-10 bg-gradient-to-br from-slate-700 to-slate-900">
+            <Fish className="w-32 h-32 text-white" />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#141518] via-[#141518]/50 to-black/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#141518] via-[#141518]/60 to-black/30" />
 
         {/* Top bar */}
-        <div className="absolute top-0 w-full p-4 flex justify-between items-center z-10 max-w-7xl mx-auto left-0 right-0">
-          <button onClick={() => navigate(-1)} className="p-2.5 bg-black/40 backdrop-blur-md text-white rounded-full hover:bg-black/60 transition-colors">
+        <div className="absolute top-0 w-full p-4 flex justify-between items-center z-20 max-w-7xl mx-auto left-0 right-0">
+          <button onClick={() => navigate(-1)} className="p-2.5 bg-black/30 backdrop-blur-md text-white rounded-full hover:bg-black/60 transition-colors border border-white/10">
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex gap-2">
-            <button className="p-2.5 bg-black/40 backdrop-blur-md text-white rounded-full hover:bg-black/60 transition-colors" title={t('fish.share')}>
+            <button className="p-2.5 bg-black/30 backdrop-blur-md text-white rounded-full hover:bg-black/60 transition-colors border border-white/10" title={t('fish.share')}>
               <Share2 className="w-5 h-5" />
             </button>
-            <button onClick={() => setIsFavorite(!isFavorite)} className="p-2.5 bg-black/40 backdrop-blur-md text-white rounded-full hover:bg-black/60 transition-colors" title={t('fish.addToFavorites')}>
+            <button onClick={() => setIsFavorite(!isFavorite)} className="p-2.5 bg-black/30 backdrop-blur-md text-white rounded-full hover:bg-black/60 transition-colors border border-white/10" title={t('fish.addToFavorites')}>
               <Heart className={cn("w-5 h-5 transition-colors", isFavorite ? "fill-rose-500 text-rose-500" : "text-white")} />
             </button>
           </div>
         </div>
 
-        {/* Title overlay */}
-        <div className="absolute bottom-8 w-full px-6 md:px-12 text-center max-w-5xl mx-auto left-0 right-0">
+        {/* Title content */}
+        <div className="relative z-10 w-full px-6 md:px-12 text-center max-w-5xl mx-auto">
           {/* Full Taxonomy breadcrumb */}
-          <div className="inline-flex flex-wrap justify-center items-center gap-1.5 mb-4 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 text-xs font-semibold text-slate-300 uppercase tracking-wider max-w-full">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-            {detail.kingdom && <><span className="hidden sm:inline">{detail.kingdom}</span><span className="text-slate-500 hidden sm:inline">›</span></>}
-            {detail.phylum && <><span className="hidden sm:inline">{detail.phylum}</span><span className="text-slate-500 hidden sm:inline">›</span></>}
-            {detail.className && <><span className="hidden md:inline">{detail.className}</span><span className="text-slate-500 hidden md:inline">›</span></>}
-            {detail.orderName && <><span className="hidden lg:inline">{detail.orderName}</span><span className="text-slate-500 hidden lg:inline">›</span></>}
-            {detail.familyName && <><span>{detail.familyName}</span><span className="text-slate-500">›</span></>}
-            {detail.genusName && <><span>{detail.genusName}</span><span className="text-slate-500">›</span></>}
+          <div className="inline-flex flex-wrap justify-center items-center gap-1.5 mb-5 bg-[#1a1c20]/60 backdrop-blur-xl px-5 py-2 rounded-full border border-slate-700/50 text-xs font-bold text-slate-300 uppercase tracking-widest shadow-lg">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+            {detail.kingdom && <><span className="hidden sm:inline">{detail.kingdom}</span><span className="text-slate-500/80 hidden sm:inline">/</span></>}
+            {detail.phylum && <><span className="hidden sm:inline">{detail.phylum}</span><span className="text-slate-500/80 hidden sm:inline">/</span></>}
+            {detail.className && <><span className="hidden md:inline">{detail.className}</span><span className="text-slate-500/80 hidden md:inline">/</span></>}
+            {detail.orderName && <><span className="hidden lg:inline">{detail.orderName}</span><span className="text-slate-500/80 hidden lg:inline">/</span></>}
+            {detail.familyName && <><span>{detail.familyName}</span><span className="text-slate-500/80">/</span></>}
+            {detail.genusName && <><span>{detail.genusName}</span><span className="text-slate-500/80">/</span></>}
             <span className="text-white normal-case italic">{detail.speciesName.split(' ').pop()}</span>
           </div>
-          <h1 className="text-3xl md:text-5xl font-extrabold text-[#f9e5b9] drop-shadow-2xl mb-1.5 leading-tight">
+          
+          <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-[#f9e5b9] to-amber-200 drop-shadow-2xl mb-2 tracking-tight">
             {detail.preferredCommonName || detail.speciesName}
           </h1>
           {detail.preferredCommonName && (
-            <h2 className="text-lg md:text-xl text-slate-300/90 italic font-light drop-shadow-md">
+            <h2 className="text-xl md:text-2xl text-slate-300/80 italic font-medium drop-shadow-md">
               {detail.speciesName}
             </h2>
           )}
@@ -225,7 +226,7 @@ export default function FishProfilePage() {
       </div>
 
       {/* ═══════════════════ MAIN CONTENT ═══════════════════ */}
-      <div className="max-w-6xl mx-auto w-full px-4 -mt-4 relative z-20 space-y-4">
+      <div className="max-w-6xl mx-auto w-full px-4 -mt-20 md:-mt-24 relative z-30 space-y-6">
 
         {/* ─── Row 1: Quick Facts ─── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

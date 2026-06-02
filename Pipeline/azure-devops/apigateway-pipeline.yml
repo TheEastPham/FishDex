@@ -1,6 +1,5 @@
-# FishDex API — Build & Deploy to Oracle Cloud VM
-# Trigger: push lên release/prod-* + thay đổi trong FishDex hoặc Share
-# Deploy: build Docker image → push GHCR → SSH Oracle VM → docker compose up
+# API Gateway — Build & Deploy to Oracle Cloud VM
+# Trigger: push lên release/prod-* + thay đổi trong ApiGateway
 
 trigger:
   branches:
@@ -8,22 +7,20 @@ trigger:
       - release/prod-*
   paths:
     include:
-      - BackEndProject/FishDex/**
-      - BackEndProject/Share/**
+      - BackEndProject/ApiGateway/**
     exclude:
       - '**/*.md'
 pr: none
 
 variables:
-  - group: oracle-prod-secrets   # ORACLE_VM_IP, ORACLE_SSH_KEY, GHCR_TOKEN, GHCR_USERNAME
+  - group: oracle-prod-secrets
   - name: IMAGE
-    value: ghcr.io/$(GHCR_USERNAME)/fishdex-api
+    value: ghcr.io/$(GHCR_USERNAME)/apigateway
   - name: SERVICE
-    value: fishdex
+    value: gateway
 
 stages:
 
-# ── Build + Push image lên GHCR ─────────────────────────────────────────────
 - stage: Build
   displayName: Build & Push
   jobs:
@@ -38,7 +35,7 @@ stages:
 
     - script: |
         docker build \
-          -f Pipeline/FishDexLocal/Dockerfile.api \
+          -f BackEndProject/ApiGateway/Dockerfile \
           -t $(IMAGE):$(Build.BuildId) \
           -t $(IMAGE):latest \
           BackEndProject/
@@ -49,7 +46,6 @@ stages:
         docker push $(IMAGE):latest
       displayName: Push to GHCR
 
-# ── Deploy lên Oracle VM ─────────────────────────────────────────────────────
 - stage: Deploy
   displayName: Deploy → Oracle VM
   dependsOn: Build
@@ -75,7 +71,7 @@ stages:
                  docker compose -f ~/app/docker-compose.prod.yml pull $(SERVICE) && \
                  docker compose -f ~/app/docker-compose.prod.yml up -d --no-deps $(SERVICE) && \
                  echo 'Deploy $(SERVICE) done'"
-            displayName: Pull & restart FishDex
+            displayName: Pull & restart API Gateway
 
           - script: rm -f /tmp/oracle.key
             displayName: Cleanup SSH key

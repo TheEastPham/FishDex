@@ -1,83 +1,79 @@
+# UserManagement API — Build & Deploy to Oracle Cloud VM
+# Trigger: push lên release/prod-* + thay đổi trong UserManagement hoặc Share
+
 trigger:
   branches:
     include:
-      - main
-      - develop
+      - release/prod-*
   paths:
     include:
       - BackEndProject/UserManagement/**
       - BackEndProject/Share/**
+    exclude:
+      - '**/*.md'
+pr: none
 
 variables:
-  dotnetVersion: '9.0.x'
-  buildConfiguration: 'Release'
-  apiProject: 'BackEndProject/UserManagement/UserManagement.API/UserManagement.API.csproj'
-  solution: 'BackEndProject/FishDex.sln'
-  dockerImageName: 'usermanagement-api'
+  - group: oracle-prod-secrets
+  - name: IMAGE
+    value: ghcr.io/$(GHCR_USERNAME)/usermanagement-api
+  - name: SERVICE
+    value: usermanagement
 
 stages:
 
 - stage: Build
-  displayName: Build & Test
+  displayName: Build & Push
   jobs:
-  - job: BuildTest
-    displayName: Build & Test
+  - job: BuildPush
+    displayName: Build Docker image → GHCR
     pool:
-      vmImage: 'ubuntu-latest'
+      vmImage: ubuntu-latest
     steps:
-    - task: UseDotNet@2
-      displayName: Setup .NET
-      inputs:
-        version: $(dotnetVersion)
 
-    - script: dotnet restore $(solution)
-      displayName: Restore
+    - script: echo "$(GHCR_TOKEN)" | docker login ghcr.io -u "$(GHCR_USERNAME)" --password-stdin
+      displayName: Login GHCR
 
-    - script: dotnet build $(apiProject) --no-restore -c $(buildConfiguration)
-      displayName: Build
+    - script: |
+        docker build \
+          -f Pipeline/UserManagementLocal/Dockerfile.api \
+          -t $(IMAGE):$(Build.BuildId) \
+          -t $(IMAGE):latest \
+          BackEndProject/
+      displayName: Build image
 
-    - script: dotnet test $(solution) --no-build -c $(buildConfiguration)
-      displayName: Test
+    - script: |
+        docker push $(IMAGE):$(Build.BuildId)
+        docker push $(IMAGE):latest
+      displayName: Push to GHCR
 
-    - task: Docker@2
-      displayName: Build Docker image
-      inputs:
-        command: build
-        dockerfile: 'BackEndProject/UserManagement/UserManagement.API/Dockerfile'
-        buildContext: 'BackEndProject/'
-        tags: |
-          $(Build.BuildId)
-          latest
-    # TODO: push to Azure Container Registry
-
-- stage: Deploy_Dev
-  displayName: Deploy → Development
+- stage: Deploy
+  displayName: Deploy → Oracle VM
   dependsOn: Build
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'))
-  jobs:
-  - deployment: DeployDev
-    displayName: Deploy to Dev
-    environment: development
-    pool:
-      vmImage: 'ubuntu-latest'
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - script: echo "TODO: deploy usermanagement-api:$(Build.BuildId) to dev"
-
-- stage: Deploy_Prod
-  displayName: Deploy → Production
-  dependsOn: Build
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
   jobs:
   - deployment: DeployProd
-    displayName: Deploy to Production
+    displayName: SSH deploy
     environment: production
     pool:
-      vmImage: 'ubuntu-latest'
+      vmImage: ubuntu-latest
     strategy:
       runOnce:
         deploy:
           steps:
-          - script: echo "TODO: deploy usermanagement-api:$(Build.BuildId) to production"
+
+          - script: |
+              echo "$(ORACLE_SSH_KEY)" > /tmp/oracle.key
+              chmod 600 /tmp/oracle.key
+            displayName: Setup SSH key
+
+          - script: |
+              ssh -i /tmp/oracle.key -o StrictHostKeyChecking=no ubuntu@$(ORACLE_VM_IP) \
+                "echo '$(GHCR_TOKEN)' | docker login ghcr.io -u '$(GHCR_USERNAME)' --password-stdin && \
+                 docker compose -f ~/app/docker-compose.prod.yml pull $(SERVICE) && \
+                 docker compose -f ~/app/docker-compose.prod.yml up -d --no-deps $(SERVICE) && \
+                 echo 'Deploy $(SERVICE) done'"
+            displayName: Pull & restart UserManagement
+
+          - script: rm -f /tmp/oracle.key
+            displayName: Cleanup SSH key
+            condition: always()

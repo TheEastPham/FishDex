@@ -11,7 +11,7 @@ public static class AquaHomeServiceExtensions
         this IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<AquaHomeDbContext>(options =>
-            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
         return services;
     }

@@ -62,7 +62,7 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddHealthChecks()
-    .AddSqlServer(builder.Configuration.GetConnectionString("DefaultConnection") ?? string.Empty);
+    .AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection") ?? string.Empty);
 
 var app = builder.Build();
 

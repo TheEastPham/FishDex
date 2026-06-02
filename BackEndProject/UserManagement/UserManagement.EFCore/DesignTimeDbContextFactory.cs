@@ -11,8 +11,8 @@ namespace UserManagement.EFCore
             var optionsBuilder = new DbContextOptionsBuilder<UserManagementDbContext>();
             
             // Use default connection string for design time
-            var connectionString = "Server=localhost;Database=baseUserManagement;User Id=sa;Password=DevPassword123!;TrustServerCertificate=true;";
-            optionsBuilder.UseSqlServer(connectionString);
+            var connectionString = "Host=localhost;Port=5435;Database=UserManagement;Username=usermanagement;Password=UserMgmt_Local_Pwd1!";
+            optionsBuilder.UseNpgsql(connectionString);
 
             return new UserManagementDbContext(optionsBuilder.Options);
         }

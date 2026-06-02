@@ -35,11 +35,15 @@ dotnet watch --project UserManagement/UserManagement.API/UserManagement.API.cspr
 
 **EF Core migrations:**
 ```
-# UserManagement (SQL Server)
-dotnet ef migrations add <MigrationName> --project UserManagement/UserManagement.EFCore
-dotnet ef database update --project UserManagement/UserManagement.EFCore
+# UserManagement (PostgreSQL — port 5435)
+dotnet ef migrations add <MigrationName> --project UserManagement/UserManagement.EFCore --startup-project UserManagement/UserManagement.API
+dotnet ef database update --project UserManagement/UserManagement.EFCore --startup-project UserManagement/UserManagement.API
 
-# FishDex (PostgreSQL)
+# AquaHome (PostgreSQL — port 5434)
+dotnet ef migrations add <MigrationName> --project AquaHome/AquaHome.EFCore --startup-project AquaHome/AquaHome.API
+dotnet ef database update --project AquaHome/AquaHome.EFCore --startup-project AquaHome/AquaHome.API
+
+# FishDex (PostgreSQL — port 5433)
 dotnet ef migrations add <MigrationName> --project FishDex/FishDex.EFCore
 dotnet ef database update --project FishDex/FishDex.EFCore
 ```
@@ -47,8 +51,8 @@ dotnet ef database update --project FishDex/FishDex.EFCore
 **Local dev — start infrastructure via Docker:**
 ```
 cd Pipeline/FishDexLocal        && docker compose up -d   # PostgreSQL 5433
-cd Pipeline/UserManagementLocal && docker compose up -d   # SQL Server 1433, Redis 6379
-cd Pipeline/AquaHomeLocal       && docker compose up -d   # SQL Server 1434, Redis 6380
+cd Pipeline/UserManagementLocal && docker compose up -d   # PostgreSQL 5435, Redis 6379
+cd Pipeline/AquaHomeLocal       && docker compose up -d   # PostgreSQL 5434, Redis 6380
 ```
 
 **Default service ports:**
@@ -106,7 +110,8 @@ JWT Bearer tokens; configuration in `appsettings.json` under `JwtSettings` (Secr
 | Concern | Library |
 |---|---|
 | ORM | Entity Framework Core 9 |
-| DB (UserManagement / AquaHome) | SQL Server (EF Core SqlServer provider) |
+| DB (UserManagement) | SQL Server (EF Core SqlServer provider) |
+| DB (AquaHome) | PostgreSQL 16 (Npgsql EF provider) |
 | DB (FishDex) | PostgreSQL 16 + pgvector (Npgsql EF provider) |
 | Gateway | Ocelot 24 |
 | DI | Autofac 9 |

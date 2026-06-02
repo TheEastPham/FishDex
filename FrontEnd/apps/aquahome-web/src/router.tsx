@@ -7,6 +7,10 @@ import AppShell from '@/layouts/AppShell';
 import FishSearchPage from '@/features/fish-search/FishSearchPage';
 import FishProfilePage from '@/features/fish-profile/FishProfilePage';
 import PlaceholderPage from '@/features/common/PlaceholderPage';
+import DashboardPage from '@/features/dashboard/DashboardPage';
+import TanksPage from '@/features/tanks/TanksPage';
+import FavoritesPage from '@/features/favorites/FavoritesPage';
+
 
 export const router = createBrowserRouter([
   { path: '/login',    element: <LoginPage /> },
@@ -18,13 +22,13 @@ export const router = createBrowserRouter([
         element: <AppShell />,
         children: [
           { index: true,          element: <Navigate to="/dashboard" replace /> },
-          { path: '/dashboard',   element: <PlaceholderPage /> },
-          { path: '/tanks',       element: <PlaceholderPage /> },
+          { path: '/dashboard',   element: <DashboardPage /> },
+          { path: '/tanks',       element: <TanksPage /> },
           { path: '/parameters',  element: <PlaceholderPage /> },
           { path: '/tasks',       element: <PlaceholderPage /> },
           { path: '/fish',        element: <FishSearchPage /> },
           { path: '/fish/:specCode', element: <FishProfilePage /> },
-          { path: '/favorites',   element: <PlaceholderPage /> },
+          { path: '/favorites',   element: <FavoritesPage /> },
           { path: '/history',     element: <PlaceholderPage /> },
           { path: '/my-fish',     element: <PlaceholderPage /> },
           { path: '/admin/blog/all',        element: <PlaceholderPage /> },

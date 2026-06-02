@@ -9,19 +9,20 @@ version: "3.9"
 services:
 
   aquahome-db:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: aquahome_sqlserver
+    image: postgres:16-alpine
+    container_name: aquahome_postgres
     restart: unless-stopped
     environment:
-      SA_PASSWORD: "AquaHome_Local_Pwd1!"
-      ACCEPT_EULA: "Y"
+      POSTGRES_DB: AquaHome
+      POSTGRES_USER: aquahome
+      POSTGRES_PASSWORD: "AquaHome_Local_Pwd1!"
     ports:
-      - "1434:1433"
+      - "5434:5432"
     volumes:
-      - aquahome_sqldata:/var/opt/mssql
+      - aquahome_sqldata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'AquaHome_Local_Pwd1!' -Q 'SELECT 1' -No"]
-      interval: 15s
+      test: ["CMD-SHELL", "pg_isready -U aquahome -d AquaHome"]
+      interval: 10s
       timeout: 5s
       retries: 5
 

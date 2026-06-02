@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Search, MessageCircle, Camera, Fish, LogOut, ChevronRight,
@@ -33,6 +33,20 @@ export default function AppShell() {
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isAvatarPickerOpen, setIsAvatarPickerOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+        setIsAvatarPickerOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Cool default avatars using DiceBear
   const DEFAULT_AVATARS = [
@@ -292,7 +306,7 @@ export default function AppShell() {
         </nav>
 
         {/* Footer: Profile & Logout */}
-        <div className="p-4 border-t border-slate-800/60 relative">
+        <div className="p-4 border-t border-slate-800/60 relative" ref={menuRef}>
           
           {/* Floating Dropdown Menu */}
           {isProfileOpen && !isAvatarPickerOpen && (

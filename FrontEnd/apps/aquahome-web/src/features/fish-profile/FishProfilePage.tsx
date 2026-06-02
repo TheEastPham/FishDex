@@ -11,7 +11,8 @@ import type {
 import {
   ArrowLeft, Share2, Heart, Fish, Ruler, Droplets, Map as MapIcon,
   Image as ImageIcon, Scale, AlertTriangle, Shield,
-  Thermometer, TestTube, BookOpen, FileText, Activity, Clock
+  Thermometer, TestTube, BookOpen, FileText, Activity, Clock,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -99,6 +100,8 @@ export default function FishProfilePage() {
   const [relatedSpecies, setRelatedSpecies] = useState<SpeciesSearchResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (!specCode) return;
@@ -144,9 +147,13 @@ export default function FishProfilePage() {
   }
 
   /* ── Derived data ─────────────────────────────────────────── */
+  const filteredOccurrences = selectedCountries.length > 0
+    ? occurrences.filter(occ => occ.countryCode && selectedCountries.includes(occ.countryCode))
+    : occurrences;
+
   const mapCenter: [number, number] =
-    occurrences.length > 0 && occurrences[0].latitudeDec && occurrences[0].longitudeDec
-      ? [occurrences[0].latitudeDec, occurrences[0].longitudeDec]
+    filteredOccurrences.length > 0 && filteredOccurrences[0].latitudeDec && filteredOccurrences[0].longitudeDec
+      ? [filteredOccurrences[0].latitudeDec, filteredOccurrences[0].longitudeDec]
       : [0, 0];
 
   const iucnCode = detail.conservation?.iucnCode?.toUpperCase() ?? '';
@@ -231,8 +238,8 @@ export default function FishProfilePage() {
         {/* ─── Row 1: Quick Facts ─── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <StatCard icon={<Droplets className="w-7 h-7 text-sky-400" />}   label={t('fish.waterType')} value={detail.waterType || '—'} />
-          <StatCard icon={<Ruler className="w-7 h-7 text-emerald-400" />}   label={t('fish.length')}    value={detail.length ? `${detail.length} cm` : '—'} />
-          <StatCard icon={<Scale className="w-7 h-7 text-orange-400" />}    label={t('fish.weight')}    value={detail.weight ? `${detail.weight} kg` : '—'} />
+          <StatCard icon={<Ruler className="w-7 h-7 text-emerald-400" />}   label={t('fish.length')}    value={detail.length ? `${detail.length.toFixed(2)} cm` : '—'} />
+          <StatCard icon={<Scale className="w-7 h-7 text-orange-400" />}    label={t('fish.weight')}    value={detail.weight ? `${detail.weight.toFixed(2)} kg` : '—'} />
           <StatCard icon={<Clock className="w-7 h-7 text-indigo-400" />}    label={t('fish.longevityWild')} value={detail.longevityWild ? `${detail.longevityWild} Yrs` : '—'} />
         </div>
 
@@ -366,14 +373,14 @@ export default function FishProfilePage() {
         {/* ─── Row 6: Map & Countries Combined ─── */}
         {occurrences.length > 0 && (
           <div className="bg-[#202226] rounded-2xl p-6 shadow-lg border border-slate-800/80">
-            <SectionHeader icon={<MapIcon className="w-5 h-5 text-green-400" />} title={`${t('fish.occurrencesMap')} (${occurrences.length} records)`} />
+            <SectionHeader icon={<MapIcon className="w-5 h-5 text-green-400" />} title={`${t('fish.occurrencesMap')} (${filteredOccurrences.length} records)`} />
             <div className="h-[400px] w-full rounded-xl overflow-hidden border border-slate-800/50 relative z-0 mb-4">
-              <MapContainer center={mapCenter} zoom={3} scrollWheelZoom={false} className="h-full w-full z-0" style={{ background: '#141518' }}>
+              <MapContainer key={selectedCountries.join(',')} center={mapCenter} zoom={3} scrollWheelZoom={false} className="h-full w-full z-0" style={{ background: '#141518' }}>
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                   url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                 />
-                {occurrences.map(occ => occ.latitudeDec && occ.longitudeDec && (
+                {filteredOccurrences.map(occ => occ.latitudeDec && occ.longitudeDec && (
                   <Marker key={occ.id} position={[occ.latitudeDec, occ.longitudeDec]}>
                     <Popup>
                       <div className="text-slate-800">
@@ -393,15 +400,25 @@ export default function FishProfilePage() {
                 <div className="flex flex-wrap gap-2">
                   {countries.map(c => {
                     const alpha2 = getCountryCode(c.code);
+                    const isSelected = selectedCountries.includes(c.code);
                     return (
-                      <span key={c.code} className="inline-flex items-center gap-1.5 bg-[#141518] border border-slate-800/50 rounded-lg px-3 py-1.5 text-sm font-semibold text-slate-300 shadow-sm">
+                      <button 
+                        key={c.code} 
+                        onClick={() => setSelectedCountries(prev => prev.includes(c.code) ? prev.filter(code => code !== c.code) : [...prev, c.code])}
+                        className={cn(
+                          "inline-flex items-center gap-1.5 border rounded-lg px-3 py-1.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer",
+                          isSelected 
+                            ? "bg-sky-500/20 border-sky-500/50 text-sky-300" 
+                            : "bg-[#141518] border-slate-800/50 text-slate-300 hover:bg-slate-800"
+                        )}
+                      >
                         {alpha2 ? (
                           <span className={`fi fi-${alpha2} rounded-sm shadow-sm`} style={{ fontSize: '1.2em' }} />
                         ) : (
                           <span className="text-base leading-none">🌍</span>
                         )}
                         {c.name}
-                      </span>
+                      </button>
                     );
                   })}
                 </div>
@@ -410,25 +427,69 @@ export default function FishProfilePage() {
           </div>
         )}
 
-        {/* ─── Row 7: Gallery ─── */}
+        {/* ─── Row 7: Gallery (Carousel) ─── */}
         {media.length > 0 && (
           <div className="bg-[#202226] rounded-2xl p-6 shadow-lg border border-slate-800/80">
             <SectionHeader icon={<ImageIcon className="w-5 h-5 text-indigo-400" />} title={`${t('fish.gallery')} (${media.length})`} />
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {media.map(m => (
-                <div key={m.id} className="aspect-square rounded-xl overflow-hidden bg-[#141518] relative group border border-slate-800/50">
-                  {m.url ? (
-                    <img src={m.url} alt={m.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Fish className="w-8 h-8 text-slate-700" />
-                    </div>
-                  )}
-                  <div className="absolute bottom-0 w-full bg-black/70 backdrop-blur-sm px-3 py-1.5 text-[11px] font-semibold text-white flex justify-between translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                    <span>{m.gender}</span>
-                    <span className="text-slate-400">{m.pictureType}</span>
-                  </div>
+            <div className="relative w-full h-[400px] rounded-xl overflow-hidden border border-slate-800/50 bg-[#141518] group">
+              {/* Display Current Image */}
+              {media[selectedImageIndex || 0].url ? (
+                <img 
+                  src={media[selectedImageIndex || 0].url || undefined} 
+                  alt={media[selectedImageIndex || 0].name || undefined} 
+                  className="w-full h-full object-contain" 
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <Fish className="w-16 h-16 text-slate-700" />
                 </div>
+              )}
+              
+              {/* Navigation overlays */}
+              <div className="absolute inset-0 flex items-center justify-between p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button 
+                  className="p-2 bg-black/50 hover:bg-black/80 text-white rounded-full transition-colors"
+                  onClick={() => setSelectedImageIndex(prev => prev === null || prev === 0 ? media.length - 1 : prev - 1)}
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button 
+                  className="p-2 bg-black/50 hover:bg-black/80 text-white rounded-full transition-colors"
+                  onClick={() => setSelectedImageIndex(prev => prev === null || prev === media.length - 1 ? 0 : prev + 1)}
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Bottom Info Bar */}
+              <div className="absolute bottom-0 w-full bg-black/60 backdrop-blur-md p-3 flex justify-between items-center text-white">
+                <div>
+                  <p className="font-bold text-sm">{media[selectedImageIndex || 0].gender}</p>
+                  <p className="text-slate-400 text-xs">{media[selectedImageIndex || 0].pictureType}</p>
+                </div>
+                <div className="text-sm font-semibold bg-white/10 px-3 py-1 rounded-full">
+                  {(selectedImageIndex || 0) + 1} / {media.length}
+                </div>
+              </div>
+            </div>
+
+            {/* Thumbnail Navigation */}
+            <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
+              {media.map((m, i) => (
+                <button 
+                  key={m.id} 
+                  onClick={() => setSelectedImageIndex(i)}
+                  className={cn(
+                    "relative h-16 w-16 shrink-0 rounded-lg overflow-hidden border-2 transition-all",
+                    (selectedImageIndex || 0) === i ? "border-indigo-500 scale-105" : "border-transparent opacity-50 hover:opacity-100"
+                  )}
+                >
+                  {m.url ? (
+                    <img src={m.url || undefined} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-[#141518] flex items-center justify-center"><Fish className="w-4 h-4 text-slate-600"/></div>
+                  )}
+                </button>
               ))}
             </div>
           </div>

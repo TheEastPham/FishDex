@@ -1,0 +1,119 @@
+# Azure DevOps Pipeline — Deploy to Oracle Cloud VM
+#
+# Flow:
+#   GitHub (code) → Azure DevOps (build + push image) → GHCR → Oracle VM (pull + up)
+#
+# Setup cần làm 1 lần trên Azure DevOps:
+#   1. Library → Variable Groups → "oracle-vm-secrets":
+#      - ORACLE_VM_IP       : public IP của VM Oracle
+#      - ORACLE_SSH_KEY     : nội dung private key (dạng secret)
+#      - GHCR_TOKEN         : GitHub Personal Access Token (read:packages)
+#      - GHCR_USERNAME      : GitHub username
+#   2. Service connection → GitHub → trỏ vào repo FishDex
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - BackEndProject/**
+      - FrontEnd/**
+
+variables:
+  - group: oracle-vm-secrets
+  - name: IMAGE_REGISTRY
+    value: ghcr.io/theeastpham     # đổi thành GitHub username của bạn
+  - name: COMPOSE_FILE
+    value: Pipeline/FrontEndLocal/docker-compose.yml
+
+stages:
+
+# ── Stage 1: Build + Push images lên GitHub Container Registry ──────────────
+- stage: Build
+  displayName: Build & Push Docker images
+  jobs:
+  - job: BuildImages
+    displayName: Build images
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+
+    - task: Docker@2
+      displayName: Login to GHCR
+      inputs:
+        command: login
+        containerRegistry: ''   # dùng script thay
+
+    - script: |
+        echo "$(GHCR_TOKEN)" | docker login ghcr.io -u "$(GHCR_USERNAME)" --password-stdin
+      displayName: Login GHCR
+
+    - script: |
+        docker build \
+          -f BackEndProject/FishDex/FishDex.API/Dockerfile \
+          -t $(IMAGE_REGISTRY)/fishdex-api:$(Build.BuildId) \
+          -t $(IMAGE_REGISTRY)/fishdex-api:latest \
+          BackEndProject/
+        docker push $(IMAGE_REGISTRY)/fishdex-api:$(Build.BuildId)
+        docker push $(IMAGE_REGISTRY)/fishdex-api:latest
+      displayName: Build & Push FishDex
+
+    - script: |
+        docker build \
+          -f Pipeline/UserManagementLocal/Dockerfile.api \
+          -t $(IMAGE_REGISTRY)/usermanagement-api:$(Build.BuildId) \
+          -t $(IMAGE_REGISTRY)/usermanagement-api:latest \
+          BackEndProject/
+        docker push $(IMAGE_REGISTRY)/usermanagement-api:$(Build.BuildId)
+        docker push $(IMAGE_REGISTRY)/usermanagement-api:latest
+      displayName: Build & Push UserManagement
+
+    # TODO: thêm AquaHome, ApiGateway, FrontEnd khi sẵn sàng
+
+# ── Stage 2: Deploy lên Oracle VM qua SSH ───────────────────────────────────
+- stage: Deploy
+  displayName: Deploy to Oracle VM
+  dependsOn: Build
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  jobs:
+  - deployment: DeployOracle
+    displayName: Deploy to Oracle Cloud VM
+    environment: production
+    pool:
+      vmImage: ubuntu-latest
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+
+          - script: |
+              # Ghi SSH key ra file tạm
+              echo "$(ORACLE_SSH_KEY)" > /tmp/oracle_key
+              chmod 600 /tmp/oracle_key
+            displayName: Setup SSH key
+
+          - script: |
+              ssh -i /tmp/oracle_key \
+                  -o StrictHostKeyChecking=no \
+                  ubuntu@$(ORACLE_VM_IP) << 'ENDSSH'
+
+                # Login GHCR trên VM
+                echo "$(GHCR_TOKEN)" | docker login ghcr.io -u "$(GHCR_USERNAME)" --password-stdin
+
+                # Pull images mới nhất
+                docker pull ghcr.io/theeastpham/fishdex-api:latest
+                docker pull ghcr.io/theeastpham/usermanagement-api:latest
+
+                # Restart services (zero-downtime với rolling update nếu cần)
+                cd ~/app
+                docker compose pull
+                docker compose up -d --remove-orphans
+
+                echo "Deploy done"
+              ENDSSH
+            displayName: SSH deploy to Oracle VM
+
+          - script: rm -f /tmp/oracle_key
+            displayName: Cleanup SSH key
+            condition: always()

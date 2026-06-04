@@ -29,7 +29,20 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - ConnectionStrings__DefaultConnection=${USERMGMT_DB_CONN}
       - ConnectionStrings__Redis=${REDIS_CONN}
+      - JwtSettings__SecretKey=${JWT_SECRET_KEY}
+      - JwtSettings__Issuer=${JWT_ISSUER}
+      - JwtSettings__Audience=${JWT_AUDIENCE}
+      - JwtSettings__ExpiryInDays=${JWT_EXPIRY_DAYS}
+      - AutoMigrate__OnStartup=true
+      - Seeding__SeedInitialAdmin=${SEED_INITIAL_ADMIN}
+      - EmailSettings__Resend__ApiKey=${EMAIL_API_KEY}
+      - RequireInvitation=${REQUIRE_INVITATION}
+      - InitialAdmin__Email=${INITIAL_ADMIN_EMAIL}
+      - InitialAdmin__Password=${INITIAL_ADMIN_PASSWORD}
       - OpenIddict__Issuer=${OIDC_ISSUER}
+      - OpenIddict__KeyDir=/openiddict-keys
+    volumes:
+      - openiddict_keys:/openiddict-keys
     depends_on:
       - postgres
       - redis
@@ -70,6 +83,7 @@ services:
       - ConnectionStrings__DefaultConnection=${AQUAHOME_DB_CONN}
       - ConnectionStrings__Redis=${REDIS_CONN}
       - AuthServer__Url=${OIDC_ISSUER}
+      - AuthServer__Authority=${OIDC_ISSUER}
     depends_on:
       - postgres
       - redis
@@ -119,6 +133,7 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  openiddict_keys:
 
 networks:
   fishlover_prod:

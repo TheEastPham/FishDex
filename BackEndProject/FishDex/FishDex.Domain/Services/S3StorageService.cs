@@ -25,11 +25,15 @@ public class S3StorageService : IStorageService
         var config = new AmazonS3Config
         {
             ForcePathStyle = _settings.ForcePathStyle,
+            SignatureVersion = "4",
         };
 
         // MinIO / R2 — custom endpoint; S3 — region-based
         if (!string.IsNullOrEmpty(_settings.ServiceUrl))
+        {
             config.ServiceURL = _settings.ServiceUrl;
+            config.AuthenticationRegion = "auto"; // R2 yêu cầu region "auto" cho SigV4
+        }
         else
             config.RegionEndpoint = RegionEndpoint.APSoutheast1;
 
@@ -48,10 +52,11 @@ public class S3StorageService : IStorageService
         {
             var request = new GetPreSignedUrlRequest
             {
-                BucketName = _settings.BucketName,
-                Key        = objectKey,
-                Expires    = DateTime.UtcNow.AddMinutes(_settings.PresignedUrlExpiryMinutes),
-                Verb       = HttpVerb.GET,
+                BucketName       = _settings.BucketName,
+                Key              = objectKey,
+                Expires          = DateTime.UtcNow.AddMinutes(_settings.PresignedUrlExpiryMinutes),
+                Verb             = HttpVerb.GET,
+                SignatureVersion = SignatureVersion.SigV4,
             };
 
             var url = _s3.GetPreSignedURL(request);

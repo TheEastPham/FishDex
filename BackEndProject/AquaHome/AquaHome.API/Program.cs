@@ -47,7 +47,36 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddMemoryCache();
 builder.Services.AddAquaHomeServices(builder.Configuration);
 builder.Services.AddFishLoverJwtAuthentication(builder.Configuration);
+
+// OAuth2 PKCE scheme — validate OpenIddict-issued tokens qua JWKS discovery
+var authServerPublicUrl = builder.Configuration["AuthServer:Url"] ?? "http://localhost:8080";
+var authServerInternalUrl = builder.Configuration["AuthServer:Authority"] ?? authServerPublicUrl;
+builder.Services.AddAuthentication()
+    .AddJwtBearer("OpenIddict", options =>
+    {
+        options.MetadataAddress = $"{authServerInternalUrl}/.well-known/openid-configuration";
+        options.RequireHttpsMetadata = false;
+        var issuer = authServerPublicUrl.TrimEnd('/');
+        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+        {
+            ValidIssuers = [issuer, issuer + "/"],
+            ValidateIssuer = true,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+        };
+    });
+
 builder.Services.AddFishLoverAuthorization();
+// [Authorize] chấp nhận cả Bearer (direct login) lẫn OpenIddict (OAuth2 PKCE)
+builder.Services.AddAuthorization(options =>
+{
+    options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder(
+        Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme,
+        "OpenIddict")
+        .RequireAuthenticatedUser()
+        .Build();
+});
 builder.Services.AddFishLoverTelemetry(builder.Configuration, "AquaHome.API");
 
 builder.Services.AddCors(options =>

@@ -46,8 +46,8 @@ export default function AquariumForm({ isOpen, onClose, onSave, editing }: Props
   const h = parseFloat(height) || 0;
   const volume = l > 0 && w > 0 && h > 0 ? (l * w * h) / 1000 : null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!name.trim()) return;
     setSaving(true);
     try {
@@ -200,7 +200,7 @@ export default function AquariumForm({ isOpen, onClose, onSave, editing }: Props
             Huỷ
           </button>
           <button
-            onClick={handleSubmit}
+          onClick={() => handleSubmit()}
             disabled={saving || !name.trim()}
             className="flex-1 py-3 rounded-xl bg-sky-500 hover:bg-sky-400 disabled:opacity-50 text-white font-bold transition-colors flex items-center justify-center gap-2"
           >

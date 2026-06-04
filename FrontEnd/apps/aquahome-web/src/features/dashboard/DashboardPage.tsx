@@ -7,11 +7,19 @@ import {
   FlaskConical, Ruler, Sparkles
 } from 'lucide-react';
 
+// Wrap a promise with a timeout — never block the page indefinitely
+function withTimeout<T>(promise: Promise<T>, ms = 8000): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
+  ]);
+}
+
 const TANK_TYPE_STYLES: Record<string, { bg: string; text: string; border: string; label: string }> = {
-  freshwater:  { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20', label: 'Nước ngọt' },
-  saltwater:   { bg: 'bg-sky-500/10',     text: 'text-sky-400',     border: 'border-sky-500/20',     label: 'Nước mặn' },
-  brackish:    { bg: 'bg-teal-500/10',    text: 'text-teal-400',    border: 'border-teal-500/20',    label: 'Lợ' },
-  planted:     { bg: 'bg-lime-500/10',    text: 'text-lime-400',    border: 'border-lime-500/20',    label: 'Thủy sinh' },
+  freshwater: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20', label: 'Nước ngọt' },
+  saltwater:  { bg: 'bg-sky-500/10',     text: 'text-sky-400',     border: 'border-sky-500/20',     label: 'Nước mặn' },
+  brackish:   { bg: 'bg-teal-500/10',    text: 'text-teal-400',    border: 'border-teal-500/20',    label: 'Lợ' },
+  planted:    { bg: 'bg-lime-500/10',    text: 'text-lime-400',    border: 'border-lime-500/20',    label: 'Thủy sinh' },
 };
 
 function getTankStyle(type: string | null) {
@@ -20,8 +28,8 @@ function getTankStyle(type: string | null) {
   return key ? TANK_TYPE_STYLES[key] : { bg: 'bg-slate-700/20', text: 'text-slate-400', border: 'border-slate-700/30', label: type };
 }
 
-function StatCard({ icon, label, value, sub, color }: {
-  icon: React.ReactNode; label: string; value: string | number; sub?: string; color: string;
+function StatCard({ icon, label, value, sub, color, loading }: {
+  icon: React.ReactNode; label: string; value: string | number; sub?: string; color: string; loading?: boolean;
 }) {
   return (
     <div className="bg-[#1e2024] rounded-2xl p-5 border border-slate-800/60 flex items-center gap-4 hover:bg-[#23262b] transition-colors group">
@@ -30,7 +38,10 @@ function StatCard({ icon, label, value, sub, color }: {
       </div>
       <div>
         <p className="text-xs text-slate-500 font-semibold uppercase tracking-widest mb-0.5">{label}</p>
-        <p className="text-2xl font-black text-white">{value}</p>
+        {loading
+          ? <div className="h-7 w-16 bg-slate-800 rounded-lg animate-pulse mt-1" />
+          : <p className="text-2xl font-black text-white">{value}</p>
+        }
         {sub && <p className="text-xs text-slate-500 mt-0.5">{sub}</p>}
       </div>
     </div>
@@ -105,43 +116,35 @@ export default function DashboardPage() {
   const [aquariums, setAquariums] = useState<AquariumDto[]>([]);
   const [favorites, setFavorites] = useState<FavoriteDto[]>([]);
   const [favDetails, setFavDetails] = useState<SpeciesDetail[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [tanksLoading, setTanksLoading] = useState(true);
+  const [favsLoading, setFavsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchAll = async () => {
-      setLoading(true);
-      try {
-        const [tanks, favs] = await Promise.all([getMyAquariums(), getMyFavorites()]);
-        setAquariums(tanks);
-        setFavorites(favs);
+    // Fetch aquariums independently — won't block the page
+    withTimeout(getMyAquariums())
+      .then(data => setAquariums(data))
+      .catch(err => console.warn('[Dashboard] aquariums:', err))
+      .finally(() => setTanksLoading(false));
 
-        // Fetch first 6 favorite details individually (until BE adds batch API)
+    // Fetch favorites independently, then cascade-load details
+    withTimeout(getMyFavorites())
+      .then(async favs => {
+        setFavorites(favs);
         const preview = favs.slice(0, 6);
-        const details = await Promise.allSettled(
-          preview.map(f => getSpeciesDetail(f.specCode))
+        const results = await Promise.allSettled(
+          preview.map(f => withTimeout(getSpeciesDetail(f.specCode), 5000))
         );
-        setFavDetails(details.filter(r => r.status === 'fulfilled').map(r => (r as PromiseFulfilledResult<SpeciesDetail>).value));
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAll();
+        setFavDetails(
+          results
+            .filter(r => r.status === 'fulfilled')
+            .map(r => (r as PromiseFulfilledResult<SpeciesDetail>).value)
+        );
+      })
+      .catch(err => console.warn('[Dashboard] favorites:', err))
+      .finally(() => setFavsLoading(false));
   }, []);
 
   const totalVolume = aquariums.reduce((sum, t) => sum + (t.volumeLiters ?? 0), 0);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#141518] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Fish className="w-14 h-14 text-slate-600 animate-bounce" />
-          <p className="text-slate-400 font-medium">Đang tải...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-[#141518] p-6 pb-20 font-sans">
@@ -168,27 +171,9 @@ export default function DashboardPage() {
 
         {/* ── Stats ── */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <StatCard
-            icon={<Layers className="w-5 h-5 text-sky-400" />}
-            label="Tổng số hồ"
-            value={aquariums.length}
-            sub="hồ cá"
-            color="bg-sky-500/10"
-          />
-          <StatCard
-            icon={<FlaskConical className="w-5 h-5 text-emerald-400" />}
-            label="Tổng thể tích"
-            value={`${totalVolume.toFixed(0)}L`}
-            sub="đang quản lý"
-            color="bg-emerald-500/10"
-          />
-          <StatCard
-            icon={<Heart className="w-5 h-5 text-rose-400" />}
-            label="Cá yêu thích"
-            value={favorites.length}
-            sub="loài"
-            color="bg-rose-500/10"
-          />
+          <StatCard icon={<Layers className="w-5 h-5 text-sky-400" />}     label="Tổng số hồ"    value={aquariums.length}            sub="hồ cá"        color="bg-sky-500/10"     loading={tanksLoading} />
+          <StatCard icon={<FlaskConical className="w-5 h-5 text-emerald-400" />} label="Tổng thể tích" value={`${totalVolume.toFixed(0)}L`} sub="đang quản lý" color="bg-emerald-500/10" loading={tanksLoading} />
+          <StatCard icon={<Heart className="w-5 h-5 text-rose-400" />}     label="Cá yêu thích"  value={favorites.length}            sub="loài"         color="bg-rose-500/10"    loading={favsLoading} />
         </div>
 
         {/* ── My Aquariums preview ── */}
@@ -197,22 +182,20 @@ export default function DashboardPage() {
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
               <Droplets className="w-5 h-5 text-sky-400" /> Hồ cá của tôi
             </h2>
-            <button
-              onClick={() => navigate('/tanks')}
-              className="text-sm text-sky-400 hover:text-sky-300 font-semibold flex items-center gap-1 transition-colors"
-            >
+            <button onClick={() => navigate('/tanks')} className="text-sm text-sky-400 hover:text-sky-300 font-semibold flex items-center gap-1 transition-colors">
               Xem tất cả <ArrowRight className="w-4 h-4" />
             </button>
           </div>
 
-          {aquariums.length === 0 ? (
+          {tanksLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3].map(i => <div key={i} className="bg-[#1e2024] border border-slate-800/60 rounded-2xl h-44 animate-pulse" />)}
+            </div>
+          ) : aquariums.length === 0 ? (
             <div className="bg-[#1e2024] border border-dashed border-slate-700/60 rounded-2xl p-10 text-center">
               <Droplets className="w-12 h-12 text-slate-700 mx-auto mb-3" />
               <p className="text-slate-400 font-medium mb-4">Bạn chưa có hồ cá nào</p>
-              <button
-                onClick={() => navigate('/tanks')}
-                className="inline-flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-white font-bold px-4 py-2 rounded-xl transition-colors text-sm"
-              >
+              <button onClick={() => navigate('/tanks')} className="inline-flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-white font-bold px-4 py-2 rounded-xl transition-colors text-sm">
                 <Plus className="w-4 h-4" /> Tạo hồ đầu tiên
               </button>
             </div>
@@ -226,26 +209,33 @@ export default function DashboardPage() {
         </div>
 
         {/* ── Favorites preview ── */}
-        {favorites.length > 0 && (
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <Heart className="w-5 h-5 text-rose-400" /> Cá yêu thích
-              </h2>
-              <button
-                onClick={() => navigate('/favorites')}
-                className="text-sm text-rose-400 hover:text-rose-300 font-semibold flex items-center gap-1 transition-colors"
-              >
-                Xem tất cả <ArrowRight className="w-4 h-4" />
-              </button>
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <Heart className="w-5 h-5 text-rose-400" /> Cá yêu thích
+            </h2>
+            <button onClick={() => navigate('/favorites')} className="text-sm text-rose-400 hover:text-rose-300 font-semibold flex items-center gap-1 transition-colors">
+              Xem tất cả <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          {favsLoading ? (
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+              {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="aspect-square rounded-xl bg-[#1e2024] animate-pulse" />)}
             </div>
+          ) : favDetails.length > 0 ? (
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
               {favDetails.map(d => (
                 <FavoritePreview key={d.specCode} detail={d} onClick={() => navigate(`/fish/${d.specCode}`)} />
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="bg-[#1e2024] border border-dashed border-slate-700/60 rounded-2xl p-8 text-center">
+              <Heart className="w-10 h-10 text-slate-700 mx-auto mb-3" />
+              <p className="text-slate-500 text-sm">Chưa có cá yêu thích — thêm từ trang chi tiết loài cá!</p>
+            </div>
+          )}
+        </div>
 
       </div>
     </div>

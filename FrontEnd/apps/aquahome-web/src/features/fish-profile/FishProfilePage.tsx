@@ -111,20 +111,21 @@ export default function FishProfilePage() {
       setLoading(true);
       try {
         const id = parseInt(specCode, 10);
-        const [detailData, mediaData, occData, countryData, relatedData, favStatus] = await Promise.all([
+        const [detailData, mediaData, occData, countryData, relatedData] = await Promise.all([
           getSpeciesDetail(id, i18n.language),
           getSpeciesMedia(id),
           getSpeciesOccurrences(id),
           getSpeciesCountries(id),
           getRelatedSpecies(id, 6, i18n.language),
-          checkFavorite(id).catch(() => false),
         ]);
         setDetail(detailData);
         setMedia(mediaData);
         setOccurrences(occData);
         setCountries(countryData);
         setRelatedSpecies(relatedData);
-        setIsFavorite(favStatus);
+
+        // Run checkFavorite independently — AquaHome API failure must not crash this page
+        checkFavorite(id).then(setIsFavorite).catch(() => {/* silently ignore */});
       } catch (err) {
         console.error(err);
       } finally {

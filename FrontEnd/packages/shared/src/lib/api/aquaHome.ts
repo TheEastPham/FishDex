@@ -35,8 +35,13 @@ export async function getMyFavorites(): Promise<FavoriteDto[]> {
 }
 
 export async function checkFavorite(specCode: number): Promise<boolean> {
-  const { data } = await apiClient.get<{ specCode: number; isFavorite: boolean }>(`/api/favorites/${specCode}`);
-  return data.isFavorite;
+  try {
+    const { data } = await apiClient.get<boolean | { specCode: number; isFavorite: boolean }>(`/api/favorites/${specCode}`);
+    if (typeof data === 'boolean') return data;
+    return (data as { specCode: number; isFavorite: boolean }).isFavorite ?? false;
+  } catch {
+    return false;
+  }
 }
 
 export async function addFavorite(specCode: number): Promise<void> {

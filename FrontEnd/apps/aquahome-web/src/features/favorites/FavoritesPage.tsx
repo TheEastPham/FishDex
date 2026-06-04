@@ -21,7 +21,6 @@ export default function FavoritesPage() {
       setLoading(true);
       try {
         const favs = await getMyFavorites();
-        // Initialize cards with loading state
         const initial: FavCard[] = favs.map(f => ({ specCode: f.specCode, detail: null, loading: true }));
         setCards(initial);
         setLoading(false);

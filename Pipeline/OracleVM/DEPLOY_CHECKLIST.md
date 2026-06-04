@@ -8,10 +8,7 @@ Target: FishDex API + UserManagement + ApiGateway. AquaHome bỏ qua.
 - [x] 4 pipeline Azure DevOps đã tạo và đặt tên rõ ràng
 - [x] Variable Group `oracle-prod-secrets` đã tạo + authorize cho pipeline
 - [x] Docker đã cài trên Oracle VM
-- [x] Dockerfile đủ cho 3 service:
-  - `Pipeline/local/FishDex/Dockerfile.api`
-  - `Pipeline/local/UserManagement/Dockerfile.api`
-  - `Pipeline/local/ApiGateway/Dockerfile.api`
+- [x] Azure DevOps pipelines đã config build image → push GHCR (VM chỉ pull về chạy, không build trực tiếp)
 - [x] Cloudflare R2 bucket `system-image` đã tạo + data migrated từ MinIO local
 - [x] R2 User API Token (Read Only) đã tạo cho FishDex API
 

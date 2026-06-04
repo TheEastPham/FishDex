@@ -32,7 +32,7 @@ public class S3StorageService : IStorageService
         if (!string.IsNullOrEmpty(_settings.ServiceUrl))
         {
             config.ServiceURL = _settings.ServiceUrl;
-            config.AuthenticationRegion = "auto"; // R2 yêu cầu region "auto" cho SigV4
+            config.AuthenticationRegion = "apac";
         }
         else
             config.RegionEndpoint = RegionEndpoint.APSoutheast1;
@@ -52,11 +52,10 @@ public class S3StorageService : IStorageService
         {
             var request = new GetPreSignedUrlRequest
             {
-                BucketName       = _settings.BucketName,
-                Key              = objectKey,
-                Expires          = DateTime.UtcNow.AddMinutes(_settings.PresignedUrlExpiryMinutes),
-                Verb             = HttpVerb.GET,
-                SignatureVersion = SignatureVersion.SigV4,
+                BucketName = _settings.BucketName,
+                Key        = objectKey,
+                Expires    = DateTime.UtcNow.AddMinutes(_settings.PresignedUrlExpiryMinutes),
+                Verb       = HttpVerb.GET,
             };
 
             var url = _s3.GetPreSignedURL(request);

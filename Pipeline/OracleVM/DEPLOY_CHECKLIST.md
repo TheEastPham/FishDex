@@ -84,33 +84,9 @@ Xác nhận 3 image đã xuất hiện trên GHCR: `github.com/TheEastPham?tab=p
 
 ---
 
-### Bước 4 — Khởi động services trên VM
+### Bước 4 — Migrate FishDex DB (local → PROD)
 
-```bash
-# Login GHCR trước
-echo "<GHCR_TOKEN>" | docker login ghcr.io -u TheEastPham --password-stdin
-
-# Chạy DB + Redis trước
-docker compose -f ~/app/docker-compose.prod.yml up -d postgres redis
-
-# Đợi postgres healthy (~15 giây), init-db.sh sẽ tự chạy tạo users/databases
-sleep 15
-docker compose -f ~/app/docker-compose.prod.yml ps
-
-# Start tất cả services
-docker compose -f ~/app/docker-compose.prod.yml up -d
-```
-
-Kiểm tra:
-```bash
-docker compose -f ~/app/docker-compose.prod.yml ps
-docker logs fishdex --tail 50
-docker logs usermanagement --tail 50
-```
-
----
-
-### Bước 5 — Migrate FishDex DB (local → PROD)
+Làm trước khi start API để FishDex có data ngay khi lên.
 
 **Dump từ local** (port 5433):
 ```powershell
@@ -123,9 +99,32 @@ scp -i "C:\Users\Lenovo\.ssh\ssh-key-2026-06-01.key" `
   fishdex_dump.dump ubuntu@<ORACLE_VM_IP>:~/
 ```
 
+**Khởi động PostgreSQL + Redis trước** (cần DB running để restore):
+```bash
+echo "<GHCR_TOKEN>" | docker login ghcr.io -u TheEastPham --password-stdin
+docker compose -f ~/app/docker-compose.prod.yml up -d postgres redis
+sleep 15  # đợi init-db.sh tạo xong users/databases
+```
+
 **Restore trên VM** (dùng postgres admin user):
 ```bash
 docker exec -i postgres pg_restore -U postgres -d fishdex < ~/fishdex_dump.dump
+```
+
+---
+
+### Bước 5 — Khởi động tất cả services
+
+```bash
+# Start app services (DB đã có data)
+docker compose -f ~/app/docker-compose.prod.yml up -d
+```
+
+Kiểm tra:
+```bash
+docker compose -f ~/app/docker-compose.prod.yml ps
+docker logs fishdex --tail 50
+docker logs usermanagement --tail 50
 ```
 
 ---

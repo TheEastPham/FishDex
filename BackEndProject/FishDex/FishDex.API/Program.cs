@@ -181,18 +181,15 @@ try
     }
 
     // ── Middleware pipeline ────────────────────────────────────
-    if (!app.Environment.IsProduction())
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
     {
-        app.UseSwagger();
-        app.UseSwaggerUI(options =>
-        {
-            options.SwaggerEndpoint("/swagger/v1/swagger.json", "FishDex API v1");
-            options.RoutePrefix = "swagger";
-            options.OAuthClientId("FishDex_Swagger");
-            options.OAuthUsePkce();
-            options.OAuthScopes("openid", "profile", "email", "roles", "fishdex");
-        });
-    }
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "FishDex API v1");
+        options.RoutePrefix = "swagger";
+        options.OAuthClientId("FishDex_Swagger");
+        options.OAuthUsePkce();
+        options.OAuthScopes("openid", "profile", "email", "roles", "fishdex");
+    });
 
     app.UseSerilogRequestLogging(options =>
     {

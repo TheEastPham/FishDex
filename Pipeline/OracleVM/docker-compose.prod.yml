@@ -27,7 +27,7 @@ services:
       - "8080:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=${USERMGMT_DB_CONN}
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=usermanagement;Username=${UM_DB_USER};Password=${UM_DB_PASSWORD}
       - ConnectionStrings__Redis=${REDIS_CONN}
       - JwtSettings__SecretKey=${JWT_SECRET_KEY}
       - JwtSettings__Issuer=${JWT_ISSUER}
@@ -58,7 +58,7 @@ services:
       - "8081:8081"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__FishDexDb=${FISHDEX_DB_CONN}
+      - ConnectionStrings__FishDexDb=Host=postgres;Port=5432;Database=fishdex;Username=${FD_DB_USER};Password=${FD_DB_PASSWORD}
       - Storage__ServiceUrl=${R2_SERVICE_URL}
       - Storage__AccessKey=${R2_ACCESS_KEY}
       - Storage__SecretKey=${R2_SECRET_KEY}
@@ -80,7 +80,7 @@ services:
       - "8082:8082"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=${AQUAHOME_DB_CONN}
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=aquahome;Username=${AH_DB_USER};Password=${AH_DB_PASSWORD}
       - ConnectionStrings__Redis=${REDIS_CONN}
       - AuthServer__Url=${OIDC_ISSUER}
       - AuthServer__Authority=${OIDC_ISSUER}
@@ -96,10 +96,17 @@ services:
     container_name: postgres
     restart: unless-stopped
     environment:
-      - POSTGRES_USER=${PG_USER}
-      - POSTGRES_PASSWORD=${PG_PASSWORD}
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${PG_ADMIN_PASSWORD}
+      - UM_DB_USER=${UM_DB_USER}
+      - UM_DB_PASSWORD=${UM_DB_PASSWORD}
+      - FD_DB_USER=${FD_DB_USER}
+      - FD_DB_PASSWORD=${FD_DB_PASSWORD}
+      - AH_DB_USER=${AH_DB_USER}
+      - AH_DB_PASSWORD=${AH_DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
     networks:
       - fishlover_prod
 
@@ -124,7 +131,7 @@ services:
       - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./ssl:/etc/nginx/ssl:ro          # cert từ Let's Encrypt
+      - ./ssl:/etc/nginx/ssl:ro
     depends_on:
       - gateway
     networks:

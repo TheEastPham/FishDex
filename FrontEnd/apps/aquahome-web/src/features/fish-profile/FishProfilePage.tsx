@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   useTranslation, cn, getSpeciesDetail, getSpeciesMedia, 
-  getSpeciesOccurrences, getSpeciesCountries, getRelatedSpecies, getCountryCode 
+  getSpeciesOccurrences, getSpeciesCountries, getRelatedSpecies, getCountryCode,
+  checkFavorite, addFavorite, removeFavorite
 } from '@fishlover/shared';
 import type { 
   SpeciesDetail, SystemImageDto, OccurrenceDto, 
@@ -100,6 +101,7 @@ export default function FishProfilePage() {
   const [relatedSpecies, setRelatedSpecies] = useState<SpeciesSearchResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
 
@@ -121,6 +123,9 @@ export default function FishProfilePage() {
         setOccurrences(occData);
         setCountries(countryData);
         setRelatedSpecies(relatedData);
+
+        // Run checkFavorite independently — AquaHome API failure must not crash this page
+        checkFavorite(id).then(setIsFavorite).catch(() => {/* silently ignore */});
       } catch (err) {
         console.error(err);
       } finally {
@@ -129,6 +134,25 @@ export default function FishProfilePage() {
     };
     fetchAll();
   }, [specCode, i18n.language]);
+
+  const handleToggleFavorite = async () => {
+    if (!specCode || favoriteLoading) return;
+    setFavoriteLoading(true);
+    try {
+      const id = parseInt(specCode, 10);
+      if (isFavorite) {
+        await removeFavorite(id);
+        setIsFavorite(false);
+      } else {
+        await addFavorite(id);
+        setIsFavorite(true);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setFavoriteLoading(false);
+    }
+  };
 
   /* ── Loading / Error ─────────────────────────────────────── */
   if (loading) {
@@ -201,8 +225,8 @@ export default function FishProfilePage() {
             <button className="p-2.5 bg-black/30 backdrop-blur-md text-white rounded-full hover:bg-black/60 transition-colors border border-white/10" title={t('fish.share')}>
               <Share2 className="w-5 h-5" />
             </button>
-            <button onClick={() => setIsFavorite(!isFavorite)} className="p-2.5 bg-black/30 backdrop-blur-md text-white rounded-full hover:bg-black/60 transition-colors border border-white/10" title={t('fish.addToFavorites')}>
-              <Heart className={cn("w-5 h-5 transition-colors", isFavorite ? "fill-rose-500 text-rose-500" : "text-white")} />
+            <button onClick={handleToggleFavorite} disabled={favoriteLoading} className="p-2.5 bg-black/30 backdrop-blur-md text-white rounded-full hover:bg-black/60 transition-colors border border-white/10 disabled:opacity-60" title={t('fish.addToFavorites')}>
+              <Heart className={cn("w-5 h-5 transition-all", isFavorite ? "fill-rose-500 text-rose-500 scale-110" : "text-white")} />
             </button>
           </div>
         </div>

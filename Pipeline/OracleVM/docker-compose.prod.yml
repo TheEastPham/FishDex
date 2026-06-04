@@ -50,6 +50,7 @@ services:
       - Storage__AccessKey=${R2_ACCESS_KEY}
       - Storage__SecretKey=${R2_SECRET_KEY}
       - Storage__BucketName=${R2_BUCKET_NAME}
+      - Storage__ForcePathStyle=false
       - AuthServer__Url=${OIDC_ISSUER}
       - AuthServer__Authority=${OIDC_ISSUER}
     depends_on:

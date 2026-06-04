@@ -50,9 +50,9 @@ dotnet ef database update --project FishDex/FishDex.EFCore
 
 **Local dev — start infrastructure via Docker:**
 ```
-cd Pipeline/FishDexLocal        && docker compose up -d   # PostgreSQL 5433
-cd Pipeline/UserManagementLocal && docker compose up -d   # PostgreSQL 5435, Redis 6379
-cd Pipeline/AquaHomeLocal       && docker compose up -d   # PostgreSQL 5434, Redis 6380
+cd Pipeline/local/FishDex        && docker compose up -d   # PostgreSQL 5433
+cd Pipeline/local/UserManagement && docker compose up -d   # PostgreSQL 5435, Redis 6379
+cd Pipeline/local/AquaHome       && docker compose up -d   # PostgreSQL 5434, Redis 6380
 ```
 
 **Default service ports:**

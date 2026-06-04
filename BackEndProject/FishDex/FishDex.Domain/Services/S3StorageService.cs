@@ -25,11 +25,15 @@ public class S3StorageService : IStorageService
         var config = new AmazonS3Config
         {
             ForcePathStyle = _settings.ForcePathStyle,
+            SignatureVersion = "4",
         };
 
         // MinIO / R2 — custom endpoint; S3 — region-based
         if (!string.IsNullOrEmpty(_settings.ServiceUrl))
+        {
             config.ServiceURL = _settings.ServiceUrl;
+            config.AuthenticationRegion = "apac";
+        }
         else
             config.RegionEndpoint = RegionEndpoint.APSoutheast1;
 

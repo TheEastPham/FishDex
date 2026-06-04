@@ -44,8 +44,9 @@ services:
 
   fishdex-api:
     build:
-      context: ../../BackEndProject
-      dockerfile: ../Pipeline/FishDexLocal/Dockerfile.api
+      context: ../../../BackEndProject
+      dockerfile: ../Pipeline/local/FishDex/Dockerfile.api
+    image: fishdex-api:local
     container_name: fishdex_api
     restart: unless-stopped
     environment:
@@ -58,6 +59,11 @@ services:
       JwtSettings__ExpiryMinutes:   ${JWT_EXPIRY_MINUTES}
       AuthServer__Url:              ${AUTH_SERVER_URL}
       AuthServer__Authority:        ${AUTH_SERVER_AUTHORITY}
+      Storage__ServiceUrl:          ${STORAGE_SERVICE_URL}
+      Storage__AccessKey:           ${STORAGE_ACCESS_KEY}
+      Storage__SecretKey:           ${STORAGE_SECRET_KEY}
+      Storage__BucketName:          ${STORAGE_BUCKET}
+      Storage__ForcePathStyle:      "false"
     ports:
       - "8081:8080"
     networks:

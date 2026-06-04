@@ -23,7 +23,7 @@ sao cho data này có thể dùng thẳng cho PROD sau khi verify.
 
 ```bash
 # ── Setup môi trường ────────────────────────────────────────────────────
-cd BackEndProject/Pipeline/FishDexLocal
+cd BackEndProject/Pipeline/local/FishDex
 
 # 1. Khởi động PostgreSQL container
 docker compose up -d
@@ -31,7 +31,7 @@ docker compose up -d
 # 2. Apply EF Core migrations (chạy từ BackEndProject/)
 cd ../..
 dotnet ef database update --project FishDex/FishDex.EFCore --startup-project FishDex/FishDex.API
-cd Pipeline/FishDexLocal
+cd Pipeline/local/FishDex
 
 # 3. Bỏ file parquet vào parquetData/  (xem danh sách bên dưới)
 
@@ -214,7 +214,7 @@ FishBase thường dùng các giá trị:
 ## Cấu trúc thư mục ETL
 
 ```
-Pipeline/FishDexLocal/
+Pipeline/local/FishDex/
 ├── parquetData/                ← bỏ file .parquet ở đây
 ├── etl/
 │   ├── __init__.py

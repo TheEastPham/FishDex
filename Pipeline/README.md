@@ -8,30 +8,34 @@ Thư mục này chứa toàn bộ pipeline config cho 3 BE services: **FishDex**
 
 ```
 Pipeline/
-  FishDexLocal/            Local Docker stack cho FishDex
-  UserManagementLocal/     Local Docker stack cho UserManagement
-  AquaHomeLocal/           Local Docker stack cho AquaHome
-  github-actions/          CI/CD templates cho GitHub Actions
-  azure-devops/            CI/CD templates cho Azure DevOps
+  local/
+    FishDex/             Local Docker stack cho FishDex
+    UserManagement/      Local Docker stack cho UserManagement
+    AquaHome/            Local Docker stack cho AquaHome
+    ApiGateway/          Local Docker stack cho ApiGateway
+    FrontEnd/            Local Docker stack cho FrontEnd
+  OracleVM/              Production Docker Compose cho Oracle VM
+  github-actions/        CI/CD templates cho GitHub Actions
+  azure-devops/          CI/CD templates cho Azure DevOps
 ```
 
 ---
 
 ## Local Docker
 
-Mỗi service có docker-compose riêng. Chạy từ thư mục tương ứng:
+Mỗi service có docker-compose riêng trong `local/`. Chạy từ thư mục tương ứng:
 
 ```bash
 # FishDex (PostgreSQL 16 + pgAdmin)
-cd Pipeline/FishDexLocal
+cd Pipeline/local/FishDex
 docker compose up -d
 
-# UserManagement (SQL Server 2022 + Redis 7)
-cd Pipeline/UserManagementLocal
+# UserManagement (PostgreSQL 16 + Redis 7)
+cd Pipeline/local/UserManagement
 docker compose up -d
 
-# AquaHome (SQL Server 2022 + Redis 7)
-cd Pipeline/AquaHomeLocal
+# AquaHome (PostgreSQL 16 + Redis 7)
+cd Pipeline/local/AquaHome
 docker compose up -d
 ```
 
@@ -41,21 +45,19 @@ docker compose up -d
 |-------------------|-------------|-----------|
 | FishDex           | PostgreSQL  | 5433      |
 | FishDex           | pgAdmin     | 5050      |
-| UserManagement    | SQL Server  | 1433      |
+| UserManagement    | PostgreSQL  | 5435      |
 | UserManagement    | Redis       | 6379      |
-| AquaHome          | SQL Server  | 1434      |
+| AquaHome          | PostgreSQL  | 5434      |
 | AquaHome          | Redis       | 6380      |
-
-AquaHome dùng port offset +1 so với UserManagement để có thể chạy song song.
 
 ### Credentials (local only)
 
-| Service        | Component  | User       | Password                  |
-|----------------|------------|------------|---------------------------|
-| FishDex        | PostgreSQL | fishdex    | fishdex_local_pwd         |
-| FishDex        | pgAdmin    | admin@fishdex.local | admin123         |
-| UserManagement | SQL Server | sa         | UserMgmt_Local_Pwd1!      |
-| AquaHome       | SQL Server | sa         | AquaHome_Local_Pwd1!      |
+| Service        | Component  | User            | Password                  |
+|----------------|------------|-----------------|---------------------------|
+| FishDex        | PostgreSQL | fishdex         | fishdex_local_pwd         |
+| FishDex        | pgAdmin    | admin@fishdex.local | admin123             |
+| UserManagement | PostgreSQL | usermanagement  | UserMgmt_Local_Pwd1!      |
+| AquaHome       | PostgreSQL | aquahome        | AquaHome_Local_Pwd1!      |
 
 ---
 
@@ -85,9 +87,3 @@ Files ở `azure-devops/*-pipeline.yml`. Trong Azure DevOps portal: tạo pipeli
 | `main`    | build → test → docker → deploy **prod**|
 
 Pipeline chỉ chạy khi có thay đổi trong folder của service đó hoặc `Share/`.
-
-### TODO khi chốt deployment
-
-Tìm các comment `# TODO` trong pipeline files và điền:
-1. Login + push Docker image lên container registry (ACR / GHCR / ECR)
-2. Deploy command tới target environment

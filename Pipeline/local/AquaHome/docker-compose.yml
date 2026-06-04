@@ -40,8 +40,8 @@ services:
 
   aquahome-api:
     build:
-      context: ../../BackEndProject
-      dockerfile: ../Pipeline/AquaHomeLocal/Dockerfile.api
+      context: ../../../BackEndProject
+      dockerfile: ../Pipeline/local/AquaHome/Dockerfile.api
     image: aquahome-api:local
     container_name: aquahome_api
     restart: unless-stopped
@@ -53,6 +53,8 @@ services:
       JwtSettings__Issuer:     ${JWT_ISSUER}
       JwtSettings__Audience:   ${JWT_AUDIENCE}
       JwtSettings__ExpiryMinutes: ${JWT_EXPIRY_MINUTES}
+      AuthServer__Url:         ${AUTH_SERVER_URL}
+      AuthServer__Authority:   ${AUTH_SERVER_AUTHORITY}
     ports:
       - "8082:8080"
     networks:

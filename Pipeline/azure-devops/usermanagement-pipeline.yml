@@ -36,7 +36,7 @@ stages:
 
     - script: |
         docker build \
-          -f Pipeline/UserManagementLocal/Dockerfile.api \
+          -f Pipeline/local/UserManagement/Dockerfile.api \
           -t $(IMAGE):$(Build.BuildId) \
           -t $(IMAGE):latest \
           BackEndProject/

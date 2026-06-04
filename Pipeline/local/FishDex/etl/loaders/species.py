@@ -9,10 +9,6 @@ import polars as pl
 from ..config import PARQUET_DIR, PARQUET_FILES
 from ..db import connect, to_str, to_float, to_int, execute_upsert
 
-# TODO(Story 1.9a): Thêm "LongevityCaptive" vào SQL + rows khi re-run ETL
-#   SQL: thêm "LongevityCaptive" vào INSERT list (sau "LongevityWild") và ON CONFLICT DO UPDATE
-#   rows: thêm to_float(r.get("LongevityCapt") or r.get("LongevityCaptive"))
-#   Parquet cols: species.parquet — kiểm tra tên cột bằng: pl.read_parquet(path).columns
 SQL = """
     INSERT INTO "Species" (
         "Id", "SpecCode", "GenusCode", "FamCode", "FamId",
@@ -20,7 +16,7 @@ SQL = """
         "Source", "AuthorRef", "Remark", "TaxIssue",
         "Length", "Weight", "Comments", "Dangerous",
         "Vulnerability", "VulnerabilityClimate", "AirBreathing", "LifeCycle",
-        "DemersPelag", "MaxLengthRef", "LengthFemale", "LongevityWild",
+        "DemersPelag", "MaxLengthRef", "LengthFemale", "LongevityWild", "LongevityCaptive",
         "PicPreferredNameM", "PicPreferredNameF"
     ) VALUES (
         %s,%s,%s,%s,%s,
@@ -28,7 +24,7 @@ SQL = """
         %s,%s,%s,%s,
         %s,%s,%s,%s,
         %s,%s,%s,%s,
-        %s,%s,%s,%s,
+        %s,%s,%s,%s,%s,
         %s,%s
     )
     ON CONFLICT ("SpecCode") DO UPDATE SET
@@ -56,6 +52,7 @@ SQL = """
         "MaxLengthRef"       = EXCLUDED."MaxLengthRef",
         "LengthFemale"       = EXCLUDED."LengthFemale",
         "LongevityWild"      = EXCLUDED."LongevityWild",
+        "LongevityCaptive"   = EXCLUDED."LongevityCaptive",
         "PicPreferredNameM"  = EXCLUDED."PicPreferredNameM",
         "PicPreferredNameF"  = EXCLUDED."PicPreferredNameF"
 """
@@ -121,6 +118,7 @@ def load(spec_codes: set[int]):
                 to_str(r.get("MaxLengthRef")),
                 to_float(r.get("LengthFemale")),
                 to_float(r.get("LongevityWild")),
+                to_float(r.get("LongevityCapt") or r.get("LongevityCaptive")),
                 to_str(r.get("PicPreferredNameM")),
                 to_str(r.get("PicPreferredNameF")),
             ))

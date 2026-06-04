@@ -17,7 +17,7 @@ import duckdb
 import tiktoken
 from tqdm import tqdm
 
-PARQUET_DIR = Path(__file__).parent.parent / "FishDexLocal" / "parquetData"
+PARQUET_DIR = Path(__file__).parent.parent / "local" / "FishDex" / "parquetData"
 OUTPUT_DIR  = Path(__file__).parent / "output"
 OUTPUT_FILE = OUTPUT_DIR / "species_chunks.jsonl"
 

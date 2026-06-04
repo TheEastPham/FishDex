@@ -2,6 +2,8 @@
 export type { TokenResponse, UserInfo }           from './types/auth';
 export type { PagedResult }                        from './types/common';
 export type { SpeciesSearchResult, SearchSpeciesParams, Family, SpeciesDetail, SystemImageDto, OccurrenceDto, CountryDto } from './types/species';
+export type { AquariumDto, CreateAquariumRequest, UpdateAquariumRequest, FavoriteDto } from './types/aquahome';
+
 
 // ── Store ─────────────────────────────────────────────────
 export { useAuthStore }                            from './store/authStore';
@@ -21,6 +23,8 @@ export {
 export { apiClient }                               from './lib/api/client';
 // TODO(mobile): fishDex.ts uses import.meta.env — pass baseUrl via config object
 export { searchSpecies, getFamilies, getSpeciesDetail, getSpeciesMedia, getSpeciesOccurrences, getSpeciesCountries, getRelatedSpecies } from './lib/api/fishDex';
+export { getMyAquariums, getAquariumById, createAquarium, updateAquarium, deleteAquarium, getMyFavorites, checkFavorite, addFavorite, removeFavorite } from './lib/api/aquaHome';
+
 
 // ── Hooks ─────────────────────────────────────────────────
 export { useDebounce }                             from './hooks/useDebounce';

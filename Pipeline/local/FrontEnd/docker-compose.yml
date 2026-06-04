@@ -1,7 +1,7 @@
 services:
   aquahome-web:
     build:
-      context: ../../FrontEnd
+      context: ../../../FrontEnd
       dockerfile: apps/aquahome-web/Dockerfile
       args:
         VITE_AUTH_ISSUER:         ${VITE_AUTH_ISSUER:-http://localhost:8080}

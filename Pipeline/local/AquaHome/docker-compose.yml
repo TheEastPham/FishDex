@@ -40,8 +40,8 @@ services:
 
   aquahome-api:
     build:
-      context: ../../BackEndProject
-      dockerfile: ../Pipeline/AquaHomeLocal/Dockerfile.api
+      context: ../../../BackEndProject
+      dockerfile: ../Pipeline/local/AquaHome/Dockerfile.api
     image: aquahome-api:local
     container_name: aquahome_api
     restart: unless-stopped

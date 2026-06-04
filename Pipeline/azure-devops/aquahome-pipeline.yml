@@ -36,7 +36,7 @@ stages:
 
     - script: |
         docker build \
-          -f Pipeline/AquaHomeLocal/Dockerfile.api \
+          -f Pipeline/local/AquaHome/Dockerfile.api \
           -t $(IMAGE):$(Build.BuildId) \
           -t $(IMAGE):latest \
           BackEndProject/

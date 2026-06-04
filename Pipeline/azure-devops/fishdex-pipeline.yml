@@ -38,7 +38,7 @@ stages:
 
     - script: |
         docker build \
-          -f Pipeline/FishDexLocal/Dockerfile.api \
+          -f Pipeline/local/FishDex/Dockerfile.api \
           -t $(IMAGE):$(Build.BuildId) \
           -t $(IMAGE):latest \
           BackEndProject/

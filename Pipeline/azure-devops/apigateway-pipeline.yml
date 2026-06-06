@@ -34,17 +34,15 @@ stages:
       displayName: Login GHCR
 
     - script: |
-        docker build \
+        docker buildx create --use --driver docker-container
+        docker buildx build \
+          --platform linux/arm64 \
+          --push \
           -f Pipeline/local/ApiGateway/Dockerfile.api \
           -t $(IMAGE):$(Build.BuildId) \
           -t $(IMAGE):latest \
           BackEndProject/
-      displayName: Build image
-
-    - script: |
-        docker push $(IMAGE):$(Build.BuildId)
-        docker push $(IMAGE):latest
-      displayName: Push to GHCR
+      displayName: Build & Push image (ARM64)
 
 - stage: Deploy
   displayName: Deploy → Oracle VM

@@ -35,7 +35,7 @@ stages:
 
     - script: |
         docker build \
-          -f BackEndProject/ApiGateway/Dockerfile \
+          -f Pipeline/local/ApiGateway/Dockerfile.api \
           -t $(IMAGE):$(Build.BuildId) \
           -t $(IMAGE):latest \
           BackEndProject/

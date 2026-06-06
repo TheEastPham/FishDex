@@ -1,10 +1,10 @@
 # API Gateway — Build & Deploy to Oracle Cloud VM
-# Trigger: push lên release/prod-* + thay đổi trong ApiGateway
+# Trigger: push lên release/v1.0 + thay đổi trong ApiGateway
 
 trigger:
   branches:
     include:
-      - release/prod-*
+      - release/v1.0
   paths:
     include:
       - BackEndProject/ApiGateway/**

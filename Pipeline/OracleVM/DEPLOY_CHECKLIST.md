@@ -144,7 +144,23 @@ docker logs usermanagement --tail 50
 - PostgreSQL: mỗi DB có user riêng (um_user, fd_user, ah_user) — init-db.sh tạo tự động lần đầu
 - SSL cert cần renew định kỳ — cân nhắc setup certbot auto-renew
 - Sau khi ổn định: tắt Swagger trên PROD
-- CORS: điền `FE_ORIGIN` trong `.env` với đúng Cloudflare Pages URL trước khi khởi động
+- CORS: `FE_ORIGIN` trong `.env` hiện để placeholder — **cần update khi FE go live** (xem mục bên dưới)
+
+---
+
+## Khi FE go live trên Cloudflare Pages *(việc cần làm)*
+
+1. **Lấy URL Cloudflare Pages** sau khi FE deploy xong (dạng `https://fishlover.pages.dev` hoặc custom domain)
+2. **SSH vào VM**, sửa `~/app/.env`:
+   ```bash
+   # Đổi FE_ORIGIN thành URL thật
+   sed -i 's|FE_ORIGIN=.*|FE_ORIGIN=https://fishlover.pages.dev|' ~/app/.env
+   ```
+3. **Restart 2 services** đọc CORS config (không cần restart toàn bộ stack):
+   ```bash
+   docker compose -f ~/app/docker-compose.prod.yml up -d --no-deps usermanagement fishdex
+   ```
+4. **Kiểm tra** login + gọi API từ FE không bị CORS error
 
 ---
 

@@ -1,11 +1,11 @@
 # FishDex API — Build & Deploy to Oracle Cloud VM
-# Trigger: push lên release/prod-* + thay đổi trong FishDex hoặc Share
+# Trigger: push lên release/v1.0 + thay đổi trong FishDex hoặc Share
 # Deploy: build Docker image → push GHCR → SSH Oracle VM → docker compose up
 
 trigger:
   branches:
     include:
-      - release/prod-*
+      - release/v1.0
   paths:
     include:
       - BackEndProject/FishDex/**

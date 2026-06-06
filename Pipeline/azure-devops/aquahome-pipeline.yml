@@ -1,10 +1,10 @@
 # AquaHome API — Build & Deploy to Oracle Cloud VM
-# Trigger: push lên release/prod-* + thay đổi trong AquaHome hoặc Share
+# Trigger: push lên release/v1.0 + thay đổi trong AquaHome hoặc Share
 
 trigger:
   branches:
     include:
-      - release/prod-*
+      - release/v1.0
   paths:
     include:
       - BackEndProject/AquaHome/**

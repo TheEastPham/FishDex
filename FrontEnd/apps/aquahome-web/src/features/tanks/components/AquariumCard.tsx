@@ -25,7 +25,7 @@ export default function AquariumCard({ tank, onEdit, onDelete }: Props) {
   const style = getTankStyle(tank.type);
 
   return (
-    <div className="bg-[#1e2024] border border-slate-800/60 rounded-2xl p-5 hover:bg-[#23262b] hover:-translate-y-1 hover:shadow-2xl hover:border-slate-700/50 transition-all duration-300 group flex flex-col">
+    <div className="bg-[#1E293B] border border-slate-800/60 rounded-2xl p-5 hover:bg-[#263348] hover:-translate-y-1 hover:shadow-2xl hover:border-slate-700/50 transition-all duration-300 group flex flex-col">
       
       {/* Top row */}
       <div className="flex items-start justify-between mb-4">

@@ -76,7 +76,7 @@ export default function AquariumForm({ isOpen, onClose, onSave, editing }: Props
       />
 
       {/* Drawer */}
-      <div className="fixed inset-y-0 right-0 w-full max-w-md bg-[#1a1c20] border-l border-slate-800/60 shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-300">
+      <div className="fixed inset-y-0 right-0 w-full max-w-md bg-[#172033] border-l border-slate-800/60 shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-300">
         
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-800/60">
@@ -109,7 +109,7 @@ export default function AquariumForm({ isOpen, onClose, onSave, editing }: Props
               onChange={e => setName(e.target.value)}
               placeholder="Ví dụ: Hồ Amazon của tôi..."
               required
-              className="w-full bg-[#141518] border border-slate-700/60 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/30 transition-all"
+              className="w-full bg-[#0F172A] border border-slate-700/60 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/30 transition-all"
             />
           </div>
 
@@ -126,7 +126,7 @@ export default function AquariumForm({ isOpen, onClose, onSave, editing }: Props
                     'py-2.5 px-3 rounded-xl text-sm font-semibold border transition-all text-left',
                     type === t.value
                       ? 'bg-sky-500/15 border-sky-500/40 text-sky-300'
-                      : 'bg-[#141518] border-slate-700/50 text-slate-400 hover:border-slate-600'
+                      : 'bg-[#0F172A] border-slate-700/50 text-slate-400 hover:border-slate-600'
                   )}
                 >
                   {t.label}
@@ -154,7 +154,7 @@ export default function AquariumForm({ isOpen, onClose, onSave, editing }: Props
                     value={val}
                     onChange={e => set(e.target.value)}
                     placeholder="0"
-                    className="w-full bg-[#141518] border border-slate-700/60 rounded-xl px-3 py-3 text-white text-center placeholder-slate-700 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/30 transition-all"
+                    className="w-full bg-[#0F172A] border border-slate-700/60 rounded-xl px-3 py-3 text-white text-center placeholder-slate-700 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/30 transition-all"
                   />
                 </div>
               ))}
@@ -165,7 +165,7 @@ export default function AquariumForm({ isOpen, onClose, onSave, editing }: Props
               'mt-3 rounded-xl p-3 border flex items-center gap-3 transition-all duration-500',
               volume != null
                 ? 'bg-emerald-500/10 border-emerald-500/20 opacity-100'
-                : 'bg-[#141518] border-slate-800/40 opacity-50'
+                : 'bg-[#0F172A] border-slate-800/40 opacity-50'
             )}>
               <FlaskConical className={cn('w-5 h-5 shrink-0', volume != null ? 'text-emerald-400' : 'text-slate-600')} />
               <div>
@@ -185,7 +185,7 @@ export default function AquariumForm({ isOpen, onClose, onSave, editing }: Props
               onChange={e => setDescription(e.target.value)}
               placeholder="Ghi chú về hồ cá..."
               rows={3}
-              className="w-full bg-[#141518] border border-slate-700/60 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/30 transition-all resize-none"
+              className="w-full bg-[#0F172A] border border-slate-700/60 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/30 transition-all resize-none"
             />
           </div>
         </form>

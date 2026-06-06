@@ -33,7 +33,7 @@ services:
       - JwtSettings__Issuer=${JWT_ISSUER}
       - JwtSettings__Audience=${JWT_AUDIENCE}
       - JwtSettings__ExpiryInDays=${JWT_EXPIRY_DAYS}
-      - AutoMigrate__OnStartup=true
+      - AutoMigrate__OnStartup=false
       - Seeding__SeedInitialAdmin=${SEED_INITIAL_ADMIN}
       - EmailSettings__Resend__ApiKey=${EMAIL_API_KEY}
       - RequireInvitation=${REQUIRE_INVITATION}
@@ -41,6 +41,7 @@ services:
       - InitialAdmin__Password=${INITIAL_ADMIN_PASSWORD}
       - OpenIddict__Issuer=${OIDC_ISSUER}
       - OpenIddict__KeyDir=/openiddict-keys
+      - AllowedOrigins__0=${FE_ORIGIN}
     volumes:
       - openiddict_keys:/openiddict-keys
     depends_on:

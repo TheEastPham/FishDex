@@ -47,7 +47,7 @@ builder.Services.AddSwaggerGen(options =>
 // Add UserManagement Domain services (includes EFCore + OpenIddict Core)
 builder.Services.AddMemoryCache();
 builder.Services.AddUserManagementDomain(builder.Configuration);
-builder.Services.AddOpenIddictServer(builder.Configuration);
+builder.Services.AddOpenIddictServer(builder.Configuration, builder.Environment);
 builder.Services.AddHostedService<OpenIddictSeeder>();
 builder.Services.AddHostedService<AdminSeeder>();
 
@@ -58,27 +58,23 @@ builder.Services.AddFishLoverJwtAuthentication(builder.Configuration);
 builder.Services.AddFishLoverAuthorization();
 
 
-// CORS
+// CORS — origins đọc từ config; local dev set trong appsettings.Development.json,
+// production set qua env var AllowedOrigins__0, __1, ... trong docker-compose
+var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? [];
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigins", policy =>
     {
-        policy.WithOrigins(
-                "http://localhost:3000",
-                "http://localhost:5000",
-                "http://localhost:5173")   // AquaHome FE (Vite)
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
     });
-    // Allow FishDex Swagger + AquaHome FE to call /connect/* for OAuth2 PKCE flow
+    // AllowOAuth applied on AuthorizationController (/connect/*) for OAuth2 PKCE flow
     options.AddPolicy("AllowOAuth", policy =>
     {
-        policy.WithOrigins(
-                "http://localhost:8081",
-                "http://localhost:8080",
-                "http://localhost:5173",   // AquaHome FE (Vite dev)
-                "http://localhost:3000")   // AquaHome FE (Docker)
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();

@@ -144,3 +144,58 @@ docker logs usermanagement --tail 50
 - PostgreSQL: mỗi DB có user riêng (um_user, fd_user, ah_user) — init-db.sh tạo tự động lần đầu
 - SSL cert cần renew định kỳ — cân nhắc setup certbot auto-renew
 - Sau khi ổn định: tắt Swagger trên PROD
+- CORS: điền `FE_ORIGIN` trong `.env` với đúng Cloudflare Pages URL trước khi khởi động
+
+---
+
+## Post v1.0 — X.509 Cert thật cho OpenIddict *(long-term)*
+
+**Hiện tại (v1.0):** UserManagement tự tạo self-signed cert lưu tại Docker volume `openiddict_keys`.
+Cert sống qua restart container. Phù hợp cho single-instance. Cert có hiệu lực 10 năm.
+
+**Giới hạn cần giải quyết khi scale:**
+- Multi-instance (horizontal scale): tất cả instance phải dùng cùng 1 cert để token được ký/giải mã nhất quán. Volume không share được giữa các host.
+- Cert rotation: khi cert hết hạn hoặc bị compromise, cần thay thủ công.
+
+**Khi nào cần upgrade lên X.509 thật:**
+- Khi cần chạy nhiều hơn 1 instance UserManagement
+- Khi yêu cầu compliance bắt buộc dùng cert từ CA
+
+**Các bước thực hiện (khi đến lúc):**
+
+1. **Tạo hoặc import cert** (chọn 1 trong 2):
+   - Azure Key Vault: upload `.pfx`, lấy certificate identifier
+   - Self-managed: tạo cert từ internal CA, export `.pfx` có password
+
+2. **Lưu cert an toàn** — KHÔNG commit lên git:
+   ```bash
+   # Ví dụ: lưu tại ~/app/certs/ trên VM, mount vào container
+   mkdir -p ~/app/certs
+   # Copy cert.pfx lên VM bằng scp
+   ```
+
+3. **Cập nhật `OpenIddictServerExtensions.cs`** — thay `GetOrCreateDevCert()`:
+   ```csharp
+   // Thay đoạn GetOrCreateDevCert bằng:
+   var certPath = configuration["OpenIddict:CertPath"]!;      // path tới .pfx trong container
+   var certPassword = configuration["OpenIddict:CertPassword"]!;
+   var cert = X509CertificateLoader.LoadPkcs12FromFile(certPath, certPassword);
+   options.AddSigningCertificate(cert);
+   options.AddEncryptionCertificate(cert);
+   ```
+
+4. **Cập nhật `docker-compose.prod.yml`**:
+   ```yaml
+   volumes:
+     - ~/app/certs:/app/certs:ro   # thêm vào usermanagement service
+   environment:
+     - OpenIddict__CertPath=/app/certs/cert.pfx
+     - OpenIddict__CertPassword=${OIDC_CERT_PASSWORD}
+   ```
+
+5. **Thêm vào `.env`**:
+   ```
+   OIDC_CERT_PASSWORD=your_cert_password
+   ```
+
+> **Lưu ý rotation:** Khi thay cert mới, tất cả access token hiện tại bị invalidate (user cần login lại). Refresh token cũng bị mất. Lên kế hoạch maintenance window khi rotate.

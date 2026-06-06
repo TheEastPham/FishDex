@@ -1,7 +1,9 @@
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using OpenIddict.Abstractions;
 
 namespace UserManagement.API.Extensions;
@@ -9,7 +11,7 @@ namespace UserManagement.API.Extensions;
 public static class OpenIddictServerExtensions
 {
     public static IServiceCollection AddOpenIddictServer(
-        this IServiceCollection services, IConfiguration configuration)
+        this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment environment)
     {
         services.AddOpenIddict()
             .AddServer(options =>
@@ -45,12 +47,15 @@ public static class OpenIddictServerExtensions
                 if (!string.IsNullOrEmpty(issuer))
                     options.SetIssuer(new Uri(issuer));
 
-                options.UseAspNetCore()
-                       .EnableAuthorizationEndpointPassthrough()
-                       .EnableTokenEndpointPassthrough()
-                       .EnableLogoutEndpointPassthrough()
-                       .EnableUserinfoEndpointPassthrough()
-                       .DisableTransportSecurityRequirement();
+                var aspNetCoreOptions = options.UseAspNetCore()
+                    .EnableAuthorizationEndpointPassthrough()
+                    .EnableTokenEndpointPassthrough()
+                    .EnableLogoutEndpointPassthrough()
+                    .EnableUserinfoEndpointPassthrough();
+
+                // Production bắt buộc HTTPS — chỉ tắt requirement này khi không phải Production
+                if (!environment.IsProduction())
+                    aspNetCoreOptions.DisableTransportSecurityRequirement();
             })
             .AddValidation(options =>
             {

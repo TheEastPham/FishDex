@@ -1,0 +1,44 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="FishDex Species DB — Products — FishDex"
+  description="35,000-species database with pgvector semantic search, ecology data, and image gallery."
+>
+  <section class="section">
+    <div class="container" style="max-width:820px;">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Home</a> <span>/</span>
+        <a href="/products">Products</a> <span>/</span>
+        <span>FishDex Species DB</span>
+      </nav>
+
+      <div class="section-header" style="margin-top:2rem;">
+        <span class="eyebrow badge badge--nature">Database + Search</span>
+        <h1 style="margin-top:0.75rem;">FishDex Species DB</h1>
+        <div class="divider"></div>
+        <p>Structured data for 35,000+ fish species — sourced from FishBase, enriched with ecology, conservation, and geographic occurrence data.</p>
+      </div>
+
+      <!-- TODO: expand with full product detail, screenshots, API examples -->
+      <div class="placeholder-content card">
+        <p class="text-muted">Full product page coming soon. Will include: feature walkthrough, search demo embed, API code samples, and data coverage map.</p>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: var(--text-sm);
+    color: var(--c-text-dim);
+  }
+  .breadcrumb a { color: var(--c-text-muted); transition: color var(--t-fast); }
+  .breadcrumb a:hover { color: var(--c-nature); }
+
+  .placeholder-content { padding: 2rem; }
+</style>

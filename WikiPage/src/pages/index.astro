@@ -1,0 +1,322 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const portals = [
+  {
+    href: '/about',
+    icon: '📖',
+    title: 'Về dự án',
+    desc: 'Tại sao FishLover được tạo ra, và hành trình xây dựng từ đầu.',
+  },
+  {
+    href: '/products',
+    icon: '🐟',
+    title: 'Sản phẩm',
+    desc: 'FishDex tra cứu loài cá, AquaHome quản lý bể — hai công cụ, một hệ sinh thái.',
+  },
+  {
+    href: '/tech',
+    icon: '⚙️',
+    title: 'Kỹ thuật',
+    desc: 'Kiến trúc microservices, tìm kiếm ngữ nghĩa với pgvector, và các quyết định thiết kế.',
+  },
+  {
+    href: '/roadmap',
+    icon: '🗺️',
+    title: 'Roadmap',
+    desc: 'Những gì đã xong, đang làm, và kế hoạch tương lai của dự án.',
+  },
+];
+
+const figures = [
+  { value: '35,000+', label: 'Loài cá', sub: 'Nguồn: FishBase' },
+  { value: 'Miễn phí', label: 'Hoàn toàn', sub: 'Giai đoạn đầu' },
+  { value: '3', label: 'Service chính', sub: 'FishDex · AquaHome · User Management' },
+  { value: 'pgvector', label: 'Tìm kiếm ngữ nghĩa', sub: 'Trên PostgreSQL 16' },
+];
+---
+
+<BaseLayout>
+  <!-- ── Hero ── -->
+  <section class="hero">
+    <div class="hero__glow" aria-hidden="true"></div>
+    <div class="container hero__content">
+      <span class="eyebrow">Dự án cá cảnh mã nguồn mở</span>
+
+      <h1>FishLover</h1>
+
+      <p class="hero__lead">
+        Một công cụ tra cứu dữ liệu sinh thái cá thủy sinh — xây dựng bởi người nuôi cá,
+        cho người nuôi cá. Dữ liệu chuẩn từ FishBase. Hoàn toàn miễn phí.
+      </p>
+
+      <div class="hero__values">
+        <span class="hero__value">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(16,185,129,0.2)"/><path d="M4 7l2 2 4-4" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Tôn trọng khoa học
+        </span>
+        <span class="hero__value">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(16,185,129,0.2)"/><path d="M4 7l2 2 4-4" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Tôn trọng tự nhiên
+        </span>
+        <span class="hero__value">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="rgba(16,185,129,0.2)"/><path d="M4 7l2 2 4-4" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Bảo vệ con người
+        </span>
+      </div>
+
+      <a href="/about" class="btn btn--nature" style="margin-top: 2rem;">Tìm hiểu thêm →</a>
+    </div>
+  </section>
+
+  <!-- ── Portals ── -->
+  <section class="section">
+    <div class="container">
+      <div class="portals-grid">
+        {portals.map(p => (
+          <a href={p.href} class="portal-card card card--link">
+            <span class="portal-card__icon" aria-hidden="true">{p.icon}</span>
+            <h3 class="portal-card__title">{p.title}</h3>
+            <p class="portal-card__desc text-muted">{p.desc}</p>
+            <span class="portal-card__arrow">Xem thêm →</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Key Figures ── -->
+  <section class="section section--surface">
+    <div class="container">
+      <div class="section-header section-header--center">
+        <span class="eyebrow">Con số</span>
+        <h2>FishLover trong những con số</h2>
+        <div class="divider"></div>
+      </div>
+
+      <div class="figures-grid">
+        {figures.map(f => (
+          <div class="figure-card">
+            <span class="figure-card__value">{f.value}</span>
+            <span class="figure-card__label">{f.label}</span>
+            <span class="figure-card__sub text-dim">{f.sub}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Core Values ── -->
+  <section class="section">
+    <div class="container">
+      <div class="section-header">
+        <span class="eyebrow">Nguyên tắc</span>
+        <h2>Ba tôn chỉ của dự án</h2>
+        <div class="divider"></div>
+      </div>
+
+      <div class="values-grid">
+        <div class="value-card">
+          <span class="value-card__icon">🔬</span>
+          <h3>Tôn trọng khoa học</h3>
+          <p class="text-muted">
+            Dữ liệu loài cá lấy từ FishBase — cơ sở dữ liệu thủy sinh học lớn nhất thế giới,
+            đọc qua file <code>.parquet</code>. Không bịa, không đoán.
+          </p>
+        </div>
+        <div class="value-card">
+          <span class="value-card__icon">🌿</span>
+          <h3>Tôn trọng tự nhiên</h3>
+          <p class="text-muted">
+            Các loài nằm trong Sách Đỏ được gắn cảnh báo rõ ràng. Nuôi cá có trách nhiệm
+            bắt đầu từ việc biết con cá mình nuôi đang ở tình trạng bảo tồn nào.
+          </p>
+        </div>
+        <div class="value-card">
+          <span class="value-card__icon">🛡️</span>
+          <h3>Bảo vệ con người</h3>
+          <p class="text-muted">
+            Cảnh báo nghiêm ngặt về các loài nguy hiểm — độc, hung dữ, hay không phù hợp với trẻ em.
+            Thông tin an toàn không phải tuỳ chọn, đó là mặc định.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* Hero */
+  .hero {
+    position: relative;
+    padding-block: clamp(5rem, 12vw, 9rem);
+    overflow: hidden;
+  }
+
+  .hero__glow {
+    position: absolute;
+    top: -20%;
+    left: 30%;
+    width: 600px;
+    height: 500px;
+    background: radial-gradient(ellipse, rgba(16,185,129,0.07) 0%, rgba(6,182,212,0.03) 50%, transparent 70%);
+    pointer-events: none;
+    filter: blur(60px);
+  }
+
+  .hero__content {
+    position: relative;
+    max-width: 680px;
+  }
+
+  .hero h1 {
+    font-size: clamp(3rem, 8vw, 5.5rem);
+    letter-spacing: -0.03em;
+    margin-bottom: 1.25rem;
+    background: linear-gradient(135deg, #ffffff 40%, #10B981 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero__lead {
+    font-size: var(--text-xl);
+    color: var(--c-text-muted);
+    max-width: 52ch;
+    margin-bottom: 1.75rem;
+    line-height: 1.75;
+  }
+
+  .hero__values {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .hero__value {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--c-text-muted);
+  }
+
+  /* Portals */
+  .portals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+    gap: 1.25rem;
+  }
+
+  .portal-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    padding: 1.75rem;
+  }
+
+  .portal-card__icon {
+    font-size: 2rem;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+
+  .portal-card__title {
+    font-size: var(--text-xl);
+    font-weight: 800;
+  }
+
+  .portal-card__desc {
+    font-size: var(--text-sm);
+    line-height: 1.65;
+    flex: 1;
+  }
+
+  .portal-card__arrow {
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: var(--c-nature);
+    margin-top: 0.5rem;
+  }
+
+  /* Figures */
+  .figures-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+    gap: 1.5rem;
+  }
+
+  .figure-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 2rem 1.5rem;
+    background: var(--c-surface-2);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-xl);
+    gap: 0.375rem;
+  }
+
+  .figure-card__value {
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: 900;
+    background: linear-gradient(135deg, #10B981, #06B6D4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+
+  .figure-card__label {
+    font-weight: 700;
+    color: var(--c-text);
+  }
+
+  .figure-card__sub {
+    font-size: var(--text-xs);
+  }
+
+  /* Values */
+  .values-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+    gap: 1.25rem;
+  }
+
+  .value-card {
+    padding: 2rem;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-xl);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .value-card__icon {
+    font-size: 2rem;
+    line-height: 1;
+  }
+
+  .value-card h3 {
+    font-size: var(--text-xl);
+  }
+
+  .value-card p {
+    font-size: var(--text-sm);
+    line-height: 1.7;
+  }
+
+  code {
+    font-family: monospace;
+    font-size: 0.85em;
+    color: var(--c-ai);
+    background: var(--c-ai-dim);
+    padding: 0.1em 0.35em;
+    border-radius: var(--r-sm);
+  }
+</style>

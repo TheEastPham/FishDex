@@ -1,0 +1,143 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const products = [
+  {
+    href: '/products/fishdex',
+    icon: '🐟',
+    title: 'FishDex',
+    desc: 'Cơ sở dữ liệu hơn 35,000 loài cá thủy sinh. Tìm kiếm theo tên khoa học, tên thường gọi, môi trường sống, nhiệt độ, pH. Có cảnh báo loài nguy hiểm và loài trong Sách Đỏ.',
+    highlights: ['35,000+ loài', 'Tìm kiếm ngữ nghĩa (pgvector)', 'Cảnh báo Sách Đỏ', 'Ảnh minh hoạ'],
+    badge: 'Tra cứu loài',
+    badgeType: 'nature',
+  },
+  {
+    href: '/products/aquahome',
+    icon: '🪣',
+    title: 'AquaHome',
+    desc: 'Quản lý bể cá cá nhân — theo dõi thông số nước, ghi nhật ký bể, lưu danh sách loài đang nuôi. Dành cho người chơi nghiêm túc muốn nuôi cá có khoa học.',
+    highlights: ['Nhiều bể cá', 'Nhật ký thông số nước', 'Danh sách cư dân', 'Kết nối với FishDex'],
+    badge: 'Quản lý bể',
+    badgeType: 'primary',
+  },
+];
+---
+
+<BaseLayout
+  title="Sản phẩm — FishLover"
+  description="FishDex tra cứu loài cá và AquaHome quản lý bể — hai công cụ miễn phí cho người nuôi cá thủy sinh."
+>
+  <section class="section">
+    <div class="container">
+      <div class="section-header">
+        <span class="eyebrow">Sản phẩm</span>
+        <h1>Hai công cụ, một mục tiêu</h1>
+        <div class="divider"></div>
+        <p>Nuôi cá đúng cách bắt đầu từ dữ liệu đúng. FishDex cung cấp thông tin, AquaHome giúp theo dõi.</p>
+      </div>
+
+      <div class="products-list">
+        {products.map((p, i) => (
+          <a href={p.href} class={`product-card card card--link ${i % 2 === 1 ? 'product-card--reverse' : ''}`}>
+            <div class="product-card__icon-wrap" aria-hidden="true">
+              <span class="product-card__icon">{p.icon}</span>
+            </div>
+            <div class="product-card__body">
+              <span class:list={['badge', `badge--${p.badgeType}`]} style="margin-bottom:0.75rem;">{p.badge}</span>
+              <h2 class="product-card__title">{p.title}</h2>
+              <p class="product-card__desc text-muted">{p.desc}</p>
+              <ul class="product-card__highlights">
+                {p.highlights.map(h => (
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <circle cx="7" cy="7" r="7" fill="rgba(16,185,129,0.15)"/>
+                      <path d="M4 7l2 2 4-4" stroke="#10B981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    {h}
+                  </li>
+                ))}
+              </ul>
+              <span class="product-card__cta">Xem chi tiết →</span>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .products-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .product-card {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 2.5rem;
+    align-items: center;
+    padding: 2.5rem;
+  }
+
+  .product-card--reverse {
+    grid-template-columns: 1fr 180px;
+  }
+  .product-card--reverse .product-card__icon-wrap { order: 2; }
+  .product-card--reverse .product-card__body { order: 1; }
+
+  .product-card__icon-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    aspect-ratio: 1;
+    background: var(--c-surface-2);
+    border-radius: var(--r-xl);
+    border: 1px solid var(--c-border);
+  }
+
+  .product-card__icon { font-size: 4rem; line-height: 1; }
+
+  .product-card__title {
+    font-size: var(--text-3xl);
+    margin-block: 0.5rem 0.75rem;
+  }
+
+  .product-card__desc {
+    font-size: var(--text-base);
+    line-height: 1.75;
+    margin-bottom: 1.25rem;
+  }
+
+  .product-card__highlights {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .product-card__highlights li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: var(--text-sm);
+    color: var(--c-text-muted);
+  }
+
+  .product-card__cta {
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: var(--c-nature);
+  }
+
+  @media (max-width: 640px) {
+    .product-card, .product-card--reverse {
+      grid-template-columns: 1fr;
+    }
+    .product-card--reverse .product-card__icon-wrap,
+    .product-card--reverse .product-card__body { order: unset; }
+    .product-card__icon-wrap { max-width: 120px; margin-inline: auto; }
+  }
+</style>

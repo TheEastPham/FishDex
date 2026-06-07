@@ -1,0 +1,50 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const subpages = [
+  {
+    href: '/about/philosophy',
+    icon: '🧭',
+    title: 'Philosophy',
+    desc: 'The principles that guide every decision — from data quality to API design.',
+  },
+  {
+    href: '/about/story',
+    icon: '📖',
+    title: 'Our Story',
+    desc: 'How FishDex went from a personal project to a full platform.',
+  },
+];
+---
+
+<BaseLayout
+  title="About — FishDex"
+  description="The mission, philosophy, and story behind the FishDex platform."
+>
+  <section class="section">
+    <div class="container">
+      <div class="section-header">
+        <span class="eyebrow">About</span>
+        <h1>Why FishDex exists</h1>
+        <div class="divider"></div>
+        <!-- TODO: replace with official mission statement -->
+        <p>
+          FishDex was built because finding reliable, structured data about fish species
+          shouldn't require a marine biology degree. We're making aquatic knowledge
+          accessible — for hobbyists, researchers, and developers alike.
+        </p>
+      </div>
+
+      <div class="grid-2">
+        {subpages.map(p => (
+          <a href={p.href} class="card card--link">
+            <span style="font-size:2.5rem; line-height:1; display:block; margin-bottom:1rem;">{p.icon}</span>
+            <h3>{p.title}</h3>
+            <p class="text-muted" style="margin-top:0.5rem; font-size:var(--text-sm);">{p.desc}</p>
+            <span style="display:block; margin-top:1rem; color:var(--c-nature); font-weight:700; font-size:var(--text-sm);">Read more →</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+</BaseLayout>

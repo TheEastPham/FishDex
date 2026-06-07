@@ -1,0 +1,83 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Câu chuyện — About — FishLover"
+  description="FishLover được tạo ra như thế nào — từ tuổi thơ ở làng quê miền Bắc đến một dự án phần mềm cá nhân."
+>
+  <section class="section">
+    <div class="container" style="max-width:720px;">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Home</a> <span>/</span>
+        <a href="/about">Về dự án</a> <span>/</span>
+        <span>Câu chuyện</span>
+      </nav>
+
+      <div class="section-header" style="margin-top:2rem;">
+        <span class="eyebrow">Hành trình</span>
+        <h1>Tại sao FishLover tồn tại</h1>
+        <div class="divider"></div>
+      </div>
+
+      <div class="prose">
+        <p>
+          Sinh ra ở làng quê miền Bắc Việt Nam những năm 199x — nơi những mương nước
+          quanh ruộng lúa đầy cá, tôm, và bèo. Anh trai có những chiếc chum sành
+          nuôi cá lia thia đặt góc sân. Đó là ký ức đầu tiên về cá.
+        </p>
+
+        <p>
+          Lớn lên, đi làm, sống xa nhà. Nuôi cá để bớt cô đơn. Không phải vì sở thích
+          đặc biệt — chỉ vì một bể cá nhỏ trên bàn làm cho căn phòng thuê bớt lạnh hơn.
+        </p>
+
+        <p>
+          Khi làm cha, mọi thứ thay đổi. Muốn nuôi cá đúng cách, an toàn, tối giản —
+          nhưng không biết bắt đầu từ đâu. Cần biết nhiệt độ phù hợp, pH bao nhiêu,
+          con cá này có ăn thịt con cá kia không, loài nào nằm trong Sách Đỏ,
+          loài nào nguy hiểm cho trẻ em.
+        </p>
+
+        <p>
+          Thông tin có — nhưng rải rác khắp nơi, không nhất quán, không có tiếng Việt,
+          không dành cho người bình thường. FishLover bắt đầu từ đó.
+        </p>
+
+        <p>
+          Không phải startup. Không gọi vốn. Không có đội ngũ.
+          Chỉ là một kỹ sư, một người cha, và bộ dữ liệu FishBase.
+        </p>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: var(--text-sm);
+    color: var(--c-text-dim);
+  }
+  .breadcrumb a { color: var(--c-text-muted); transition: color var(--t-fast); }
+  .breadcrumb a:hover { color: var(--c-nature); }
+
+  .prose {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .prose p {
+    font-size: var(--text-lg);
+    line-height: 1.85;
+    color: var(--c-text-muted);
+  }
+
+  .prose p:first-child {
+    font-size: var(--text-xl);
+    color: var(--c-text);
+  }
+</style>

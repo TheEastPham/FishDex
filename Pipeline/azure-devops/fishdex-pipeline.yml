@@ -63,7 +63,7 @@ stages:
           steps:
 
           - script: |
-              printf '%b' "$(ORACLE_SSH_KEY)" > /tmp/oracle.key
+              echo "$(ORACLE_SSH_KEY)" | base64 -d > /tmp/oracle.key
               chmod 600 /tmp/oracle.key
             displayName: Setup SSH key
 

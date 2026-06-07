@@ -60,16 +60,17 @@ stages:
           steps:
 
           - script: |
-              printf '%s' "$(ORACLE_SSH_KEY)" > /tmp/oracle.key
+              echo "$(ORACLE_SSH_KEY)" | base64 -d > /tmp/oracle.key
               chmod 600 /tmp/oracle.key
             displayName: Setup SSH key
 
           - script: |
-              ssh -i /tmp/oracle.key -o StrictHostKeyChecking=no ubuntu@$(ORACLE_VM_IP) \
-                "echo '$(GHCR_TOKEN)' | docker login ghcr.io -u '$(GHCR_USERNAME)' --password-stdin && \
-                 docker compose -f ~/app/docker-compose.prod.yml pull $(SERVICE) && \
-                 docker compose -f ~/app/docker-compose.prod.yml up -d --no-deps $(SERVICE) && \
-                 echo 'Deploy $(SERVICE) done'"
+              ssh -i /tmp/oracle.key -o StrictHostKeyChecking=no ubuntu@$(ORACLE_VM_IP) "
+                echo '$(GHCR_TOKEN)' | docker login ghcr.io -u '$(GHCR_USERNAME)' --password-stdin &&
+                GHCR_USERNAME='$(GHCR_USERNAME)' docker compose -f ~/app/docker-compose.prod.yml pull $(SERVICE) &&
+                GHCR_USERNAME='$(GHCR_USERNAME)' docker compose -f ~/app/docker-compose.prod.yml up -d --no-deps $(SERVICE) &&
+                echo 'Deploy $(SERVICE) done'
+              "
             displayName: Pull & restart AquaHome
 
           - script: rm -f /tmp/oracle.key

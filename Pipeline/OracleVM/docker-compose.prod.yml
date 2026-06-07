@@ -69,6 +69,9 @@ services:
       - Storage__ForcePathStyle=false
       - AuthServer__Url=${OIDC_ISSUER}
       - AuthServer__Authority=${OIDC_ISSUER}
+      - JwtSettings__SecretKey=${JWT_SECRET_KEY}
+      - JwtSettings__Issuer=${JWT_ISSUER}
+      - JwtSettings__Audience=${JWT_AUDIENCE}
       - Cors__AllowedOrigins__0=${FE_ORIGIN}
       - ASPNETCORE_HTTP_PORTS=8081
     depends_on:

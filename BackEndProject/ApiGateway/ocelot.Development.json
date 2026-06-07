@@ -5,7 +5,7 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "usermanagement",
+          "Host": "localhost",
           "Port": 8080
         }
       ],
@@ -17,7 +17,7 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "fishdex",
+          "Host": "localhost",
           "Port": 8081
         }
       ],
@@ -29,15 +29,27 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "usermanagement",
+          "Host": "localhost",
           "Port": 8080
         }
       ],
       "UpstreamPathTemplate": "/api/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS" ]
+    },
+    {
+      "UpstreamPathTemplate": "/storage/{everything}",
+      "UpstreamHttpMethod": [ "GET", "PUT", "POST", "DELETE" ],
+      "DownstreamPathTemplate": "/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 9000
+        }
+      ]
     }
   ],
   "GlobalConfiguration": {
-    "BaseUrl": "https://api.fishlover.org"
+    "BaseUrl": "http://localhost:5000"
   }
 }

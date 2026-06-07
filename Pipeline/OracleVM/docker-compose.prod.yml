@@ -15,6 +15,7 @@ services:
       - "5000:5000"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_HTTP_PORTS=5000
     networks:
       - fishlover_prod
 
@@ -69,6 +70,7 @@ services:
       - AuthServer__Url=${OIDC_ISSUER}
       - AuthServer__Authority=${OIDC_ISSUER}
       - Cors__AllowedOrigins__0=${FE_ORIGIN}
+      - ASPNETCORE_HTTP_PORTS=8081
     depends_on:
       - postgres
     networks:
@@ -87,6 +89,7 @@ services:
       - ConnectionStrings__Redis=${REDIS_CONN}
       - AuthServer__Url=${OIDC_ISSUER}
       - AuthServer__Authority=${OIDC_ISSUER}
+      - ASPNETCORE_HTTP_PORTS=8082
     depends_on:
       - postgres
       - redis

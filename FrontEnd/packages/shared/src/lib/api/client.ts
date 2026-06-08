@@ -3,7 +3,7 @@ import { useAuthStore } from '../../store/authStore';
 import { refreshAccessToken } from '../auth/oidc';
 
 export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_AQUAHOME_API_URL,
+  baseURL: import.meta.env.VITE_GATEWAY_URL,
   timeout: 10000, // 10s timeout — never hang indefinitely
 });
 

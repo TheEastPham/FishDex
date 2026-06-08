@@ -1,7 +1,7 @@
 import type { TokenResponse } from '../../types/auth';
 import { generateCodeChallenge } from './pkce';
 
-const authority = import.meta.env.VITE_AUTH_ISSUER;
+const authority = import.meta.env.VITE_GATEWAY_URL;
 const clientId = import.meta.env.VITE_AUTH_CLIENT_ID;
 const redirectUri = import.meta.env.VITE_AUTH_REDIRECT_URI;
 const postLogoutUri = import.meta.env.VITE_AUTH_POST_LOGOUT_URI;

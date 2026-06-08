@@ -44,6 +44,21 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? 'http://localhost
   </body>
 </html>
 
+<script>
+  const io = new IntersectionObserver(
+    (entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-revealed');
+          io.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.05, rootMargin: '0px 0px 0px 0px' }
+  );
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+
 <style is:global>
   html, body { height: 100%; }
   body {

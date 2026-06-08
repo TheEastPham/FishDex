@@ -4,21 +4,19 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 const products = [
   {
     href: '/products/fishdex',
-    icon: '🐟',
+    vp: 'vp--ocean',
     title: 'FishDex',
     desc: 'Cơ sở dữ liệu hơn 35,000 loài cá thủy sinh. Tìm kiếm theo tên khoa học, tên thường gọi, môi trường sống, nhiệt độ, pH. Có cảnh báo loài nguy hiểm và loài trong Sách Đỏ.',
     highlights: ['35,000+ loài', 'Tìm kiếm ngữ nghĩa (pgvector)', 'Cảnh báo Sách Đỏ', 'Ảnh minh hoạ'],
     badge: 'Tra cứu loài',
-    badgeType: 'nature',
   },
   {
     href: '/products/aquahome',
-    icon: '🪣',
+    vp: 'vp--tank',
     title: 'AquaHome',
     desc: 'Quản lý bể cá cá nhân — theo dõi thông số nước, ghi nhật ký bể, lưu danh sách loài đang nuôi. Dành cho người chơi nghiêm túc muốn nuôi cá có khoa học.',
     highlights: ['Nhiều bể cá', 'Nhật ký thông số nước', 'Danh sách cư dân', 'Kết nối với FishDex'],
     badge: 'Quản lý bể',
-    badgeType: 'primary',
   },
 ];
 ---
@@ -29,7 +27,7 @@ const products = [
 >
   <section class="section">
     <div class="container">
-      <div class="section-header">
+      <div class="section-header reveal">
         <span class="eyebrow">Sản phẩm</span>
         <h1>Hai công cụ, một mục tiêu</h1>
         <div class="divider"></div>
@@ -38,12 +36,15 @@ const products = [
 
       <div class="products-list">
         {products.map((p, i) => (
-          <a href={p.href} class={`product-card card card--link ${i % 2 === 1 ? 'product-card--reverse' : ''}`}>
-            <div class="product-card__icon-wrap" aria-hidden="true">
-              <span class="product-card__icon">{p.icon}</span>
+          <a href={p.href} class={`product-card card card--link reveal reveal-delay-${i + 1} ${i % 2 === 1 ? 'product-card--reverse' : ''}`}>
+
+            <div class="product-card__visual">
+              <div class={`vp ${p.vp}`} style="position:absolute;inset:0;"></div>
+              <div class="product-card__visual-overlay" aria-hidden="true"></div>
             </div>
+
             <div class="product-card__body">
-              <span class:list={['badge', `badge--${p.badgeType}`]} style="margin-bottom:0.75rem;">{p.badge}</span>
+              <span class="badge badge--nature" style="margin-bottom:0.75rem;">{p.badge}</span>
               <h2 class="product-card__title">{p.title}</h2>
               <p class="product-card__desc text-muted">{p.desc}</p>
               <ul class="product-card__highlights">
@@ -59,6 +60,7 @@ const products = [
               </ul>
               <span class="product-card__cta">Xem chi tiết →</span>
             </div>
+
           </a>
         ))}
       </div>
@@ -75,38 +77,59 @@ const products = [
 
   .product-card {
     display: grid;
-    grid-template-columns: 180px 1fr;
-    gap: 2.5rem;
-    align-items: center;
-    padding: 2.5rem;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 0;
+    align-items: stretch;
+    padding: 0;
+    overflow: hidden;
   }
 
   .product-card--reverse {
-    grid-template-columns: 1fr 180px;
+    grid-template-columns: 1.2fr 1fr;
   }
-  .product-card--reverse .product-card__icon-wrap { order: 2; }
-  .product-card--reverse .product-card__body { order: 1; }
+  .product-card--reverse .product-card__visual { order: 2; }
+  .product-card--reverse .product-card__body   { order: 1; }
 
-  .product-card__icon-wrap {
+  .product-card__visual {
+    position: relative;
+    overflow: hidden;
+    min-height: 300px;
+  }
+
+  .product-card__visual .vp {
+    transition: opacity var(--t-slow);
+    opacity: 0.85;
+  }
+
+  .product-card:hover .product-card__visual .vp {
+    opacity: 1;
+  }
+
+  .product-card__visual-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, transparent 60%, rgba(30,41,59,0.9) 100%);
+    pointer-events: none;
+  }
+
+  .product-card--reverse .product-card__visual-overlay {
+    background: linear-gradient(to left, transparent 60%, rgba(30,41,59,0.9) 100%);
+  }
+
+  .product-card__body {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    aspect-ratio: 1;
-    background: var(--c-surface-2);
-    border-radius: var(--r-xl);
-    border: 1px solid var(--c-border);
+    flex-direction: column;
+    padding: 2.5rem 2rem;
+    background: var(--c-surface);
   }
-
-  .product-card__icon { font-size: 4rem; line-height: 1; }
 
   .product-card__title {
-    font-size: var(--text-3xl);
+    font-size: clamp(1.5rem, 3vw, var(--text-3xl));
     margin-block: 0.5rem 0.75rem;
   }
 
   .product-card__desc {
-    font-size: var(--text-base);
+    font-size: var(--text-sm);
     line-height: 1.75;
     margin-bottom: 1.25rem;
   }
@@ -116,6 +139,7 @@ const products = [
     flex-direction: column;
     gap: 0.5rem;
     margin-bottom: 1.5rem;
+    flex: 1;
   }
 
   .product-card__highlights li {
@@ -133,11 +157,16 @@ const products = [
   }
 
   @media (max-width: 640px) {
-    .product-card, .product-card--reverse {
+    .product-card,
+    .product-card--reverse {
       grid-template-columns: 1fr;
     }
-    .product-card--reverse .product-card__icon-wrap,
+    .product-card--reverse .product-card__visual,
     .product-card--reverse .product-card__body { order: unset; }
-    .product-card__icon-wrap { max-width: 120px; margin-inline: auto; }
+    .product-card__visual { min-height: 200px; }
+    .product-card__visual-overlay,
+    .product-card--reverse .product-card__visual-overlay {
+      background: linear-gradient(to top, rgba(30,41,59,0.9) 0%, transparent 60%);
+    }
   }
 </style>

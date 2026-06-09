@@ -56,7 +56,7 @@ export default function TanksPage() {
   const filtered = tanks.filter(t => t.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div className="min-h-screen bg-[#141518] p-6 pb-20 font-sans">
+    <div className="min-h-screen bg-[#0F172A] p-6 pb-20 font-sans">
       <div className="max-w-6xl mx-auto">
 
         {/* Header */}
@@ -85,7 +85,7 @@ export default function TanksPage() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Tìm kiếm hồ cá..."
-              className="w-full bg-[#1e2024] border border-slate-800/60 rounded-xl pl-10 pr-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-sky-500/40 transition-all"
+              className="w-full bg-[#1E293B] border border-slate-800/60 rounded-xl pl-10 pr-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-sky-500/40 transition-all"
             />
           </div>
         )}
@@ -140,7 +140,7 @@ export default function TanksPage() {
         <>
           <div className="fixed inset-0 bg-black/60 z-50" onClick={() => setDeleteId(null)} />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="bg-[#1e2024] border border-slate-700 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+            <div className="bg-[#1E293B] border border-slate-700 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
               <h3 className="text-white font-bold text-lg mb-2">Xoá hồ cá?</h3>
               <p className="text-slate-400 text-sm mb-6">Hành động này không thể hoàn tác.</p>
               <div className="flex gap-3">

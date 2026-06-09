@@ -1,9 +1,6 @@
 using AquaHome.Domain.Extensions;
-using AquaHome.Domain.Modules;
 using AquaHome.EFCore.Data;
-using AquaHome.EFCore.Modules;
-using Autofac;
-using Autofac.Extensions.DependencyInjection;
+using AquaHome.EFCore.Extensions;
 using FishLover.Shared.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -15,12 +12,6 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 builder.Host.UseSerilog();
-builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
-builder.Host.ConfigureContainer<ContainerBuilder>(container =>
-{
-    container.RegisterModule<AquaHomeEFCoreModule>();
-    container.RegisterModule<AquaHomeModule>();
-});
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -46,6 +37,8 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services.AddMemoryCache();
 builder.Services.AddAquaHomeServices(builder.Configuration);
+builder.Services.AddAquaHomeRepositories();
+builder.Services.AddAquaHomeDomainServices();
 builder.Services.AddFishLoverJwtAuthentication(builder.Configuration);
 
 // OAuth2 PKCE scheme — validate OpenIddict-issued tokens qua JWKS discovery

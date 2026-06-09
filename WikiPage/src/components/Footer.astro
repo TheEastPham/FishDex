@@ -1,0 +1,137 @@
+---
+const year = new Date().getFullYear();
+
+const links = {
+  'Dự án': [
+    { href: '/about/philosophy', label: 'Philosophy' },
+    { href: '/about/story',      label: 'Our Story' },
+    { href: '/roadmap',          label: 'Roadmap' },
+  ],
+  'Sản phẩm': [
+    { href: '/products/fishdex',  label: 'FishDex' },
+    { href: '/products/aquahome', label: 'AquaHome' },
+    { href: '/tech',              label: 'Technology' },
+  ],
+};
+---
+
+<footer class="footer">
+  <div class="footer__inner container">
+    <!-- Brand -->
+    <div class="footer__brand">
+      <a href="/" class="footer__logo">
+        <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
+          <rect width="32" height="32" rx="8" fill="#1E293B"/>
+          <path d="M26 13l-4 3 4 3V13z" fill="#10B981"/>
+          <ellipse cx="15.5" cy="16" rx="7" ry="6" fill="#10B981"/>
+          <circle cx="18.5" cy="14" r="1.5" fill="#0F172A"/>
+        </svg>
+        <span>FishLover</span>
+      </a>
+      <!-- Mission statement TBD — do not fill in -->
+      <p class="footer__tagline">
+        Dữ liệu cá thủy sinh · Miễn phí · Mã nguồn mở
+      </p>
+    </div>
+
+    <!-- Links -->
+    {Object.entries(links).map(([group, items]) => (
+      <div class="footer__group">
+        <h4 class="footer__group-title">{group}</h4>
+        <ul class="footer__list">
+          {items.map(item => (
+            <li><a href={item.href} class="footer__link">{item.label}</a></li>
+          ))}
+        </ul>
+      </div>
+    ))}
+  </div>
+
+  <div class="footer__bottom container">
+    <span>© {year} FishLover Project.</span>
+    <span class="footer__stack">Built with Astro · Azure Static Web Apps</span>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    border-top: 1px solid var(--c-border);
+    background: var(--c-surface-3);
+    margin-top: auto;
+  }
+
+  .footer__inner {
+    display: grid;
+    grid-template-columns: 1.5fr repeat(2, 1fr);
+    gap: 3rem;
+    padding-block: 3.5rem;
+  }
+
+  .footer__logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: var(--text-lg);
+    font-weight: 800;
+    color: var(--c-white);
+    margin-bottom: 0.75rem;
+    width: fit-content;
+  }
+
+  .footer__tagline {
+    font-size: var(--text-sm);
+    color: var(--c-text-dim);
+    line-height: 1.6;
+  }
+
+  .footer__group-title {
+    font-size: var(--text-xs);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--c-text-dim);
+    margin-bottom: 1rem;
+  }
+
+  .footer__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .footer__link {
+    font-size: var(--text-sm);
+    color: var(--c-text-muted);
+    transition: color var(--t-fast);
+  }
+  .footer__link:hover { color: var(--c-nature); }
+
+  .footer__bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 1.25rem;
+    border-top: 1px solid var(--c-border);
+    font-size: var(--text-xs);
+    color: var(--c-text-dim);
+    flex-wrap: wrap;
+  }
+
+  .footer__stack { opacity: 0.6; }
+
+  @media (max-width: 768px) {
+    .footer__inner {
+      grid-template-columns: 1fr 1fr;
+    }
+    .footer__brand {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .footer__inner {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

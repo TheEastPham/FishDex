@@ -1,10 +1,10 @@
 # API Gateway — Build & Deploy to Oracle Cloud VM
-# Trigger: push lên release/prod-* + thay đổi trong ApiGateway
+# Trigger: push lên release/v1.0 + thay đổi trong ApiGateway
 
 trigger:
   branches:
     include:
-      - release/prod-*
+      - release/v1.0
   paths:
     include:
       - BackEndProject/ApiGateway/**
@@ -34,17 +34,15 @@ stages:
       displayName: Login GHCR
 
     - script: |
-        docker build \
-          -f BackEndProject/ApiGateway/Dockerfile \
+        docker buildx create --use --driver docker-container
+        docker buildx build \
+          --platform linux/arm64 \
+          --push \
+          -f Pipeline/local/ApiGateway/Dockerfile.api \
           -t $(IMAGE):$(Build.BuildId) \
           -t $(IMAGE):latest \
           BackEndProject/
-      displayName: Build image
-
-    - script: |
-        docker push $(IMAGE):$(Build.BuildId)
-        docker push $(IMAGE):latest
-      displayName: Push to GHCR
+      displayName: Build & Push image (ARM64)
 
 - stage: Deploy
   displayName: Deploy → Oracle VM
@@ -61,16 +59,17 @@ stages:
           steps:
 
           - script: |
-              echo "$(ORACLE_SSH_KEY)" > /tmp/oracle.key
+              echo "$(ORACLE_SSH_KEY)" | base64 -d > /tmp/oracle.key
               chmod 600 /tmp/oracle.key
             displayName: Setup SSH key
 
           - script: |
-              ssh -i /tmp/oracle.key -o StrictHostKeyChecking=no ubuntu@$(ORACLE_VM_IP) \
-                "echo '$(GHCR_TOKEN)' | docker login ghcr.io -u '$(GHCR_USERNAME)' --password-stdin && \
-                 docker compose -f ~/app/docker-compose.prod.yml pull $(SERVICE) && \
-                 docker compose -f ~/app/docker-compose.prod.yml up -d --no-deps $(SERVICE) && \
-                 echo 'Deploy $(SERVICE) done'"
+              ssh -i /tmp/oracle.key -o StrictHostKeyChecking=no ubuntu@$(ORACLE_VM_IP) "
+                echo '$(GHCR_TOKEN)' | docker login ghcr.io -u '$(GHCR_USERNAME)' --password-stdin &&
+                GHCR_USERNAME='$(GHCR_USERNAME)' docker compose -f ~/app/docker-compose.prod.yml pull $(SERVICE) &&
+                GHCR_USERNAME='$(GHCR_USERNAME)' docker compose -f ~/app/docker-compose.prod.yml up -d --no-deps $(SERVICE) &&
+                echo 'Deploy $(SERVICE) done'
+              "
             displayName: Pull & restart API Gateway
 
           - script: rm -f /tmp/oracle.key

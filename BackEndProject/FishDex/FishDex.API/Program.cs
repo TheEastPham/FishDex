@@ -1,10 +1,7 @@
-using Autofac;
-using Autofac.Extensions.DependencyInjection;
-using FishDex.Domain.Modules;
+using FishDex.Domain.Extensions;
 using FishDex.Domain.Settings;
 using FishDex.EFCore.DbContexts;
 using FishDex.EFCore.Extensions;
-using FishDex.EFCore.Modules;
 using FishLover.Shared.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -34,16 +31,10 @@ try
             rollingInterval: RollingInterval.Day,
             retainedFileCountLimit: 7));
 
-    // ── Autofac (giống UserManagement) ────────────────────────
-    builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
-    builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
-    {
-        containerBuilder.RegisterModule<FishDexEFCoreModule>();
-        containerBuilder.RegisterModule<FishDexModule>();
-    });
-
     // ── Database — PostgreSQL ──────────────────────────────────
     builder.Services.AddFishDexDatabase(builder.Configuration);
+    builder.Services.AddFishDexRepositories();
+    builder.Services.AddFishDexServices();
     builder.Services.AddMemoryCache();
     builder.Services.Configure<FishDexSettings>(
         builder.Configuration.GetSection(FishDexSettings.SectionName));

@@ -1,11 +1,23 @@
 {
   "Routes": [
     {
+      "DownstreamPathTemplate": "/.well-known/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "usermanagement",
+          "Port": 8080
+        }
+      ],
+      "UpstreamPathTemplate": "/.well-known/{everything}",
+      "UpstreamHttpMethod": [ "GET" ]
+    },
+    {
       "DownstreamPathTemplate": "/connect/{everything}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "user-management",
+          "Host": "usermanagement",
           "Port": 8080
         }
       ],
@@ -17,27 +29,39 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "user-management",
-          "Port": 8080
+          "Host": "fishdex",
+          "Port": 8081
         }
       ],
-      "UpstreamPathTemplate": "/api/{everything}",
+      "UpstreamPathTemplate": "/fishdex/v1/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS" ]
     },
     {
-      "UpstreamPathTemplate": "/storage/{everything}",
-      "UpstreamHttpMethod": [ "Get", "Put", "Post", "Delete" ],
-      "DownstreamPathTemplate": "/{everything}",
+      "DownstreamPathTemplate": "/api/{everything}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "storage", 
-          "Port": 9000   
+          "Host": "usermanagement",
+          "Port": 8080
         }
-      ]
+      ],
+      "UpstreamPathTemplate": "/user/v1/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS" ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "aquahome",
+          "Port": 8082
+        }
+      ],
+      "UpstreamPathTemplate": "/aquahome/v1/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS" ]
     }
   ],
   "GlobalConfiguration": {
-    "BaseUrl": "http://localhost:5000"
+    "BaseUrl": "https://api.fishlover.org"
   }
 }

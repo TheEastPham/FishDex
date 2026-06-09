@@ -32,7 +32,7 @@ function StatCard({ icon, label, value, sub, color, loading }: {
   icon: React.ReactNode; label: string; value: string | number; sub?: string; color: string; loading?: boolean;
 }) {
   return (
-    <div className="bg-[#1e2024] rounded-2xl p-5 border border-slate-800/60 flex items-center gap-4 hover:bg-[#23262b] transition-colors group">
+    <div className="bg-[#1E293B] rounded-2xl p-5 border border-slate-800/60 flex items-center gap-4 hover:bg-[#263348] transition-colors group">
       <div className={cn('p-3 rounded-xl shrink-0 transition-transform group-hover:scale-110', color)}>
         {icon}
       </div>
@@ -53,7 +53,7 @@ function AquariumPreviewCard({ tank, onClick }: { tank: AquariumDto; onClick: ()
   return (
     <div
       onClick={onClick}
-      className="bg-[#1e2024] border border-slate-800/60 rounded-2xl p-5 cursor-pointer hover:bg-[#23262b] hover:-translate-y-1 hover:shadow-xl hover:border-slate-700/60 transition-all duration-300 group"
+      className="bg-[#1E293B] border border-slate-800/60 rounded-2xl p-5 cursor-pointer hover:bg-[#263348] hover:-translate-y-1 hover:shadow-xl hover:border-slate-700/60 transition-all duration-300 group"
     >
       <div className="flex items-start justify-between mb-4">
         <div className={cn('p-2 rounded-xl border', style.bg, style.border)}>
@@ -94,7 +94,7 @@ function FavoritePreview({ detail, onClick }: { detail: SpeciesDetail; onClick: 
   return (
     <div
       onClick={onClick}
-      className="relative rounded-xl overflow-hidden aspect-square cursor-pointer group border border-slate-800/50 bg-[#1a1c20]"
+      className="relative rounded-xl overflow-hidden aspect-square cursor-pointer group border border-slate-800/50 bg-[#172033]"
     >
       {detail.preferredImageUrl ? (
         <img src={detail.preferredImageUrl} alt={detail.preferredCommonName || detail.speciesName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
@@ -147,7 +147,7 @@ export default function DashboardPage() {
   const totalVolume = aquariums.reduce((sum, t) => sum + (t.volumeLiters ?? 0), 0);
 
   return (
-    <div className="min-h-screen bg-[#141518] p-6 pb-20 font-sans">
+    <div className="min-h-screen bg-[#0F172A] p-6 pb-20 font-sans">
       <div className="max-w-6xl mx-auto space-y-8">
 
         {/* ── Header ── */}
@@ -189,10 +189,10 @@ export default function DashboardPage() {
 
           {tanksLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3].map(i => <div key={i} className="bg-[#1e2024] border border-slate-800/60 rounded-2xl h-44 animate-pulse" />)}
+              {[1, 2, 3].map(i => <div key={i} className="bg-[#1E293B] border border-slate-800/60 rounded-2xl h-44 animate-pulse" />)}
             </div>
           ) : aquariums.length === 0 ? (
-            <div className="bg-[#1e2024] border border-dashed border-slate-700/60 rounded-2xl p-10 text-center">
+            <div className="bg-[#1E293B] border border-dashed border-slate-700/60 rounded-2xl p-10 text-center">
               <Droplets className="w-12 h-12 text-slate-700 mx-auto mb-3" />
               <p className="text-slate-400 font-medium mb-4">Bạn chưa có hồ cá nào</p>
               <button onClick={() => navigate('/tanks')} className="inline-flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-white font-bold px-4 py-2 rounded-xl transition-colors text-sm">
@@ -221,7 +221,7 @@ export default function DashboardPage() {
 
           {favsLoading ? (
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-              {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="aspect-square rounded-xl bg-[#1e2024] animate-pulse" />)}
+              {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="aspect-square rounded-xl bg-[#1E293B] animate-pulse" />)}
             </div>
           ) : favDetails.length > 0 ? (
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
@@ -230,7 +230,7 @@ export default function DashboardPage() {
               ))}
             </div>
           ) : (
-            <div className="bg-[#1e2024] border border-dashed border-slate-700/60 rounded-2xl p-8 text-center">
+            <div className="bg-[#1E293B] border border-dashed border-slate-700/60 rounded-2xl p-8 text-center">
               <Heart className="w-10 h-10 text-slate-700 mx-auto mb-3" />
               <p className="text-slate-500 text-sm">Chưa có cá yêu thích — thêm từ trang chi tiết loài cá!</p>
             </div>

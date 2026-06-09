@@ -145,10 +145,10 @@ export default function AppShell() {
   };
 
   return (
-    <div className="flex h-screen w-full bg-[#141518] text-slate-300 selection:bg-primary/20">
+    <div className="flex h-screen w-full bg-[#0F172A] text-slate-300 selection:bg-primary/20">
 
       {/* ── Sidebar ── */}
-      <aside className="w-[260px] flex-shrink-0 flex flex-col bg-[#0e0f11] border-r border-slate-800/60 shadow-[4px_0_24px_rgba(0,0,0,0.5)] z-10 transition-all duration-300">
+      <aside className="w-[260px] flex-shrink-0 flex flex-col bg-[#0A0F1A] border-r border-slate-800/60 shadow-[4px_0_24px_rgba(0,0,0,0.5)] z-10 transition-all duration-300">
         
         {/* Logo */}
         <div className="flex items-center gap-3 px-6 py-6 border-b border-slate-800/60">
@@ -310,7 +310,7 @@ export default function AppShell() {
           
           {/* Floating Dropdown Menu */}
           {isProfileOpen && !isAvatarPickerOpen && (
-            <div className="absolute bottom-[calc(100%-8px)] left-4 right-4 mb-2 bg-[#1e2024] border border-slate-700 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-2 z-50">
+            <div className="absolute bottom-[calc(100%-8px)] left-4 right-4 mb-2 bg-[#1E293B] border border-slate-700 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-2 z-50">
               <div className="px-4 py-3 border-b border-slate-800 flex items-center justify-between">
                 <span className="text-xs font-semibold text-slate-400">Language</span>
                 <LanguageSwitcher className="text-xs font-bold px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-slate-300 transition-colors cursor-pointer" />
@@ -335,7 +335,7 @@ export default function AppShell() {
 
           {/* Avatar Picker Overlay */}
           {isAvatarPickerOpen && (
-            <div className="absolute bottom-[calc(100%-8px)] left-4 right-4 mb-2 bg-[#1e2024] border border-slate-700 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-2 z-50 p-4">
+            <div className="absolute bottom-[calc(100%-8px)] left-4 right-4 mb-2 bg-[#1E293B] border border-slate-700 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-2 z-50 p-4">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">Choose Avatar</span>
                 <button onClick={() => setIsAvatarPickerOpen(false)} className="text-slate-500 hover:text-white">✕</button>

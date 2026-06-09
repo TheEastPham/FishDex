@@ -40,11 +40,13 @@ public class OpenIddictSeeder(IServiceProvider serviceProvider) : IHostedService
             {
                 new Uri("http://localhost:5173/callback"),  // Vite dev server
                 new Uri("http://localhost:3000/callback"),  // Docker
+                new Uri("https://fishlover.org/callback"),  // Production
             },
             PostLogoutRedirectUris =
             {
                 new Uri("http://localhost:5173"),
                 new Uri("http://localhost:3000"),
+                new Uri("https://fishlover.org"),           // Production
             },
             Permissions =
             {

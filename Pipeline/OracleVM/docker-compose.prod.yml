@@ -43,6 +43,7 @@ services:
       - OpenIddict__Issuer=${OIDC_ISSUER}
       - OpenIddict__KeyDir=/openiddict-keys
       - AllowedOrigins__0=${FE_ORIGIN}
+      - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
     volumes:
       - openiddict_keys:/openiddict-keys
     depends_on:

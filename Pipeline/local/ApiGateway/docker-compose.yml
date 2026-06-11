@@ -1,0 +1,32 @@
+version: "3.9"
+
+# ─────────────────────────────────────────────────────────────
+# ApiGateway — Local Dev Stack
+# Không có DB/Redis riêng — chỉ proxy đến các service khác
+# Yêu cầu fishlover_local network đã tồn tại:
+#   docker network create fishlover_local
+# ─────────────────────────────────────────────────────────────
+
+services:
+
+  apigateway:
+    build:
+      context: ../../../BackEndProject
+      dockerfile: ../Pipeline/local/ApiGateway/Dockerfile.api
+    image: apigateway:local
+    container_name: apigateway
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "5000"
+      JwtSettings__SecretKey:  ${JWT_SECRET_KEY}
+      JwtSettings__Issuer:     ${JWT_ISSUER}
+      JwtSettings__Audience:   ${JWT_AUDIENCE}
+    ports:
+      - "5000:5000"
+    networks:
+      - fishlover_local
+
+networks:
+  fishlover_local:
+    external: true

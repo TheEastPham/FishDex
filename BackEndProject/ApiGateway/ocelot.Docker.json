@@ -5,24 +5,35 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "usermanagement",
+          "Host": "usermanagement-api",
           "Port": 8080
         }
       ],
       "UpstreamPathTemplate": "/.well-known/{everything}",
-      "UpstreamHttpMethod": [ "GET" ]
+      "UpstreamHttpMethod": [ "GET" ],
+      "UpstreamHeaderTransform": {
+        "X-Forwarded-Host": "localhost:5000",
+        "X-Forwarded-Proto": "http"
+      },
+      "DownstreamHeaderTransform": {
+        "Location": "{DownstreamBaseUrl}, {BaseUrl}"
+      }
     },
     {
       "DownstreamPathTemplate": "/connect/{everything}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "usermanagement",
+          "Host": "usermanagement-api",
           "Port": 8080
         }
       ],
       "UpstreamPathTemplate": "/connect/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST", "OPTIONS" ],
+      "UpstreamHeaderTransform": {
+        "X-Forwarded-Host": "localhost:5000",
+        "X-Forwarded-Proto": "http"
+      },
       "DownstreamHeaderTransform": {
         "Location": "{DownstreamBaseUrl}, {BaseUrl}"
       },
@@ -35,8 +46,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "fishdex",
-          "Port": 8081
+          "Host": "fishdex-api",
+          "Port": 8080
         }
       ],
       "UpstreamPathTemplate": "/fishdex/v1/{everything}",
@@ -47,7 +58,7 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "usermanagement",
+          "Host": "usermanagement-api",
           "Port": 8080
         }
       ],
@@ -59,15 +70,27 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "aquahome",
-          "Port": 8082
+          "Host": "aquahome-api",
+          "Port": 8080
         }
       ],
       "UpstreamPathTemplate": "/aquahome/v1/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS" ]
+    },
+    {
+      "UpstreamPathTemplate": "/storage/{everything}",
+      "UpstreamHttpMethod": [ "GET", "PUT", "POST", "DELETE" ],
+      "DownstreamPathTemplate": "/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "minio",
+          "Port": 9000
+        }
+      ]
     }
   ],
   "GlobalConfiguration": {
-    "BaseUrl": "https://api.fishlover.org"
+    "BaseUrl": "http://localhost:5000"
   }
 }

@@ -261,11 +261,23 @@ services:
 
 volumes:
   usermanagement_sqldata:
-  fishdex_pgdata:
-  fishdex_pgadmin:
-  fishdex_minio:
-  aquahome_sqldata:
+    external: true
+    name: usermanagementlocal_usermanagement_sqldata
   openiddict_keys:
+    external: true
+    name: usermanagementlocal_openiddict_keys
+  fishdex_pgdata:
+    external: true
+    name: fishdexlocal_fishdex_pgdata
+  fishdex_pgadmin:
+    external: true
+    name: fishdexlocal_fishdex_pgadmin
+  fishdex_minio:
+    external: true
+    name: fishdexlocal_fishdex_minio
+  aquahome_sqldata:
+    external: true
+    name: aquahomelocal_aquahome_sqldata
 
 networks:
   fishlover_local:

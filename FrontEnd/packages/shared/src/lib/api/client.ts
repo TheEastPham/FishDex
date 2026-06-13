@@ -24,14 +24,12 @@ apiClient.interceptors.response.use(
     const url = error.config?.url ?? '(unknown)';
     const status: number | undefined = error.response?.status;
 
-    // Network error / timeout / CORS — log but DO NOT redirect
     if (!error.response) {
-      console.warn(`[API] Network error on ${url}:`, error.message);
+      if (import.meta.env.DEV) console.warn(`[API] Network error on ${url}:`, error.message);
       return Promise.reject(error);
     }
 
-    // Log all non-2xx errors with context so you can see which API failed
-    console.warn(`[API] ${status} on ${url}`, error.response?.data ?? '');
+    if (import.meta.env.DEV) console.warn(`[API] ${status} on ${url}`, error.response?.data ?? '');
 
     // Only attempt token refresh for 401 — all other errors pass through
     if (status !== 401) {
@@ -42,7 +40,6 @@ apiClient.interceptors.response.use(
 
     // If already retried after a refresh → session truly expired → go to login
     if (original._retry) {
-      console.warn('[API] Token refresh failed — redirecting to login');
       useAuthStore.getState().clearTokens();
       return Promise.reject(error);
     }
@@ -51,7 +48,6 @@ apiClient.interceptors.response.use(
     const { getRefreshToken, setTokens, clearTokens } = useAuthStore.getState();
     const rt = getRefreshToken();
     if (!rt) {
-      console.warn('[API] No refresh token — redirecting to login');
       clearTokens();
       return Promise.reject(error);
     }
@@ -65,10 +61,8 @@ apiClient.interceptors.response.use(
 
       const newToken = await refreshing;
       original.headers.Authorization = `Bearer ${newToken}`;
-      console.info(`[API] Token refreshed — retrying ${url}`);
       return apiClient(original);
     } catch {
-      console.warn('[API] Token refresh threw — redirecting to login');
       clearTokens();
       return Promise.reject(error);
     }

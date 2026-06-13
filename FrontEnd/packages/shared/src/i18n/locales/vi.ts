@@ -105,6 +105,17 @@ const vi = {
     ciguatera: 'Độc tố ciguatera',
     unknown: 'Không rõ',
   },
+  favorites: {
+    loading: 'Đang tải danh sách yêu thích…',
+    title: 'Cá yêu thích',
+    count: '{{count}} loài trong danh sách',
+    remove: 'Bỏ yêu thích',
+    explore: 'Khám phá cá',
+    empty: {
+      title: 'Chưa có cá yêu thích',
+      desc: 'Hãy thêm cá yêu thích từ trang chi tiết loài cá!',
+    },
+  },
   pagination: {
     prev: '← Trước',
     next: 'Tiếp →',

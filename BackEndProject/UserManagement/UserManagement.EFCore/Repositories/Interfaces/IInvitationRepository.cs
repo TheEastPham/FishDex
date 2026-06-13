@@ -5,4 +5,5 @@ namespace UserManagement.EFCore.Repositories.Interfaces;
 public interface IInvitationRepository
 {
     Task<Invitation?> GetByCodeAsync(string code);
+    Task<int> GetUsageCountAsync(Guid invitationId);
 }

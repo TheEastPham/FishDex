@@ -307,7 +307,7 @@ public class AuthService(
             };
         }
 
-        var usageCount = invitation.UsedBy.Count;
+        var usageCount = await invitationRepository.GetUsageCountAsync(invitation.Id);
         if (usageCount >= invitation.MaxUses)
         {
             return new ValidateInvitationResponse

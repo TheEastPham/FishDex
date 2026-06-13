@@ -58,7 +58,7 @@ services:
       JwtSettings__SecretKey:               ${JWT_SECRET_KEY}
       JwtSettings__Issuer:                  ${JWT_ISSUER}
       JwtSettings__Audience:                ${JWT_AUDIENCE}
-      JwtSettings__ExpiryInDays:            ${JWT_EXPIRY_DAYS}
+      JwtSettings__ExpiryMinutes:           ${JWT_EXPIRY_MINUTES}
       AutoMigrate__OnStartup:               "true"
       Seeding__SeedInitialAdmin:            ${SEED_INITIAL_ADMIN}
       EmailSettings__Resend__ApiKey:        ${EMAIL_API_KEY}
@@ -136,11 +136,12 @@ services:
       JwtSettings__ExpiryMinutes:   ${JWT_EXPIRY_MINUTES}
       AuthServer__Url:              ${AUTH_SERVER_URL}
       AuthServer__Authority:        ${AUTH_SERVER_AUTHORITY}
+      AuthServer__SwaggerUrl:       ${AUTH_SERVER_SWAGGER_URL}
       Storage__ServiceUrl:          ${STORAGE_SERVICE_URL}
       Storage__AccessKey:           ${STORAGE_ACCESS_KEY}
       Storage__SecretKey:           ${STORAGE_SECRET_KEY}
       Storage__BucketName:          ${STORAGE_BUCKET}
-      Storage__ForcePathStyle:      "true"
+      Storage__ForcePathStyle:      "false"
     ports:
       - "8081:8080"
     networks:
@@ -150,27 +151,6 @@ services:
         condition: service_healthy
       usermanagement-api:
         condition: service_started
-
-  minio:
-    image: quay.io/minio/minio
-    container_name: fishdex_minio
-    restart: unless-stopped
-    command: server /data --console-address :9001
-    environment:
-      MINIO_ROOT_USER:     ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    volumes:
-      - fishdex_minio:/data
-    networks:
-      - fishlover_local
-    healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   # ── AquaHome ──────────────────────────────────────────────────────
   aquahome-db:
@@ -250,6 +230,7 @@ services:
       JwtSettings__SecretKey: ${JWT_SECRET_KEY}
       JwtSettings__Issuer:    ${JWT_ISSUER}
       JwtSettings__Audience:  ${JWT_AUDIENCE}
+      FE_ORIGIN:              ${FE_ORIGIN}
     ports:
       - "5000:5000"
     networks:
@@ -272,9 +253,6 @@ volumes:
   fishdex_pgadmin:
     external: true
     name: fishdexlocal_fishdex_pgadmin
-  fishdex_minio:
-    external: true
-    name: fishdexlocal_fishdex_minio
   aquahome_sqldata:
     external: true
     name: aquahomelocal_aquahome_sqldata

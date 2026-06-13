@@ -106,6 +106,17 @@ const en = {
     ciguatera: 'Ciguatera',
     unknown: 'Unknown',
   },
+  favorites: {
+    loading: 'Loading your favorites…',
+    title: 'My Favorites',
+    count: '{{count}} species in list',
+    remove: 'Remove',
+    explore: 'Explore Fish',
+    empty: {
+      title: 'No favorites yet',
+      desc: 'Add fish from a species detail page!',
+    },
+  },
   pagination: {
     prev: '← Previous',
     next: 'Next →',

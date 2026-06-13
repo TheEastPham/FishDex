@@ -1,13 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  useTranslation, cn, getSpeciesDetail, getSpeciesMedia, 
-  getSpeciesOccurrences, getSpeciesCountries, getRelatedSpecies, getCountryCode,
-  checkFavorite, addFavorite, removeFavorite
-} from '@fishlover/shared';
-import type { 
-  SpeciesDetail, SystemImageDto, OccurrenceDto, 
-  CountryDto, SpeciesSearchResult 
+import {
+  useTranslation, cn, getCountryCode,
+  checkFavorite, addFavorite, removeFavorite,
+  useFishProfile, getCached, setCached, invalidateCache, CacheKeys, FAVORITE_CHECK_TTL,
 } from '@fishlover/shared';
 import {
   ArrowLeft, Share2, Heart, Fish, Ruler, Droplets, Map as MapIcon,
@@ -94,52 +90,35 @@ export default function FishProfilePage() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
 
-  const [detail, setDetail] = useState<SpeciesDetail | null>(null);
-  const [media, setMedia] = useState<SystemImageDto[]>([]);
-  const [occurrences, setOccurrences] = useState<OccurrenceDto[]>([]);
-  const [countries, setCountries] = useState<CountryDto[]>([]);
-  const [relatedSpecies, setRelatedSpecies] = useState<SpeciesSearchResult[]>([]);
-  const [loading, setLoading] = useState(true);
+  const id = specCode ? parseInt(specCode, 10) : null;
+  const { detail, media, occurrences, countries, relatedSpecies, loading } = useFishProfile(id, i18n.language);
+
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
 
+  // Reset UI state when navigating between fish profiles
   useEffect(() => {
-    if (!specCode) return;
-    const fetchAll = async () => {
-      setLoading(true);
-      try {
-        const id = parseInt(specCode, 10);
-        const [detailData, mediaData, occData, countryData, relatedData] = await Promise.all([
-          getSpeciesDetail(id, i18n.language),
-          getSpeciesMedia(id),
-          getSpeciesOccurrences(id),
-          getSpeciesCountries(id),
-          getRelatedSpecies(id, 6, i18n.language),
-        ]);
-        setDetail(detailData);
-        setMedia(mediaData);
-        setOccurrences(occData);
-        setCountries(countryData);
-        setRelatedSpecies(relatedData);
+    setSelectedCountries([]);
+    setSelectedImageIndex(null);
+  }, [id]);
 
-        // Run checkFavorite independently — AquaHome API failure must not crash this page
-        checkFavorite(id).then(setIsFavorite).catch(() => {/* silently ignore */});
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAll();
-  }, [specCode, i18n.language]);
+  // Check favorite status — cached, AquaHome failure must not crash this page
+  useEffect(() => {
+    if (!id) return;
+    const key = CacheKeys.favoriteCheck(id);
+    const cached = getCached<boolean>(key);
+    if (cached !== null) { setIsFavorite(cached); return; }
+    checkFavorite(id)
+      .then((val) => { setCached(key, val, FAVORITE_CHECK_TTL); setIsFavorite(val); })
+      .catch(() => {});
+  }, [id]);
 
   const handleToggleFavorite = async () => {
-    if (!specCode || favoriteLoading) return;
+    if (!id || favoriteLoading) return;
     setFavoriteLoading(true);
     try {
-      const id = parseInt(specCode, 10);
       if (isFavorite) {
         await removeFavorite(id);
         setIsFavorite(false);
@@ -147,6 +126,9 @@ export default function FishProfilePage() {
         await addFavorite(id);
         setIsFavorite(true);
       }
+      // Bust caches so next visit reflects the change
+      invalidateCache(CacheKeys.favoriteCheck(id));
+      invalidateCache(CacheKeys.myFavorites());
     } catch (err) {
       console.error(err);
     } finally {

@@ -8,9 +8,8 @@ namespace UserManagement.EFCore.Repositories;
 public class InvitationRepository(UserManagementDbContext context) : IInvitationRepository
 {
     public Task<Invitation?> GetByCodeAsync(string code)
-    {
-        return context.Invitations
-            .Include(i => i.UsedBy)
-            .FirstOrDefaultAsync(i => i.Code == code);
-    }
+        => context.Invitations.FirstOrDefaultAsync(i => i.Code == code);
+
+    public Task<int> GetUsageCountAsync(Guid invitationId)
+        => context.InvitationUsages.CountAsync(u => u.InvitationId == invitationId);
 }

@@ -24,12 +24,13 @@ public class CurrentUserSession : ICurrentUserSession
         {
             var userIdClaim = _httpContextAccessor.HttpContext?.User?
                 .FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            
-            return Guid.TryParse(userIdClaim, out var guid) ? guid : Guid.Empty;
+
+            if (!Guid.TryParse(userIdClaim, out var guid))
+                throw new UnauthorizedAccessException("Authenticated user has no valid NameIdentifier claim.");
+            return guid;
         });
-        
-        _userIdString = new Lazy<string>(() => 
-            _userId.Value == Guid.Empty ? string.Empty : _userId.Value.ToString());
+
+        _userIdString = new Lazy<string>(() => _userId.Value.ToString());
         
         _userName = new Lazy<string?>(() => 
             _httpContextAccessor.HttpContext?.User?.Identity?.Name);

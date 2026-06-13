@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getMyAquariums, getMyFavorites, getSpeciesDetail, cn } from '@fishlover/shared';
-import type { AquariumDto, FavoriteDto, SpeciesDetail } from '@fishlover/shared';
+import { useMyAquariums, useMyFavorites, getSpeciesDetail, cn, getCached, setCached, CacheKeys, useTranslation } from '@fishlover/shared';
+import type { AquariumDto, SpeciesDetail } from '@fishlover/shared';
 import {
   Droplets, Plus, Heart, Fish, ArrowRight, Layers,
   FlaskConical, Ruler, Sparkles
@@ -112,37 +112,34 @@ function FavoritePreview({ detail, onClick }: { detail: SpeciesDetail; onClick: 
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const { i18n } = useTranslation();
 
-  const [aquariums, setAquariums] = useState<AquariumDto[]>([]);
-  const [favorites, setFavorites] = useState<FavoriteDto[]>([]);
+  const { aquariums, loading: tanksLoading } = useMyAquariums();
+  const { favorites, loading: favsLoading } = useMyFavorites();
   const [favDetails, setFavDetails] = useState<SpeciesDetail[]>([]);
-  const [tanksLoading, setTanksLoading] = useState(true);
-  const [favsLoading, setFavsLoading] = useState(true);
 
+  // Fetch preview details for first 6 favorites — each detail is individually cached
   useEffect(() => {
-    // Fetch aquariums independently — won't block the page
-    withTimeout(getMyAquariums())
-      .then(data => setAquariums(data))
-      .catch(err => console.warn('[Dashboard] aquariums:', err))
-      .finally(() => setTanksLoading(false));
+    if (favsLoading) return;
+    const preview = favorites.slice(0, 6);
+    if (!preview.length) return;
 
-    // Fetch favorites independently, then cascade-load details
-    withTimeout(getMyFavorites())
-      .then(async favs => {
-        setFavorites(favs);
-        const preview = favs.slice(0, 6);
-        const results = await Promise.allSettled(
-          preview.map(f => withTimeout(getSpeciesDetail(f.specCode), 5000))
-        );
-        setFavDetails(
-          results
-            .filter(r => r.status === 'fulfilled')
-            .map(r => (r as PromiseFulfilledResult<SpeciesDetail>).value)
-        );
+    Promise.allSettled(
+      preview.map((f) => {
+        const key = CacheKeys.speciesDetail(f.specCode, i18n.language);
+        const cached = getCached<SpeciesDetail>(key);
+        if (cached) return Promise.resolve(cached);
+        return withTimeout(getSpeciesDetail(f.specCode, i18n.language), 5000)
+          .then((d) => { setCached(key, d); return d; });
       })
-      .catch(err => console.warn('[Dashboard] favorites:', err))
-      .finally(() => setFavsLoading(false));
-  }, []);
+    ).then((results) => {
+      setFavDetails(
+        results
+          .filter((r) => r.status === 'fulfilled')
+          .map((r) => (r as PromiseFulfilledResult<SpeciesDetail>).value)
+      );
+    });
+  }, [favorites, favsLoading, i18n.language]);
 
   const totalVolume = aquariums.reduce((sum, t) => sum + (t.volumeLiters ?? 0), 0);
 

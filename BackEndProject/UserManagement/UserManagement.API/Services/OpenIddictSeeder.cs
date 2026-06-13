@@ -8,6 +8,14 @@ public class OpenIddictSeeder(IServiceProvider serviceProvider) : IHostedService
     {
         await using var scope = serviceProvider.CreateAsyncScope();
         var manager = scope.ServiceProvider.GetRequiredService<IOpenIddictApplicationManager>();
+        var scopeManager = scope.ServiceProvider.GetRequiredService<IOpenIddictScopeManager>();
+
+        await UpsertScopeAsync(scopeManager, new OpenIddictScopeDescriptor
+        {
+            Name = "fishdex",
+            DisplayName = "FishDex API",
+            Resources = { "fishdex_api" }
+        }, cancellationToken);
 
         await UpsertAsync(manager, new OpenIddictApplicationDescriptor
         {
@@ -62,6 +70,7 @@ public class OpenIddictSeeder(IServiceProvider serviceProvider) : IHostedService
                 OpenIddictConstants.Permissions.Scopes.Profile,
                 OpenIddictConstants.Permissions.Scopes.Roles,
                 OpenIddictConstants.Permissions.Prefixes.Scope + OpenIddictConstants.Scopes.OfflineAccess,
+                OpenIddictConstants.Permissions.Prefixes.Scope + "fishdex",
             }
         }, cancellationToken);
     }
@@ -75,9 +84,22 @@ public class OpenIddictSeeder(IServiceProvider serviceProvider) : IHostedService
     {
         var existing = await manager.FindByClientIdAsync(descriptor.ClientId!, cancellationToken);
         if (existing is null)
-        {
             await manager.CreateAsync(descriptor, cancellationToken);
+        else
+        {
+            await manager.PopulateAsync(existing, descriptor, cancellationToken);
+            await manager.UpdateAsync(existing, cancellationToken);
         }
+    }
+
+    private static async Task UpsertScopeAsync(
+        IOpenIddictScopeManager manager,
+        OpenIddictScopeDescriptor descriptor,
+        CancellationToken cancellationToken)
+    {
+        var existing = await manager.FindByNameAsync(descriptor.Name!, cancellationToken);
+        if (existing is null)
+            await manager.CreateAsync(descriptor, cancellationToken);
         else
         {
             await manager.PopulateAsync(existing, descriptor, cancellationToken);

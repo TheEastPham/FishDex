@@ -20,8 +20,11 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        var feOrigin = Environment.GetEnvironmentVariable("FE_ORIGIN") ?? "http://localhost:5173";
-        policy.WithOrigins(feOrigin)
+        var raw = Environment.GetEnvironmentVariable("FE_ORIGIN");
+        var origins = string.IsNullOrEmpty(raw)
+            ? ["http://localhost:5173", "http://localhost:3000"]
+            : raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        policy.WithOrigins(origins)
               .AllowAnyMethod()
               .AllowAnyHeader();
     });

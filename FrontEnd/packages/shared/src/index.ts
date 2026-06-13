@@ -26,11 +26,17 @@ export { searchSpecies, getFamilies, getSpeciesDetail, getSpeciesMedia, getSpeci
 export { getMyAquariums, getAquariumById, createAquarium, updateAquarium, deleteAquarium, getMyFavorites, checkFavorite, addFavorite, removeFavorite } from './lib/api/aquaHome';
 
 
+// ── Cache ─────────────────────────────────────────────────
+export { getCached, setCached, invalidateCache, clearCache, CacheKeys, USER_DATA_TTL, FAVORITE_CHECK_TTL } from './lib/cache';
+
 // ── Hooks ─────────────────────────────────────────────────
 export { useDebounce }                             from './hooks/useDebounce';
 // TODO(mobile): useLogout uses useNavigate (react-router-dom) + window.location
 export { useLogout }                               from './hooks/useLogout';
 export { useAuthRestore }                          from './hooks/useAuthRestore';
+export { useFishProfile }                          from './hooks/useFishProfile';
+export { useMyFavorites }                          from './hooks/useMyFavorites';
+export { useMyAquariums }                          from './hooks/useMyAquariums';
 
 // ── Utils ─────────────────────────────────────────────────
 export { cn, getCountryCode }                       from './lib/utils';

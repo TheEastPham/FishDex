@@ -13,6 +13,7 @@ public class AquariumRepository(AquaHomeDbContext context)
 
     public async Task<IReadOnlyList<Aquarium>> GetByUserAsync(Guid userId, CancellationToken ct = default)
         => await _db.Aquariums
+            .Include(a => a.Fish)
             .Where(a => a.UserId == userId)
             .OrderByDescending(a => a.CreatedAt)
             .ToListAsync(ct);

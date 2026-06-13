@@ -88,15 +88,14 @@ public class SpeciesService(
             request.Query, request.FamId, request.GenusCode, language,
             request.Page, request.PageSize, ct);
 
-        var mapped = new List<SpeciesSearchResultDto>(items.Count);
-        foreach (var s in items)
+        var mapped = await Task.WhenAll(items.Select(async s =>
         {
             var pic      = s.Pictures.FirstOrDefault(p => p.PicPreferred == true);
             var imageUrl = pic != null
                 ? await storage.GetPresignedUrlAsync(pic.ObjectKey, ct)
                 : null;
-            mapped.Add(s.ToSearchResultDto(language, imageUrl));
-        }
+            return s.ToSearchResultDto(language, imageUrl);
+        }));
 
         return new PagedResult<SpeciesSearchResultDto>
         {
@@ -214,16 +213,14 @@ public class SpeciesService(
         var related = await speciesRepo.GetRelatedAsync(
             specCode, species.GenusCode, species.FamId, limit, ct);
 
-        var result = new List<SpeciesSearchResultDto>(related.Count);
-        foreach (var s in related)
+        return await Task.WhenAll(related.Select(async s =>
         {
             var pic      = s.Pictures?.FirstOrDefault(p => p.PicPreferred == true);
             var imageUrl = pic != null
                 ? await storage.GetPresignedUrlAsync(pic.ObjectKey, ct)
                 : null;
-            result.Add(s.ToSearchResultDto(language, imageUrl));
-        }
-        return result;
+            return s.ToSearchResultDto(language, imageUrl);
+        }));
     }
 
     public async Task<IReadOnlyList<LanguageCountDto>> GetTopLanguagesAsync(CancellationToken ct = default)

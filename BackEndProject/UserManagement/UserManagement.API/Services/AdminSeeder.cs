@@ -24,7 +24,7 @@ public class AdminSeeder(IServiceProvider serviceProvider, IConfiguration config
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<UserEntity>>();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<RoleEntity>>();
 
-        const string adminRole = "Admin";
+        const string adminRole = "SystemAdmin";
         if (!await roleManager.RoleExistsAsync(adminRole))
         {
             await roleManager.CreateAsync(new RoleEntity { Name = adminRole, Description = "System administrator" });

@@ -20,7 +20,8 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.AllowAnyOrigin()
+        var feOrigin = Environment.GetEnvironmentVariable("FE_ORIGIN") ?? "http://localhost:5173";
+        policy.WithOrigins(feOrigin)
               .AllowAnyMethod()
               .AllowAnyHeader();
     });

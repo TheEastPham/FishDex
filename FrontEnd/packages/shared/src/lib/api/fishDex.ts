@@ -1,6 +1,6 @@
 import axios from 'axios';
 import type { PagedResult } from '../../types/common';
-import type { SpeciesSearchResult, SearchSpeciesParams, SpeciesDetail, SystemImageDto, OccurrenceDto, CountryDto } from '../../types/species';
+import type { SpeciesSearchResult, SpeciesSummary, SearchSpeciesParams, SpeciesDetail, SystemImageDto, OccurrenceDto, CountryDto, SpeciesDistributionDto } from '../../types/species';
 import { useAuthStore } from '../../store/authStore';
 
 const fishDexClient = axios.create({
@@ -50,6 +50,18 @@ export async function getSpeciesOccurrences(specCode: number): Promise<Occurrenc
 
 export async function getSpeciesCountries(specCode: number): Promise<CountryDto[]> {
   const { data } = await fishDexClient.get<CountryDto[]>(`/fishdex/v1/species/${specCode}/countries`);
+  return data;
+}
+
+export async function getSpeciesSummaries(specCodes: number[], language?: string): Promise<SpeciesSummary[]> {
+  const { data } = await fishDexClient.get<SpeciesSummary[]>('/fishdex/v1/species/summaries', {
+    params: { codes: specCodes.join(','), ...(language ? { language } : {}) },
+  });
+  return data;
+}
+
+export async function getSpeciesDistribution(specCode: number): Promise<SpeciesDistributionDto> {
+  const { data } = await fishDexClient.get<SpeciesDistributionDto>(`/fishdex/v1/species/${specCode}/distribution`);
   return data;
 }
 

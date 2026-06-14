@@ -1,61 +1,29 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  removeFavorite, getSpeciesDetail, cn,
-  useMyFavorites, getCached, setCached, CacheKeys, useTranslation,
+  removeFavorite, cn,
+  useMyFavorites, useSpeciesSummaries, useTranslation,
 } from '@fishlover/shared';
-import type { SpeciesDetail } from '@fishlover/shared';
 import { Heart, Fish, Loader, ArrowRight, Trash2 } from 'lucide-react';
-
-interface FavCard {
-  specCode: number;
-  detail: SpeciesDetail | null;
-  loading: boolean;
-}
 
 export default function FavoritesPage() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const { favorites, loading, invalidate } = useMyFavorites();
-  const [cards, setCards] = useState<FavCard[]>([]);
   const [removingId, setRemovingId] = useState<number | null>(null);
+  const [removed, setRemoved] = useState<Set<number>>(new Set());
 
-  // Sync cards from favorites list, then fetch details in parallel (not sequential)
-  useEffect(() => {
-    if (loading) return;
-    setCards(favorites.map((f) => ({ specCode: f.specCode, detail: null, loading: true })));
+  const allCodes = favorites.map((f) => f.specCode);
+  const { summaries, loading: summariesLoading } = useSpeciesSummaries(allCodes, i18n.language);
 
-    // Fire all detail fetches in parallel — cache hits resolve instantly
-    favorites.forEach((fav) => {
-      const key = CacheKeys.speciesDetail(fav.specCode, i18n.language);
-      const cached = getCached<SpeciesDetail>(key);
-      if (cached) {
-        setCards((prev) =>
-          prev.map((c) => c.specCode === fav.specCode ? { ...c, detail: cached, loading: false } : c)
-        );
-        return;
-      }
-      getSpeciesDetail(fav.specCode, i18n.language)
-        .then((detail) => {
-          setCached(key, detail);
-          setCards((prev) =>
-            prev.map((c) => c.specCode === fav.specCode ? { ...c, detail, loading: false } : c)
-          );
-        })
-        .catch(() => {
-          setCards((prev) =>
-            prev.map((c) => c.specCode === fav.specCode ? { ...c, loading: false } : c)
-          );
-        });
-    });
-  }, [favorites, loading, i18n.language]);
+  const visibleCodes = allCodes.filter((c) => !removed.has(c));
 
   const handleRemove = async (specCode: number) => {
     setRemovingId(specCode);
     try {
       await removeFavorite(specCode);
-      setCards((prev) => prev.filter((c) => c.specCode !== specCode));
-      invalidate(); // bust cache so next navigation fetches fresh list
+      setRemoved((prev) => new Set(prev).add(specCode));
+      invalidate();
     } catch (err) {
       console.error(err);
     } finally {
@@ -63,7 +31,7 @@ export default function FavoritesPage() {
     }
   };
 
-  if (loading) {
+  if (loading || summariesLoading) {
     return (
       <div className="min-h-screen bg-[#141518] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -84,11 +52,11 @@ export default function FavoritesPage() {
             <Heart className="w-8 h-8 text-rose-400 fill-rose-400" />
             {t('favorites.title')}
           </h1>
-          <p className="text-slate-400 mt-1">{t('favorites.count', { count: cards.length })}</p>
+          <p className="text-slate-400 mt-1">{t('favorites.count', { count: visibleCodes.length })}</p>
         </div>
 
         {/* Empty state */}
-        {cards.length === 0 && (
+        {visibleCodes.length === 0 && (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <div className="w-20 h-20 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mb-4">
               <Heart className="w-10 h-10 text-rose-400" />
@@ -105,78 +73,68 @@ export default function FavoritesPage() {
         )}
 
         {/* Grid */}
-        {cards.length > 0 && (
+        {visibleCodes.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {cards.map((card) => (
-              <div
-                key={card.specCode}
-                className="bg-[#1e2024] border border-slate-800/60 rounded-2xl overflow-hidden hover:border-slate-700/60 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 group"
-              >
-                {/* Image */}
+            {visibleCodes.map((specCode) => {
+              const s = summaries[specCode];
+              return (
                 <div
-                  className="aspect-square cursor-pointer relative overflow-hidden bg-[#141518]"
-                  onClick={() => navigate(`/fish/${card.specCode}`)}
+                  key={specCode}
+                  className="bg-[#1e2024] border border-slate-800/60 rounded-2xl overflow-hidden hover:border-slate-700/60 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 group"
                 >
-                  {card.loading ? (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Loader className="w-6 h-6 text-slate-600 animate-spin" />
-                    </div>
-                  ) : card.detail?.preferredImageUrl ? (
-                    <img
-                      src={card.detail.preferredImageUrl}
-                      alt={card.detail.preferredCommonName || card.detail.speciesName}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Fish className="w-10 h-10 text-slate-700" />
-                    </div>
-                  )}
-                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="bg-black/50 rounded-lg p-1">
-                      <ArrowRight className="w-3.5 h-3.5 text-white" />
+                  {/* Image */}
+                  <div
+                    className="aspect-square cursor-pointer relative overflow-hidden bg-[#141518]"
+                    onClick={() => navigate(`/fish/${specCode}`)}
+                  >
+                    {s?.imageUrl ? (
+                      <img
+                        src={s.imageUrl}
+                        alt={s.commonName || s.speciesName}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Fish className="w-10 h-10 text-slate-700" />
+                      </div>
+                    )}
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="bg-black/50 rounded-lg p-1">
+                        <ArrowRight className="w-3.5 h-3.5 text-white" />
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Info */}
-                <div className="p-3">
-                  {card.loading ? (
-                    <div className="space-y-1.5">
-                      <div className="h-3 bg-slate-800 rounded animate-pulse w-3/4" />
-                      <div className="h-2.5 bg-slate-800 rounded animate-pulse w-1/2" />
-                    </div>
-                  ) : (
-                    <>
-                      <p className="font-bold text-white text-xs leading-snug line-clamp-2 mb-0.5">
-                        {card.detail?.preferredCommonName || card.detail?.speciesName || `Species #${card.specCode}`}
-                      </p>
-                      {card.detail?.preferredCommonName && (
-                        <p className="text-slate-500 text-[11px] italic truncate">{card.detail.speciesName}</p>
-                      )}
-                    </>
-                  )}
-
-                  {/* Remove button */}
-                  <button
-                    onClick={() => handleRemove(card.specCode)}
-                    disabled={removingId === card.specCode}
-                    className={cn(
-                      'mt-2 w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold transition-colors',
-                      removingId === card.specCode
-                        ? 'bg-rose-500/10 text-rose-400 opacity-50 cursor-not-allowed'
-                        : 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-400'
+                  {/* Info */}
+                  <div className="p-3">
+                    <p className="font-bold text-white text-xs leading-snug line-clamp-2 mb-0.5">
+                      {s?.commonName || s?.speciesName || `Species #${specCode}`}
+                    </p>
+                    {s?.commonName && (
+                      <p className="text-slate-500 text-[11px] italic truncate">{s.speciesName}</p>
                     )}
-                  >
-                    {removingId === card.specCode
-                      ? <Loader className="w-3 h-3 animate-spin" />
-                      : <Trash2 className="w-3 h-3" />
-                    }
-                    {t('favorites.remove')}
-                  </button>
+
+                    {/* Remove button */}
+                    <button
+                      onClick={() => handleRemove(specCode)}
+                      disabled={removingId === specCode}
+                      className={cn(
+                        'mt-2 w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold transition-colors',
+                        removingId === specCode
+                          ? 'bg-rose-500/10 text-rose-400 opacity-50 cursor-not-allowed'
+                          : 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-400'
+                      )}
+                    >
+                      {removingId === specCode
+                        ? <Loader className="w-3 h-3 animate-spin" />
+                        : <Trash2 className="w-3 h-3" />
+                      }
+                      {t('favorites.remove')}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

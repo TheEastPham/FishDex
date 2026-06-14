@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Search, Sparkles } from 'lucide-react';
-import { useDebounce, searchSpecies, getFamilies, useTranslation } from '@fishlover/shared';
+import { Search, Sparkles, LogIn } from 'lucide-react';
+import { useDebounce, searchSpecies, getFamilies, getMyFavorites, useTranslation, useAuthStore, useMyAquariums, getCached, setCached, CacheKeys, USER_DATA_TTL } from '@fishlover/shared';
 import type { PagedResult, SpeciesSearchResult, Family } from '@fishlover/shared';
+import { useNavigate } from 'react-router-dom';
 import SpeciesCard from './components/SpeciesCard';
 import SpeciesCardSkeleton from './components/SpeciesCardSkeleton';
 import FamilySelect from './components/FamilySelect';
@@ -10,15 +11,29 @@ const PAGE_SIZE = 12;
 
 export default function FishSearchPage() {
   const { t, i18n } = useTranslation();
-  const [query, setQuery]     = useState('');
-  const [page, setPage]       = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [result, setResult]   = useState<PagedResult<SpeciesSearchResult> | null>(null);
-  const [error, setError]     = useState<string | null>(null);
+  const navigate = useNavigate();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const { aquariums } = useMyAquariums();
+
+  const [query, setQuery]           = useState('');
+  const [page, setPage]             = useState(1);
+  const [loading, setLoading]       = useState(false);
+  const [result, setResult]         = useState<PagedResult<SpeciesSearchResult> | null>(null);
+  const [error, setError]           = useState<string | null>(null);
+  const [requiresLogin, setRequiresLogin] = useState(false);
   const [families, setFamilies] = useState<Family[]>([]);
   const [selectedFamily, setSelectedFamily] = useState<string>('');
 
   const debouncedQuery = useDebounce(query, 400);
+
+  // Prefetch favorites once so SpeciesCard checks resolve from cache (no N individual calls)
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    if (getCached(CacheKeys.myFavorites()) !== null) return;
+    getMyFavorites().then(favs => {
+      setCached(CacheKeys.myFavorites(), favs, USER_DATA_TTL);
+    }).catch(() => {});
+  }, [isAuthenticated]);
 
   useEffect(() => {
     let cancelled = false;
@@ -36,26 +51,41 @@ export default function FishSearchPage() {
     if (!debouncedQuery.trim() && !selectedFamily) {
       setResult(null);
       setError(null);
+      setRequiresLogin(false);
+      return;
+    }
+
+    if (!isAuthenticated) {
+      setRequiresLogin(true);
+      setResult(null);
+      setError(null);
       return;
     }
 
     let cancelled = false;
     setLoading(true);
     setError(null);
+    setRequiresLogin(false);
 
-    searchSpecies({ 
-      query: debouncedQuery.trim() || undefined, 
+    searchSpecies({
+      query: debouncedQuery.trim() || undefined,
       famId: selectedFamily || undefined,
-      language: i18n.language, 
-      page, 
-      pageSize: PAGE_SIZE 
+      language: i18n.language,
+      page,
+      pageSize: PAGE_SIZE
     })
       .then((data) => { if (!cancelled) setResult(data); })
-      .catch(() => { if (!cancelled) setError(t('fish.error')); })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          const status = (err as { response?: { status?: number } })?.response?.status;
+          if (status === 401) setRequiresLogin(true);
+          else setError(t('fish.error'));
+        }
+      })
       .finally(() => { if (!cancelled) setLoading(false); });
 
     return () => { cancelled = true; };
-  }, [debouncedQuery, selectedFamily, page, t, i18n.language]);
+  }, [debouncedQuery, selectedFamily, page, t, i18n.language, isAuthenticated]);
 
   const handleFamilyClick = (familyName: string) => {
     const family = families.find(f => f.name.toLowerCase() === familyName.toLowerCase());
@@ -130,6 +160,22 @@ export default function FishSearchPage() {
         </div>
       )}
 
+      {/* Login required */}
+      {requiresLogin && (
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-5 py-4 text-sm text-amber-300 shadow-sm flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <LogIn className="w-4 h-4 shrink-0" />
+            <span>Vui lòng đăng nhập để sử dụng tính năng tìm kiếm.</span>
+          </div>
+          <button
+            onClick={() => navigate('/login')}
+            className="shrink-0 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-200 font-semibold text-xs transition-colors"
+          >
+            {t('login.button')}
+          </button>
+        </div>
+      )}
+
       {/* Error */}
       {error && (
         <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-4 text-sm text-red-400 shadow-sm flex items-center gap-3">
@@ -156,6 +202,7 @@ export default function FishSearchPage() {
               species={species}
               index={index}
               onFamilyClick={handleFamilyClick}
+              aquariums={isAuthenticated ? aquariums : []}
             />
           ))}
         </div>

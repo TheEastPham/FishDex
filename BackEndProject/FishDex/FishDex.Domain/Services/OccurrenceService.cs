@@ -25,4 +25,31 @@ public class OccurrenceService(
             .Select(code => new CountryDto(code, CountryCodeMap.Resolve(code)))
             .ToList();
     }
+
+    public async Task<SpeciesDistributionDto> GetDistributionAsync(int specCode, CancellationToken ct = default)
+    {
+        var all = await occurrenceRepo.GetAllWithCoordsAsync(specCode, ct);
+
+        var countries = all
+            .Where(o => o.CountryCode is not null)
+            .GroupBy(o => o.CountryCode!)
+            .Select(g =>
+            {
+                var code   = g.Key;
+                var points = g.Take(200)
+                    .Select(o => new OccurrencePointDto(o.LatitudeDec, o.LongitudeDec, o.Locality, o.Province))
+                    .ToList();
+                return new CountryDistributionDto(
+                    code,
+                    CountryCodeMap.Resolve(code),
+                    CountryCodeMap.ResolveAlpha2(code),
+                    g.Count(),
+                    points
+                );
+            })
+            .OrderByDescending(c => c.Count)
+            .ToList();
+
+        return new SpeciesDistributionDto(all.Count, countries);
+    }
 }

@@ -17,5 +17,11 @@ public class OccurrenceRepository(FishDexDbContext context) : GenericRepository<
             .Distinct()
             .OrderBy(c => c)
             .ToListAsync(ct);
+
+    public async Task<IReadOnlyList<Occurrence>> GetAllWithCoordsAsync(int specCode, CancellationToken ct = default)
+        => await _db.Occurrences
+            .Where(o => o.SpecCode == specCode && o.LatitudeDec != 0 && o.LongitudeDec != 0)
+            .OrderBy(o => o.CountryCode)
+            .ToListAsync(ct);
 }
 

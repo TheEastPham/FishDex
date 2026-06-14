@@ -75,4 +75,29 @@ public class SpeciesController(
         var result = await occurrenceService.GetCountriesAsync(specCode, ct);
         return Ok(result);
     }
+
+    [HttpGet("{specCode:int}/distribution")]
+    public async Task<IActionResult> GetDistribution(int specCode, CancellationToken ct)
+    {
+        var result = await occurrenceService.GetDistributionAsync(specCode, ct);
+        return Ok(result);
+    }
+
+    [HttpGet("summaries")]
+    public async Task<IActionResult> GetSummaries([FromQuery] string codes, [FromQuery] string? language, CancellationToken ct)
+    {
+        var specCodes = codes
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(c => int.TryParse(c, out var n) ? n : (int?)null)
+            .Where(n => n.HasValue)
+            .Select(n => n!.Value)
+            .Distinct()
+            .ToList();
+
+        if (specCodes.Count == 0) return BadRequest("No valid spec codes provided.");
+        if (specCodes.Count > 100) return BadRequest("Maximum 100 spec codes per request.");
+
+        var result = await speciesService.GetSummariesAsync(specCodes, language, ct);
+        return Ok(result);
+    }
 }

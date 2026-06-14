@@ -36,6 +36,7 @@ export const router = createBrowserRouter([
         element: <AuthGuard />,
         children: [
           { path: '/dashboard',    element: <DashboardPage /> },
+          { path: '/articles',     element: <PlaceholderPage /> },
           { path: '/tanks',        element: <TanksPage /> },
           { path: '/parameters',   element: <PlaceholderPage /> },
           { path: '/tasks',        element: <PlaceholderPage /> },
@@ -49,12 +50,10 @@ export const router = createBrowserRouter([
 
       // ── Role-protected routes ──────────────────────────────
       {
-        element: <RoleGuard roles={['ADMIN', 'CONTENT_ADMIN']} />,
+        element: <RoleGuard roles={['SystemAdmin', 'ContentAdmin']} />,
         children: [
-          { path: '/admin/blog/all',        element: <PlaceholderPage /> },
-          { path: '/admin/blog/new',        element: <PlaceholderPage /> },
-          { path: '/admin/blog/categories', element: <PlaceholderPage /> },
-          { path: '/admin/media-approval',  element: <PlaceholderPage /> },
+          { path: '/admin/articles', element: <PlaceholderPage /> },
+          { path: '/admin/media',    element: <PlaceholderPage /> },
         ],
       },
 

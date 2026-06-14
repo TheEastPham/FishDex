@@ -238,6 +238,28 @@ public class SpeciesService(
         return result;
     }
 
+    public async Task<IReadOnlyList<SpeciesSummaryDto>> GetSummariesAsync(
+        IEnumerable<int> specCodes, string? language = null, CancellationToken ct = default)
+    {
+        language = NormalizeLanguage(language);
+        var speciesList = await speciesRepo.GetBySpecCodesAsync(specCodes, ct);
+
+        return await Task.WhenAll(speciesList.Select(async s =>
+        {
+            var pic      = s.Pictures?.FirstOrDefault(p => p.PicPreferred == true);
+            var imageUrl = pic != null
+                ? await storage.GetPresignedUrlAsync(pic.ObjectKey, ct)
+                : null;
+            return new SpeciesSummaryDto
+            {
+                SpecCode    = s.SpecCode,
+                SpeciesName = s.SpeciesName,
+                CommonName  = s.CommonNames.PickPreferredName(language),
+                ImageUrl    = imageUrl
+            };
+        }));
+    }
+
     private static string? NormalizeLanguage(string? lang) => lang?.ToLowerInvariant() switch
     {
         "vn" or "vi" or "vietnamese" => "Vietnamese",

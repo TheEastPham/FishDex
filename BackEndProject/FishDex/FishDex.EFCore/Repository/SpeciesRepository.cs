@@ -83,4 +83,15 @@ public class SpeciesRepository(FishDexDbContext context)
 
         return sameGenus.Concat(fromFamily).ToList();
     }
+
+    public async Task<IReadOnlyList<Species>> GetBySpecCodesAsync(IEnumerable<int> specCodes, CancellationToken ct = default)
+    {
+        var codeList = specCodes.ToList();
+        return await _db.Species
+            .Include(s => s.CommonNames)
+            .Include(s => s.Pictures.Where(p => p.PicPreferred == true))
+            .Where(s => codeList.Contains(s.SpecCode))
+            .AsNoTracking()
+            .ToListAsync(ct);
+    }
 }

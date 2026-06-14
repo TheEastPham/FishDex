@@ -15,4 +15,6 @@ public interface ISpeciesService
     Task<SpeciesDetailDto?> GetDetailAsync(int specCode, string? language = null, CancellationToken ct = default);
     Task<IReadOnlyList<SpeciesSearchResultDto>> GetRelatedAsync(int specCode, int limit = 6, string? language = null, CancellationToken ct = default);
     Task<IReadOnlyList<LanguageCountDto>> GetTopLanguagesAsync(CancellationToken ct = default);
+
+    Task<IReadOnlyList<SpeciesSummaryDto>> GetSummariesAsync(IEnumerable<int> specCodes, string? language = null, CancellationToken ct = default);
 }

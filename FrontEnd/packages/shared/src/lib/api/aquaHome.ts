@@ -27,6 +27,10 @@ export async function deleteAquarium(id: string): Promise<void> {
   await apiClient.delete(`/aquahome/v1/aquariums/${id}`);
 }
 
+export async function addFishToAquarium(aquariumId: string, specCode: number, quantity = 1): Promise<void> {
+  await apiClient.post(`/aquahome/v1/aquariums/${aquariumId}/fish`, { specCode, quantity });
+}
+
 // ── Favorites ─────────────────────────────────────────────
 
 export async function getMyFavorites(): Promise<FavoriteDto[]> {

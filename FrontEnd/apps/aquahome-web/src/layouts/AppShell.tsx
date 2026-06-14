@@ -73,10 +73,13 @@ export default function AppShell() {
 
   const navItems = useMemo<NavItem[]>(() => [
     {
-      to: '/dashboard',
       icon: LayoutDashboard,
-      label: t('nav.dashboard'),
+      label: t('nav.overviewGroup'),
       requireAuth: true,
+      subItems: [
+        { to: '/dashboard', icon: LayoutDashboard, label: t('nav.dashboard') },
+        { to: '/articles',  icon: FileText,         label: t('nav.article') },
+      ],
     },
     {
       icon: Home,
@@ -109,13 +112,11 @@ export default function AppShell() {
     },
     {
       icon: Shield,
-      label: t('nav.contentMediaAdmin'),
-      requireRoles: ['ADMIN', 'CONTENT_ADMIN'],
+      label: t('nav.contribution'),
+      requireRoles: ['SystemAdmin', 'ContentAdmin'],
       subItems: [
-        { to: '/admin/blog/all',        icon: FileText,  label: t('nav.allArticles') },
-        { to: '/admin/blog/new',        icon: FileText,  label: t('nav.createNew') },
-        { to: '/admin/blog/categories', icon: FileText,  label: t('nav.categories') },
-        { to: '/admin/media-approval',  icon: ImageIcon, label: t('nav.mediaApproval') },
+        { to: '/admin/articles', icon: FileText,  label: t('nav.articlesManager') },
+        { to: '/admin/media',    icon: ImageIcon, label: t('nav.mediaManager') },
       ],
     },
   ], [t]);

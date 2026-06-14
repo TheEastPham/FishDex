@@ -11,32 +11,23 @@ namespace AquaHome.API.Controllers;
 public class AquariumsController(IAquariumService aquariumService) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetAll(CancellationToken ct)
-    {
-        var result = await aquariumService.GetMyAquariumsAsync(ct);
-        return Ok(result);
-    }
+    public Task<IReadOnlyList<AquariumDto>> GetAll(CancellationToken ct)
+        => aquariumService.GetMyAquariumsAsync(ct);
 
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
-    {
-        var result = await aquariumService.GetByIdAsync(id, ct);
-        return result is null ? NotFound() : Ok(result);
-    }
+    public Task<AquariumDto?> GetById(Guid id, CancellationToken ct)
+        => aquariumService.GetByIdAsync(id, ct);
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateAquariumRequest request, CancellationToken ct)
+    public async Task<ActionResult<AquariumDto>> Create([FromBody] CreateAquariumRequest request, CancellationToken ct)
     {
         var result = await aquariumService.CreateAsync(request, ct);
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
     [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateAquariumRequest request, CancellationToken ct)
-    {
-        var result = await aquariumService.UpdateAsync(id, request, ct);
-        return result is null ? NotFound() : Ok(result);
-    }
+    public Task<AquariumDto?> Update(Guid id, [FromBody] UpdateAquariumRequest request, CancellationToken ct)
+        => aquariumService.UpdateAsync(id, request, ct);
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)

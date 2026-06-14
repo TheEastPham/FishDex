@@ -1,5 +1,8 @@
+using FishDex.Domain.DTOs.Media;
+using FishDex.Domain.DTOs.Occurrence;
 using FishDex.Domain.DTOs.Species;
 using FishDex.Domain.Services.Interfaces;
+using FishLover.Shared.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,77 +17,47 @@ public class SpeciesController(
     IOccurrenceService occurrenceService) : ControllerBase
 {
     [HttpGet("families")]
-    public async Task<IActionResult> GetFamilies(CancellationToken ct)
-    {
-        var result = await speciesService.GetFamiliesAsync(ct);
-        return Ok(result);
-    }
+    public Task<IReadOnlyList<FamilyDto>> GetFamilies(CancellationToken ct)
+        => speciesService.GetFamiliesAsync(ct);
 
     [HttpGet("families/{famId:guid}/genera")]
-    public async Task<IActionResult> GetGenera(Guid famId, CancellationToken ct)
-    {
-        var result = await speciesService.GetGenusByFamilyAsync(famId, ct);
-        return Ok(result);
-    }
+    public Task<IReadOnlyList<GenusDto>> GetGenera(Guid famId, CancellationToken ct)
+        => speciesService.GetGenusByFamilyAsync(famId, ct);
 
     [HttpGet("search")]
-    public async Task<IActionResult> Search([FromQuery] GetSpeciesSearchRequest request, CancellationToken ct)
-    {
-        var result = await speciesService.SearchSpeciesAsync(request, ct);
-        return Ok(result);
-    }
+    public Task<PagedResult<SpeciesSearchResultDto>> Search([FromQuery] GetSpeciesSearchRequest request, CancellationToken ct)
+        => speciesService.SearchSpeciesAsync(request, ct);
 
     [HttpGet("languages")]
-    public async Task<IActionResult> GetTopLanguages(CancellationToken ct)
-    {
-        var result = await speciesService.GetTopLanguagesAsync(ct);
-        return Ok(result);
-    }
+    public Task<IReadOnlyList<LanguageCountDto>> GetTopLanguages(CancellationToken ct)
+        => speciesService.GetTopLanguagesAsync(ct);
 
     [HttpGet("{specCode:int}/detail")]
-    public async Task<IActionResult> GetDetail(int specCode, [FromQuery] string? language, CancellationToken ct)
-    {
-        var result = await speciesService.GetDetailAsync(specCode, language, ct);
-        return result is null ? NotFound() : Ok(result);
-    }
+    public Task<SpeciesDetailDto?> GetDetail(int specCode, [FromQuery] string? language, CancellationToken ct)
+        => speciesService.GetDetailAsync(specCode, language, ct);
 
     [HttpGet("{specCode:int}/media")]
-    public async Task<IActionResult> GetMedia(int specCode, CancellationToken ct)
-    {
-        var result = await mediaService.GetBySpecCodeAsync(specCode, ct);
-        return Ok(result);
-    }
+    public Task<IReadOnlyList<SystemImageDto>> GetMedia(int specCode, CancellationToken ct)
+        => mediaService.GetBySpecCodeAsync(specCode, ct);
 
     [HttpGet("{specCode:int}/occurrences")]
-    public async Task<IActionResult> GetOccurrences(int specCode, [FromQuery] int limit = 500, CancellationToken ct = default)
-    {
-        var result = await occurrenceService.GetBySpecCodeAsync(specCode, limit, ct);
-        return Ok(result);
-    }
+    public Task<IReadOnlyList<OccurrenceDto>> GetOccurrences(int specCode, [FromQuery] int limit = 500, CancellationToken ct = default)
+        => occurrenceService.GetBySpecCodeAsync(specCode, limit, ct);
 
     [HttpGet("{specCode:int}/related")]
-    public async Task<IActionResult> GetRelated(int specCode, [FromQuery] int limit = 6, [FromQuery] string? language = null, CancellationToken ct = default)
-    {
-        var result = await speciesService.GetRelatedAsync(specCode, limit, language, ct);
-        return Ok(result);
-    }
+    public Task<IReadOnlyList<SpeciesSearchResultDto>> GetRelated(int specCode, [FromQuery] int limit = 6, [FromQuery] string? language = null, CancellationToken ct = default)
+        => speciesService.GetRelatedAsync(specCode, limit, language, ct);
 
     [HttpGet("{specCode:int}/countries")]
-    public async Task<IActionResult> GetCountries(int specCode, CancellationToken ct)
-    {
-        var result = await occurrenceService.GetCountriesAsync(specCode, ct);
-        return Ok(result);
-    }
+    public Task<IReadOnlyList<CountryDto>> GetCountries(int specCode, CancellationToken ct)
+        => occurrenceService.GetCountriesAsync(specCode, ct);
 
     [HttpGet("{specCode:int}/distribution")]
-    public async Task<IActionResult> GetDistribution(int specCode, CancellationToken ct)
-    {
-        var result = await occurrenceService.GetDistributionAsync(specCode, ct);
-        return Ok(result);
-    }
+    public Task<SpeciesDistributionDto> GetDistribution(int specCode, CancellationToken ct)
+        => occurrenceService.GetDistributionAsync(specCode, ct);
 
     [HttpGet("summaries")]
-    public async Task<IActionResult> GetSummaries([FromQuery] string codes, [FromQuery] string? language, CancellationToken ct)
+    public async Task<IReadOnlyList<SpeciesSummaryDto>> GetSummaries([FromQuery] string codes, [FromQuery] string? language, CancellationToken ct)
     {
         var specCodes = codes
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
@@ -92,12 +65,9 @@ public class SpeciesController(
             .Where(n => n.HasValue)
             .Select(n => n!.Value)
             .Distinct()
+            .Take(100)
             .ToList();
 
-        if (specCodes.Count == 0) return BadRequest("No valid spec codes provided.");
-        if (specCodes.Count > 100) return BadRequest("Maximum 100 spec codes per request.");
-
-        var result = await speciesService.GetSummariesAsync(specCodes, language, ct);
-        return Ok(result);
+        return await speciesService.GetSummariesAsync(specCodes, language, ct);
     }
 }

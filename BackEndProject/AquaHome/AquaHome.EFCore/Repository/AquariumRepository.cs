@@ -37,4 +37,11 @@ public class AquariumRepository(AquaHomeDbContext context)
         _db.AquariumFish.Remove(fish);
         await _db.SaveChangesAsync(ct);
     }
+
+    // Single indexed query: WHERE AquariumId = @id — no N+1, no JOIN needed (ownership verified by caller)
+    public async Task<IReadOnlyList<AquariumFish>> GetFishListAsync(Guid aquariumId, CancellationToken ct = default)
+        => await _db.AquariumFish
+            .Where(f => f.AquariumId == aquariumId)
+            .OrderBy(f => f.AddedAt)
+            .ToListAsync(ct);
 }

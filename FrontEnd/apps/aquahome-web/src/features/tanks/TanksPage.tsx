@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react';
-import { getMyAquariums, createAquarium, updateAquarium, deleteAquarium } from '@fishlover/shared';
+import { createAquarium, updateAquarium, deleteAquarium, getMyAquariums } from '@fishlover/shared';
 import type { AquariumDto, CreateAquariumRequest } from '@fishlover/shared';
-import { Plus, Droplets, Fish, Search } from 'lucide-react';
-import AquariumCard from './components/AquariumCard';
+import { Plus, Droplets, Fish } from 'lucide-react';
 import AquariumForm from './components/AquariumForm';
+import AquariumDetail from './components/AquariumDetail';
+import { getTankStyle } from './components/AquariumCard';
 
 export default function TanksPage() {
-  const [tanks, setTanks] = useState<AquariumDto[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [tanks, setTanks]       = useState<AquariumDto[]>([]);
+  const [loading, setLoading]   = useState(true);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<AquariumDto | null>(null);
-  const [search, setSearch] = useState('');
+  const [editing, setEditing]   = useState<AquariumDto | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const fetchTanks = async () => {
@@ -18,6 +19,10 @@ export default function TanksPage() {
     try {
       const data = await getMyAquariums();
       setTanks(data);
+      setActiveId(prev => {
+        if (prev && data.some(t => t.id === prev)) return prev;
+        return data[0]?.id ?? null;
+      });
     } catch (err) {
       console.error(err);
     } finally {
@@ -31,15 +36,14 @@ export default function TanksPage() {
     if (editing) {
       await updateAquarium(editing.id, req);
     } else {
-      await createAquarium(req);
+      const created = await createAquarium(req);
+      setActiveId(created.id);
     }
     setEditing(null);
     await fetchTanks();
   };
 
-  const handleDelete = async (id: string) => {
-    setDeleteId(id);
-  };
+  const handleDelete = (id: string) => setDeleteId(id);
 
   const confirmDelete = async () => {
     if (!deleteId) return;
@@ -53,81 +57,96 @@ export default function TanksPage() {
     }
   };
 
-  const filtered = tanks.filter(t => t.name.toLowerCase().includes(search.toLowerCase()));
+  const activeTank = tanks.find(t => t.id === activeId) ?? null;
 
   return (
-    <div className="min-h-screen bg-[#0F172A] p-6 pb-20 font-sans">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-[#0F172A] pb-20 font-sans">
 
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-black text-white flex items-center gap-3">
-              <Droplets className="w-8 h-8 text-sky-400" />
-              Hồ cá của tôi
-            </h1>
-            <p className="text-slate-400 mt-1">{tanks.length} hồ cá đang quản lý</p>
-          </div>
-          <button
-            onClick={() => { setEditing(null); setFormOpen(true); }}
-            className="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-white font-bold px-5 py-2.5 rounded-xl transition-colors shadow-lg shadow-sky-500/20"
-          >
-            <Plus className="w-4 h-4" />
-            Thêm hồ cá
-          </button>
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 pt-6 pb-4">
+        <div>
+          <h1 className="text-2xl font-black text-white flex items-center gap-2.5">
+            <Droplets className="w-6 h-6 text-sky-400" />
+            Hồ cá của tôi
+          </h1>
+          <p className="text-slate-500 text-sm mt-0.5">{tanks.length} hồ đang quản lý</p>
         </div>
-
-        {/* Search */}
-        {tanks.length > 0 && (
-          <div className="relative mb-6">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Tìm kiếm hồ cá..."
-              className="w-full bg-[#1E293B] border border-slate-800/60 rounded-xl pl-10 pr-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-sky-500/40 transition-all"
-            />
-          </div>
-        )}
-
-        {/* Content */}
-        {loading ? (
-          <div className="flex items-center justify-center py-24">
-            <Fish className="w-12 h-12 text-slate-700 animate-bounce" />
-          </div>
-        ) : tanks.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="w-20 h-20 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center mb-4">
-              <Droplets className="w-10 h-10 text-sky-400" />
-            </div>
-            <h3 className="text-xl font-bold text-white mb-2">Chưa có hồ cá nào</h3>
-            <p className="text-slate-500 mb-6">Hãy tạo hồ cá đầu tiên của bạn!</p>
-            <button
-              onClick={() => { setEditing(null); setFormOpen(true); }}
-              className="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-white font-bold px-5 py-2.5 rounded-xl transition-colors"
-            >
-              <Plus className="w-4 h-4" /> Tạo hồ đầu tiên
-            </button>
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-16 text-slate-500">
-            Không tìm thấy hồ cá nào với từ khoá "<span className="text-slate-300">{search}</span>"
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filtered.map(tank => (
-              <AquariumCard
-                key={tank.id}
-                tank={tank}
-                onEdit={t => { setEditing(t); setFormOpen(true); }}
-                onDelete={handleDelete}
-              />
-            ))}
-          </div>
-        )}
+        <button
+          onClick={() => { setEditing(null); setFormOpen(true); }}
+          className="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-white font-bold px-4 py-2 rounded-xl transition-colors shadow-lg shadow-sky-500/20 text-sm"
+        >
+          <Plus className="w-4 h-4" />
+          Thêm hồ
+        </button>
       </div>
 
-      {/* Form Drawer */}
+      {/* Loading */}
+      {loading && (
+        <div className="flex items-center justify-center py-32">
+          <Fish className="w-10 h-10 text-slate-700 animate-bounce" />
+        </div>
+      )}
+
+      {/* Empty */}
+      {!loading && tanks.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-28 text-center px-6">
+          <div className="w-20 h-20 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center mb-4">
+            <Droplets className="w-10 h-10 text-sky-400" />
+          </div>
+          <h3 className="text-xl font-bold text-white mb-2">Chưa có hồ cá nào</h3>
+          <p className="text-slate-500 mb-6">Hãy tạo hồ cá đầu tiên của bạn!</p>
+          <button
+            onClick={() => { setEditing(null); setFormOpen(true); }}
+            className="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-white font-bold px-5 py-2.5 rounded-xl transition-colors"
+          >
+            <Plus className="w-4 h-4" /> Tạo hồ đầu tiên
+          </button>
+        </div>
+      )}
+
+      {/* Tab view */}
+      {!loading && tanks.length > 0 && (
+        <>
+          {/* Tab bar */}
+          <div className="flex overflow-x-auto border-b border-slate-800/60 px-6 gap-1 scrollbar-none">
+            {tanks.map(tank => {
+              const style = getTankStyle(tank.type);
+              const isActive = tank.id === activeId;
+              return (
+                <button
+                  key={tank.id}
+                  onClick={() => setActiveId(tank.id)}
+                  className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold whitespace-nowrap border-b-2 transition-all ${
+                    isActive
+                      ? 'border-sky-500 text-white'
+                      : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-600'
+                  }`}
+                >
+                  <Droplets className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-sky-400' : style.text}`} />
+                  <span className="max-w-[140px] truncate">{tank.name}</span>
+                  {tank.fishCount > 0 && (
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isActive ? 'bg-sky-500/20 text-sky-300' : 'bg-slate-800 text-slate-500'}`}>
+                      {tank.fishCount}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Active tab content */}
+          {activeTank && (
+            <AquariumDetail
+              key={activeTank.id}
+              tank={activeTank}
+              onEdit={t => { setEditing(t); setFormOpen(true); }}
+              onDelete={handleDelete}
+            />
+          )}
+        </>
+      )}
+
+      {/* Form drawer */}
       <AquariumForm
         isOpen={formOpen}
         onClose={() => { setFormOpen(false); setEditing(null); }}
@@ -135,7 +154,7 @@ export default function TanksPage() {
         editing={editing}
       />
 
-      {/* Delete Confirm Modal */}
+      {/* Delete confirm */}
       {deleteId && (
         <>
           <div className="fixed inset-0 bg-black/60 z-50" onClick={() => setDeleteId(null)} />

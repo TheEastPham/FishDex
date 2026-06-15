@@ -50,4 +50,11 @@ public class AquariumsController(IAquariumService aquariumService) : ControllerB
         var ok = await aquariumService.RemoveFishAsync(id, specCode, ct);
         return ok ? NoContent() : NotFound();
     }
+
+    [HttpGet("{id:guid}/fish")]
+    public async Task<IActionResult> GetFish(Guid id, CancellationToken ct)
+    {
+        var fish = await aquariumService.GetFishListAsync(id, ct);
+        return fish is null ? NotFound() : Ok(fish);
+    }
 }

@@ -12,4 +12,7 @@ public interface IAquariumService
 
     Task<bool> AddFishAsync(Guid aquariumId, int specCode, int quantity, CancellationToken ct = default);
     Task<bool> RemoveFishAsync(Guid aquariumId, int specCode, CancellationToken ct = default);
+
+    // Returns null if aquarium not found / not owned by current user
+    Task<IReadOnlyList<AquariumFishDto>?> GetFishListAsync(Guid aquariumId, CancellationToken ct = default);
 }

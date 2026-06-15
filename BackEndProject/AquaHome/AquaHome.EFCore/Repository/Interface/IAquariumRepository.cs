@@ -11,4 +11,6 @@ public interface IAquariumRepository : IGenericRepository<Aquarium>
     Task<AquariumFish?> GetFishEntryAsync(Guid aquariumId, int specCode, CancellationToken ct = default);
     Task AddFishAsync(AquariumFish fish, CancellationToken ct = default);
     Task RemoveFishAsync(AquariumFish fish, CancellationToken ct = default);
+
+    Task<IReadOnlyList<AquariumFish>> GetFishListAsync(Guid aquariumId, CancellationToken ct = default);
 }

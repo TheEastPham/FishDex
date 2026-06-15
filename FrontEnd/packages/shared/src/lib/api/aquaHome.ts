@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import type { AquariumDto, CreateAquariumRequest, UpdateAquariumRequest, FavoriteDto } from '../../types/aquahome';
+import type { AquariumDto, AquariumFishDto, CreateAquariumRequest, UpdateAquariumRequest, FavoriteDto } from '../../types/aquahome';
 
 // ── Aquariums ─────────────────────────────────────────────
 
@@ -29,6 +29,11 @@ export async function deleteAquarium(id: string): Promise<void> {
 
 export async function addFishToAquarium(aquariumId: string, specCode: number, quantity = 1): Promise<void> {
   await apiClient.post(`/aquahome/v1/aquariums/${aquariumId}/fish`, { specCode, quantity });
+}
+
+export async function getAquariumFish(aquariumId: string): Promise<AquariumFishDto[]> {
+  const { data } = await apiClient.get<AquariumFishDto[]>(`/aquahome/v1/aquariums/${aquariumId}/fish`);
+  return data;
 }
 
 // ── Favorites ─────────────────────────────────────────────

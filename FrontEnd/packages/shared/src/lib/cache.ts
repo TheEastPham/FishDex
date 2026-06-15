@@ -47,9 +47,11 @@ export const CacheKeys = {
 
   // AquaHome — user data, shorter TTL (60s), invalidated on mutation
   myAquariums:   () => 'aquariums:mine',
+  aquariumFish:  (id: string) => `aquarium:fish:${id}`,
   myFavorites:   () => 'favorites:mine',
   favoriteCheck: (specCode: number) => `favorites:check:${specCode}`,
 } as const;
 
-export const USER_DATA_TTL = 60 * 1000; // 1 minute
-export const FAVORITE_CHECK_TTL = 30 * 1000; // 30 seconds
+export const USER_DATA_TTL      = 60 * 1000;           // 1 minute
+export const FAVORITE_CHECK_TTL = 30 * 1000;           // 30 seconds
+export const SPECIES_DATA_TTL   = 48 * 60 * 60 * 1000; // 48 hours — distribution + summaries

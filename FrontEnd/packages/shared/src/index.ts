@@ -2,7 +2,7 @@
 export type { TokenResponse, UserInfo }           from './types/auth';
 export type { PagedResult }                        from './types/common';
 export type { SpeciesSearchResult, SpeciesSummary, SearchSpeciesParams, Family, SpeciesDetail, SystemImageDto, OccurrenceDto, CountryDto, OccurrencePointDto, CountryDistributionDto, SpeciesDistributionDto } from './types/species';
-export type { AquariumDto, CreateAquariumRequest, UpdateAquariumRequest, FavoriteDto } from './types/aquahome';
+export type { AquariumDto, AquariumFishDto, CreateAquariumRequest, UpdateAquariumRequest, FavoriteDto } from './types/aquahome';
 
 
 // ── Store ─────────────────────────────────────────────────
@@ -23,11 +23,11 @@ export {
 export { apiClient }                               from './lib/api/client';
 // TODO(mobile): fishDex.ts uses import.meta.env — pass baseUrl via config object
 export { searchSpecies, getFamilies, getSpeciesDetail, getSpeciesSummaries, getSpeciesMedia, getSpeciesOccurrences, getSpeciesCountries, getSpeciesDistribution, getRelatedSpecies } from './lib/api/fishDex';
-export { getMyAquariums, getAquariumById, createAquarium, updateAquarium, deleteAquarium, addFishToAquarium, getMyFavorites, checkFavorite, addFavorite, removeFavorite } from './lib/api/aquaHome';
+export { getMyAquariums, getAquariumById, createAquarium, updateAquarium, deleteAquarium, addFishToAquarium, getAquariumFish, getMyFavorites, checkFavorite, addFavorite, removeFavorite } from './lib/api/aquaHome';
 
 
 // ── Cache ─────────────────────────────────────────────────
-export { getCached, setCached, invalidateCache, clearCache, CacheKeys, USER_DATA_TTL, FAVORITE_CHECK_TTL } from './lib/cache';
+export { getCached, setCached, invalidateCache, clearCache, CacheKeys, USER_DATA_TTL, FAVORITE_CHECK_TTL, SPECIES_DATA_TTL } from './lib/cache';
 
 // ── Hooks ─────────────────────────────────────────────────
 export { useDebounce }                             from './hooks/useDebounce';

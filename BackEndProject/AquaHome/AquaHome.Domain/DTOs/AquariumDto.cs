@@ -27,3 +27,5 @@ public record UpdateAquariumRequest(
     double? HeightCm,
     string? Type,
     string? Description);
+
+public record AddFishRequest(int SpecCode, int Quantity = 1);

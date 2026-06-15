@@ -12,5 +12,7 @@ public interface ISpeciesRepository : IGenericRepository<Species>
     Task<Species?> GetWithDetailsAsync(int specCode, CancellationToken ct = default);
 
     Task<IReadOnlyList<Species>> GetRelatedAsync(int specCode, int? genusCode, Guid famId, int limit, CancellationToken ct = default);
+
+    Task<IReadOnlyList<Species>> GetBySpecCodesAsync(IEnumerable<int> specCodes, CancellationToken ct = default);
 }
 

@@ -1,6 +1,8 @@
 const vi = {
   nav: {
-    dashboard: 'Tổng quan',
+    overviewGroup: 'Tổng quan',
+    dashboard: 'Nhật ký',
+    article: 'Bài viết',
     fishSearch: 'Tra cứu & Bách khoa',
     aiChat: 'Trợ lý AI',
     imageSearch: 'Nhận diện cá',
@@ -14,12 +16,9 @@ const vi = {
     aquahomeGroup: 'AquaHome',
     fishdexGroup: 'FishDex',
     utilitiesGroup: 'Tiện ích',
-    contentMediaAdmin: 'Content & Media Admin',
-    blog: 'Blog & Bài viết',
-    mediaApproval: 'Duyệt Media',
-    allArticles: 'Tất cả bài viết',
-    createNew: 'Tạo bài mới',
-    categories: 'Chuyên mục',
+    contribution: 'Đóng góp',
+    articlesManager: 'Quản lý bài viết',
+    mediaManager: 'Quản lý Media',
     profile: 'Hồ sơ',
     settings: 'Cài đặt',
   },
@@ -86,6 +85,9 @@ const vi = {
     shoaling: 'Tụ tập thành bầy',
     solitary: 'Sống đơn độc',
     relatedSpecies: 'Các loài liên quan',
+    distributionRecords: 'điểm',
+    distributionCountries: 'quốc gia',
+    showAll: 'Tất cả',
   },
   iucn: {
     LC: 'Ít quan tâm (LC)',
@@ -104,6 +106,17 @@ const vi = {
     poisonous_to_eat: 'Thịt có độc',
     ciguatera: 'Độc tố ciguatera',
     unknown: 'Không rõ',
+  },
+  favorites: {
+    loading: 'Đang tải danh sách yêu thích…',
+    title: 'Cá yêu thích',
+    count: '{{count}} loài trong danh sách',
+    remove: 'Bỏ yêu thích',
+    explore: 'Khám phá cá',
+    empty: {
+      title: 'Chưa có cá yêu thích',
+      desc: 'Hãy thêm cá yêu thích từ trang chi tiết loài cá!',
+    },
   },
   pagination: {
     prev: '← Trước',

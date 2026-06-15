@@ -66,6 +66,52 @@ public class AquariumService(
         return true;
     }
 
+    public async Task<bool> AddFishAsync(Guid aquariumId, int specCode, int quantity, CancellationToken ct = default)
+    {
+        var aquarium = await aquariumRepo.GetByIdAndUserAsync(aquariumId, currentUser.UserId, ct);
+        if (aquarium is null) return false;
+
+        var existing = await aquariumRepo.GetFishEntryAsync(aquariumId, specCode, ct);
+        if (existing is not null)
+        {
+            existing.Quantity += quantity;
+            await aquariumRepo.UpdateAsync(aquarium); // triggers SaveChanges
+            return true;
+        }
+
+        await aquariumRepo.AddFishAsync(new AquariumFish
+        {
+            AquariumId = aquariumId,
+            SpecCode   = specCode,
+            Quantity   = quantity,
+            AddedAt    = DateTime.UtcNow,
+        }, ct);
+        return true;
+    }
+
+    public async Task<bool> RemoveFishAsync(Guid aquariumId, int specCode, CancellationToken ct = default)
+    {
+        var aquarium = await aquariumRepo.GetByIdAndUserAsync(aquariumId, currentUser.UserId, ct);
+        if (aquarium is null) return false;
+
+        var entry = await aquariumRepo.GetFishEntryAsync(aquariumId, specCode, ct);
+        if (entry is null) return false;
+
+        await aquariumRepo.RemoveFishAsync(entry, ct);
+        return true;
+    }
+
+    public async Task<IReadOnlyList<AquariumFishDto>?> GetFishListAsync(Guid aquariumId, CancellationToken ct = default)
+    {
+        // Ownership check: 1 PK lookup on Aquariums table
+        var aquarium = await aquariumRepo.GetByIdAndUserAsync(aquariumId, currentUser.UserId, ct);
+        if (aquarium is null) return null;
+
+        // Fish list: 1 indexed query on AquariumFish WHERE AquariumId = @id; mapping done here, not in repo
+        var entities = await aquariumRepo.GetFishListAsync(aquariumId, ct);
+        return entities.Select(f => new AquariumFishDto(f.SpecCode, f.Quantity, f.AddedAt)).ToList();
+    }
+
     private static AquariumDto ToDto(Aquarium a) => new(
         a.Id, a.Name, a.LengthCm, a.WidthCm, a.HeightCm, a.VolumeLiters,
         a.Type, a.Description, a.CreatedAt, a.Fish?.Count ?? 0);

@@ -52,7 +52,7 @@ services:
       JwtSettings__SecretKey:               ${JWT_SECRET_KEY}
       JwtSettings__Issuer:                  ${JWT_ISSUER}
       JwtSettings__Audience:                ${JWT_AUDIENCE}
-      JwtSettings__ExpiryInDays:            ${JWT_EXPIRY_DAYS}
+      JwtSettings__ExpiryMinutes:           ${JWT_EXPIRY_MINUTES}
       AutoMigrate__OnStartup:               "true"
       Seeding__SeedInitialAdmin:            ${SEED_INITIAL_ADMIN}
       EmailSettings__Resend__ApiKey:        ${EMAIL_API_KEY}

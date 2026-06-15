@@ -20,6 +20,9 @@ try
 
     var builder = WebApplication.CreateBuilder(args);
 
+    // appsettings.Local.json — gitignored, dùng cho local credentials (R2, secrets)
+    builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+
     // ── Serilog (giống UserManagement) ────────────────────────
     builder.Host.UseSerilog((ctx, services, config) => config
         .ReadFrom.Configuration(ctx.Configuration)
@@ -82,7 +85,10 @@ try
     // ── Controllers + OpenAPI ──────────────────────────────────
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
-    var authServerUrl = builder.Configuration["AuthServer:Url"] ?? "http://localhost:8080";
+    // SwaggerUrl: trực tiếp tới UserManagement (bypass gateway) để tránh CORS từ Swagger origin
+    var authServerUrl = builder.Configuration["AuthServer:SwaggerUrl"]
+        ?? builder.Configuration["AuthServer:Url"]
+        ?? "http://localhost:8080";
     builder.Services.AddSwaggerGen(options =>
     {
         options.SwaggerDoc("v1", new() { Title = "FishDex API", Version = "v1" });

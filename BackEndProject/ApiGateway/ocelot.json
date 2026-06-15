@@ -10,7 +10,11 @@
         }
       ],
       "UpstreamPathTemplate": "/.well-known/{everything}",
-      "UpstreamHttpMethod": [ "GET" ]
+      "UpstreamHttpMethod": [ "GET" ],
+      "UpstreamHeaderTransform": {
+        "X-Forwarded-Host": "api.fishlover.org",
+        "X-Forwarded-Proto": "https"
+      }
     },
     {
       "DownstreamPathTemplate": "/connect/{everything}",
@@ -22,7 +26,17 @@
         }
       ],
       "UpstreamPathTemplate": "/connect/{everything}",
-      "UpstreamHttpMethod": [ "GET", "POST", "OPTIONS" ]
+      "UpstreamHttpMethod": [ "GET", "POST", "OPTIONS" ],
+      "UpstreamHeaderTransform": {
+        "X-Forwarded-Host": "api.fishlover.org",
+        "X-Forwarded-Proto": "https"
+      },
+      "DownstreamHeaderTransform": {
+        "Location": "https://usermanagement:8080, https://api.fishlover.org"
+      },
+      "HttpHandlerOptions": {
+        "AllowAutoRedirect": false
+      }
     },
     {
       "DownstreamPathTemplate": "/api/{everything}",

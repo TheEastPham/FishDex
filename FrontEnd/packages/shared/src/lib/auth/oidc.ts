@@ -42,14 +42,7 @@ export async function exchangeCode(code: string, verifier: string): Promise<Toke
     }),
   });
   if (!res.ok) throw new Error(`Token exchange failed: ${res.status}`);
-  const data = await res.json();
-  console.log('[DEBUG Auth] Token Exchange Response:', {
-    hasAccessToken: !!data.access_token,
-    hasRefreshToken: !!data.refresh_token,
-    expiresIn: data.expires_in,
-    scopes: data.scope || data.scopes
-  });
-  return data;
+  return res.json();
 }
 
 export async function refreshAccessToken(refreshToken: string): Promise<TokenResponse> {

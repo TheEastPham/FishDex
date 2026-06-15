@@ -1,3 +1,4 @@
+using AquaHome.Domain.DTOs;
 using AquaHome.Domain.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,25 +11,16 @@ namespace AquaHome.API.Controllers;
 public class FavoritesController(IFavoriteService favoriteService) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetAll(CancellationToken ct)
-    {
-        var result = await favoriteService.GetMyFavoritesAsync(ct);
-        return Ok(result);
-    }
+    public Task<IReadOnlyList<FavoriteDto>> GetAll(CancellationToken ct)
+        => favoriteService.GetMyFavoritesAsync(ct);
 
     [HttpGet("{specCode:int}")]
-    public async Task<IActionResult> IsFavorite(int specCode, CancellationToken ct)
-    {
-        var isFav = await favoriteService.IsFavoriteAsync(specCode, ct);
-        return Ok(new { specCode, isFavorite = isFav });
-    }
+    public Task<bool> IsFavorite(int specCode, CancellationToken ct)
+        => favoriteService.IsFavoriteAsync(specCode, ct);
 
     [HttpPost("{specCode:int}")]
-    public async Task<IActionResult> Add(int specCode, CancellationToken ct)
-    {
-        var result = await favoriteService.AddAsync(specCode, ct);
-        return Ok(result);
-    }
+    public Task<FavoriteDto> Add(int specCode, CancellationToken ct)
+        => favoriteService.AddAsync(specCode, ct);
 
     [HttpDelete("{specCode:int}")]
     public async Task<IActionResult> Remove(int specCode, CancellationToken ct)

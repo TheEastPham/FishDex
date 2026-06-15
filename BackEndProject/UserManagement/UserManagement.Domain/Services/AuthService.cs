@@ -184,7 +184,7 @@ public class AuthService(
         var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey not configured");
         var issuer = jwtSettings["Issuer"];
         var audience = jwtSettings["Audience"];
-        var expiryInDays = int.Parse(jwtSettings["ExpiryInDays"] ?? "7");
+        var expiryInMinutes = int.Parse(jwtSettings["ExpiryMinutes"] ?? "60");
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -200,7 +200,7 @@ public class AuthService(
 
         claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
-        var expiresAt = DateTime.UtcNow.AddDays(expiryInDays);
+        var expiresAt = DateTime.UtcNow.AddMinutes(expiryInMinutes);
         var token = new JwtSecurityToken(
             issuer: issuer,
             audience: audience,
@@ -307,7 +307,7 @@ public class AuthService(
             };
         }
 
-        var usageCount = invitation.UsedBy.Count;
+        var usageCount = await invitationRepository.GetUsageCountAsync(invitation.Id);
         if (usageCount >= invitation.MaxUses)
         {
             return new ValidateInvitationResponse

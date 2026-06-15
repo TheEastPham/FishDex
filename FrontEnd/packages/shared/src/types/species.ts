@@ -1,3 +1,10 @@
+export interface SpeciesSummary {
+  specCode: number;
+  speciesName: string;
+  commonName: string | null;
+  imageUrl: string | null;
+}
+
 export interface SpeciesSearchResult {
   specCode: number;
   speciesName: string;
@@ -98,4 +105,24 @@ export interface OccurrenceDto {
 export interface CountryDto {
   code: string;
   name: string;
+}
+
+export interface OccurrencePointDto {
+  lat: number;
+  lon: number;
+  locality: string | null;
+  province: string | null;
+}
+
+export interface CountryDistributionDto {
+  code: string;
+  name: string;
+  alpha2: string | null;
+  count: number;
+  occurrences: OccurrencePointDto[];
+}
+
+export interface SpeciesDistributionDto {
+  totalOccurrences: number;
+  countries: CountryDistributionDto[];
 }

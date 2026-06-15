@@ -1,19 +1,11 @@
-import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getMyAquariums, getMyFavorites, getSpeciesDetail, cn } from '@fishlover/shared';
-import type { AquariumDto, FavoriteDto, SpeciesDetail } from '@fishlover/shared';
+import { useMyAquariums, useMyFavorites, useSpeciesSummaries, cn, useTranslation } from '@fishlover/shared';
+import type { AquariumDto, SpeciesSummary } from '@fishlover/shared';
 import {
   Droplets, Plus, Heart, Fish, ArrowRight, Layers,
   FlaskConical, Ruler, Sparkles
 } from 'lucide-react';
 
-// Wrap a promise with a timeout — never block the page indefinitely
-function withTimeout<T>(promise: Promise<T>, ms = 8000): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
-  ]);
-}
 
 const TANK_TYPE_STYLES: Record<string, { bg: string; text: string; border: string; label: string }> = {
   freshwater: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20', label: 'Nước ngọt' },
@@ -90,21 +82,21 @@ function AquariumPreviewCard({ tank, onClick }: { tank: AquariumDto; onClick: ()
   );
 }
 
-function FavoritePreview({ detail, onClick }: { detail: SpeciesDetail; onClick: () => void }) {
+function FavoritePreview({ summary, onClick }: { summary: SpeciesSummary; onClick: () => void }) {
   return (
     <div
       onClick={onClick}
       className="relative rounded-xl overflow-hidden aspect-square cursor-pointer group border border-slate-800/50 bg-[#172033]"
     >
-      {detail.preferredImageUrl ? (
-        <img src={detail.preferredImageUrl} alt={detail.preferredCommonName || detail.speciesName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+      {summary.imageUrl ? (
+        <img src={summary.imageUrl} alt={summary.commonName || summary.speciesName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
       ) : (
         <div className="w-full h-full flex items-center justify-center">
           <Fish className="w-8 h-8 text-slate-700" />
         </div>
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
-        <p className="text-white text-xs font-bold truncate">{detail.preferredCommonName || detail.speciesName}</p>
+        <p className="text-white text-xs font-bold truncate">{summary.commonName || summary.speciesName}</p>
       </div>
     </div>
   );
@@ -112,37 +104,13 @@ function FavoritePreview({ detail, onClick }: { detail: SpeciesDetail; onClick: 
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const { i18n } = useTranslation();
 
-  const [aquariums, setAquariums] = useState<AquariumDto[]>([]);
-  const [favorites, setFavorites] = useState<FavoriteDto[]>([]);
-  const [favDetails, setFavDetails] = useState<SpeciesDetail[]>([]);
-  const [tanksLoading, setTanksLoading] = useState(true);
-  const [favsLoading, setFavsLoading] = useState(true);
+  const { aquariums, loading: tanksLoading } = useMyAquariums();
+  const { favorites, loading: favsLoading } = useMyFavorites();
 
-  useEffect(() => {
-    // Fetch aquariums independently — won't block the page
-    withTimeout(getMyAquariums())
-      .then(data => setAquariums(data))
-      .catch(err => console.warn('[Dashboard] aquariums:', err))
-      .finally(() => setTanksLoading(false));
-
-    // Fetch favorites independently, then cascade-load details
-    withTimeout(getMyFavorites())
-      .then(async favs => {
-        setFavorites(favs);
-        const preview = favs.slice(0, 6);
-        const results = await Promise.allSettled(
-          preview.map(f => withTimeout(getSpeciesDetail(f.specCode), 5000))
-        );
-        setFavDetails(
-          results
-            .filter(r => r.status === 'fulfilled')
-            .map(r => (r as PromiseFulfilledResult<SpeciesDetail>).value)
-        );
-      })
-      .catch(err => console.warn('[Dashboard] favorites:', err))
-      .finally(() => setFavsLoading(false));
-  }, []);
+  const previewCodes = favorites.slice(0, 6).map((f) => f.specCode);
+  const { summaries, loading: summariesLoading } = useSpeciesSummaries(previewCodes, i18n.language);
 
   const totalVolume = aquariums.reduce((sum, t) => sum + (t.volumeLiters ?? 0), 0);
 
@@ -219,14 +187,14 @@ export default function DashboardPage() {
             </button>
           </div>
 
-          {favsLoading ? (
+          {favsLoading || summariesLoading ? (
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
               {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="aspect-square rounded-xl bg-[#1E293B] animate-pulse" />)}
             </div>
-          ) : favDetails.length > 0 ? (
+          ) : Object.keys(summaries).length > 0 ? (
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-              {favDetails.map(d => (
-                <FavoritePreview key={d.specCode} detail={d} onClick={() => navigate(`/fish/${d.specCode}`)} />
+              {Object.values(summaries).map(s => (
+                <FavoritePreview key={s.specCode} summary={s} onClick={() => navigate(`/fish/${s.specCode}`)} />
               ))}
             </div>
           ) : (

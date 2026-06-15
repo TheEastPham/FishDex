@@ -30,6 +30,12 @@ export interface UpdateAquariumRequest {
   description?: string | null;
 }
 
+export interface AquariumFishDto {
+  specCode: number;
+  quantity: number;
+  addedAt: string;
+}
+
 export interface FavoriteDto {
   specCode: number;
 }

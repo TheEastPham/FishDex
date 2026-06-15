@@ -6,4 +6,5 @@ public interface IOccurrenceService
 {
     Task<IReadOnlyList<OccurrenceDto>> GetBySpecCodeAsync(int specCode, int limit = 500, CancellationToken ct = default);
     Task<IReadOnlyList<CountryDto>> GetCountriesAsync(int specCode, CancellationToken ct = default);
+    Task<SpeciesDistributionDto> GetDistributionAsync(int specCode, CancellationToken ct = default);
 }

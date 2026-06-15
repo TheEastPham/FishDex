@@ -43,6 +43,7 @@ services:
       - OpenIddict__Issuer=${OIDC_ISSUER}
       - OpenIddict__KeyDir=/openiddict-keys
       - AllowedOrigins__0=${FE_ORIGIN}
+      - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
     volumes:
       - openiddict_keys:/openiddict-keys
     depends_on:
@@ -104,6 +105,8 @@ services:
     image: pgvector/pgvector:pg16
     container_name: postgres
     restart: unless-stopped
+    ports:
+      - "127.0.0.1:5432:5432"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=${PG_ADMIN_PASSWORD}

@@ -14,14 +14,11 @@ public class MediaService(
     {
         var items = await imageRepo.FindAsync(i => i.SpecCode == specCode);
 
-        var result = new List<SystemImageDto>(items.Count());
-        foreach (var i in items)
+        return await Task.WhenAll(items.Select(async i =>
         {
-            var dto = i.ToDto();
             var url = await storage.GetPresignedUrlAsync(i.ObjectKey, ct);
-            result.Add(dto with { Url = url });
-        }
-        return result;
+            return i.ToDto() with { Url = url };
+        }));
     }
 
     public async Task<SystemImageDto?> GetPreferredImageAsync(int specCode, CancellationToken ct = default)

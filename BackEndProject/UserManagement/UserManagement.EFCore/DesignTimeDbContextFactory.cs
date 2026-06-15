@@ -10,8 +10,10 @@ namespace UserManagement.EFCore
         {
             var optionsBuilder = new DbContextOptionsBuilder<UserManagementDbContext>();
             
-            // Use default connection string for design time
-            var connectionString = "Host=localhost;Port=5435;Database=UserManagement;Username=usermanagement;Password=UserMgmt_Local_Pwd1!";
+            var connectionString =
+                Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+                ?? throw new InvalidOperationException(
+                    "Set ConnectionStrings__DefaultConnection env var for EF design-time operations.");
             optionsBuilder.UseNpgsql(connectionString);
 
             return new UserManagementDbContext(optionsBuilder.Options);

@@ -1,21 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  useTranslation, cn, getSpeciesDetail, getSpeciesMedia, 
-  getSpeciesOccurrences, getSpeciesCountries, getRelatedSpecies, getCountryCode,
-  checkFavorite, addFavorite, removeFavorite
+import {
+  useTranslation, cn,
+  checkFavorite, addFavorite, removeFavorite,
+  useFishProfile, getCached, setCached, invalidateCache, CacheKeys, FAVORITE_CHECK_TTL,
 } from '@fishlover/shared';
-import type { 
-  SpeciesDetail, SystemImageDto, OccurrenceDto, 
-  CountryDto, SpeciesSearchResult 
-} from '@fishlover/shared';
+import type { CountryDistributionDto, OccurrencePointDto } from '@fishlover/shared';
 import {
   ArrowLeft, Share2, Heart, Fish, Ruler, Droplets, Map as MapIcon,
   Image as ImageIcon, Scale, AlertTriangle, Shield,
   Thermometer, TestTube, BookOpen, FileText, Activity, Clock,
   ChevronLeft, ChevronRight
 } from 'lucide-react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import SpeciesCard from '../fish-search/components/SpeciesCard';
@@ -87,6 +84,18 @@ function SectionHeader({ icon, title }: { icon: React.ReactNode; title: string }
   );
 }
 
+/* ── MapController — fitBounds on point change (no remount) ── */
+
+function MapController({ points }: { points: OccurrencePointDto[] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!points.length) return;
+    const bounds = L.latLngBounds(points.map(p => [p.lat, p.lon] as [number, number]));
+    map.fitBounds(bounds, { padding: [30, 30], maxZoom: 9 });
+  }, [points, map]);
+  return null;
+}
+
 /* ── Main Component ───────────────────────────────────────── */
 
 export default function FishProfilePage() {
@@ -94,52 +103,35 @@ export default function FishProfilePage() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
 
-  const [detail, setDetail] = useState<SpeciesDetail | null>(null);
-  const [media, setMedia] = useState<SystemImageDto[]>([]);
-  const [occurrences, setOccurrences] = useState<OccurrenceDto[]>([]);
-  const [countries, setCountries] = useState<CountryDto[]>([]);
-  const [relatedSpecies, setRelatedSpecies] = useState<SpeciesSearchResult[]>([]);
-  const [loading, setLoading] = useState(true);
+  const id = specCode ? parseInt(specCode, 10) : null;
+  const { detail, media, distribution, relatedSpecies, loading } = useFishProfile(id, i18n.language);
+
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
-  const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
+  const [selectedCountry, setSelectedCountry] = useState<CountryDistributionDto | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
 
+  // Reset UI state when navigating between fish profiles
   useEffect(() => {
-    if (!specCode) return;
-    const fetchAll = async () => {
-      setLoading(true);
-      try {
-        const id = parseInt(specCode, 10);
-        const [detailData, mediaData, occData, countryData, relatedData] = await Promise.all([
-          getSpeciesDetail(id, i18n.language),
-          getSpeciesMedia(id),
-          getSpeciesOccurrences(id),
-          getSpeciesCountries(id),
-          getRelatedSpecies(id, 6, i18n.language),
-        ]);
-        setDetail(detailData);
-        setMedia(mediaData);
-        setOccurrences(occData);
-        setCountries(countryData);
-        setRelatedSpecies(relatedData);
+    setSelectedCountry(null);
+    setSelectedImageIndex(null);
+  }, [id]);
 
-        // Run checkFavorite independently — AquaHome API failure must not crash this page
-        checkFavorite(id).then(setIsFavorite).catch(() => {/* silently ignore */});
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAll();
-  }, [specCode, i18n.language]);
+  // Check favorite status — cached, AquaHome failure must not crash this page
+  useEffect(() => {
+    if (!id) return;
+    const key = CacheKeys.favoriteCheck(id);
+    const cached = getCached<boolean>(key);
+    if (cached !== null) { setIsFavorite(cached); return; }
+    checkFavorite(id)
+      .then((val) => { setCached(key, val, FAVORITE_CHECK_TTL); setIsFavorite(val); })
+      .catch(() => {});
+  }, [id]);
 
   const handleToggleFavorite = async () => {
-    if (!specCode || favoriteLoading) return;
+    if (!id || favoriteLoading) return;
     setFavoriteLoading(true);
     try {
-      const id = parseInt(specCode, 10);
       if (isFavorite) {
         await removeFavorite(id);
         setIsFavorite(false);
@@ -147,6 +139,9 @@ export default function FishProfilePage() {
         await addFavorite(id);
         setIsFavorite(true);
       }
+      // Bust caches so next visit reflects the change
+      invalidateCache(CacheKeys.favoriteCheck(id));
+      invalidateCache(CacheKeys.myFavorites());
     } catch (err) {
       console.error(err);
     } finally {
@@ -171,14 +166,9 @@ export default function FishProfilePage() {
   }
 
   /* ── Derived data ─────────────────────────────────────────── */
-  const filteredOccurrences = selectedCountries.length > 0
-    ? occurrences.filter(occ => occ.countryCode && selectedCountries.includes(occ.countryCode))
-    : occurrences;
-
-  const mapCenter: [number, number] =
-    filteredOccurrences.length > 0 && filteredOccurrences[0].latitudeDec && filteredOccurrences[0].longitudeDec
-      ? [filteredOccurrences[0].latitudeDec, filteredOccurrences[0].longitudeDec]
-      : [0, 0];
+  const filteredPoints: OccurrencePointDto[] = selectedCountry
+    ? selectedCountry.occurrences
+    : distribution?.countries.flatMap(c => c.occurrences) ?? [];
 
   const iucnCode = detail.conservation?.iucnCode?.toUpperCase() ?? '';
   const iucnStyle = IUCN_COLORS[iucnCode] ?? IUCN_COLORS['LC'];
@@ -394,60 +384,79 @@ export default function FishProfilePage() {
           </div>
         )}
 
-        {/* ─── Row 6: Map & Countries Combined ─── */}
-        {occurrences.length > 0 && (
+        {/* ─── Row 6: Distribution Map + Country Sidebar ─── */}
+        {distribution && distribution.countries.length > 0 && (
           <div className="bg-[#202226] rounded-2xl p-6 shadow-lg border border-slate-800/80">
-            <SectionHeader icon={<MapIcon className="w-5 h-5 text-green-400" />} title={`${t('fish.occurrencesMap')} (${filteredOccurrences.length} records)`} />
-            <div className="h-[400px] w-full rounded-xl overflow-hidden border border-slate-800/50 relative z-0 mb-4">
-              <MapContainer key={selectedCountries.join(',')} center={mapCenter} zoom={3} scrollWheelZoom={false} className="h-full w-full z-0" style={{ background: '#141518' }}>
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                  url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                />
-                {filteredOccurrences.map(occ => occ.latitudeDec && occ.longitudeDec && (
-                  <Marker key={occ.id} position={[occ.latitudeDec, occ.longitudeDec]}>
-                    <Popup>
-                      <div className="text-slate-800">
-                        <p className="font-bold">{occ.locality || 'Unknown'}</p>
-                        {occ.province && <p className="text-xs text-slate-600">{occ.province}</p>}
-                        {occ.countryCode && <p className="text-xs text-slate-500">{occ.countryCode}</p>}
-                      </div>
-                    </Popup>
-                  </Marker>
-                ))}
-              </MapContainer>
+            {/* Header */}
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-bold text-white flex items-center gap-3">
+                <div className="p-2 rounded-lg"><MapIcon className="w-5 h-5 text-green-400" /></div>
+                {t('fish.occurrencesMap')}
+                <span className="text-sm font-normal text-slate-500">
+                  · {distribution.totalOccurrences} {t('fish.distributionRecords')}
+                  · {distribution.countries.length} {t('fish.distributionCountries')}
+                </span>
+              </h3>
+              {selectedCountry && (
+                <button
+                  onClick={() => setSelectedCountry(null)}
+                  className="text-xs px-3 py-1.5 rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-300 transition-colors border border-slate-700/50"
+                >
+                  {t('fish.showAll')}
+                </button>
+              )}
             </div>
-            
-            {countries.length > 0 && (
-              <div className="pt-2 border-t border-slate-800/50">
-                <p className="text-sm font-semibold text-slate-400 mb-3">{t('fish.countriesOfOrigin')}</p>
-                <div className="flex flex-wrap gap-2">
-                  {countries.map(c => {
-                    const alpha2 = getCountryCode(c.code);
-                    const isSelected = selectedCountries.includes(c.code);
-                    return (
-                      <button 
-                        key={c.code} 
-                        onClick={() => setSelectedCountries(prev => prev.includes(c.code) ? prev.filter(code => code !== c.code) : [...prev, c.code])}
-                        className={cn(
-                          "inline-flex items-center gap-1.5 border rounded-lg px-3 py-1.5 text-sm font-semibold shadow-sm transition-colors cursor-pointer",
-                          isSelected 
-                            ? "bg-sky-500/20 border-sky-500/50 text-sky-300" 
-                            : "bg-[#141518] border-slate-800/50 text-slate-300 hover:bg-slate-800"
-                        )}
-                      >
-                        {alpha2 ? (
-                          <span className={`fi fi-${alpha2} rounded-sm shadow-sm`} style={{ fontSize: '1.2em' }} />
-                        ) : (
-                          <span className="text-base leading-none">🌍</span>
-                        )}
-                        {c.name}
-                      </button>
-                    );
-                  })}
-                </div>
+
+            {/* Two-column layout: country list | map */}
+            <div className="flex gap-4">
+              {/* Country sidebar */}
+              <div className="w-44 shrink-0 flex flex-col gap-1 max-h-[400px] overflow-y-auto pr-1">
+                {distribution.countries.map(c => {
+                  const isSelected = selectedCountry?.code === c.code;
+                  return (
+                    <button
+                      key={c.code}
+                      onClick={() => setSelectedCountry(prev => prev?.code === c.code ? null : c)}
+                      className={cn(
+                        "w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-left transition-colors border",
+                        isSelected
+                          ? "bg-sky-500/20 border-sky-500/50 text-sky-300"
+                          : "bg-[#141518] border-slate-800/50 text-slate-300 hover:bg-slate-800"
+                      )}
+                    >
+                      {c.alpha2 ? (
+                        <span className={`fi fi-${c.alpha2} rounded-sm shrink-0`} style={{ fontSize: '1em' }} />
+                      ) : (
+                        <span className="text-sm shrink-0">🌍</span>
+                      )}
+                      <span className="flex-1 truncate text-xs leading-tight">{c.name}</span>
+                      <span className="text-[10px] text-slate-500 font-mono shrink-0">{c.count}</span>
+                    </button>
+                  );
+                })}
               </div>
-            )}
+
+              {/* Map — no remount on filter change */}
+              <div className="flex-1 h-[400px] rounded-xl overflow-hidden border border-slate-800/50 relative z-0">
+                <MapContainer center={[0, 0]} zoom={2} scrollWheelZoom={false} className="h-full w-full z-0" style={{ background: '#141518' }}>
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                  />
+                  <MapController points={filteredPoints} />
+                  {filteredPoints.map((p, i) => (
+                    <Marker key={i} position={[p.lat, p.lon]}>
+                      <Popup>
+                        <div className="text-slate-800">
+                          {p.locality && <p className="font-bold text-sm">{p.locality}</p>}
+                          {p.province && <p className="text-xs text-slate-600">{p.province}</p>}
+                        </div>
+                      </Popup>
+                    </Marker>
+                  ))}
+                </MapContainer>
+              </div>
+            </div>
           </div>
         )}
 

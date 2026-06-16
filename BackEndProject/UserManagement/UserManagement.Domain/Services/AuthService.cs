@@ -342,4 +342,51 @@ public class AuthService(
     
     private static string GetCacheKey(string email) => $"verification_code:{email.ToLowerInvariant()}";
 
+    public async Task<bool> ForgotPasswordAsync(string email)
+    {
+        try
+        {
+            var user = await userManager.FindByEmailAsync(email);
+            // Always return true — don't leak whether email exists
+            if (user == null || !user.IsActive)
+                return true;
+
+            var token = await userManager.GeneratePasswordResetTokenAsync(user);
+            var encodedToken = Uri.EscapeDataString(token);
+            var feBaseUrl = configuration["AppSettings:FeBaseUrl"] ?? "http://localhost:5173";
+            var resetUrl = $"{feBaseUrl}/reset-password?email={Uri.EscapeDataString(email)}&token={encodedToken}";
+
+            var language = user.Language ?? configuration["AppSettings:DefaultLanguage"] ?? "vi";
+            await emailService.SendPasswordResetAsync(email, user.FirstName ?? email, resetUrl, language);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error during forgot password for {Email}", email);
+            return false;
+        }
+    }
+
+    public async Task<bool> ResetPasswordAsync(ResetPasswordRequest request)
+    {
+        try
+        {
+            if (request.NewPassword != request.ConfirmPassword)
+                return false;
+
+            var user = await userManager.FindByEmailAsync(request.Email);
+            if (user == null || !user.IsActive)
+                return false;
+
+            var result = await userManager.ResetPasswordAsync(user, request.Token, request.NewPassword);
+            return result.Succeeded;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error during reset password for {Email}", request.Email);
+            return false;
+        }
+    }
+
 }

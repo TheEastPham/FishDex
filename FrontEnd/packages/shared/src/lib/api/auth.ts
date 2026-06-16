@@ -34,3 +34,28 @@ export async function registerUser(req: RegisterRequest): Promise<RegisterRespon
   const { data } = await apiClient.post<RegisterResponse>('/user/v1/auth/register', req);
   return data;
 }
+
+export interface ForgotPasswordResponse {
+  message: string;
+}
+
+export interface ResetPasswordPayload {
+  email: string;
+  token: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface ResetPasswordResponse {
+  message: string;
+}
+
+export async function forgotPassword(email: string): Promise<ForgotPasswordResponse> {
+  const { data } = await apiClient.post<ForgotPasswordResponse>('/user/v1/auth/forgot-password', { email });
+  return data;
+}
+
+export async function resetPassword(payload: ResetPasswordPayload): Promise<ResetPasswordResponse> {
+  const { data } = await apiClient.post<ResetPasswordResponse>('/user/v1/auth/reset-password', payload);
+  return data;
+}

@@ -32,11 +32,14 @@ export default function LoginPage() {
         >
           {t('login.button')}
         </button>
-        <p className="text-center text-sm text-slate-500 mt-4">
+        <div className="mt-4 flex justify-between text-sm text-slate-500">
           <Link to="/register" className="text-blue-600 hover:underline">
             {t('login.registerLink')}
           </Link>
-        </p>
+          <Link to="/forgot-password" className="hover:underline">
+            {t('login.forgotLink')}
+          </Link>
+        </div>
       </div>
     </div>
   );

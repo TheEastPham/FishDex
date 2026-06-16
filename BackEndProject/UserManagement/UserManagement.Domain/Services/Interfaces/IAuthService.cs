@@ -10,4 +10,6 @@ public interface IAuthService
     Task<bool> LogoutAsync(Guid userId);
     Task<RegisterResponse> RegisterAsync(RegisterRequest request);
     Task<EmailVerificationResponse> GetVerificationCode(string email, string? invitationCode);
+    Task<bool> ForgotPasswordAsync(string email);
+    Task<bool> ResetPasswordAsync(ResetPasswordRequest request);
 }

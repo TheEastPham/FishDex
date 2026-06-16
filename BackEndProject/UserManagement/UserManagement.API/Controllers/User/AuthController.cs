@@ -4,6 +4,7 @@ using UserManagement.Domain.DTOs.Account;
 using UserManagement.Domain.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace UserManagement.API.Controllers.User;
 
@@ -103,6 +104,36 @@ public class AuthController(IAuthService authService, ICurrentUserSession curren
         }
 
         return Ok(response);
+    }
+
+    /// <summary>
+    /// Forgot password — sends reset link to email
+    /// </summary>
+    [HttpPost("forgot-password")]
+    public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        await authService.ForgotPasswordAsync(request.Email);
+        // Always 200 — don't leak whether email exists
+        return Ok(new { message = "If this email exists, a reset link has been sent." });
+    }
+
+    /// <summary>
+    /// Reset password with token from email link
+    /// </summary>
+    [HttpPost("reset-password")]
+    public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var success = await authService.ResetPasswordAsync(request);
+        if (!success)
+            return BadRequest(new { message = "Invalid or expired reset token." });
+
+        return Ok(new { message = "Password reset successfully." });
     }
 
     /// <summary>

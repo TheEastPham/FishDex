@@ -3,6 +3,8 @@ import { useAuthStore } from '@fishlover/shared';
 import LoginPage from '@/features/auth/LoginPage';
 import CallbackPage from '@/features/auth/CallbackPage';
 import RegisterPage from '@/features/auth/RegisterPage';
+import ForgotPasswordPage from '@/features/auth/ForgotPasswordPage';
+import ResetPasswordPage from '@/features/auth/ResetPasswordPage';
 import AuthGuard from '@/components/AuthGuard';
 import RoleGuard from '@/components/RoleGuard';
 import AppShell from '@/layouts/AppShell';
@@ -21,9 +23,11 @@ function RootRedirect() {
 }
 
 export const router = createBrowserRouter([
-  { path: '/login',    element: <LoginPage /> },
-  { path: '/register', element: <RegisterPage /> },
-  { path: '/callback', element: <CallbackPage /> },
+  { path: '/login',           element: <LoginPage /> },
+  { path: '/register',        element: <RegisterPage /> },
+  { path: '/forgot-password', element: <ForgotPasswordPage /> },
+  { path: '/reset-password',  element: <ResetPasswordPage /> },
+  { path: '/callback',        element: <CallbackPage /> },
   {
     element: <AppShell />,
     children: [

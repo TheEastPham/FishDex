@@ -62,7 +62,8 @@ public class AccountController(
                 Id: currentUser.UserId,
                 FirstName: request.FirstName,
                 LastName: request.LastName,
-                PhoneNumber: request.PhoneNumber
+                PhoneNumber: request.PhoneNumber,
+                Language: request.Language
             );
 
             var user = await userService.UpdateUserAsync(updateRequest);

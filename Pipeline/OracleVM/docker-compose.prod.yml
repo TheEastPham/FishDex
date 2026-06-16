@@ -16,6 +16,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_HTTP_PORTS=5000
+      - FE_ORIGIN=${FE_ORIGIN}
     networks:
       - fishlover_prod
 

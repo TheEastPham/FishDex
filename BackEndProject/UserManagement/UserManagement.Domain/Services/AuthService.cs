@@ -217,6 +217,9 @@ public class AuthService(
     
     public async Task<EmailVerificationResponse> GetVerificationCode(string email, string? invitationCode)
     {
+        if (!email.EndsWith("@gmail.com", StringComparison.OrdinalIgnoreCase))
+            return new EmailVerificationResponse(false, "Only Gmail addresses are allowed");
+
         var existingUser = await userManager.FindByEmailAsync(email);
         if (existingUser != null)
         {

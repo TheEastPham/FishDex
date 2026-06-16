@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { useAuthStore } from '@fishlover/shared';
 import LoginPage from '@/features/auth/LoginPage';
 import CallbackPage from '@/features/auth/CallbackPage';
+import RegisterPage from '@/features/auth/RegisterPage';
 import AuthGuard from '@/components/AuthGuard';
 import RoleGuard from '@/components/RoleGuard';
 import AppShell from '@/layouts/AppShell';
@@ -21,6 +22,7 @@ function RootRedirect() {
 
 export const router = createBrowserRouter([
   { path: '/login',    element: <LoginPage /> },
+  { path: '/register', element: <RegisterPage /> },
   { path: '/callback', element: <CallbackPage /> },
   {
     element: <AppShell />,

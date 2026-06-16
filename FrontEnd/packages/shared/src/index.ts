@@ -24,6 +24,8 @@ export { apiClient }                               from './lib/api/client';
 // TODO(mobile): fishDex.ts uses import.meta.env — pass baseUrl via config object
 export { searchSpecies, getFamilies, getSpeciesDetail, getSpeciesSummaries, getSpeciesMedia, getSpeciesOccurrences, getSpeciesCountries, getSpeciesDistribution, getRelatedSpecies } from './lib/api/fishDex';
 export { getMyAquariums, getAquariumById, createAquarium, updateAquarium, deleteAquarium, addFishToAquarium, getAquariumFish, getMyFavorites, checkFavorite, addFavorite, removeFavorite } from './lib/api/aquaHome';
+export { requestOtp, registerUser } from './lib/api/auth';
+export type { RequestOtpResponse, RegisterRequest, RegisterResponse } from './lib/api/auth';
 
 
 // ── Cache ─────────────────────────────────────────────────

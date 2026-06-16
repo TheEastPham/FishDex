@@ -110,10 +110,11 @@ public class EmailService(
         {
             language ??= configuration["AppSettings:DefaultLanguage"] ?? "vi";
 
+            var expiryTime = language.StartsWith("vi") ? "5 phút" : "5 minutes";
             var replacements = new Dictionary<string, string>
             {
                 { "Code", code },
-                { "ExpiryTime", "5 phút" }, // or "5 minutes" for English
+                { "ExpiryTime", expiryTime },
                 { "Year", DateTime.Now.Year.ToString() }
             };
 

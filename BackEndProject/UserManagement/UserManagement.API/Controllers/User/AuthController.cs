@@ -115,8 +115,11 @@ public class AuthController(IAuthService authService, ICurrentUserSession curren
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        await authService.ForgotPasswordAsync(request.Email);
-        // Always 200 — don't leak whether email exists
+        var sent = await authService.ForgotPasswordAsync(request.Email);
+        if (!sent)
+            return StatusCode(500, new { message = "Failed to send reset email. Please try again later." });
+
+        // Always same message — don't leak whether email exists
         return Ok(new { message = "If this email exists, a reset link has been sent." });
     }
 

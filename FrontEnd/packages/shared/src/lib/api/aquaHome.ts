@@ -75,7 +75,7 @@ export async function recordView(specCode: number): Promise<void> {
 // ── Aquarium Media ────────────────────────────────────────
 
 export async function getAquariumMedia(aquariumId: string): Promise<AquariumMediaDto[]> {
-  const { data } = await apiClient.get<AquariumMediaDto[]>(`/aquahome/v1/aquaria/${aquariumId}/media`);
+  const { data } = await apiClient.get<AquariumMediaDto[]>(`/aquahome/v1/aquariums/${aquariumId}/media`);
   return data;
 }
 
@@ -85,7 +85,7 @@ export async function requestMediaUpload(
   contentType: string,
 ): Promise<PresignedUploadDto> {
   const { data } = await apiClient.post<PresignedUploadDto>(
-    `/aquahome/v1/aquaria/${aquariumId}/media/presign`,
+    `/aquahome/v1/aquariums/${aquariumId}/media/presign`,
     { fileName, contentType },
   );
   return data;
@@ -113,13 +113,13 @@ export async function uploadToR2(
 
 export async function confirmMediaUpload(aquariumId: string, mediaId: string): Promise<AquariumMediaDto> {
   const { data } = await apiClient.post<AquariumMediaDto>(
-    `/aquahome/v1/aquaria/${aquariumId}/media/${mediaId}/confirm`,
+    `/aquahome/v1/aquariums/${aquariumId}/media/${mediaId}/confirm`,
   );
   return data;
 }
 
 export async function deleteAquariumMedia(aquariumId: string, mediaId: string): Promise<void> {
-  await apiClient.delete(`/aquahome/v1/aquaria/${aquariumId}/media/${mediaId}`);
+  await apiClient.delete(`/aquahome/v1/aquariums/${aquariumId}/media/${mediaId}`);
 }
 
 // ── TODO(BE): Cần API batch get species by list of specCodes ─────

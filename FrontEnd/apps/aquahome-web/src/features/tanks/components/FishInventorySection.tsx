@@ -251,14 +251,13 @@ export default function FishInventorySection({ aquariumId: _aquariumId, fishList
         {/* ── Right: Map 60% ── */}
         {/* isolation:isolate keeps Leaflet's internal z-index from escaping this stacking context */}
         <div className="w-[60%] relative" style={{ isolation: 'isolate' }}>
-          {/* Loading spinner only before first data arrives */}
+          {/* Loading overlay — map stays mounted underneath */}
           {summaryLoading && (
             <div className="absolute inset-0 flex items-center justify-center text-slate-600 bg-slate-900 z-10">
               <Loader2 className="w-5 h-5 animate-spin" />
             </div>
           )}
-          {!summaryLoading && (
-            <MapContainer
+          <MapContainer
               center={[20, 0]}
               zoom={2}
               style={{ height: '100%', width: '100%' }}
@@ -285,7 +284,6 @@ export default function FishInventorySection({ aquariumId: _aquariumId, fishList
                 </CircleMarker>
               ))}
             </MapContainer>
-          )}
         </div>
       </div>
 

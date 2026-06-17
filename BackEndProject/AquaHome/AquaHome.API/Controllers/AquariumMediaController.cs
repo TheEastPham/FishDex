@@ -6,7 +6,7 @@ namespace AquaHome.API.Controllers;
 
 [Authorize]
 [ApiController]
-[Route("aquaria/{aquariumId:guid}/media")]
+[Route("api/aquariums/{aquariumId:guid}/media")]
 public class AquariumMediaController(IAquariumMediaService mediaService) : ControllerBase
 {
     /// <summary>

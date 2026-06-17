@@ -22,6 +22,7 @@ public static class AquaHomeServiceExtensions
     {
         services.AddScoped<IAquariumService, AquariumService>();
         services.AddScoped<IFavoriteService, FavoriteService>();
+        services.AddScoped<IRecentlyViewedService, RecentlyViewedService>();
         return services;
     }
 }

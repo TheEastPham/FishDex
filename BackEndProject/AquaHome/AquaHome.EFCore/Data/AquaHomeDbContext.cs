@@ -5,9 +5,10 @@ namespace AquaHome.EFCore.Data;
 
 public class AquaHomeDbContext(DbContextOptions<AquaHomeDbContext> options) : DbContext(options)
 {
-    public DbSet<Aquarium>     Aquariums     => Set<Aquarium>();
-    public DbSet<AquariumFish> AquariumFish  => Set<AquariumFish>();
-    public DbSet<UserFavorite> UserFavorites => Set<UserFavorite>();
+    public DbSet<Aquarium>       Aquariums       => Set<Aquarium>();
+    public DbSet<AquariumFish>   AquariumFish    => Set<AquariumFish>();
+    public DbSet<UserFavorite>   UserFavorites   => Set<UserFavorite>();
+    public DbSet<RecentlyViewed> RecentlyViewed  => Set<RecentlyViewed>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -32,6 +33,12 @@ public class AquaHomeDbContext(DbContextOptions<AquaHomeDbContext> options) : Db
         model.Entity<UserFavorite>(e =>
         {
             e.HasKey(x => new { x.UserId, x.SpecCode });
+        });
+
+        model.Entity<RecentlyViewed>(e =>
+        {
+            e.HasKey(x => new { x.UserId, x.SpecCode });
+            e.HasIndex(x => new { x.UserId, x.ViewedAt });
         });
     }
 }

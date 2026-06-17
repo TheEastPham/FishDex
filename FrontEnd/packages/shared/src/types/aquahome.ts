@@ -68,3 +68,18 @@ export interface RecentlyViewedDto {
   specCode: number;
   viewedAt: string;
 }
+
+export interface AquariumMediaDto {
+  id: string;
+  aquariumId: string;
+  fileName: string;
+  contentType: string;
+  createdAt: string;
+  url: string | null;
+}
+
+export interface PresignedUploadDto {
+  mediaId: string;
+  uploadUrl: string;
+  objectKey: string;
+}

@@ -4,6 +4,7 @@ import { getAquariumFish, getCached, setCached, CacheKeys, USER_DATA_TTL, cn, Wa
 import type { AquariumDto, AquariumFishDto } from '@fishlover/shared';
 import { Pencil, Trash2, FlaskConical, Ruler, Calendar, Fish, Layers, Droplets } from 'lucide-react';
 import FishInventorySection from './FishInventorySection';
+import AquariumMediaSection from './AquariumMediaSection';
 
 const TANK_HERO: Record<number, { from: string; via: string; to: string; accent: string }> = {
   [WaterType.Freshwater]: { from: 'from-emerald-950', via: 'via-emerald-900/80', to: 'to-teal-950',   accent: 'text-emerald-400' },
@@ -161,6 +162,11 @@ export default function AquariumDetail({ tank, onEdit, onDelete }: Props) {
           value={fishLoading ? '' : `${totalFish} ${t('aquarium.fishUnit')}`}
           loading={fishLoading}
         />
+      </div>
+
+      {/* Photos */}
+      <div className="mb-8">
+        <AquariumMediaSection aquariumId={tank.id} />
       </div>
 
       {/* Fish inventory */}

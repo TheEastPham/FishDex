@@ -8,7 +8,8 @@ public class Aquarium
     public double? LengthCm { get; set; }
     public double? WidthCm { get; set; }
     public double? HeightCm { get; set; }
-    public string? Type { get; set; }   // freshwater | saltwater | brackish
+    public int? WaterType { get; set; }
+    public int? Style { get; set; }
 
     /// <summary>Tính từ L × W × H (cm³ → lít). Null nếu thiếu bất kỳ chiều nào.</summary>
     public double? VolumeLiters => (LengthCm.HasValue && WidthCm.HasValue && HeightCm.HasValue)

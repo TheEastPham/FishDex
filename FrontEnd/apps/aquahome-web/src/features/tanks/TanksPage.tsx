@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { createAquarium, updateAquarium, deleteAquarium, getMyAquariums } from '@fishlover/shared';
+import { createAquarium, updateAquarium, deleteAquarium, getMyAquariums, useTranslation } from '@fishlover/shared';
 import type { AquariumDto, CreateAquariumRequest } from '@fishlover/shared';
 import { Plus, Droplets, Fish } from 'lucide-react';
 import AquariumForm from './components/AquariumForm';
@@ -57,6 +57,7 @@ export default function TanksPage() {
     }
   };
 
+  const { t } = useTranslation();
   const activeTank = tanks.find(t => t.id === activeId) ?? null;
 
   return (
@@ -67,16 +68,16 @@ export default function TanksPage() {
         <div>
           <h1 className="text-2xl font-black text-white flex items-center gap-2.5">
             <Droplets className="w-6 h-6 text-sky-400" />
-            Hồ cá của tôi
+            {t('tanks.pageTitle')}
           </h1>
-          <p className="text-slate-500 text-sm mt-0.5">{tanks.length} hồ đang quản lý</p>
+          <p className="text-slate-500 text-sm mt-0.5">{t('tanks.tankCount', { count: tanks.length })}</p>
         </div>
         <button
           onClick={() => { setEditing(null); setFormOpen(true); }}
           className="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-white font-bold px-4 py-2 rounded-xl transition-colors shadow-lg shadow-sky-500/20 text-sm"
         >
           <Plus className="w-4 h-4" />
-          Thêm hồ
+          {t('tanks.addBtn')}
         </button>
       </div>
 
@@ -93,13 +94,13 @@ export default function TanksPage() {
           <div className="w-20 h-20 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center mb-4">
             <Droplets className="w-10 h-10 text-sky-400" />
           </div>
-          <h3 className="text-xl font-bold text-white mb-2">Chưa có hồ cá nào</h3>
-          <p className="text-slate-500 mb-6">Hãy tạo hồ cá đầu tiên của bạn!</p>
+          <h3 className="text-xl font-bold text-white mb-2">{t('tanks.emptyTitle')}</h3>
+          <p className="text-slate-500 mb-6">{t('tanks.emptyHint')}</p>
           <button
             onClick={() => { setEditing(null); setFormOpen(true); }}
             className="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-white font-bold px-5 py-2.5 rounded-xl transition-colors"
           >
-            <Plus className="w-4 h-4" /> Tạo hồ đầu tiên
+            <Plus className="w-4 h-4" /> {t('tanks.createFirstBtn')}
           </button>
         </div>
       )}
@@ -110,7 +111,7 @@ export default function TanksPage() {
           {/* Tab bar */}
           <div className="flex overflow-x-auto border-b border-slate-800/60 px-6 gap-1 scrollbar-none">
             {tanks.map(tank => {
-              const style = getTankStyle(tank.type);
+              const style = getTankStyle(tank.waterType);
               const isActive = tank.id === activeId;
               return (
                 <button

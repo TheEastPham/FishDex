@@ -3,6 +3,7 @@ export type { TokenResponse, UserInfo }           from './types/auth';
 export type { PagedResult }                        from './types/common';
 export type { SpeciesSearchResult, SpeciesSummary, SearchSpeciesParams, Family, SpeciesDetail, SystemImageDto, OccurrenceDto, CountryDto, OccurrencePointDto, CountryDistributionDto, SpeciesDistributionDto } from './types/species';
 export type { AquariumDto, AquariumFishDto, CreateAquariumRequest, UpdateAquariumRequest, FavoriteDto } from './types/aquahome';
+export { WaterType, AquariumStyle } from './types/aquahome';
 
 
 // ── Store ─────────────────────────────────────────────────

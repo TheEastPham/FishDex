@@ -1,14 +1,7 @@
 import { useEffect, useState } from 'react';
-import { cn } from '@fishlover/shared';
+import { cn, useTranslation, WaterType, AquariumStyle } from '@fishlover/shared';
 import type { AquariumDto, CreateAquariumRequest } from '@fishlover/shared';
 import { X, FlaskConical, Droplets, Save, Loader } from 'lucide-react';
-
-const TANK_TYPES = [
-  { value: 'freshwater', label: 'Nước ngọt 🐠' },
-  { value: 'saltwater',  label: 'Nước mặn 🐡' },
-  { value: 'brackish',   label: 'Lợ 🦐' },
-  { value: 'planted',    label: 'Thủy sinh 🌿' },
-];
 
 interface Props {
   isOpen: boolean;
@@ -17,30 +10,34 @@ interface Props {
   editing?: AquariumDto | null;
 }
 
+const SELECT_CLASS = 'w-full bg-[#0F172A] border border-slate-700/60 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/30 transition-all appearance-none';
+
 export default function AquariumForm({ isOpen, onClose, onSave, editing }: Props) {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
-  const [type, setType] = useState('');
+  const [waterType, setWaterType] = useState<WaterType | ''>('');
+  const [style, setStyle] = useState<AquariumStyle | ''>('');
   const [length, setLength] = useState('');
   const [width, setWidth] = useState('');
   const [height, setHeight] = useState('');
   const [description, setDescription] = useState('');
   const [saving, setSaving] = useState(false);
 
-  // Pre-fill form when editing
   useEffect(() => {
     if (editing) {
       setName(editing.name);
-      setType(editing.type ?? '');
+      setWaterType(editing.waterType ?? '');
+      setStyle(editing.style ?? '');
       setLength(editing.lengthCm?.toString() ?? '');
       setWidth(editing.widthCm?.toString() ?? '');
       setHeight(editing.heightCm?.toString() ?? '');
       setDescription(editing.description ?? '');
     } else {
-      setName(''); setType(''); setLength(''); setWidth(''); setHeight(''); setDescription('');
+      setName(''); setWaterType(''); setStyle('');
+      setLength(''); setWidth(''); setHeight(''); setDescription('');
     }
   }, [editing, isOpen]);
 
-  // Live volume calculation
   const l = parseFloat(length) || 0;
   const w = parseFloat(width) || 0;
   const h = parseFloat(height) || 0;
@@ -53,7 +50,8 @@ export default function AquariumForm({ isOpen, onClose, onSave, editing }: Props
     try {
       await onSave({
         name: name.trim(),
-        type: type || null,
+        waterType: waterType !== '' ? waterType : null,
+        style: style !== '' ? style : null,
         lengthCm: l > 0 ? l : null,
         widthCm: w > 0 ? w : null,
         heightCm: h > 0 ? h : null,
@@ -67,17 +65,30 @@ export default function AquariumForm({ isOpen, onClose, onSave, editing }: Props
 
   if (!isOpen) return null;
 
+  const waterTypeOptions = [
+    { value: WaterType.Freshwater, label: t('tanks.wt_freshwater') },
+    { value: WaterType.Saltwater,  label: t('tanks.wt_saltwater')  },
+    { value: WaterType.Brackish,   label: t('tanks.wt_brackish')   },
+  ];
+
+  const styleOptions = [
+    { value: AquariumStyle.Nature,     label: t('tanks.st_nature')     },
+    { value: AquariumStyle.Dutch,      label: t('tanks.st_dutch')      },
+    { value: AquariumStyle.Iwagumi,    label: t('tanks.st_iwagumi')    },
+    { value: AquariumStyle.Biotope,    label: t('tanks.st_biotope')    },
+    { value: AquariumStyle.Reef,       label: t('tanks.st_reef')       },
+    { value: AquariumStyle.Blackwater, label: t('tanks.st_blackwater') },
+    { value: AquariumStyle.Community,  label: t('tanks.st_community')  },
+    { value: AquariumStyle.Predator,   label: t('tanks.st_predator')   },
+    { value: AquariumStyle.Paludarium, label: t('tanks.st_paludarium') },
+  ];
+
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40" onClick={onClose} />
 
-      {/* Drawer */}
       <div className="fixed inset-y-0 right-0 w-full max-w-md bg-[#172033] border-l border-slate-800/60 shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-300">
-        
+
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-800/60">
           <div className="flex items-center gap-3">
@@ -113,26 +124,38 @@ export default function AquariumForm({ isOpen, onClose, onSave, editing }: Props
             />
           </div>
 
-          {/* Type */}
+          {/* Water Type */}
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Loại hồ</label>
-            <div className="grid grid-cols-2 gap-2">
-              {TANK_TYPES.map(t => (
-                <button
-                  key={t.value}
-                  type="button"
-                  onClick={() => setType(prev => prev === t.value ? '' : t.value)}
-                  className={cn(
-                    'py-2.5 px-3 rounded-xl text-sm font-semibold border transition-all text-left',
-                    type === t.value
-                      ? 'bg-sky-500/15 border-sky-500/40 text-sky-300'
-                      : 'bg-[#0F172A] border-slate-700/50 text-slate-400 hover:border-slate-600'
-                  )}
-                >
-                  {t.label}
-                </button>
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
+              Loại hồ
+            </label>
+            <select
+              value={waterType}
+              onChange={e => setWaterType(e.target.value !== '' ? Number(e.target.value) as WaterType : '')}
+              className={cn(SELECT_CLASS, waterType === '' ? 'text-slate-600' : 'text-white')}
+            >
+              <option value="">{t('tanks.waterTypePlaceholder')}</option>
+              {waterTypeOptions.map(o => (
+                <option key={o.value} value={o.value} className="bg-[#0F172A]">{o.label}</option>
               ))}
-            </div>
+            </select>
+          </div>
+
+          {/* Style */}
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
+              Phong cách
+            </label>
+            <select
+              value={style}
+              onChange={e => setStyle(e.target.value !== '' ? Number(e.target.value) as AquariumStyle : '')}
+              className={cn(SELECT_CLASS, style === '' ? 'text-slate-600' : 'text-white')}
+            >
+              <option value="">{t('tanks.stylePlaceholder')}</option>
+              {styleOptions.map(o => (
+                <option key={o.value} value={o.value} className="bg-[#0F172A]">{o.label}</option>
+              ))}
+            </select>
           </div>
 
           {/* Dimensions + Live Volume */}
@@ -160,7 +183,6 @@ export default function AquariumForm({ isOpen, onClose, onSave, editing }: Props
               ))}
             </div>
 
-            {/* Live Volume Display */}
             <div className={cn(
               'mt-3 rounded-xl p-3 border flex items-center gap-3 transition-all duration-500',
               volume != null
@@ -190,7 +212,7 @@ export default function AquariumForm({ isOpen, onClose, onSave, editing }: Props
           </div>
         </form>
 
-        {/* Footer buttons */}
+        {/* Footer */}
         <div className="px-6 py-4 border-t border-slate-800/60 flex gap-3">
           <button
             type="button"
@@ -200,7 +222,7 @@ export default function AquariumForm({ isOpen, onClose, onSave, editing }: Props
             Huỷ
           </button>
           <button
-          onClick={() => handleSubmit()}
+            onClick={() => handleSubmit()}
             disabled={saving || !name.trim()}
             className="flex-1 py-3 rounded-xl bg-sky-500 hover:bg-sky-400 disabled:opacity-50 text-white font-bold transition-colors flex items-center justify-center gap-2"
           >

@@ -4,7 +4,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
   getSpeciesSummaries, getSpeciesDistribution,
-  getCached, setCached, CacheKeys, SPECIES_DATA_TTL,
+  getCached, setCached, CacheKeys, SPECIES_DATA_TTL, useTranslation,
 } from '@fishlover/shared';
 import type { AquariumFishDto, SpeciesSummary, SpeciesDistributionDto } from '@fishlover/shared';
 import { Fish, Globe, MapPin, ExternalLink, Loader2 } from 'lucide-react';
@@ -28,6 +28,7 @@ interface Props {
 }
 
 export default function FishInventorySection({ aquariumId: _aquariumId, fishList, loading, onNavigateFish }: Props) {
+  const { t } = useTranslation();
   const [summaries, setSummaries]         = useState<Record<number, SpeciesSummary>>({});
   const [distributions, setDistributions] = useState<Record<number, SpeciesDistributionDto>>({});
   const [selected, setSelected]           = useState<number | null>(null);
@@ -101,8 +102,8 @@ export default function FishInventorySection({ aquariumId: _aquariumId, fishList
         <div className="w-14 h-14 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center mb-3">
           <Fish className="w-7 h-7 text-sky-500/60" />
         </div>
-        <p className="text-slate-500 text-sm">Chưa có cá trong hồ này</p>
-        <p className="text-slate-600 text-xs mt-1">Tìm cá và thêm vào từ trang Tra cứu</p>
+        <p className="text-slate-500 text-sm">{t('aquarium.empty')}</p>
+        <p className="text-slate-600 text-xs mt-1">{t('aquarium.emptyHint')}</p>
       </div>
     );
   }
@@ -110,7 +111,7 @@ export default function FishInventorySection({ aquariumId: _aquariumId, fishList
   return (
     <div>
       <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">
-        Danh sách cá trong hồ
+        {t('aquarium.fishListTitle')}
       </h3>
 
       <div className="flex gap-4 min-h-[480px]">

@@ -1,29 +1,31 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAquariumFish, getCached, setCached, CacheKeys, USER_DATA_TTL, cn } from '@fishlover/shared';
+import { getAquariumFish, getCached, setCached, CacheKeys, USER_DATA_TTL, cn, WaterType, useTranslation } from '@fishlover/shared';
 import type { AquariumDto, AquariumFishDto } from '@fishlover/shared';
 import { Pencil, Trash2, FlaskConical, Ruler, Calendar, Fish, Layers, Droplets } from 'lucide-react';
 import FishInventorySection from './FishInventorySection';
 
-const TANK_HERO: Record<string, { from: string; via: string; to: string; accent: string }> = {
-  freshwater: { from: 'from-emerald-950', via: 'via-emerald-900/80', to: 'to-teal-950',   accent: 'text-emerald-400' },
-  saltwater:  { from: 'from-sky-950',     via: 'via-blue-900/80',    to: 'to-indigo-950',  accent: 'text-sky-400'     },
-  brackish:   { from: 'from-teal-950',    via: 'via-cyan-900/80',    to: 'to-slate-950',   accent: 'text-teal-400'    },
-  planted:    { from: 'from-lime-950',    via: 'via-green-900/80',   to: 'to-emerald-950', accent: 'text-lime-400'    },
+const TANK_HERO: Record<number, { from: string; via: string; to: string; accent: string }> = {
+  [WaterType.Freshwater]: { from: 'from-emerald-950', via: 'via-emerald-900/80', to: 'to-teal-950',   accent: 'text-emerald-400' },
+  [WaterType.Saltwater]:  { from: 'from-sky-950',     via: 'via-blue-900/80',    to: 'to-indigo-950',  accent: 'text-sky-400'     },
+  [WaterType.Brackish]:   { from: 'from-teal-950',    via: 'via-cyan-900/80',    to: 'to-slate-950',   accent: 'text-teal-400'    },
 };
 
-function getHeroStyle(type: string | null) {
-  if (!type) return { from: 'from-slate-900', via: 'via-slate-800/80', to: 'to-slate-950', accent: 'text-slate-400' };
-  const key = Object.keys(TANK_HERO).find(k => type.toLowerCase().includes(k));
-  return key ? TANK_HERO[key] : { from: 'from-slate-900', via: 'via-slate-800/80', to: 'to-slate-950', accent: 'text-slate-400' };
+const DEFAULT_HERO = { from: 'from-slate-900', via: 'via-slate-800/80', to: 'to-slate-950', accent: 'text-slate-400' };
+
+function getHeroStyle(waterType: WaterType | null) {
+  if (waterType == null) return DEFAULT_HERO;
+  return TANK_HERO[waterType] ?? DEFAULT_HERO;
 }
 
-const TANK_TYPE_LABELS: Record<string, string> = {
-  freshwater: 'Nước ngọt', saltwater: 'Nước mặn', brackish: 'Lợ', planted: 'Thủy sinh',
+const WATER_TYPE_LABELS: Record<number, string> = {
+  [WaterType.Freshwater]: 'Nước ngọt',
+  [WaterType.Saltwater]:  'Nước mặn',
+  [WaterType.Brackish]:   'Lợ',
 };
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+function formatDate(iso: string, locale: string) {
+  return new Date(iso).toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
 interface StatItemProps { icon: React.ReactNode; label: string; value: string; loading?: boolean }
@@ -50,10 +52,9 @@ interface Props {
 
 export default function AquariumDetail({ tank, onEdit, onDelete }: Props) {
   const navigate = useNavigate();
-  const hero = getHeroStyle(tank.type);
-  const typeLabel = tank.type
-    ? (Object.entries(TANK_TYPE_LABELS).find(([k]) => tank.type!.toLowerCase().includes(k))?.[1] ?? tank.type)
-    : null;
+  const { t } = useTranslation();
+  const hero = getHeroStyle(tank.waterType);
+  const typeLabel = tank.waterType != null ? (WATER_TYPE_LABELS[tank.waterType] ?? null) : null;
 
   const [fishList, setFishList]     = useState<AquariumFishDto[]>([]);
   const [fishLoading, setFishLoading] = useState(true);
@@ -101,14 +102,14 @@ export default function AquariumDetail({ tank, onEdit, onDelete }: Props) {
               <button
                 onClick={() => onEdit(tank)}
                 className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
-                title="Chỉnh sửa"
+                title={t('aquarium.editTitle')}
               >
                 <Pencil className="w-3.5 h-3.5 text-white" />
               </button>
               <button
                 onClick={() => onDelete(tank.id)}
                 className="p-2 rounded-lg bg-red-500/20 hover:bg-red-500/40 transition-colors"
-                title="Xoá hồ"
+                title={t('aquarium.deleteTitle')}
               >
                 <Trash2 className="w-3.5 h-3.5 text-red-400" />
               </button>
@@ -125,19 +126,19 @@ export default function AquariumDetail({ tank, onEdit, onDelete }: Props) {
 
       {/* Stats grid */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8">
-        <StatItem icon={<FlaskConical className="w-3.5 h-3.5" />} label="Thể tích" value={volumeLabel} />
-        <StatItem icon={<Ruler className="w-3.5 h-3.5" />} label="Kích thước" value={dimLabel} />
-        <StatItem icon={<Calendar className="w-3.5 h-3.5" />} label="Ngày tạo" value={formatDate(tank.createdAt)} />
+        <StatItem icon={<FlaskConical className="w-3.5 h-3.5" />} label={t('aquarium.volume')} value={volumeLabel} />
+        <StatItem icon={<Ruler className="w-3.5 h-3.5" />} label={t('aquarium.dimensions')} value={dimLabel} />
+        <StatItem icon={<Calendar className="w-3.5 h-3.5" />} label={t('aquarium.createdAt')} value={formatDate(tank.createdAt, t('aquarium.dateLocale'))} />
         <StatItem
           icon={<Fish className="w-3.5 h-3.5" />}
-          label="Số loài"
-          value={fishLoading ? '' : `${fishList.length} loài`}
+          label={t('aquarium.speciesCount')}
+          value={fishLoading ? '' : `${fishList.length} ${t('aquarium.speciesUnit')}`}
           loading={fishLoading}
         />
         <StatItem
           icon={<Layers className="w-3.5 h-3.5" />}
-          label="Tổng số cá"
-          value={fishLoading ? '' : `${totalFish} con`}
+          label={t('aquarium.fishCount')}
+          value={fishLoading ? '' : `${totalFish} ${t('aquarium.fishUnit')}`}
           loading={fishLoading}
         />
       </div>

@@ -16,8 +16,7 @@ public class AquaHomeDbContext(DbContextOptions<AquaHomeDbContext> options) : Db
         {
             e.HasKey(x => x.Id);
             e.Property(x => x.Name).HasMaxLength(100).IsRequired();
-            e.Property(x => x.Type).HasMaxLength(20);
-            e.Property(x => x.Description).HasMaxLength(500);
+e.Property(x => x.Description).HasMaxLength(500);
             e.Ignore(x => x.VolumeLiters);   // computed: L×W×H/1000, không lưu DB
         });
 

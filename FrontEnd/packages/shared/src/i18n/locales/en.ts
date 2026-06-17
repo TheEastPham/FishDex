@@ -29,6 +29,13 @@ const en = {
     registerLink: "Don't have an account? Sign up",
     forgotLink: 'Forgot password?',
   },
+  history: {
+    title: 'Recent Searches',
+    empty: 'No species viewed recently',
+    emptyHint: 'Start exploring species from the search page!',
+    viewedAt: 'Viewed at',
+    viewDetail: 'View detail',
+  },
   profile: {
     title: 'My Profile',
     firstName: 'First name',

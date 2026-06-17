@@ -28,6 +28,13 @@ const vi = {
     registerLink: 'Chưa có tài khoản? Đăng ký',
     forgotLink: 'Quên mật khẩu?',
   },
+  history: {
+    title: 'Lịch sử tra cứu',
+    empty: 'Chưa có loài nào được xem gần đây',
+    emptyHint: 'Hãy khám phá các loài cá từ trang tra cứu!',
+    viewedAt: 'Xem lúc',
+    viewDetail: 'Xem chi tiết',
+  },
   profile: {
     title: 'Hồ sơ của tôi',
     firstName: 'Họ',

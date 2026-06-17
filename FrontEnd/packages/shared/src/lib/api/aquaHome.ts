@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import type { AquariumDto, AquariumFishDto, CreateAquariumRequest, UpdateAquariumRequest, FavoriteDto } from '../../types/aquahome';
+import type { AquariumDto, AquariumFishDto, CreateAquariumRequest, UpdateAquariumRequest, FavoriteDto, RecentlyViewedDto } from '../../types/aquahome';
 
 // ── Aquariums ─────────────────────────────────────────────
 
@@ -59,6 +59,17 @@ export async function addFavorite(specCode: number): Promise<void> {
 
 export async function removeFavorite(specCode: number): Promise<void> {
   await apiClient.delete(`/aquahome/v1/favorites/${specCode}`);
+}
+
+// ── Recently Viewed ───────────────────────────────────────
+
+export async function getRecentlyViewed(): Promise<RecentlyViewedDto[]> {
+  const { data } = await apiClient.get<RecentlyViewedDto[]>('/aquahome/v1/recently-viewed');
+  return data;
+}
+
+export async function recordView(specCode: number): Promise<void> {
+  await apiClient.post(`/aquahome/v1/recently-viewed/${specCode}`);
 }
 
 // ── TODO(BE): Cần API batch get species by list of specCodes ─────

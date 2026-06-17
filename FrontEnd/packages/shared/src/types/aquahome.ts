@@ -39,3 +39,8 @@ export interface AquariumFishDto {
 export interface FavoriteDto {
   specCode: number;
 }
+
+export interface RecentlyViewedDto {
+  specCode: number;
+  viewedAt: string;
+}

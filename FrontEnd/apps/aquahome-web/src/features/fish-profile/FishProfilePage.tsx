@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   useTranslation, cn,
-  checkFavorite, addFavorite, removeFavorite,
+  checkFavorite, addFavorite, removeFavorite, recordView,
   useFishProfile, getCached, setCached, invalidateCache, CacheKeys, FAVORITE_CHECK_TTL,
 } from '@fishlover/shared';
 import type { CountryDistributionDto, OccurrencePointDto } from '@fishlover/shared';
@@ -115,6 +115,12 @@ export default function FishProfilePage() {
   useEffect(() => {
     setSelectedCountry(null);
     setSelectedImageIndex(null);
+  }, [id]);
+
+  // Record view for recently-viewed history — fire-and-forget, auth failure is silent
+  useEffect(() => {
+    if (!id) return;
+    recordView(id).catch(() => {});
   }, [id]);
 
   // Check favorite status — cached, AquaHome failure must not crash this page

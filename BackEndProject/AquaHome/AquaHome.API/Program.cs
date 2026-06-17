@@ -39,6 +39,7 @@ builder.Services.AddMemoryCache();
 builder.Services.AddAquaHomeServices(builder.Configuration);
 builder.Services.AddAquaHomeRepositories();
 builder.Services.AddAquaHomeDomainServices();
+builder.Services.AddAquaHomeStorage(builder.Configuration);
 builder.Services.AddFishLoverJwtAuthentication(builder.Configuration);
 
 // OAuth2 PKCE scheme — validate OpenIddict-issued tokens qua JWKS discovery

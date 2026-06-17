@@ -59,10 +59,10 @@ services:
       JwtSettings__ExpiryMinutes:   ${JWT_EXPIRY_MINUTES}
       AuthServer__Url:              ${AUTH_SERVER_URL}
       AuthServer__Authority:        ${AUTH_SERVER_AUTHORITY}
-      Storage__ServiceUrl:          ${STORAGE_SERVICE_URL}
-      Storage__AccessKey:           ${STORAGE_ACCESS_KEY}
-      Storage__SecretKey:           ${STORAGE_SECRET_KEY}
-      Storage__BucketName:          ${STORAGE_BUCKET}
+      Storage__ServiceUrl:          ${FISHDEX_STORAGE_SERVICE_URL}
+      Storage__AccessKey:           ${FISHDEX_STORAGE_ACCESS_KEY}
+      Storage__SecretKey:           ${FISHDEX_STORAGE_SECRET_KEY}
+      Storage__BucketName:          ${FISHDEX_STORAGE_BUCKET}
       Storage__ForcePathStyle:      "false"
     ports:
       - "8081:8080"

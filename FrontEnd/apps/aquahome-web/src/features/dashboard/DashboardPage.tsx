@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useMyAquariums, useMyFavorites, useSpeciesSummaries, cn, useTranslation } from '@fishlover/shared';
+import { useMyAquariums, useMyFavorites, useSpeciesSummaries, cn, useTranslation, WaterType } from '@fishlover/shared';
 import type { AquariumDto, SpeciesSummary } from '@fishlover/shared';
 import {
   Droplets, Plus, Heart, Fish, ArrowRight, Layers,
@@ -7,17 +7,17 @@ import {
 } from 'lucide-react';
 
 
-const TANK_TYPE_STYLES: Record<string, { bg: string; text: string; border: string; label: string }> = {
-  freshwater: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20', label: 'Nước ngọt' },
-  saltwater:  { bg: 'bg-sky-500/10',     text: 'text-sky-400',     border: 'border-sky-500/20',     label: 'Nước mặn' },
-  brackish:   { bg: 'bg-teal-500/10',    text: 'text-teal-400',    border: 'border-teal-500/20',    label: 'Lợ' },
-  planted:    { bg: 'bg-lime-500/10',    text: 'text-lime-400',    border: 'border-lime-500/20',    label: 'Thủy sinh' },
+const TANK_TYPE_STYLES: Record<number, { bg: string; text: string; border: string; label: string }> = {
+  [WaterType.Freshwater]: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20', label: 'Nước ngọt' },
+  [WaterType.Saltwater]:  { bg: 'bg-sky-500/10',     text: 'text-sky-400',     border: 'border-sky-500/20',     label: 'Nước mặn' },
+  [WaterType.Brackish]:   { bg: 'bg-teal-500/10',    text: 'text-teal-400',    border: 'border-teal-500/20',    label: 'Lợ'       },
 };
 
-function getTankStyle(type: string | null) {
-  if (!type) return { bg: 'bg-slate-700/20', text: 'text-slate-400', border: 'border-slate-700/30', label: 'Khác' };
-  const key = Object.keys(TANK_TYPE_STYLES).find(k => type.toLowerCase().includes(k));
-  return key ? TANK_TYPE_STYLES[key] : { bg: 'bg-slate-700/20', text: 'text-slate-400', border: 'border-slate-700/30', label: type };
+const DEFAULT_TANK_STYLE = { bg: 'bg-slate-700/20', text: 'text-slate-400', border: 'border-slate-700/30', label: 'Khác' };
+
+function getTankStyle(waterType: WaterType | null) {
+  if (waterType == null) return DEFAULT_TANK_STYLE;
+  return TANK_TYPE_STYLES[waterType] ?? DEFAULT_TANK_STYLE;
 }
 
 function StatCard({ icon, label, value, sub, color, loading }: {
@@ -41,7 +41,7 @@ function StatCard({ icon, label, value, sub, color, loading }: {
 }
 
 function AquariumPreviewCard({ tank, onClick }: { tank: AquariumDto; onClick: () => void }) {
-  const style = getTankStyle(tank.type);
+  const style = getTankStyle(tank.waterType);
   return (
     <div
       onClick={onClick}
@@ -51,7 +51,7 @@ function AquariumPreviewCard({ tank, onClick }: { tank: AquariumDto; onClick: ()
         <div className={cn('p-2 rounded-xl border', style.bg, style.border)}>
           <Droplets className={cn('w-5 h-5', style.text)} />
         </div>
-        {tank.type && (
+        {tank.waterType && (
           <span className={cn('text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border', style.bg, style.text, style.border)}>
             {style.label}
           </span>

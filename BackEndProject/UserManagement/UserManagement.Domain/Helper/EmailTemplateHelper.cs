@@ -18,7 +18,7 @@ public class EmailTemplateHelper
     public EmailTemplateHelper(ILogger<EmailTemplateHelper> logger, IHostEnvironment environment)
     {
         _logger = logger;
-        _templateBasePath = Path.Combine(environment.ContentRootPath, "EmailTemplates");
+        _templateBasePath = Path.Combine(environment.ContentRootPath, "Helper", "EmailTemplates");
         
         // Ensure templates directory exists
         EnsureTemplateDirectoryExists();

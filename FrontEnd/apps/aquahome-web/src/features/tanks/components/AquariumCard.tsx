@@ -1,18 +1,18 @@
-import { cn } from '@fishlover/shared';
+import { cn, WaterType } from '@fishlover/shared';
 import type { AquariumDto } from '@fishlover/shared';
 import { Droplets, Fish, FlaskConical, Ruler, Pencil, Trash2 } from 'lucide-react';
 
-const TANK_TYPE_STYLES: Record<string, { bg: string; text: string; border: string; label: string }> = {
-  freshwater:  { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20', label: 'Nước ngọt' },
-  saltwater:   { bg: 'bg-sky-500/10',     text: 'text-sky-400',     border: 'border-sky-500/20',     label: 'Nước mặn' },
-  brackish:    { bg: 'bg-teal-500/10',    text: 'text-teal-400',    border: 'border-teal-500/20',    label: 'Lợ' },
-  planted:     { bg: 'bg-lime-500/10',    text: 'text-lime-400',    border: 'border-lime-500/20',    label: 'Thủy sinh' },
+const WATER_TYPE_STYLES: Record<number, { bg: string; text: string; border: string; label: string }> = {
+  [WaterType.Freshwater]: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20', label: 'Nước ngọt' },
+  [WaterType.Saltwater]:  { bg: 'bg-sky-500/10',     text: 'text-sky-400',     border: 'border-sky-500/20',     label: 'Nước mặn' },
+  [WaterType.Brackish]:   { bg: 'bg-teal-500/10',    text: 'text-teal-400',    border: 'border-teal-500/20',    label: 'Lợ'       },
 };
 
-export function getTankStyle(type: string | null) {
-  if (!type) return { bg: 'bg-slate-700/20', text: 'text-slate-400', border: 'border-slate-700/30', label: 'Khác' };
-  const key = Object.keys(TANK_TYPE_STYLES).find(k => type.toLowerCase().includes(k));
-  return key ? TANK_TYPE_STYLES[key] : { bg: 'bg-slate-700/20', text: 'text-slate-400', border: 'border-slate-700/30', label: type };
+const DEFAULT_STYLE = { bg: 'bg-slate-700/20', text: 'text-slate-400', border: 'border-slate-700/30', label: 'Khác' };
+
+export function getTankStyle(waterType: WaterType | null) {
+  if (waterType == null) return DEFAULT_STYLE;
+  return WATER_TYPE_STYLES[waterType] ?? DEFAULT_STYLE;
 }
 
 interface Props {
@@ -22,11 +22,11 @@ interface Props {
 }
 
 export default function AquariumCard({ tank, onEdit, onDelete }: Props) {
-  const style = getTankStyle(tank.type);
+  const style = getTankStyle(tank.waterType);
 
   return (
     <div className="bg-[#1E293B] border border-slate-800/60 rounded-2xl p-5 hover:bg-[#263348] hover:-translate-y-1 hover:shadow-2xl hover:border-slate-700/50 transition-all duration-300 group flex flex-col">
-      
+
       {/* Top row */}
       <div className="flex items-start justify-between mb-4">
         <div className={cn('p-2.5 rounded-xl border shrink-0', style.bg, style.border)}>
@@ -52,7 +52,7 @@ export default function AquariumCard({ tank, onEdit, onDelete }: Props) {
 
       {/* Name & Type */}
       <h3 className="font-bold text-white text-lg mb-2 leading-tight">{tank.name}</h3>
-      {tank.type && (
+      {tank.waterType != null && (
         <span className={cn('text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border w-fit mb-3', style.bg, style.text, style.border)}>
           {style.label}
         </span>

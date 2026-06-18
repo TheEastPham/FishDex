@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import type { AquariumDto, AquariumFishDto, CreateAquariumRequest, UpdateAquariumRequest, FavoriteDto } from '../../types/aquahome';
+import type { AquariumDto, AquariumFishDto, CreateAquariumRequest, UpdateAquariumRequest, FavoriteDto, RecentlyViewedDto, AquariumMediaDto, PresignedUploadDto } from '../../types/aquahome';
 
 // ── Aquariums ─────────────────────────────────────────────
 
@@ -59,6 +59,67 @@ export async function addFavorite(specCode: number): Promise<void> {
 
 export async function removeFavorite(specCode: number): Promise<void> {
   await apiClient.delete(`/aquahome/v1/favorites/${specCode}`);
+}
+
+// ── Recently Viewed ───────────────────────────────────────
+
+export async function getRecentlyViewed(): Promise<RecentlyViewedDto[]> {
+  const { data } = await apiClient.get<RecentlyViewedDto[]>('/aquahome/v1/recently-viewed');
+  return data;
+}
+
+export async function recordView(specCode: number): Promise<void> {
+  await apiClient.post(`/aquahome/v1/recently-viewed/${specCode}`);
+}
+
+// ── Aquarium Media ────────────────────────────────────────
+
+export async function getAquariumMedia(aquariumId: string): Promise<AquariumMediaDto[]> {
+  const { data } = await apiClient.get<AquariumMediaDto[]>(`/aquahome/v1/aquariums/${aquariumId}/media`);
+  return data;
+}
+
+export async function requestMediaUpload(
+  aquariumId: string,
+  fileName: string,
+  contentType: string,
+): Promise<PresignedUploadDto> {
+  const { data } = await apiClient.post<PresignedUploadDto>(
+    `/aquahome/v1/aquariums/${aquariumId}/media/presign`,
+    { fileName, contentType },
+  );
+  return data;
+}
+
+/** Upload file thẳng lên R2 dùng presigned PUT URL — không qua BE */
+export async function uploadToR2(
+  uploadUrl: string,
+  file: Blob,
+  contentType: string,
+  onProgress?: (percent: number) => void,
+): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', uploadUrl);
+    xhr.setRequestHeader('Content-Type', contentType);
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress?.(Math.round((e.loaded / e.total) * 100));
+    };
+    xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`R2 upload failed: ${xhr.status}`)));
+    xhr.onerror = () => reject(new Error('R2 upload network error'));
+    xhr.send(file);
+  });
+}
+
+export async function confirmMediaUpload(aquariumId: string, mediaId: string): Promise<AquariumMediaDto> {
+  const { data } = await apiClient.post<AquariumMediaDto>(
+    `/aquahome/v1/aquariums/${aquariumId}/media/${mediaId}/confirm`,
+  );
+  return data;
+}
+
+export async function deleteAquariumMedia(aquariumId: string, mediaId: string): Promise<void> {
+  await apiClient.delete(`/aquahome/v1/aquariums/${aquariumId}/media/${mediaId}`);
 }
 
 // ── TODO(BE): Cần API batch get species by list of specCodes ─────

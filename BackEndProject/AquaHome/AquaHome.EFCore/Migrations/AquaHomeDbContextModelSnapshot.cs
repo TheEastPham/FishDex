@@ -46,12 +46,14 @@ namespace AquaHome.EFCore.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("Type")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                    b.Property<int?>("Style")
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
+
+                    b.Property<int?>("WaterType")
+                        .HasColumnType("integer");
 
                     b.Property<double?>("WidthCm")
                         .HasColumnType("double precision");
@@ -80,6 +82,53 @@ namespace AquaHome.EFCore.Migrations
                     b.ToTable("AquariumFish");
                 });
 
+            modelBuilder.Entity("AquaHome.EFCore.Entity.AquariumMedia", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AquariumId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("character varying(260)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AquariumId");
+
+                    b.ToTable("AquariumMedia");
+                });
+
+            modelBuilder.Entity("AquaHome.EFCore.Entity.RecentlyViewed", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("SpecCode")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("ViewedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("UserId", "SpecCode");
+
+                    b.HasIndex("UserId", "ViewedAt");
+
+                    b.ToTable("RecentlyViewed");
+                });
+
             modelBuilder.Entity("AquaHome.EFCore.Entity.UserFavorite", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -100,6 +149,17 @@ namespace AquaHome.EFCore.Migrations
                 {
                     b.HasOne("AquaHome.EFCore.Entity.Aquarium", "Aquarium")
                         .WithMany("Fish")
+                        .HasForeignKey("AquariumId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Aquarium");
+                });
+
+            modelBuilder.Entity("AquaHome.EFCore.Entity.AquariumMedia", b =>
+                {
+                    b.HasOne("AquaHome.EFCore.Entity.Aquarium", "Aquarium")
+                        .WithMany()
                         .HasForeignKey("AquariumId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();

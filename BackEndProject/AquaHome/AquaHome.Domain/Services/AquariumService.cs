@@ -1,4 +1,5 @@
 using AquaHome.Domain.DTOs;
+using AquaHome.Domain.Enums;
 using AquaHome.Domain.Services.Interfaces;
 using AquaHome.EFCore.Entity;
 using AquaHome.EFCore.Repository.Interface;
@@ -32,7 +33,8 @@ public class AquariumService(
             LengthCm    = request.LengthCm,
             WidthCm     = request.WidthCm,
             HeightCm    = request.HeightCm,
-            Type        = request.Type,
+            WaterType   = (int?)request.WaterType,
+            Style       = (int?)request.Style,
             Description = request.Description,
             CreatedAt   = DateTime.UtcNow
         };
@@ -50,7 +52,8 @@ public class AquariumService(
         if (request.LengthCm.HasValue)       entity.LengthCm    = request.LengthCm;
         if (request.WidthCm.HasValue)        entity.WidthCm     = request.WidthCm;
         if (request.HeightCm.HasValue)       entity.HeightCm    = request.HeightCm;
-        if (request.Type        is not null) entity.Type        = request.Type;
+        if (request.WaterType.HasValue) entity.WaterType = (int)request.WaterType.Value;
+        if (request.Style.HasValue)     entity.Style     = (int)request.Style.Value;
         if (request.Description is not null) entity.Description = request.Description;
 
         await aquariumRepo.UpdateAsync(entity);
@@ -114,5 +117,7 @@ public class AquariumService(
 
     private static AquariumDto ToDto(Aquarium a) => new(
         a.Id, a.Name, a.LengthCm, a.WidthCm, a.HeightCm, a.VolumeLiters,
-        a.Type, a.Description, a.CreatedAt, a.Fish?.Count ?? 0);
+        a.WaterType.HasValue ? (WaterType)a.WaterType.Value : null,
+        a.Style.HasValue     ? (AquariumStyle)a.Style.Value : null,
+        a.Description, a.CreatedAt, a.Fish?.Count ?? 0);
 }

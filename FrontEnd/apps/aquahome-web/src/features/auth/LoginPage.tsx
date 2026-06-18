@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore, buildAuthorizeUrl, generateCodeVerifier, generateState, useTranslation } from '@fishlover/shared';
 
 export default function LoginPage() {
@@ -32,6 +32,14 @@ export default function LoginPage() {
         >
           {t('login.button')}
         </button>
+        <div className="mt-4 flex justify-between text-sm text-slate-500">
+          <Link to="/register" className="text-blue-600 hover:underline">
+            {t('login.registerLink')}
+          </Link>
+          <Link to="/forgot-password" className="hover:underline">
+            {t('login.forgotLink')}
+          </Link>
+        </div>
       </div>
     </div>
   );

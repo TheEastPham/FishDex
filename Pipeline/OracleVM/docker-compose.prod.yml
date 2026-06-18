@@ -64,10 +64,10 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - ConnectionStrings__FishDexDb=Host=postgres;Port=5432;Database=fishdex;Username=${FD_DB_USER};Password=${FD_DB_PASSWORD}
       - Storage__Provider=r2
-      - Storage__ServiceUrl=${R2_SERVICE_URL}
-      - Storage__AccessKey=${R2_ACCESS_KEY}
-      - Storage__SecretKey=${R2_SECRET_KEY}
-      - Storage__BucketName=${R2_BUCKET_NAME}
+      - Storage__ServiceUrl=${FISHDEX_R2_SERVICE_URL}
+      - Storage__AccessKey=${FISHDEX_R2_ACCESS_KEY}
+      - Storage__SecretKey=${FISHDEX_R2_SECRET_KEY}
+      - Storage__BucketName=${FISHDEX_R2_BUCKET_NAME}
       - Storage__ForcePathStyle=false
       - AuthServer__Url=${OIDC_ISSUER}
       - AuthServer__Authority=${OIDC_ISSUER}
@@ -95,6 +95,13 @@ services:
       - AuthServer__Url=${OIDC_ISSUER}
       - AuthServer__Authority=${OIDC_ISSUER}
       - AutoMigrate__OnStartup=true
+      - Storage__Provider=r2
+      - Storage__ServiceUrl=${AQUAHOME_R2_SERVICE_URL}
+      - Storage__AccessKey=${AQUAHOME_R2_ACCESS_KEY}
+      - Storage__SecretKey=${AQUAHOME_R2_SECRET_KEY}
+      - Storage__BucketName=${AQUAHOME_R2_BUCKET_NAME}
+      - Storage__Environment=${AQUAHOME_R2_ENV}
+      - Storage__ForcePathStyle=false
       - ASPNETCORE_HTTP_PORTS=8082
     depends_on:
       - postgres
@@ -132,6 +139,52 @@ services:
     command: redis-server --requirepass ${REDIS_PASSWORD}
     volumes:
       - redis_data:/data
+    networks:
+      - fishlover_prod
+
+  # ── Promtail (thu log Docker containers → đẩy sang Loki) ─────────────────
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    restart: unless-stopped
+    volumes:
+      - ./promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - fishlover_prod
+
+  # ── Node Exporter (metrics hệ thống cho Prometheus) ──────────────────────
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - fishlover_prod
+
+  # ── cAdvisor (metrics Docker containers cho Prometheus) ───────────────────
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    restart: unless-stopped
+    ports:
+      - "9200:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
     networks:
       - fishlover_prod
 

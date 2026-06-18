@@ -43,20 +43,16 @@ public class EmailService(
         }
     }
 
-    public async Task<bool> SendPasswordResetAsync(string email, string firstName, string resetToken)
+    public async Task<bool> SendPasswordResetAsync(string email, string firstName, string resetUrl, string? language = null)
     {
         try
         {
-            var baseUrl = configuration["AppSettings:BaseUrl"] ?? "http://localhost:5000";
-            var resetUrl = $"{baseUrl}/api/auth/reset-password?token={resetToken}&email={Uri.EscapeDataString(email)}";
-
-            var language = configuration["AppSettings:DefaultLanguage"] ?? "vi";
+            language ??= configuration["AppSettings:DefaultLanguage"] ?? "vi";
 
             var replacements = new Dictionary<string, string>
             {
                 { "FirstName", firstName },
                 { "ResetUrl", resetUrl },
-                { "ResetToken", resetToken },
                 { "Year", DateTime.Now.Year.ToString() }
             };
 
@@ -110,10 +106,11 @@ public class EmailService(
         {
             language ??= configuration["AppSettings:DefaultLanguage"] ?? "vi";
 
+            var expiryTime = language.StartsWith("vi") ? "5 phút" : "5 minutes";
             var replacements = new Dictionary<string, string>
             {
                 { "Code", code },
-                { "ExpiryTime", "5 phút" }, // or "5 minutes" for English
+                { "ExpiryTime", expiryTime },
                 { "Year", DateTime.Now.Year.ToString() }
             };
 

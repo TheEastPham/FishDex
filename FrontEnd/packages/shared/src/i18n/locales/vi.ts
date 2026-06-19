@@ -106,6 +106,11 @@ const vi = {
     loginLink: 'Đã có tài khoản? Đăng nhập',
     backToStep1: '← Quay lại',
     gmailOnly: 'Chỉ chấp nhận địa chỉ Gmail (@gmail.com)',
+    pwdMinLength: 'Mật khẩu phải có ít nhất 8 ký tự',
+    pwdLowercase: 'Mật khẩu phải có ít nhất một chữ thường',
+    pwdUppercase: 'Mật khẩu phải có ít nhất một chữ hoa',
+    pwdDigit: 'Mật khẩu phải có ít nhất một chữ số',
+    pwdMismatch: 'Mật khẩu xác nhận không khớp',
   },
   fish: {
     title: 'Hãy khám phá thế giới cá của bạn',

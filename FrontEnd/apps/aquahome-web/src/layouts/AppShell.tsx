@@ -409,13 +409,19 @@ export default function AppShell() {
             </button>
           </>
         ) : (
-          <Link
-            to="/login"
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary font-semibold text-sm transition-colors border border-primary/20 min-h-[44px]"
-          >
-            <LogIn className="w-4 h-4" />
-            Đăng nhập
-          </Link>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-white/5 border border-slate-800/60">
+              <span className="text-xs font-semibold text-slate-400">Language</span>
+              <LanguageSwitcher className="text-xs font-bold px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-slate-300 transition-colors cursor-pointer" />
+            </div>
+            <Link
+              to="/login"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary font-semibold text-sm transition-colors border border-primary/20 min-h-[44px]"
+            >
+              <LogIn className="w-4 h-4" />
+              Đăng nhập
+            </Link>
+          </div>
         )}
       </div>
     </>

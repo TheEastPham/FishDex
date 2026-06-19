@@ -54,11 +54,21 @@ export default function RegisterPage() {
     }
   }
 
+  function validatePassword(pwd: string): string | null {
+    if (pwd.length < 8)          return t('register.pwdMinLength');
+    if (!/[a-z]/.test(pwd))      return t('register.pwdLowercase');
+    if (!/[A-Z]/.test(pwd))      return t('register.pwdUppercase');
+    if (!/[0-9]/.test(pwd))      return t('register.pwdDigit');
+    return null;
+  }
+
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    const pwdError = validatePassword(password);
+    if (pwdError) { setError(pwdError); return; }
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError(t('register.pwdMismatch'));
       return;
     }
     setLoading(true);

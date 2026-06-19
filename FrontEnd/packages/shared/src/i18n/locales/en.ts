@@ -107,6 +107,11 @@ const en = {
     loginLink: 'Already have an account? Log in',
     backToStep1: '← Back',
     gmailOnly: 'Only Gmail addresses are accepted (@gmail.com)',
+    pwdMinLength: 'Password must be at least 8 characters',
+    pwdLowercase: 'Password must contain at least one lowercase letter',
+    pwdUppercase: 'Password must contain at least one uppercase letter',
+    pwdDigit: 'Password must contain at least one digit',
+    pwdMismatch: 'Passwords do not match',
   },
   fish: {
     title: 'Discover your aquatic world',

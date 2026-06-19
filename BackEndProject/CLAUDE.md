@@ -4,9 +4,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Rules
 
+### General
 - **Mobile context**: FE được truy cập chủ yếu qua iPhone 12+ (390px). Khi thiết kế API response — tránh payload thừa, pagination hợp lý, error message rõ ràng để FE hiển thị được trên màn hình nhỏ.
 - **Khi làm task BE**: chỉ `git add` và commit các file trong `BackEndProject/` và `Pipeline/`. KHÔNG bao giờ stage hoặc commit file trong `FrontEnd/` — đó là phần của team FE, họ tự quản lý commit riêng.
 - **MinIO object key cho SystemImage**: LUÔN dùng `pic.ObjectKey` (computed property trên entity `SystemImage`) khi gọi `IStorageService.GetPresignedUrlAsync`. KHÔNG tự ghép path thủ công, KHÔNG dùng `pic.Name` trực tiếp. `ObjectKey` trả về `{SpecCode}/{Id}{ext}` — đây là nguồn sự thật duy nhất cho đường dẫn ảnh trên MinIO.
+
+### v2.0 AI Stack (Groq + VM3)
+- **Groq API key**: `appsettings.Docker.json` chứa `ExternalServices:GroqApi:ApiKey`. Local dev dùng dummy value; Docker prod dùng env var `GROQ_API_KEY` từ docker-compose.
+- **Rate limit monitoring**: Mỗi LLM request log timestamp + token count tới Grafana. Alert nếu >25 RPM (buffer dưới 30 RPM limit). Groq trả 429 → return 503 Temporarily Unavailable tới FE (không retry tự động).
+- **VM3 embedding service** (:8000): AquaHome BFF gọi qua gateway `/embeddings/embed`. Nếu service down → return 503 (không fallback tới local embedding). Embedding responses cache 1 giờ (key: MD5 của input text).
+- **VM3 image search service** (:8001): FishDex API gọi qua gateway `/image-search/*`. Nếu service down → return 503. CLIP embeddings pre-computed trên species_media; image upload queries live (không cache).
+- **pgvector constraints**: `SpeciesChunk.Embedding` (384-d, HNSW index) dùng cho RAG. `SpeciesMedia.ClipEmbedding` (512-d, HNSW index) dùng cho image search. Không mix cả hai trong một query — separate code paths.
+- **Fallback strategy**: Nếu Groq API down >5min → log alert, fallback command để switch tới Ollama Gemma 2B (Story 2.3 fallback branch, keep ready). FE shows "Powered by local LLM" message.
+- **Response latency budgets**:
+  - RAG (Groq): <1.5s p95 (embedding 50ms + pgvector 100ms + Groq 1000ms + network 200ms)
+  - Image search: <700ms p95 (CLIP 200ms + pgvector 100ms + presigned URLs 300ms + network 100ms)
 
 ## Project Overview
 

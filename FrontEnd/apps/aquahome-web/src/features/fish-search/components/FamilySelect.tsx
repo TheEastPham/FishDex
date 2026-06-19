@@ -54,7 +54,7 @@ export default function FamilySelect({ families, value, onChange }: Props) {
         
         <input
           type="text"
-          className="w-full bg-transparent pl-11 pr-10 py-3 text-sm font-medium text-slate-200 focus:outline-none placeholder:text-slate-400"
+          className="w-full bg-transparent pl-11 pr-10 py-3 text-base sm:text-sm font-medium text-slate-200 focus:outline-none placeholder:text-slate-400"
           placeholder={displayText}
           value={isOpen ? searchTerm : ''}
           onChange={(e) => {

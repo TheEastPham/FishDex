@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FishLover AI Stack — Free Tier Research</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+            padding: 2rem;
+        }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        h1 { color: #1a73e8; margin: 2rem 0 1rem; border-bottom: 3px solid #1a73e8; padding-bottom: 0.5rem; }
+        h2 { color: #34a853; margin: 1.5rem 0 1rem; }
+        h3 { color: #666; margin: 1rem 0 0.5rem; font-size: 1.1rem; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        table th { background: #f0f0f0; padding: 0.8rem; text-align: left; font-weight: 600; border: 1px solid #ddd; }
+        table td { padding: 0.8rem; border: 1px solid #ddd; }
+        table tr:nth-child(even) { background: #f9f9f9; }
+        .section { margin: 2rem 0; }
+        .highlight { background: #fff3cd; padding: 1.5rem; border-left: 4px solid #ffc107; border-radius: 4px; margin: 1rem 0; }
+        .success { background: #d4edda; border-left-color: #28a745; }
+        .warning { background: #f8d7da; border-left-color: #dc3545; }
+        .info { background: #d1ecf1; border-left-color: #17a2b8; }
+        .tag { display: inline-block; padding: 0.3rem 0.7rem; background: #e8f0fe; color: #1a73e8; border-radius: 4px; font-size: 0.85rem; margin: 0.2rem; }
+        .tag.pass { background: #e6f4ea; color: #137333; }
+        .tag.fail { background: #fce8e6; color: #c5221f; }
+        .tag.warn { background: #fef7e0; color: #b47109; }
+        .option-box { border: 2px solid #ddd; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; }
+        .option-box.recommended { border-color: #34a853; background: #f1f8f4; }
+        .option-box h3 { margin-top: 0; }
+        .ram-chart { font-family: monospace; background: #f5f5f5; padding: 1rem; border-radius: 4px; margin: 1rem 0; }
+        .source { font-size: 0.85rem; color: #666; margin: 0.5rem 0; }
+        ul { margin-left: 1.5rem; }
+        li { margin: 0.5rem 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 FishLover v2.0 AI Stack — Free Tier Research & Recommendation</h1>
+        <p style="font-size: 0.9rem; color: #666;">Verified against official docs (Groq, Google, Cloudflare) as of 2026-06-19</p>
+
+        <div class="section">
+            <h2>📊 Verified Free Tier Limits</h2>
+
+            <h3>Groq API</h3>
+            <table>
+                <tr>
+                    <th>Metric</th>
+                    <th>Value</th>
+                    <th>Assessment</th>
+                </tr>
+                <tr>
+                    <td>Requests/min (RPM)</td>
+                    <td><strong>30 RPM</strong></td>
+                    <td><span class="tag pass">✅ Sufficient for personal scale</span></td>
+                </tr>
+                <tr>
+                    <td>Tokens/min (TPM)</td>
+                    <td><strong>6,000 TPM</strong></td>
+                    <td><span class="tag pass">✅ ~180k tokens/day</span></td>
+                </tr>
+                <tr>
+                    <td>Daily Requests</td>
+                    <td><strong>14,400 requests/day</strong></td>
+                    <td><span class="tag pass">✅ Not constraining</span></td>
+                </tr>
+                <tr>
+                    <td>Credit Card Required</td>
+                    <td><strong>No ❌</strong></td>
+                    <td><span class="tag pass">✅ 100% safe, rate-limited not charged</span></td>
+                </tr>
+                <tr>
+                    <td>Models Available</td>
+                    <td>All (Llama 3.1 70B, etc)</td>
+                    <td><span class="tag pass">✅ Full model access</span></td>
+                </tr>
+            </table>
+
+            <h3>Google Gemini AI Studio</h3>
+            <table>
+                <tr>
+                    <th>Model</th>
+                    <th>RPM</th>
+                    <th>Daily Requests</th>
+                    <th>Assessment</th>
+                </tr>
+                <tr>
+                    <td><strong>Gemini 3 Flash</strong> (recommended)</td>
+                    <td>10</td>
+                    <td>1,500 requests/day</td>
+                    <td><span class="tag warn">⚠️ Lower than Groq</span></td>
+                </tr>
+                <tr>
+                    <td>Gemini 2.5 Flash</td>
+                    <td>10</td>
+                    <td>1,500 requests/day</td>
+                    <td><span class="tag warn">⚠️ Same as 3 Flash</span></td>
+                </tr>
+                <tr>
+                    <td>Gemini 2.5 Pro</td>
+                    <td>5</td>
+                    <td>50 requests/day</td>
+                    <td><span class="tag fail">❌ Testing only</span></td>
+                </tr>
+                <tr>
+                    <td>Credit Card Required</td>
+                    <td colspan="3"><strong>No ❌</strong> <span class="tag pass">✅ 100% safe</span></td>
+                </tr>
+            </table>
+
+            <h3>Cloudflare Workers AI</h3>
+            <table>
+                <tr>
+                    <th>Metric</th>
+                    <th>Value</th>
+                    <th>Assessment</th>
+                </tr>
+                <tr>
+                    <td>Daily Allocation</td>
+                    <td><strong>10,000 neurons/day</strong></td>
+                    <td><span class="tag fail">❌ ~1.25M tokens for Llama 8B = ~25–100 req/day</span></td>
+                </tr>
+                <tr>
+                    <td>Token Equivalents (Llama 3.1 8B)</td>
+                    <td><strong>~1.25M tokens</strong></td>
+                    <td><span class="tag fail">❌ Too low for production RAG</span></td>
+                </tr>
+                <tr>
+                    <td>Embedding Models</td>
+                    <td>Not available</td>
+                    <td><span class="tag fail">❌ Must self-host</span></td>
+                </tr>
+                <tr>
+                    <td>CLIP / Image Models</td>
+                    <td>Not available</td>
+                    <td><span class="tag fail">❌ Must self-host</span></td>
+                </tr>
+                <tr>
+                    <td>Credit Card Required</td>
+                    <td><strong>No ❌</strong></td>
+                    <td><span class="tag pass">✅ 100% safe, hard-capped daily</span></td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>💾 Model Sizes & VM3 Memory Analysis</h2>
+
+            <h3>Model Footprints</h3>
+            <table>
+                <tr>
+                    <th>Model</th>
+                    <th>File Size</th>
+                    <th>Runtime Memory</th>
+                    <th>GPU/CPU</th>
+                </tr>
+                <tr>
+                    <td><strong>CLIP ViT-B/32</strong> (image search)</td>
+                    <td>338 MB</td>
+                    <td>~800 MB (fp32) / ~450 MB (fp16)</td>
+                    <td>CPU ok, inference ~200ms</td>
+                </tr>
+                <tr>
+                    <td><strong>all-MiniLM-L6-v2</strong> (embedding)</td>
+                    <td>~80 MB</td>
+                    <td>~200 MB (fp32) / ~120 MB (fp16)</td>
+                    <td>CPU ✅, inference ~30ms</td>
+                </tr>
+                <tr>
+                    <td><strong>Gemma 2B</strong> (optional LLM)</td>
+                    <td>1.9 GB</td>
+                    <td>~1.5–2.5 GB (with KV cache)</td>
+                    <td>CPU (~3–5 tok/s), not production</td>
+                </tr>
+                <tr>
+                    <td><strong>Phi-3-mini Q4</strong> (optional LLM)</td>
+                    <td>2.3 GB</td>
+                    <td>~2.5–4 GB (with KV cache)</td>
+                    <td>CPU (~2–4 tok/s), not production</td>
+                </tr>
+            </table>
+
+            <h3>VM3 Memory Allocation (6GB RAM total)</h3>
+            <div class="ram-chart">
+Operating System + Python runtime     ~800 MB
+CLIP ViT-B/32 (model)                ~450 MB (fp16)
+all-MiniLM-L6-v2 (model)             ~120 MB
+────────────────────────────────────────────
+Subtotal: Models loaded              ~1.5 GB
+Inference working memory (batch)     ~1–2 GB
+────────────────────────────────────────────
+<strong>TOTAL REQUIRED: ~2.5–3.5 GB</strong>
+<strong>HEADROOM: ~2.5–3.5 GB (safe)</strong>
+            </div>
+
+            <div class="highlight success">
+                <strong>✅ Option A (Embedding + CLIP on VM3) is FEASIBLE:</strong>
+                <ul>
+                    <li>Models use ~1.5 GB, inference uses ~2 GB → total ~3.5 GB</li>
+                    <li>Leaves 2.5–3 GB headroom for OS, caching, pgvector client</li>
+                    <li>No concurrent Ollama LLM interference needed</li>
+                </ul>
+            </div>
+
+            <div class="highlight warning">
+                <strong>⚠️ Option B (Ollama on VM3) is BORDERLINE:</strong>
+                <ul>
+                    <li>Gemma 2B (2 GB) + MiniLM (120 MB) + CLIP (450 MB) = ~2.6 GB models only</li>
+                    <li>Inference working memory: +1–2 GB</li>
+                    <li>Total: ~3.6–4.6 GB — leaves only ~1.5 GB headroom</li>
+                    <li><strong>Risk:</strong> OOM if any concurrent spike, pgvector operations, or KV cache grows</li>
+                    <li><strong>Feasible if:</strong> Models load separately (not concurrent), context window capped at 512 tokens, OS overhead minimized</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🎯 Reranked Options (Updated)</h2>
+
+            <div class="option-box recommended">
+                <h3>🥇 Option A — External LLM + Self-Hosted Embedding</h3>
+                <table>
+                    <tr>
+                        <td><strong>LLM Inference</strong></td>
+                        <td>Groq API (free: 30 RPM, 14.4k req/day)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Embedding</strong></td>
+                        <td><code>all-MiniLM-L6-v2</code> on VM3 (FastAPI wrapper)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Image Search</strong></td>
+                        <td>CLIP ViT-B/32 on VM3</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Database</strong></td>
+                        <td>PostgreSQL 16 + pgvector on VM1</td>
+                    </tr>
+                </table>
+                <p style="margin-top: 1rem;"><strong>Pros:</strong></p>
+                <ul>
+                    <li>✅ Groq (30 RPM / 14.4k req/day) sufficient for personal-scale RAG chatbot</li>
+                    <li>✅ VM3 memory comfortable: 3.5 GB / 6 GB used, 2.5 GB headroom</li>
+                    <li>✅ No risk of charge (Groq returns 429, doesn't bill)</li>
+                    <li>✅ LLM quality excellent (Llama 3.1 8B via Groq)</li>
+                    <li>✅ Embedding + CLIP inference latency acceptable (~200–250ms total)</li>
+                </ul>
+                <p style="margin-top: 1rem;"><strong>Cons:</strong></p>
+                <ul>
+                    <li>⚠️ Vendor dependency on Groq (but stable, backed by investors)</li>
+                    <li>⚠️ Groq rate limit (30 RPM) if traffic suddenly spikes beyond forecast</li>
+                </ul>
+                <p style="margin-top: 1rem;"><strong>Recommendation:</strong> <span class="tag pass">PRIMARY CHOICE</span></p>
+            </div>
+
+            <div class="option-box">
+                <h3>🥈 Option B — Full Self-Hosted (Ollama)</h3>
+                <table>
+                    <tr>
+                        <td><strong>LLM Inference</strong></td>
+                        <td>Ollama + Gemma 2B on VM3</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Embedding</strong></td>
+                        <td><code>all-MiniLM-L6-v2</code> on VM3</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Image Search</strong></td>
+                        <td>CLIP ViT-B/32 on VM3</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Database</strong></td>
+                        <td>PostgreSQL 16 + pgvector on VM1</td>
+                    </tr>
+                </table>
+                <p style="margin-top: 1rem;"><strong>Pros:</strong></p>
+                <ul>
+                    <li>✅ 100% self-hosted, zero vendor dependency</li>
+                    <li>✅ No rate limits, unlimited inference</li>
+                    <li>✅ Oracle ARM64 fully supported (native, not emulation)</li>
+                    <li>✅ Gemma 2B: acceptable for simple FAQ/Q&A (not long-form reasoning)</li>
+                </ul>
+                <p style="margin-top: 1rem;"><strong>Cons:</strong></p>
+                <ul>
+                    <li>❌ Memory borderline: 3.6–4.6 GB / 6 GB, only 1.5 GB headroom</li>
+                    <li>❌ LLM quality mediocre (Gemma 2B << Llama 8B via Groq)</li>
+                    <li>❌ Latency slow: Gemma 2B inference ~2–4 sec on ARM CPU</li>
+                    <li>❌ Context window small (~2k tokens) → limited RAG effectiveness</li>
+                    <li>⚠️ Models must load separately (not concurrent) → UX friction if switching tasks</li>
+                </ul>
+                <p style="margin-top: 1rem;"><strong>Recommendation:</strong> <span class="tag warn">FALLBACK if Groq quota exhausted</span></p>
+            </div>
+
+            <div class="option-box">
+                <h3>🥉 Option C — Cloudflare Workers AI</h3>
+                <table>
+                    <tr>
+                        <td><strong>LLM Inference</strong></td>
+                        <td>Cloudflare Workers AI (~1.25M tok/day for Llama 8B)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Embedding</strong></td>
+                        <td>Not available → must self-host on VM3</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Image Search</strong></td>
+                        <td>CLIP ViT-B/32 on VM3 (Workers AI has no CLIP)</td>
+                    </tr>
+                </table>
+                <p style="margin-top: 1rem;"><strong>Pros:</strong></p>
+                <ul>
+                    <li>✅ Edge inference (lower latency ~300–500ms)</li>
+                    <li>✅ No credit card (rate-limited daily, not charged)</li>
+                </ul>
+                <p style="margin-top: 1rem;"><strong>Cons:</strong></p>
+                <ul>
+                    <li>❌ <strong>Neuron quota too low:</strong> 10k neurons/day = ~1.25M tokens = ~25–100 requests</li>
+                    <li>❌ Embedding NOT available → still need self-hosted on VM3</li>
+                    <li>❌ CLIP NOT available → still need self-hosted on VM3</li>
+                    <li>❌ Net result: Still need VM3 anyway, but LLM quota so low it's impractical</li>
+                    <li>⚠️ Vendor lock to Cloudflare ecosystem</li>
+                </ul>
+                <p style="margin-top: 1rem;"><strong>Recommendation:</strong> <span class="tag fail">NOT RECOMMENDED</span> — Quota too restrictive, doesn't save VM3.</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🎬 Action Plan</h2>
+            <ol>
+                <li><strong>Adopt Option A as primary:</strong> Groq API (30 RPM) + Embedding/CLIP on VM3</li>
+                <li><strong>Create Story 2.1:</strong> VM3 Embedding Service (FastAPI wrapper for all-MiniLM-L6-v2)</li>
+                <li><strong>Create Story 4.1:</strong> VM3 Image Search Service (CLIP ViT-B/32 inference)</li>
+                <li><strong>Create Story 2.2:</strong> RAG Pipeline on AquaHome (orchestrate Groq LLM + VM3 embedding)</li>
+                <li><strong>Test Groq rate limit:</strong> Monitor actual usage; if consistently &lt;5 RPM, plan is safe</li>
+                <li><strong>Plan Option B fallback:</strong> Ollama Gemma 2B as contingency if Groq becomes unreliable</li>
+            </ol>
+        </div>
+
+        <div class="section">
+            <h2>📋 Risk Assessment</h2>
+            <table>
+                <tr>
+                    <th>Risk</th>
+                    <th>Impact</th>
+                    <th>Mitigation</th>
+                </tr>
+                <tr>
+                    <td>Groq API down (outage)</td>
+                    <td>High (no fallback)</td>
+                    <td>Keep Option B (Gemma 2B) docs ready; can deploy in 1 week if needed</td>
+                </tr>
+                <tr>
+                    <td>Groq rate limit exceeded (spike)</td>
+                    <td>Medium (API returns 429, UX degrades)</td>
+                    <td>Monitor in Grafana; add queue + retry logic in BFF layer</td>
+                </tr>
+                <tr>
+                    <td>VM3 OOM crash</td>
+                    <td>Medium (embedding/CLIP offline)</td>
+                    <td>Kubernetes-style restart loop; monitor memory in Grafana</td>
+                </tr>
+                <tr>
+                    <td>CLIP model outdated / poor quality</td>
+                    <td>Low (acceptable for MVP)</td>
+                    <td>Revisit in v2.1; can upgrade to CLIP ViT-L/14 if needed</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="highlight info">
+            <strong>ℹ️ Summary:</strong> <br/>
+            Groq free tier is <strong>reliable &amp; sufficient</strong> for personal-scale AI. VM3 (6GB) easily accommodates embedding + image search with 2.5GB headroom. <strong>No risk of surprise charges.</strong> Go with Option A.
+        </div>
+    </div>
+</body>
+</html>

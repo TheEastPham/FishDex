@@ -413,10 +413,10 @@ export default function FishProfilePage() {
               )}
             </div>
 
-            {/* Two-column layout: country list | map */}
-            <div className="flex gap-4">
-              {/* Country sidebar */}
-              <div className="w-44 shrink-0 flex flex-col gap-1 max-h-[400px] overflow-y-auto pr-1">
+            {/* Two-column layout: country list | map — stacks vertically on mobile */}
+            <div className="flex flex-col md:flex-row gap-4">
+              {/* Country list */}
+              <div className="md:w-44 md:shrink-0 flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-x-visible md:max-h-[400px] md:overflow-y-auto pb-1 md:pb-0 pr-0 md:pr-1">
                 {distribution.countries.map(c => {
                   const isSelected = selectedCountry?.code === c.code;
                   return (
@@ -443,7 +443,7 @@ export default function FishProfilePage() {
               </div>
 
               {/* Map — no remount on filter change */}
-              <div className="flex-1 h-[400px] rounded-xl overflow-hidden border border-slate-800/50 relative z-0">
+              <div className="flex-1 h-[280px] md:h-[400px] rounded-xl overflow-hidden border border-slate-800/50 relative z-0">
                 <MapContainer center={[0, 0]} zoom={2} scrollWheelZoom={true} className="h-full w-full z-0" style={{ background: '#141518' }}>
                   <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -470,7 +470,7 @@ export default function FishProfilePage() {
         {media.length > 0 && (
           <div className="bg-[#202226] rounded-2xl p-6 shadow-lg border border-slate-800/80">
             <SectionHeader icon={<ImageIcon className="w-5 h-5 text-indigo-400" />} title={`${t('fish.gallery')} (${media.length})`} />
-            <div className="relative w-full h-[400px] rounded-xl overflow-hidden border border-slate-800/50 bg-[#141518] group">
+            <div className="relative w-full h-[280px] md:h-[400px] rounded-xl overflow-hidden border border-slate-800/50 bg-[#141518] group">
               {/* Display Current Image */}
               {media[selectedImageIndex || 0].url ? (
                 <img 

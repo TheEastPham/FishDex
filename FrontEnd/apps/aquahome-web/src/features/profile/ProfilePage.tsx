@@ -109,7 +109,7 @@ export default function ProfilePage() {
               required
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
-              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div>
@@ -119,7 +119,7 @@ export default function ProfilePage() {
               required
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
-              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>
@@ -130,7 +130,7 @@ export default function ProfilePage() {
             type="email"
             disabled
             value={profile.email}
-            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-slate-50 text-slate-400"
+            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-base sm:text-sm bg-slate-50 text-slate-400"
           />
         </div>
 
@@ -141,7 +141,7 @@ export default function ProfilePage() {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="+84..."
-            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -150,7 +150,7 @@ export default function ProfilePage() {
           <select
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
-            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             {LANGUAGES.map((l) => (
               <option key={l.value} value={l.value}>{l.label}</option>
@@ -180,7 +180,7 @@ export default function ProfilePage() {
             required
             value={currentPwd}
             onChange={(e) => setCurrentPwd(e.target.value)}
-            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -192,7 +192,7 @@ export default function ProfilePage() {
             minLength={8}
             value={newPwd}
             onChange={(e) => setNewPwd(e.target.value)}
-            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -203,7 +203,7 @@ export default function ProfilePage() {
             required
             value={confirmPwd}
             onChange={(e) => setConfirmPwd(e.target.value)}
-            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 

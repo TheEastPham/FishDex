@@ -60,7 +60,8 @@ export default function AppShell() {
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      const inside = (event.target as Element).closest('[data-profile-menu]');
+      if (!inside) {
         setIsProfileOpen(false);
         setIsAvatarPickerOpen(false);
       }
@@ -315,7 +316,7 @@ export default function AppShell() {
       </nav>
 
       {/* Footer: Profile (authenticated) or Login button (guest) */}
-      <div className="p-4 border-t border-slate-800/60 relative" ref={menuRef}>
+      <div className="p-4 border-t border-slate-800/60 relative z-10" ref={menuRef} data-profile-menu>
         {isAuthenticated ? (
           <>
             {isProfileOpen && !isAvatarPickerOpen && (

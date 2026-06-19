@@ -118,7 +118,14 @@ export default function FishInventorySection({ aquariumId: _aquariumId, fishList
   const selectedColor = selected != null ? getFishColor(colorMap[selected] ?? 0) : '#38bdf8';
 
   const mapPoints = useMemo(() => {
-    if (selected === null) return [];
+    if (selected === null) {
+      // No fish selected — show all points from every loaded distribution
+      return Object.entries(distributions).flatMap(([, dist]) =>
+        dist.countries
+          .filter(c => c.occurrences.length > 0)
+          .map(c => ({ lat: c.occurrences[0].lat, lon: c.occurrences[0].lon, countryName: c.name, count: c.count }))
+      );
+    }
     const dist = distributions[selected];
     if (!dist) return [];
     return dist.countries

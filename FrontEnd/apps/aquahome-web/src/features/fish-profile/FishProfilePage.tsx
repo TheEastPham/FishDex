@@ -10,7 +10,7 @@ import {
   ArrowLeft, Share2, Heart, Fish, Ruler, Droplets, Map as MapIcon,
   Image as ImageIcon, Scale, AlertTriangle, Shield,
   Thermometer, TestTube, BookOpen, FileText, Activity, Clock,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, Layers
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -103,6 +103,14 @@ function formatRange(min: number | null | undefined, max: number | null | undefi
   if (min == null) return `≤ ${max}`;
   if (max == null) return `≥ ${min}`;
   return `${min} – ${max}`;
+}
+
+function HabitatFlag({ label, icon }: { label: string; icon: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 text-xs bg-slate-800 text-slate-300 border border-slate-700/60 px-2.5 py-1 rounded-full">
+      <span>{icon}</span>{label}
+    </span>
+  );
 }
 
 function resilienceColor(level: string): string {
@@ -340,6 +348,46 @@ export default function FishProfilePage() {
             </div>
           </div>
         </div>
+
+        {/* ─── Row 2.5: Habitat Preferences ─── */}
+        {detail.habitat && (detail.habitat.preferredSubstrates.length > 0 || detail.habitat.specialHabitats.length > 0 || detail.habitat.requiresCaves || detail.habitat.requiresDriftwood || detail.habitat.requiresVegetation || detail.habitat.requiresCoralReefs) && (
+          <div className="bg-[#202226] rounded-2xl p-6 shadow-lg border border-slate-800/80">
+            <SectionHeader icon={<Layers className="w-5 h-5 text-lime-400" />} title={t('fish.habitat')} />
+            <div className="space-y-4">
+              {detail.habitat.preferredSubstrates.length > 0 && (
+                <div>
+                  <p className="text-xs text-slate-500 uppercase tracking-widest mb-2">{t('fish.preferredSubstrates')}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {detail.habitat.preferredSubstrates.map(s => (
+                      <span key={s} className="text-xs bg-amber-900/40 text-amber-300 border border-amber-700/40 px-2.5 py-1 rounded-full">
+                        {t(`fish.substrate_${s}`, { defaultValue: s })}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {detail.habitat.specialHabitats.length > 0 && (
+                <div>
+                  <p className="text-xs text-slate-500 uppercase tracking-widest mb-2">{t('fish.specialHabitats')}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {detail.habitat.specialHabitats.map(h => (
+                      <span key={h} className="text-xs bg-teal-900/40 text-teal-300 border border-teal-700/40 px-2.5 py-1 rounded-full">
+                        {t(`fish.habitat_${h}`, { defaultValue: h })}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="flex flex-wrap gap-3">
+                {detail.habitat.burrowingCapable && <HabitatFlag label={t('fish.burrowingCapable')} icon="⛏️" />}
+                {detail.habitat.requiresCaves && <HabitatFlag label={t('fish.requiresCaves')} icon="🕳️" />}
+                {detail.habitat.requiresDriftwood && <HabitatFlag label={t('fish.requiresDriftwood')} icon="🪵" />}
+                {detail.habitat.requiresVegetation && <HabitatFlag label={t('fish.requiresVegetation')} icon="🌿" />}
+                {detail.habitat.requiresCoralReefs && <HabitatFlag label={t('fish.requiresCoralReefs')} icon="🪸" />}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ─── Row 3: Conservation + Dangerous ─── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

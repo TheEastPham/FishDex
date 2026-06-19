@@ -9,7 +9,9 @@ public class EcologyService(
     IEcologyRepository ecologyRepo,
     IFeedingAndDietRepository feedingRepo,
     IHabitatZoneRepository habitatRepo,
-    IAssociationsRepository associationsRepo) : IEcologyService
+    IAssociationsRepository associationsRepo,
+    ISubstrateRepository substrateRepo,
+    ISpecialHabitatRepository specialHabitatRepo) : IEcologyService
 {
     public async Task<EcologyDto?> GetBySpecCodeAsync(int specCode, CancellationToken ct = default)
     {
@@ -41,5 +43,17 @@ public class EcologyService(
             Shoaling  = a.Shoaling,
             Solitary  = a.Solitary
         };
+    }
+
+    public async Task<SubstrateDto?> GetSubstrateAsync(int ecologyId, CancellationToken ct = default)
+    {
+        var results = await substrateRepo.FindAsync(s => s.EcologyId == ecologyId);
+        return results.FirstOrDefault()?.ToDto();
+    }
+
+    public async Task<SpecialHabitatDto?> GetSpecialHabitatAsync(int ecologyId, CancellationToken ct = default)
+    {
+        var results = await specialHabitatRepo.FindAsync(h => h.EcologyId == ecologyId);
+        return results.FirstOrDefault()?.ToDto();
     }
 }

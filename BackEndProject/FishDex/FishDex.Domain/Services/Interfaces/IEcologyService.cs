@@ -8,4 +8,6 @@ public interface IEcologyService
     Task<FeedingAndDietDto?> GetFeedingAsync(int ecologyId, CancellationToken ct = default);
     Task<HabitatZoneDto?> GetHabitatZoneAsync(int ecologyId, CancellationToken ct = default);
     Task<AssociationsDto?> GetAssociationsAsync(int ecologyId, CancellationToken ct = default);
+    Task<SubstrateDto?> GetSubstrateAsync(int ecologyId, CancellationToken ct = default);
+    Task<SpecialHabitatDto?> GetSpecialHabitatAsync(int ecologyId, CancellationToken ct = default);
 }

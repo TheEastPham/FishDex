@@ -32,6 +32,7 @@ public class SpeciesDetailDto
     public SpeciesDetailEcologyDto? Ecology { get; init; }
     public SpeciesDetailConservationDto? Conservation { get; init; }
     public SpeciesDetailEnvironmentDto? Environment { get; init; }
+    public SpeciesDetailHabitatDto? Habitat { get; init; }
 }
 
 public class SpeciesDetailEcologyDto
@@ -50,6 +51,17 @@ public class SpeciesDetailConservationDto
     public string? IucnAssessment { get; init; }
     public DateTime? IucnDateAssessed { get; init; }
     public string? CitesCode { get; init; }
+}
+
+public class SpeciesDetailHabitatDto
+{
+    public IReadOnlyList<string> PreferredSubstrates { get; init; } = [];
+    public bool BurrowingCapable { get; init; }
+    public bool RequiresCaves { get; init; }
+    public bool RequiresDriftwood { get; init; }
+    public bool RequiresVegetation { get; init; }
+    public bool RequiresCoralReefs { get; init; }
+    public IReadOnlyList<string> SpecialHabitats { get; init; } = [];
 }
 
 public class SpeciesDetailEnvironmentDto

@@ -75,10 +75,13 @@ export interface SpeciesDetail {
   environment: {
     tempMin: number | null;
     tempMax: number | null;
+    tempPreferred: number | null;
     phMin: number | null;
     phMax: number | null;
     dHMin: number | null;
     dHMax: number | null;
+    resilience: 'VeryLow' | 'Low' | 'Medium' | 'High' | null;
+    resilienceRemark: string | null;
   } | null;
 }
 

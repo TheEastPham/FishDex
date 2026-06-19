@@ -156,10 +156,10 @@ public class AuthService(
                 return new RegisterResponse(false, "Invalid verification code");
             }
             
-            var user = await CreateUserAsync(request);
+            var (user, createError) = await CreateUserAsync(request);
             if (user == null)
             {
-                return new RegisterResponse(false, "Failed to create user");
+                return new RegisterResponse(false, createError ?? "Failed to create user");
             }
 
             await emailService.SendWelcomeEmailAsync(user.Email!, user.FirstName!);
@@ -253,7 +253,7 @@ public class AuthService(
         return new EmailVerificationResponse(true, string.Empty);
     }
 
-     private async Task<UserEntity?> CreateUserAsync(RegisterRequest request)
+    private async Task<(UserEntity? User, string? Error)> CreateUserAsync(RegisterRequest request)
     {
         var user = new UserEntity
         {
@@ -271,13 +271,13 @@ public class AuthService(
         var result = await userManager.CreateAsync(user, request.Password);
         if (!result.Succeeded)
         {
-            logger.LogError("Failed to create user: {Errors}",
-                string.Join(", ", result.Errors.Select(e => e.Description)));
-            return null;
+            var error = string.Join(", ", result.Errors.Select(e => e.Description));
+            logger.LogError("Failed to create user: {Errors}", error);
+            return (null, error);
         }
 
         await userManager.AddToRoleAsync(user, "Member");
-        return user;
+        return (user, null);
     }
 
     private async Task<ValidateInvitationResponse> ValidateInvitationCodeAsync(string? code)

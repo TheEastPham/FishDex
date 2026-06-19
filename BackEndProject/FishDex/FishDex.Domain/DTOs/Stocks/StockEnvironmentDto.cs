@@ -9,4 +9,7 @@ public class StockEnvironmentDto
     public double? PHMax { get; init; }
     public double? DHMin { get; init; }
     public double? DHMax { get; init; }
+    public double? TempPreferred { get; init; }
+    public string? Resilience { get; init; }
+    public string? ResilienceRemark { get; init; }
 }

@@ -150,13 +150,16 @@ internal static class EntityToDtoExtensions
 
     internal static StockEnvironmentDto ToDto(this StockEnvironment e) => new()
     {
-        StockCode = e.StockCode,
-        TempMin   = e.TempMin,
-        TempMax   = e.TempMax,
-        PHMin     = e.PHMin,
-        PHMax     = e.PHMax,
-        DHMin     = e.DHMin,
-        DHMax     = e.DHMax
+        StockCode        = e.StockCode,
+        TempMin          = e.TempMin,
+        TempMax          = e.TempMax,
+        PHMin            = e.PHMin,
+        PHMax            = e.PHMax,
+        DHMin            = e.DHMin,
+        DHMax            = e.DHMax,
+        TempPreferred    = e.TempPreferred,
+        Resilience       = e.Resilience?.ToString(),
+        ResilienceRemark = e.ResilienceRemark
     };
 
     internal static EcosystemRefDto ToDto(this EcosystemRef e) => new()

@@ -179,12 +179,15 @@ public class SpeciesService(
             } : null,
             Environment = environment != null ? new SpeciesDetailEnvironmentDto
             {
-                TempMin = environment.TempMin,
-                TempMax = environment.TempMax,
-                PhMin   = environment.PHMin,
-                PhMax   = environment.PHMax,
-                DHMin   = environment.DHMin,
-                DHMax   = environment.DHMax
+                TempMin          = environment.TempMin,
+                TempMax          = environment.TempMax,
+                TempPreferred    = environment.TempPreferred,
+                PhMin            = environment.PHMin,
+                PhMax            = environment.PHMax,
+                DHMin            = environment.DHMin,
+                DHMax            = environment.DHMax,
+                Resilience       = environment.Resilience,
+                ResilienceRemark = environment.ResilienceRemark
             } : null
         };
     }

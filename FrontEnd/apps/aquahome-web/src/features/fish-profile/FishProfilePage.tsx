@@ -96,6 +96,25 @@ function MapController({ points }: { points: OccurrencePointDto[] }) {
   return null;
 }
 
+/* ── Helpers ──────────────────────────────────────────────── */
+
+function formatRange(min: number | null | undefined, max: number | null | undefined): string {
+  if (min == null && max == null) return '—';
+  if (min == null) return `≤ ${max}`;
+  if (max == null) return `≥ ${min}`;
+  return `${min} – ${max}`;
+}
+
+function resilienceColor(level: string): string {
+  switch (level) {
+    case 'High':    return 'bg-emerald-900/60 text-emerald-300';
+    case 'Medium':  return 'bg-yellow-900/60 text-yellow-300';
+    case 'Low':     return 'bg-orange-900/60 text-orange-300';
+    case 'VeryLow': return 'bg-red-900/60 text-red-300';
+    default:        return 'bg-slate-800 text-slate-400';
+  }
+}
+
 /* ── Main Component ───────────────────────────────────────── */
 
 export default function FishProfilePage() {
@@ -273,15 +292,18 @@ export default function FishProfilePage() {
                 <Thermometer className="w-5 h-5 text-red-400 mx-auto mb-2" />
                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Temp</p>
                 <p className="text-xl font-black text-slate-200">
-                  {detail.environment?.tempMin ?? '?'} – {detail.environment?.tempMax ?? '?'}
+                  {formatRange(detail.environment?.tempMin, detail.environment?.tempMax)}
                 </p>
                 <p className="text-xs text-slate-500">°C</p>
+                {detail.environment?.tempPreferred != null && (
+                  <p className="text-[10px] text-amber-400 mt-1">{t('fish.tempPreferred')}: {detail.environment.tempPreferred}°C</p>
+                )}
               </div>
               <div className="bg-[#141518] rounded-xl p-4 border border-slate-800/50 text-center">
                 <TestTube className="w-5 h-5 text-violet-400 mx-auto mb-2" />
                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">pH</p>
                 <p className="text-xl font-black text-slate-200">
-                  {detail.environment?.phMin ?? '?'} – {detail.environment?.phMax ?? '?'}
+                  {formatRange(detail.environment?.phMin, detail.environment?.phMax)}
                 </p>
                 <p className="text-xs text-slate-500">Level</p>
               </div>
@@ -289,11 +311,22 @@ export default function FishProfilePage() {
                 <Activity className="w-5 h-5 text-cyan-400 mx-auto mb-2" />
                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">{t('fish.waterHardness')}</p>
                 <p className="text-xl font-black text-slate-200">
-                  {detail.environment?.dHMin ?? '?'} – {detail.environment?.dHMax ?? '?'}
+                  {formatRange(detail.environment?.dHMin, detail.environment?.dHMax)}
                 </p>
                 <p className="text-xs text-slate-500">dGH</p>
               </div>
             </div>
+            {detail.environment?.resilience && (
+              <div className="mt-3 flex items-center gap-2">
+                <span className="text-xs text-slate-400">{t('fish.resilience')}:</span>
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${resilienceColor(detail.environment.resilience)}`}>
+                  {t(`fish.resilience${detail.environment.resilience}`)}
+                </span>
+                {detail.environment.resilienceRemark && (
+                  <span className="text-xs text-slate-500 truncate">{detail.environment.resilienceRemark}</span>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Ecology */}

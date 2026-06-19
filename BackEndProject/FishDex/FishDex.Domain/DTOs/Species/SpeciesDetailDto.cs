@@ -56,9 +56,12 @@ public class SpeciesDetailEnvironmentDto
 {
     public double? TempMin { get; init; }
     public double? TempMax { get; init; }
+    public double? TempPreferred { get; init; }
     public double? PhMin { get; init; }
     public double? PhMax { get; init; }
     /// <summary>Water hardness in dGH (German degrees). GH ≈ dGH × 17.8 ppm.</summary>
     public double? DHMin { get; init; }
     public double? DHMax { get; init; }
+    public string? Resilience { get; init; }
+    public string? ResilienceRemark { get; init; }
 }

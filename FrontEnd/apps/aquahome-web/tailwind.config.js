@@ -42,6 +42,15 @@ export default {
           'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
         },
       },
+      keyframes: {
+        marquee: {
+          '0%':   { transform: 'translateX(0%)' },
+          '100%': { transform: 'translateX(-50%)' },
+        },
+      },
+      animation: {
+        marquee: 'marquee 6s linear infinite',
+      },
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',

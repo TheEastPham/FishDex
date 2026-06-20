@@ -65,6 +65,16 @@ export interface SpeciesDetail {
     solitary: boolean | null;
   } | null;
 
+  habitat: {
+    preferredSubstrates: string[];
+    burrowingCapable: boolean;
+    requiresCaves: boolean;
+    requiresDriftwood: boolean;
+    requiresVegetation: boolean;
+    requiresCoralReefs: boolean;
+    specialHabitats: string[];
+  } | null;
+
   conservation: {
     iucnCode: string | null;
     iucnAssessment: string | null;

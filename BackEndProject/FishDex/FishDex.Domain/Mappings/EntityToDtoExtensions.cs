@@ -220,4 +220,61 @@ internal static class EntityToDtoExtensions
                      : e.PicPreferredJuv  == true ? ImageGender.Juvenile
                      : ImageGender.Unknown
     };
+
+    internal static SubstrateDto ToDto(this Substrate e)
+    {
+        var list = new List<string>();
+        if (e.Sand)       list.Add("Sand");
+        if (e.Gravel)     list.Add("Gravel");
+        if (e.Rocky)      list.Add("Rocky");
+        if (e.Mud)        list.Add("Mud");
+        if (e.Silt)       list.Add("Silt");
+        if (e.Rubble)     list.Add("Rubble");
+        if (e.Coarse)     list.Add("Coarse");
+        if (e.Fine)       list.Add("Fine");
+        if (e.SoftBottom) list.Add("SoftBottom");
+        if (e.HardBottom) list.Add("HardBottom");
+        if (e.Organic)    list.Add("Organic");
+        if (e.Detritus)   list.Add("Detritus");
+        if (e.Pelagic)    list.Add("Pelagic");
+        if (e.Benthic)    list.Add("Benthic");
+        if (e.Demersal)   list.Add("Demersal");
+
+        return new SubstrateDto
+        {
+            EcologyId          = e.EcologyId,
+            PreferredSubstrates = list,
+            BurrowingCapable   = e.Endofauna
+        };
+    }
+
+    internal static SpecialHabitatDto ToDto(this SpecialHabitat e)
+    {
+        var list = new List<string>();
+        if (e.CoralReefs || e.ReefExclusive) list.Add("CoralReefs");
+        if (e.ReefFlats)                     list.Add("ReefFlats");
+        if (e.Lagoons)                       list.Add("Lagoons");
+        if (e.DropOffs)                      list.Add("DropOffs");
+        if (e.Burrows || e.Crevices)         list.Add("Burrows");
+        if (e.SeaGrassBeds)                  list.Add("SeaGrassBeds");
+        if (e.Macrophyte || e.Vegetation)    list.Add("Vegetation");
+        if (e.Driftwood)                     list.Add("Driftwood");
+        if (e.Leaves || e.Stems || e.Roots)  list.Add("AquaticPlants");
+        if (e.RicePaddies)                   list.Add("RicePaddies");
+        if (e.Seamounts)                     list.Add("Seamounts");
+        if (e.HydrothermalVents)             list.Add("HydrothermalVents");
+        if (e.ColdSeeps)                     list.Add("ColdSeeps");
+        if (e.DeepWaterCorals)               list.Add("DeepWaterCorals");
+        if (e.Tunnels)                       list.Add("Tunnels");
+
+        return new SpecialHabitatDto
+        {
+            EcologyId           = e.EcologyId,
+            SpecialHabitats     = list,
+            RequiresCaves       = e.Burrows || e.Crevices || e.Tunnels,
+            RequiresDriftwood   = e.Driftwood,
+            RequiresVegetation  = e.Macrophyte || e.Vegetation || e.Leaves || e.Stems || e.Roots,
+            RequiresCoralReefs  = e.CoralReefs || e.ReefExclusive
+        };
+    }
 }

@@ -13,7 +13,8 @@ public record AquariumDto(
     AquariumStyle? Style,
     string? Description,
     DateTime CreatedAt,
-    int FishCount);
+    int FishCount,
+    int TotalQuantity);
 
 public record CreateAquariumRequest(
     string Name,

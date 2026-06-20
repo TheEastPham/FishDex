@@ -118,9 +118,11 @@ public class SpeciesService(
         var stocks     = await stockService.GetBySpecCodeAsync(specCode, ct);
         var firstStock = stocks.FirstOrDefault();
 
-        FeedingAndDietDto?      feeding      = ecology    != null ? await ecologyService.GetFeedingAsync(ecology.EcologyId, ct)        : null;
-        HabitatZoneDto?         habitat      = ecology    != null ? await ecologyService.GetHabitatZoneAsync(ecology.EcologyId, ct)    : null;
-        AssociationsDto?        associations = ecology    != null ? await ecologyService.GetAssociationsAsync(ecology.EcologyId, ct)   : null;
+        FeedingAndDietDto?      feeding        = ecology != null ? await ecologyService.GetFeedingAsync(ecology.EcologyId, ct)         : null;
+        HabitatZoneDto?         habitat        = ecology != null ? await ecologyService.GetHabitatZoneAsync(ecology.EcologyId, ct)     : null;
+        AssociationsDto?        associations   = ecology != null ? await ecologyService.GetAssociationsAsync(ecology.EcologyId, ct)    : null;
+        SubstrateDto?           substrate      = ecology != null ? await ecologyService.GetSubstrateAsync(ecology.EcologyId, ct)       : null;
+        SpecialHabitatDto?      specialHabitat = ecology != null ? await ecologyService.GetSpecialHabitatAsync(ecology.EcologyId, ct)  : null;
         StockConservationDto?   conservation = firstStock != null ? await stockService.GetConservationAsync(firstStock.StockCode, ct)  : null;
         StockEnvironmentDto?    environment  = firstStock != null ? await stockService.GetEnvironmentAsync(firstStock.StockCode, ct)   : null;
 
@@ -176,6 +178,16 @@ public class SpeciesService(
                 IucnAssessment   = conservation.IUCN_Assessment,
                 IucnDateAssessed = conservation.IUCN_DateAssessed,
                 CitesCode        = conservation.CITES_Code
+            } : null,
+            Habitat = substrate != null || specialHabitat != null ? new SpeciesDetailHabitatDto
+            {
+                PreferredSubstrates = substrate?.PreferredSubstrates ?? [],
+                BurrowingCapable    = substrate?.BurrowingCapable ?? false,
+                RequiresCaves       = specialHabitat?.RequiresCaves ?? false,
+                RequiresDriftwood   = specialHabitat?.RequiresDriftwood ?? false,
+                RequiresVegetation  = specialHabitat?.RequiresVegetation ?? false,
+                RequiresCoralReefs  = specialHabitat?.RequiresCoralReefs ?? false,
+                SpecialHabitats     = specialHabitat?.SpecialHabitats ?? []
             } : null,
             Environment = environment != null ? new SpeciesDetailEnvironmentDto
             {

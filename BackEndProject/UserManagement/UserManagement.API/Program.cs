@@ -53,9 +53,40 @@ builder.Services.AddHostedService<AdminSeeder>();
 
 // OpenTelemetry Configuration
 builder.Services.AddFishLoverTelemetry(builder.Configuration, "UserManagement.API");
-// JWT Authentication
+// JWT Authentication — HS256 symmetric scheme (direct-login tokens)
 builder.Services.AddFishLoverJwtAuthentication(builder.Configuration);
+
+// OpenIddict RS256 scheme — validate OAuth2 PKCE tokens issued by this service
+// MetadataAddress trỏ về chính service này (internal); ValidIssuers = OpenIddict:Issuer (public URL)
+var oidcIssuer = builder.Configuration["OpenIddict:Issuer"] ?? "http://localhost:8080";
+var oidcInternalUrl = builder.Configuration["AuthServer:InternalUrl"] ?? "http://localhost:8080";
+builder.Services.AddAuthentication()
+    .AddJwtBearer("OpenIddict", options =>
+    {
+        options.MetadataAddress = $"{oidcInternalUrl}/.well-known/openid-configuration";
+        options.RequireHttpsMetadata = false;
+        var issuer = oidcIssuer.TrimEnd('/');
+        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+        {
+            ValidIssuers = [issuer, issuer + "/"],
+            ValidateIssuer = true,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+        };
+    });
+
 builder.Services.AddFishLoverAuthorization();
+
+// Override DefaultPolicy: accept cả Bearer (HS256) lẫn OpenIddict (RS256)
+builder.Services.AddAuthorization(options =>
+{
+    options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder(
+        Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme,
+        "OpenIddict")
+        .RequireAuthenticatedUser()
+        .Build();
+});
 
 
 // CORS — origins đọc từ config; local dev set trong appsettings.Development.json,

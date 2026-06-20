@@ -264,60 +264,25 @@ export default function AppShell() {
   );
 
   return (
-    <div className="flex h-screen w-full bg-[#0F172A] text-slate-300 selection:bg-primary/20">
+    <div className="flex flex-col h-screen w-full bg-[#0F172A] text-slate-300 selection:bg-primary/20">
 
-      {/* ── Desktop Sidebar ── */}
-      <aside className="hidden md:flex w-[240px] flex-shrink-0 flex-col bg-[#0A0F1A] border-r border-slate-800/60">
-        {/* Logo */}
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-slate-800/60">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-blue-600 shadow-sm shadow-primary/30">
-            <Fish className="h-4 w-4 text-white stroke-[2.5]" />
-          </div>
-          <span className="font-bold text-base tracking-tight text-white">The FishLover</span>
-        </div>
-        <SidebarNav />
-      </aside>
-
-      {/* ── Mobile Drawer Overlay ── */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 bg-black/60 z-40 md:hidden" onClick={() => setIsMobileMenuOpen(false)} />
-      )}
-
-      {/* ── Mobile Drawer Panel ── */}
-      <aside className={cn(
-        'fixed top-0 left-0 h-full w-[260px] flex flex-col bg-[#0A0F1A] border-r border-slate-800/60 shadow-2xl z-50 transition-transform duration-300 ease-in-out md:hidden',
-        isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-      )}>
-        <div className="flex items-center justify-between px-4 py-4 border-b border-slate-800/60">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-blue-600">
-              <Fish className="h-4 w-4 text-white stroke-[2.5]" />
-            </div>
-            <span className="font-bold text-base tracking-tight text-white">The FishLover</span>
-          </div>
-          <button
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="flex items-center justify-center w-9 h-9 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-        <SidebarNav />
-      </aside>
-
-      {/* ── Main content ── */}
-      <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
-
-        {/* ── Top Header ── */}
-        <header className="flex items-center justify-between px-4 h-14 bg-[#0A0F1A] border-b border-slate-800/60 shrink-0 z-30">
-          {/* Left: hamburger (mobile only) */}
+      {/* ── Full-width Top Header ── */}
+      <header className="flex items-center justify-between px-4 h-14 bg-[#0A0F1A] border-b border-slate-800/60 shrink-0 z-30 w-full">
+        {/* Left: Logo + hamburger (mobile) */}
+        <div className="flex items-center gap-3">
           <button
             onClick={() => setIsMobileMenuOpen(true)}
             className="md:hidden flex items-center justify-center w-9 h-9 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
           >
             <Menu className="w-5 h-5" />
           </button>
-          <div className="hidden md:block" />
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-blue-600 shadow-sm shadow-primary/30">
+              <Fish className="h-4 w-4 text-white stroke-[2.5]" />
+            </div>
+            <span className="font-bold text-base tracking-tight text-white">The FishLover</span>
+          </div>
+        </div>
 
           {/* Right: Language + Bell + User */}
           <div className="flex items-center gap-1">
@@ -426,9 +391,44 @@ export default function AppShell() {
               </Link>
             )}
           </div>
-        </header>
+      </header>
 
-        <main className="flex-1 overflow-auto">
+      {/* ── Body: Sidebar + Content ── */}
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+
+        {/* ── Desktop Sidebar ── */}
+        <aside className="hidden md:flex w-[240px] flex-shrink-0 flex-col bg-[#0A0F1A] border-r border-slate-800/60">
+          <SidebarNav />
+        </aside>
+
+        {/* ── Mobile Drawer Overlay ── */}
+        {isMobileMenuOpen && (
+          <div className="fixed inset-0 bg-black/60 z-40 md:hidden" onClick={() => setIsMobileMenuOpen(false)} />
+        )}
+
+        {/* ── Mobile Drawer Panel ── */}
+        <aside className={cn(
+          'fixed top-0 left-0 h-full w-[260px] flex flex-col bg-[#0A0F1A] border-r border-slate-800/60 shadow-2xl z-50 transition-transform duration-300 ease-in-out md:hidden',
+          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        )}>
+          <div className="flex items-center justify-between px-4 py-4 border-b border-slate-800/60">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-blue-600">
+                <Fish className="h-4 w-4 text-white stroke-[2.5]" />
+              </div>
+              <span className="font-bold text-base tracking-tight text-white">The FishLover</span>
+            </div>
+            <button
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center justify-center w-9 h-9 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <SidebarNav />
+        </aside>
+
+        <main className="flex-1 overflow-auto min-w-0">
           <div className="w-full h-full">
             <Outlet />
           </div>

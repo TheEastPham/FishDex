@@ -63,9 +63,7 @@ interface Props {
   onNavigateFish: (specCode: number) => void;
 }
 
-const FIXED_HEIGHT = 480;
-const ROW_HEIGHT   = 40; // px — compact row
-const VISIBLE_ROWS = 10;
+const ROW_HEIGHT = 40; // px — compact row
 
 export default function FishInventorySection({ aquariumId: _aquariumId, fishList, loading, onNavigateFish }: Props) {
   const { t } = useTranslation();
@@ -97,7 +95,8 @@ export default function FishInventorySection({ aquariumId: _aquariumId, fishList
         const map: Record<number, SpeciesSummary> = {};
         list.forEach(s => { map[s.specCode] = s; });
         setSummaries(map);
-        setSelected(prev => prev ?? specCodes[0]);
+        // Keep current selection if valid, otherwise show all (null)
+        setSelected(prev => (prev != null && specCodes.includes(prev)) ? prev : null);
       })
       .catch(console.error)
       .finally(() => setSummaryLoading(false));
@@ -115,23 +114,23 @@ export default function FishInventorySection({ aquariumId: _aquariumId, fishList
     });
   }, [loading, fishList]);
 
-  const selectedColor = selected != null ? getFishColor(colorMap[selected] ?? 0) : '#38bdf8';
-
   const mapPoints = useMemo(() => {
-    if (selected === null) {
-      // No fish selected — show all points from every loaded distribution
-      return Object.entries(distributions).flatMap(([, dist]) =>
-        dist.countries
-          .filter(c => c.occurrences.length > 0)
-          .map(c => ({ lat: c.occurrences[0].lat, lon: c.occurrences[0].lon, countryName: c.name, count: c.count }))
-      );
+    if (selected !== null) {
+      const dist = distributions[selected];
+      if (!dist) return [];
+      const color = getFishColor(colorMap[selected] ?? 0);
+      return dist.countries
+        .filter(c => c.occurrences.length > 0)
+        .map(c => ({ lat: c.occurrences[0].lat, lon: c.occurrences[0].lon, countryName: c.name, count: c.count, color }));
     }
-    const dist = distributions[selected];
-    if (!dist) return [];
-    return dist.countries
-      .filter(c => c.occurrences.length > 0)
-      .map(c => ({ lat: c.occurrences[0].lat, lon: c.occurrences[0].lon, countryName: c.name, count: c.count }));
-  }, [selected, distributions]);
+    // Show all fish — each species gets its own color
+    return Object.entries(distributions).flatMap(([specCodeStr, dist]) => {
+      const color = getFishColor(colorMap[Number(specCodeStr)] ?? 0);
+      return dist.countries
+        .filter(c => c.occurrences.length > 0)
+        .map(c => ({ lat: c.occurrences[0].lat, lon: c.occurrences[0].lon, countryName: c.name, count: c.count, color }));
+    });
+  }, [selected, distributions, colorMap]);
 
   const hoverSummary = hover ? summaries[hover.specCode] : null;
 
@@ -155,30 +154,73 @@ export default function FishInventorySection({ aquariumId: _aquariumId, fishList
     );
   }
 
-  const listScrollHeight = ROW_HEIGHT * VISIBLE_ROWS;
-
   return (
     <div>
       <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">
         {t('aquarium.fishListTitle')}
       </h3>
 
-      {/* Fixed-height container */}
-      <div className="flex gap-3 rounded-2xl overflow-hidden border border-slate-800/60" style={{ height: FIXED_HEIGHT }}>
+      {/* Responsive container: mobile = col (map top, list bottom), desktop = row */}
+      <div className="flex flex-col md:flex-row gap-3 rounded-2xl overflow-hidden border border-slate-800/60 md:h-[480px]">
 
-        {/* ── Left: Fish list 40% ── */}
-        <div className="w-[40%] flex flex-col bg-[#111827]">
+        {/* ── Map — top on mobile, right on desktop ── */}
+        {/* rendered first in DOM so it appears on top on mobile */}
+        <div className="order-1 md:order-2 md:flex-1 h-[220px] md:h-full relative" style={{ isolation: 'isolate' }}>
+          {summaryLoading && (
+            <div className="absolute inset-0 flex items-center justify-center text-slate-600 bg-slate-900 z-10">
+              <Loader2 className="w-5 h-5 animate-spin" />
+            </div>
+          )}
+          <MapContainer
+            center={[20, 0]}
+            zoom={2}
+            style={{ height: '100%', width: '100%' }}
+            zoomControl={false}
+          >
+            <TileLayer
+              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+            />
+            <MapController points={mapPoints} />
+            {mapPoints.map((p, i) => (
+              <CircleMarker
+                key={i}
+                center={[p.lat, p.lon]}
+                radius={5}
+                pathOptions={{ color: p.color, fillColor: p.color, fillOpacity: 0.75, weight: 1.5 }}
+              >
+                <Popup>
+                  <div className="text-xs">
+                    <p className="font-bold">{p.countryName}</p>
+                    <p className="text-slate-500">{p.count.toLocaleString()}</p>
+                  </div>
+                </Popup>
+              </CircleMarker>
+            ))}
+          </MapContainer>
+        </div>
+
+        {/* ── Fish list — bottom on mobile, left on desktop ── */}
+        <div className="order-2 md:order-1 md:w-1/3 flex flex-col bg-[#111827]">
           {/* Column headers */}
           <div className="flex items-center gap-2 px-3 py-1.5 border-b border-slate-800/60 shrink-0">
             <span className="w-7 shrink-0" />
-            <span className="flex-1 text-[10px] font-bold uppercase tracking-wider text-slate-600">Loài</span>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 w-8 text-right shrink-0">SL</span>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 w-8 text-right shrink-0">QG</span>
+            <span className="flex-1 text-[10px] font-bold uppercase tracking-wider text-slate-600">{t('tanks_detail.colSpecies')}</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 w-8 text-right shrink-0">{t('tanks_detail.colQty')}</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 w-8 text-right shrink-0">{t('tanks_detail.colOrigin')}</span>
             <span className="w-5 shrink-0" />
           </div>
+          {/* Show-all chip — only when a fish is selected */}
+          {selected !== null && (
+            <button
+              onClick={() => setSelected(null)}
+              className="mx-2 mt-1.5 flex items-center gap-1 px-2 py-0.5 rounded-full bg-sky-500/15 border border-sky-500/30 text-sky-400 text-[10px] font-semibold hover:bg-sky-500/25 transition-colors self-start shrink-0"
+            >
+              <span>✕</span> All
+            </button>
+          )}
           <div
-            className="overflow-y-auto flex-1 p-2 space-y-0.5"
-            style={{ maxHeight: listScrollHeight }}
+            className="overflow-y-auto flex-1 p-2 space-y-0.5 max-h-[200px] md:max-h-[320px]"
           >
             {summaryLoading && fishList.map(f => (
               <div key={f.specCode} className="flex items-center gap-2 px-2 py-1.5 rounded-lg animate-pulse" style={{ height: ROW_HEIGHT }}>
@@ -255,43 +297,6 @@ export default function FishInventorySection({ aquariumId: _aquariumId, fishList
           </div>
         </div>
 
-        {/* ── Right: Map 60% ── */}
-        {/* isolation:isolate keeps Leaflet's internal z-index from escaping this stacking context */}
-        <div className="w-[60%] relative" style={{ isolation: 'isolate' }}>
-          {/* Loading overlay — map stays mounted underneath */}
-          {summaryLoading && (
-            <div className="absolute inset-0 flex items-center justify-center text-slate-600 bg-slate-900 z-10">
-              <Loader2 className="w-5 h-5 animate-spin" />
-            </div>
-          )}
-          <MapContainer
-              center={[20, 0]}
-              zoom={2}
-              style={{ height: '100%', width: '100%' }}
-              zoomControl={false}
-            >
-              <TileLayer
-                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-              />
-              <MapController points={mapPoints} />
-              {mapPoints.map((p, i) => (
-                <CircleMarker
-                  key={i}
-                  center={[p.lat, p.lon]}
-                  radius={5}
-                  pathOptions={{ color: selectedColor, fillColor: selectedColor, fillOpacity: 0.75, weight: 1.5 }}
-                >
-                  <Popup>
-                    <div className="text-xs">
-                      <p className="font-bold">{p.countryName}</p>
-                      <p className="text-slate-500">{p.count.toLocaleString()}</p>
-                    </div>
-                  </Popup>
-                </CircleMarker>
-              ))}
-            </MapContainer>
-        </div>
       </div>
 
       {/* Hover image popup */}

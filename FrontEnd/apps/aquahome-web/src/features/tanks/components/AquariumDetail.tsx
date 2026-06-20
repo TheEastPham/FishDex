@@ -19,11 +19,7 @@ function getHeroStyle(waterType: WaterType | null) {
   return TANK_HERO[waterType] ?? DEFAULT_HERO;
 }
 
-const WATER_TYPE_LABELS: Record<number, string> = {
-  [WaterType.Freshwater]: 'Nước ngọt 🐠',
-  [WaterType.Saltwater]:  'Nước mặn 🐡',
-  [WaterType.Brackish]:   'Lợ 🦐',
-};
+// Water type labels resolved via i18n — see getWaterTypeLabel() below
 
 const STYLE_LABELS: Record<number, string> = {
   [AquariumStyle.Nature]:     'Nature',
@@ -44,14 +40,14 @@ function formatDate(iso: string, locale: string) {
 interface StatItemProps { icon: React.ReactNode; label: string; value: string; loading?: boolean }
 function StatItem({ icon, label, value, loading }: StatItemProps) {
   return (
-    <div className="bg-[#1E293B] rounded-xl p-4 border border-slate-800/60 flex flex-col gap-1">
-      <div className="flex items-center gap-1.5 text-slate-500 text-xs font-medium">
+    <div className="bg-[#1E293B] rounded-xl p-2.5 sm:p-4 border border-slate-800/60 flex flex-col gap-0.5 sm:gap-1">
+      <div className="flex items-center gap-1 text-slate-500 text-[10px] sm:text-xs font-medium">
         {icon}
-        {label}
+        <span className="truncate">{label}</span>
       </div>
       {loading
-        ? <div className="h-5 w-16 bg-slate-700/50 rounded animate-pulse mt-0.5" />
-        : <p className="text-white font-bold text-sm">{value}</p>
+        ? <div className="h-4 sm:h-5 w-12 sm:w-16 bg-slate-700/50 rounded animate-pulse mt-0.5" />
+        : <p className="text-white font-bold text-xs sm:text-sm leading-tight">{value}</p>
       }
     </div>
   );
@@ -67,7 +63,14 @@ export default function AquariumDetail({ tank, onEdit, onDelete }: Props) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const hero = getHeroStyle(tank.waterType);
-  const typeLabel  = tank.waterType != null ? (WATER_TYPE_LABELS[tank.waterType] ?? null) : null;
+  const typeLabel = (() => {
+    switch (tank.waterType) {
+      case WaterType.Freshwater: return t('tanks.wt_freshwater');
+      case WaterType.Saltwater:  return t('tanks.wt_saltwater');
+      case WaterType.Brackish:   return t('tanks.wt_brackish');
+      default: return null;
+    }
+  })();
   const styleLabel = tank.style     != null ? (STYLE_LABELS[tank.style]         ?? null) : null;
 
   const [fishList, setFishList]     = useState<AquariumFishDto[]>([]);
@@ -146,7 +149,7 @@ export default function AquariumDetail({ tank, onEdit, onDelete }: Props) {
       </div>
 
       {/* Stats grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8">
+      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3 mb-8">
         <StatItem icon={<FlaskConical className="w-3.5 h-3.5" />} label={t('aquarium.volume')} value={volumeLabel} />
         <StatItem icon={<Ruler className="w-3.5 h-3.5" />} label={t('aquarium.dimensions')} value={dimLabel} />
         <StatItem icon={<Calendar className="w-3.5 h-3.5" />} label={t('aquarium.createdAt')} value={formatDate(tank.createdAt, t('aquarium.dateLocale'))} />

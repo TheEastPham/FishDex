@@ -3,7 +3,7 @@ import { NavLink, Link, Outlet, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Search, MessageCircle, Camera, Fish, LogOut, ChevronRight,
   Droplets, TestTube, Calendar, Heart, History, BookOpen, ChevronDown,
-  Shield, Home, Settings, FileText, ImageIcon, User, LogIn, Menu, X, Globe, Bell
+  Shield, Home, Settings, FileText, ImageIcon, User, LogIn, Menu, X, Globe, Bell, MoreHorizontal
 } from 'lucide-react';
 import { cn, useLogout, useTranslation, setLanguage, useAuthStore } from '@fishlover/shared';
 
@@ -291,12 +291,16 @@ export default function AppShell() {
               <button
                 onClick={() => setIsLangOpen((v) => !v)}
                 className={cn(
-                  'flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl transition-colors min-h-[36px]',
+                  'flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl transition-colors min-h-[36px]',
                   isLangOpen ? 'bg-white/5' : 'hover:bg-white/5'
                 )}
               >
                 <Globe className="w-4 h-4 text-slate-400" />
-                <span className="text-sm font-semibold text-slate-300">
+                {/* mobile: abbreviation only; desktop: full label */}
+                <span className="text-sm font-semibold text-slate-300 sm:hidden">
+                  {currentLang.toUpperCase()}
+                </span>
+                <span className="text-sm font-semibold text-slate-300 hidden sm:inline">
                   {LANGUAGES.find(l => l.code === currentLang)?.label}
                 </span>
                 <ChevronDown className={cn('w-3 h-3 text-slate-500 transition-transform duration-200', isLangOpen && 'rotate-180')} />
@@ -331,22 +335,26 @@ export default function AppShell() {
                 <button
                   onClick={() => setIsUserMenuOpen((v) => !v)}
                   className={cn(
-                    'flex items-center gap-2 px-3 py-1.5 rounded-xl transition-colors border border-transparent min-h-[40px]',
+                    'flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-xl transition-colors border border-transparent min-h-[40px]',
                     isUserMenuOpen ? 'bg-white/5 border-slate-700/50' : 'hover:bg-white/5'
                   )}
                 >
-                  {selectedAvatar ? (
-                    <img src={selectedAvatar} alt="avatar" className="w-7 h-7 rounded-full border border-slate-700" />
-                  ) : (
-                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-white font-bold text-xs">
-                      {userInitials}
+                  {/* mobile: 3-dot icon; desktop: avatar + name */}
+                  <MoreHorizontal className="w-5 h-5 text-slate-400 sm:hidden" />
+                  <div className="hidden sm:flex items-center gap-2">
+                    {selectedAvatar ? (
+                      <img src={selectedAvatar} alt="avatar" className="w-7 h-7 rounded-full border border-slate-700" />
+                    ) : (
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-white font-bold text-xs">
+                        {userInitials}
+                      </div>
+                    )}
+                    <div className="flex flex-col items-start leading-none">
+                      <span className="text-sm font-semibold text-white truncate max-w-[120px]">{userName || 'User'}</span>
+                      <span className="text-[11px] text-slate-400 truncate max-w-[120px]">{roles[0] ?? userEmail ?? ''}</span>
                     </div>
-                  )}
-                  <div className="hidden sm:flex flex-col items-start leading-none">
-                    <span className="text-sm font-semibold text-white truncate max-w-[120px]">{userName || 'User'}</span>
-                    <span className="text-[11px] text-slate-400 truncate max-w-[120px]">{roles[0] ?? userEmail ?? ''}</span>
+                    <ChevronDown className={cn('w-3.5 h-3.5 text-slate-500 transition-transform duration-300', isUserMenuOpen && 'rotate-180')} />
                   </div>
-                  <ChevronDown className={cn('w-3.5 h-3.5 text-slate-500 transition-transform duration-300', isUserMenuOpen && 'rotate-180')} />
                 </button>
 
                 {isUserMenuOpen && (

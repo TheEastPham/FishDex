@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  getAquariumMedia, requestMediaUpload, uploadToR2, confirmMediaUpload, deleteAquariumMedia,
+  getAquariumMedia, requestMediaUpload, uploadToR2, confirmMediaUpload, deleteAquariumMedia, useTranslation,
 } from '@fishlover/shared';
 import type { AquariumMediaDto } from '@fishlover/shared';
 import { ImagePlus, Trash2, Loader2, X, ZoomIn } from 'lucide-react';
@@ -90,6 +90,7 @@ interface UploadState {
 }
 
 export default function AquariumMediaSection({ aquariumId }: Props) {
+  const { t } = useTranslation();
   const [photos, setPhotos]         = useState<AquariumMediaDto[]>([]);
   const [loading, setLoading]       = useState(true);
   const [uploads, setUploads]       = useState<UploadState[]>([]);
@@ -181,15 +182,15 @@ export default function AquariumMediaSection({ aquariumId }: Props) {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">
-          Ảnh bể ({photos.length}/{MAX_PHOTOS})
+          {t('tanks_detail.photos')} ({photos.length}/{MAX_PHOTOS})
         </h3>
         {canUpload && (
           <button
             onClick={() => inputRef.current?.click()}
-            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 transition-colors"
+            className="flex items-center justify-center w-8 h-8 rounded-lg bg-sky-500/20 hover:bg-sky-500/40 border border-sky-500/40 hover:border-sky-400 text-sky-400 transition-colors"
+            title={t('tanks_detail.addPhoto')}
           >
-            <ImagePlus className="w-3.5 h-3.5" />
-            Thêm ảnh
+            <ImagePlus className="w-4 h-4" />
           </button>
         )}
         <input
@@ -208,8 +209,8 @@ export default function AquariumMediaSection({ aquariumId }: Props) {
           onClick={() => canUpload && inputRef.current?.click()}
         >
           <ImagePlus className="w-8 h-8 text-slate-600 mb-2" />
-          <p className="text-slate-500 text-sm">Chưa có ảnh</p>
-          <p className="text-slate-600 text-xs mt-1">JPG, PNG, WebP · tối đa 1 MB sau khi nén</p>
+          <p className="text-slate-500 text-sm">{t('tanks_detail.noPhoto')}</p>
+          <p className="text-slate-600 text-xs mt-1">{t('tanks_detail.photoHint')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">

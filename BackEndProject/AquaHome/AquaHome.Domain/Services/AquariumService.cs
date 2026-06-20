@@ -119,5 +119,7 @@ public class AquariumService(
         a.Id, a.Name, a.LengthCm, a.WidthCm, a.HeightCm, a.VolumeLiters,
         a.WaterType.HasValue ? (WaterType)a.WaterType.Value : null,
         a.Style.HasValue     ? (AquariumStyle)a.Style.Value : null,
-        a.Description, a.CreatedAt, a.Fish?.Count ?? 0);
+        a.Description, a.CreatedAt,
+        FishCount: a.Fish?.Count ?? 0,
+        TotalQuantity: a.Fish?.Sum(f => f.Quantity) ?? 0);
 }

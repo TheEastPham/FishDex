@@ -31,7 +31,8 @@ export interface AquariumDto {
   style: AquariumStyle | null;
   description: string | null;
   createdAt: string;
-  fishCount: number;
+  fishCount: number;      // số loài đang nuôi (species count)
+  totalQuantity: number;  // tổng số cá thể (sum of quantity)
 }
 
 export interface CreateAquariumRequest {

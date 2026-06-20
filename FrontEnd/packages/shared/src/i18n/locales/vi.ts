@@ -21,6 +21,7 @@ const vi = {
     mediaManager: 'Quản lý Media',
     profile: 'Hồ sơ',
     settings: 'Cài đặt',
+    login: 'Đăng nhập',
   },
   login: {
     subtitle: 'Quản lý bể cá của bạn',

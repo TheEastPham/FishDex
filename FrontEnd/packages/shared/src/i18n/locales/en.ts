@@ -1,6 +1,5 @@
 const en = {
   nav: {
-    login: 'Login',
     overviewGroup: 'Overview',
     dashboard: 'Dashboard',
     article: 'Article',
@@ -22,6 +21,7 @@ const en = {
     mediaManager: 'Media Manager',
     profile: 'Profile',
     settings: 'Settings',
+    login: 'Sign in',
   },
   login: {
     subtitle: 'Manage your aquarium',

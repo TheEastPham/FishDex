@@ -46,9 +46,11 @@ public class AuthorizationController(
             nameType: Claims.Name,
             roleType: Claims.Role);
 
+        var displayName = $"{user.FirstName} {user.LastName}".Trim();
+
         identity.SetClaim(Claims.Subject, user.Id.ToString())
                 .SetClaim(Claims.Email, user.Email)
-                .SetClaim(Claims.Name, user.UserName)
+                .SetClaim(Claims.Name, string.IsNullOrEmpty(displayName) ? user.UserName : displayName)
                 .SetClaims(Claims.Role, [.. (await userManager.GetRolesAsync(user))]);
 
         identity.SetScopes(request.GetScopes());
@@ -171,9 +173,11 @@ public class AuthorizationController(
             nameType: Claims.Name,
             roleType: Claims.Role);
 
+        var displayName = $"{user.FirstName} {user.LastName}".Trim();
+
         identity.SetClaim(Claims.Subject, user.Id.ToString())
                 .SetClaim(Claims.Email, user.Email)
-                .SetClaim(Claims.Name, user.UserName)
+                .SetClaim(Claims.Name, string.IsNullOrEmpty(displayName) ? user.UserName : displayName)
                 .SetClaims(Claims.Role, [.. (await userManager.GetRolesAsync(user))]);
 
         identity.SetDestinations(GetDestinations);
@@ -189,11 +193,13 @@ public class AuthorizationController(
         if (user is null)
             return Challenge(authenticationSchemes: OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme);
 
+        var displayName = $"{user.FirstName} {user.LastName}".Trim();
+
         var claims = new Dictionary<string, object>
         {
             [Claims.Subject] = user.Id.ToString(),
             [Claims.Email] = user.Email ?? string.Empty,
-            [Claims.Name] = user.UserName ?? string.Empty,
+            [Claims.Name] = string.IsNullOrEmpty(displayName) ? (user.UserName ?? string.Empty) : displayName,
             [Claims.Role] = await userManager.GetRolesAsync(user)
         };
 

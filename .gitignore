@@ -23,6 +23,9 @@ Pipeline/OracleVM/VM3/image_search_service/models/
 Pipeline/OracleVM/VM*/data/
 Pipeline/OracleVM/*/data/
 
+# Prod seed scripts (contain credentials — run manually on server)
+Pipeline/OracleVM/shared/seed-*.sql
+
 # Node modules + JS
 node_modules/
 package-lock.json

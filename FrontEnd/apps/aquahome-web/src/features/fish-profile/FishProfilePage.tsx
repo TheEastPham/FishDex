@@ -342,7 +342,7 @@ export default function FishProfilePage() {
             <SectionHeader icon={<Fish className="w-5 h-5 text-teal-400" />} title={t('fish.ecology')} />
             <div className="space-y-3">
               <InfoRow label={t('fish.feedingType')} value={detail.ecology?.feedingType} />
-              <InfoRow label={t('fish.trophicLevel')} value={detail.ecology?.dietTroph ? `${detail.ecology.dietTroph.toFixed(1)}` : null} />
+              <InfoRow label={t('fish.trophicLevel')} value={detail.ecology?.dietTroph != null ? `${detail.ecology.dietTroph.toFixed(1)}` : null} />
               <InfoRow label={t('fish.demerspelagic')} value={detail.demersPelag} />
               <InfoRow label={t('fish.socialBehavior')} value={socialBehavior} />
             </div>

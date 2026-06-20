@@ -38,7 +38,7 @@ try
     builder.Services.AddFishDexDatabase(builder.Configuration);
     builder.Services.AddFishDexRepositories();
     builder.Services.AddFishDexServices();
-    builder.Services.AddMemoryCache();
+    builder.Services.AddMemoryCache(opts => opts.SizeLimit = 3_000);
     builder.Services.Configure<FishDexSettings>(
         builder.Configuration.GetSection(FishDexSettings.SectionName));
     builder.Services.Configure<StorageSettings>(

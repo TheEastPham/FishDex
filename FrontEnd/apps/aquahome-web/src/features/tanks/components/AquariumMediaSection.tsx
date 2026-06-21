@@ -144,18 +144,18 @@ export default function AquariumMediaSection({ aquariumId }: Props) {
         setProgress(upload, 100);
 
         setPhotos(prev => [...prev, dto]);
-        setUploads(prev => prev.filter(u => u !== upload));
+        setUploads(prev => prev.filter(u => u.preview !== upload.preview));
         URL.revokeObjectURL(upload.preview);
       } catch (err) {
         setUploads(prev =>
-          prev.map(u => u === upload ? { ...u, error: (err as Error).message } : u),
+          prev.map(u => u.preview === upload.preview ? { ...u, error: (err as Error).message } : u),
         );
       }
     }
   }
 
   function setProgress(upload: UploadState, pct: number) {
-    setUploads(prev => prev.map(u => u === upload ? { ...u, progress: pct } : u));
+    setUploads(prev => prev.map(u => u.preview === upload.preview ? { ...u, progress: pct } : u));
   }
 
   async function handleDelete(id: string) {

@@ -234,12 +234,13 @@ public class AuthService(
             CreatedAt = DateTime.UtcNow
         };
 
-        if (configuration.GetValue<bool>("RequireInvitation"))
+        var requireInvitation = configuration.GetValue<bool>("RequireInvitation");
+        if (requireInvitation || !string.IsNullOrWhiteSpace(invitationCode))
         {
             var validation = await ValidateInvitationCodeAsync(invitationCode);
             cacheData.InvitationId = validation.InvitationId;
-            
-            if(!validation.IsValid)
+
+            if (requireInvitation && !validation.IsValid)
                 return new EmailVerificationResponse(false, validation.Message);
         }
         

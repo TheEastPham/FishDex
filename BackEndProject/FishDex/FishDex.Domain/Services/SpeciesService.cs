@@ -5,6 +5,7 @@ using FishDex.Domain.DTOs.Stocks;
 using FishDex.Domain.Mappings;
 using FishDex.Domain.Services.Interfaces;
 using FishDex.Domain.Settings;
+using FishDex.EFCore.Cache;
 using FishDex.EFCore.Repository.Interface;
 using FishLover.Shared.Common;
 using Microsoft.Extensions.Caching.Memory;
@@ -20,6 +21,7 @@ public class SpeciesService(
     IStorageService storage,
     IEcologyService ecologyService,
     IStockService stockService,
+    ISpeciesCache speciesCache,
     IMemoryCache cache,
     IOptions<FishDexSettings> settings) : ISpeciesService
 {
@@ -109,6 +111,9 @@ public class SpeciesService(
     public async Task<SpeciesDetailDto?> GetDetailAsync(int specCode, string? language = null, CancellationToken ct = default)
     {
         language = NormalizeLanguage(language);
+
+        // Trigger cache population (cache-aside) — does nothing if already cached
+        _ = speciesCache.GetOrPopulateAsync(specCode, ct);
 
         var species = await speciesRepo.GetWithDetailsAsync(specCode, ct);
         if (species == null) return null;
@@ -257,19 +262,20 @@ public class SpeciesService(
         IEnumerable<int> specCodes, string? language = null, CancellationToken ct = default)
     {
         language = NormalizeLanguage(language);
-        var speciesList = await speciesRepo.GetBySpecCodesAsync(specCodes, ct);
 
-        return await Task.WhenAll(speciesList.Select(async s =>
+        // Use snapshot cache — avoids loading 16 FishBase tables per species
+        var snapshots = await speciesCache.GetOrPopulateManyAsync(specCodes, ct);
+
+        return await Task.WhenAll(snapshots.Select(async snap =>
         {
-            var pic      = s.Pictures?.FirstOrDefault(p => p.PicPreferred == true);
-            var imageUrl = pic != null
-                ? await storage.GetPresignedUrlAsync(pic.ObjectKey, ct)
+            var imageUrl = snap.ThumbnailObjectKey is not null
+                ? await storage.GetPresignedUrlAsync(snap.ThumbnailObjectKey, ct)
                 : null;
             return new SpeciesSummaryDto
             {
-                SpecCode    = s.SpecCode,
-                SpeciesName = s.SpeciesName,
-                CommonName  = s.CommonNames.PickPreferredName(language),
+                SpecCode    = snap.SpecCode,
+                SpeciesName = snap.SpeciesName,
+                CommonName  = snap.CommonName,
                 ImageUrl    = imageUrl
             };
         }));

@@ -17,6 +17,7 @@ import TanksPage from '@/features/tanks/TanksPage';
 import FavoritesPage from '@/features/favorites/FavoritesPage';
 import ProfilePage from '@/features/profile/ProfilePage';
 import HistoryPage from '@/features/history/HistoryPage';
+import ReleasePage from '@/features/articles/ReleasePage';
 
 // Redirect "/" based on auth state: dashboard if logged in, fish search if not
 function RootRedirect() {
@@ -36,15 +37,16 @@ export const router = createBrowserRouter([
       { index: true, element: <RootRedirect /> },
 
       // ── Public routes ──────────────────────────────────────
-      { path: '/fish',           element: <FishSearchPage /> },
-      { path: '/fish/:specCode', element: <FishProfilePage /> },
+      { path: '/fish',                element: <FishSearchPage /> },
+      { path: '/fish/:specCode',      element: <FishProfilePage /> },
+      { path: '/articles/release',    element: <ReleasePage /> },
+      { path: '/articles',            element: <Navigate to="/articles/release" replace /> },
 
       // ── Auth-required routes ───────────────────────────────
       {
         element: <AuthGuard />,
         children: [
           { path: '/dashboard',    element: <DashboardPage /> },
-          { path: '/articles',     element: <PlaceholderPage /> },
           { path: '/tanks',        element: <TanksPage /> },
           { path: '/parameters',   element: <PlaceholderPage /> },
           { path: '/tasks',        element: <PlaceholderPage /> },

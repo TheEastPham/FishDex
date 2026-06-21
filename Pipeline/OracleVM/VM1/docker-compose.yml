@@ -75,6 +75,7 @@ services:
       - JwtSettings__Issuer=${JWT_ISSUER}
       - JwtSettings__Audience=${JWT_AUDIENCE}
       - Cors__AllowedOrigins__0=${FE_ORIGIN}
+      - AutoMigrate__OnStartup=true
       - ASPNETCORE_HTTP_PORTS=8081
     depends_on:
       - postgres

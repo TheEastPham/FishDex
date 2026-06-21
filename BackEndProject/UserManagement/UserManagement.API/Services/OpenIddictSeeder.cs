@@ -54,7 +54,8 @@ public class OpenIddictSeeder(IServiceProvider serviceProvider) : IHostedService
             {
                 new Uri("http://localhost:5173"),
                 new Uri("http://localhost:3000"),
-                new Uri("https://fishlover.org"),           // Production
+                new Uri("https://fishlover.org"),
+                new Uri("https://fishlover.org/"),          // trailing slash variant
             },
             Permissions =
             {

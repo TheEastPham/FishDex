@@ -1,4 +1,5 @@
-﻿using FishDex.EFCore.Entity.Ecologies;
+﻿using FishDex.EFCore.Entity.Cache;
+using FishDex.EFCore.Entity.Ecologies;
 using FishDex.EFCore.Entity.Ecosystem;
 using FishDex.EFCore.Entity.Media;
 using FishDex.EFCore.Entity.MorphData;
@@ -51,8 +52,11 @@ public class FishDexDbContext : DbContext
     public DbSet<Ecosystem>    Ecosystems    { get; set; }
 
     // Other
-    public DbSet<Occurrence>  Occurrences  { get; set; }
-    public DbSet<SystemImage> SystemImages { get; set; }
+    public DbSet<Occurrence>       Occurrences      { get; set; }
+    public DbSet<SystemImage>      SystemImages     { get; set; }
+
+    // Cache
+    public DbSet<SpeciesSnapshot> SpeciesSnapshots { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -267,6 +271,15 @@ public class FishDexDbContext : DbContext
             entity.HasKey(e => e.AutoCtr);
             entity.HasIndex(e => e.SpecCode);
             entity.HasIndex(e => e.E_CODE);
+        });
+
+        // ── SpeciesSnapshot ───────────────────────────────────────
+        modelBuilder.Entity<SpeciesSnapshot>(entity =>
+        {
+            entity.HasKey(e => e.SpecCode);
+            entity.HasIndex(e => e.DataSource);
+            entity.HasIndex(e => e.PopulatedAt);
+            entity.Property(e => e.SpeciesName).IsRequired();
         });
 
         // ── StockDataAvailability: bool? thay vì string ──────────

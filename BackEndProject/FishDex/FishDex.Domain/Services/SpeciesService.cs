@@ -113,7 +113,8 @@ public class SpeciesService(
         language = NormalizeLanguage(language);
 
         // Trigger cache population (cache-aside) — does nothing if already cached
-        _ = speciesCache.GetOrPopulateAsync(specCode, ct);
+        // Must await: shares the same scoped DbContext, concurrent use is not safe
+        await speciesCache.GetOrPopulateAsync(specCode, ct);
 
         var species = await speciesRepo.GetWithDetailsAsync(specCode, ct);
         if (species == null) return null;

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { requestOtp, registerUser, useTranslation } from '@fishlover/shared';
+import { requestOtp, registerUser, useTranslation, LanguageSwitcher } from '@fishlover/shared';
 
 const LANGUAGES = [
   { value: 'vi-VN', label: 'Tiếng Việt' },
@@ -98,11 +98,14 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 w-full max-w-sm">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-800">AquaHome 🐠</h1>
-          <p className="text-slate-500 text-sm mt-1">
-            {step === 1 ? t('register.step1Title') : t('register.step2Title')}
-          </p>
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">AquaHome 🐠</h1>
+            <p className="text-slate-500 text-sm mt-1">
+              {step === 1 ? t('register.step1Title') : t('register.step2Title')}
+            </p>
+          </div>
+          <LanguageSwitcher className="text-xs font-semibold text-slate-400 hover:text-slate-700 border border-slate-200 rounded-lg px-2.5 py-1.5 transition-colors shrink-0 mt-1" />
         </div>
 
         {success ? (

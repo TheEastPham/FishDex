@@ -29,9 +29,9 @@ public class S3StorageService : IStorageService
 
         if (!string.IsNullOrEmpty(_settings.ServiceUrl))
         {
-            config.ServiceURL          = _settings.ServiceUrl;
+            config.ServiceURL           = _settings.ServiceUrl;
             config.AuthenticationRegion = "apac";
-            config.UseHttp             = _settings.ServiceUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase);
+            config.UseHttp              = _settings.ServiceUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase);
         }
         else
             config.RegionEndpoint = RegionEndpoint.APSoutheast1;
@@ -59,9 +59,11 @@ public class S3StorageService : IStorageService
                 ContentType = contentType,
             };
 
-            // Enforce max upload size so oversized files get rejected by MinIO directly
+            // UNSIGNED-PAYLOAD tells R2 to skip body hash verification (required for browser PUT)
+            // x-amz-meta-max-bytes is intentionally NOT signed — signing metadata forces FE to send
+            // that header on PUT, but browsers don't, causing R2 signature mismatch → 403.
+            // Max-size enforcement is done at the controller layer before issuing the URL.
             request.Headers["x-amz-content-sha256"] = "UNSIGNED-PAYLOAD";
-            request.Metadata.Add("x-amz-meta-max-bytes", maxBytes.ToString());
 
             var url = _s3.GetPreSignedURL(request);
             return Task.FromResult<string?>(url);

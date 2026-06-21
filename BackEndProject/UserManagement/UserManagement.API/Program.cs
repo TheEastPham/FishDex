@@ -56,43 +56,18 @@ builder.Services.AddFishLoverTelemetry(builder.Configuration, "UserManagement.AP
 // JWT Authentication — HS256 symmetric scheme (direct-login tokens)
 builder.Services.AddFishLoverJwtAuthentication(builder.Configuration);
 
-// OpenIddict RS256 scheme — validate OAuth2 PKCE tokens issued by this service
-// MetadataAddress + JWKS calls đều đi qua internal URL để tránh hairpin NAT issue trên Oracle VM.
-// Khi PROD: oidcIssuer = https://api.fishlover.org; oidcInternalUrl = http://localhost:8080
-// BackchannelHttpMessageHandler rewrite mọi call tới oidcIssuer → oidcInternalUrl trong nội bộ container.
-var oidcIssuer = builder.Configuration["OpenIddict:Issuer"] ?? "http://localhost:8080";
-var oidcInternalUrl = builder.Configuration["AuthServer:InternalUrl"] ?? "http://localhost:8080";
-builder.Services.AddAuthentication()
-    .AddJwtBearer("OpenIddict", options =>
-    {
-        options.MetadataAddress = $"{oidcInternalUrl.TrimEnd('/')}/.well-known/openid-configuration";
-        options.RequireHttpsMetadata = false;
-        // Rewrite external issuer URL → internal URL so JWKS fetch stays in-container (no hairpin NAT needed)
-        var externalBase = oidcIssuer.TrimEnd('/');
-        var internalBase = oidcInternalUrl.TrimEnd('/');
-        if (!string.Equals(externalBase, internalBase, StringComparison.OrdinalIgnoreCase))
-        {
-            options.BackchannelHttpHandler = new UserManagement.API.Infrastructure.InternalUrlRewriteHandler(externalBase, internalBase);
-        }
-        var issuer = externalBase;
-        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-        {
-            ValidIssuers = [issuer, issuer + "/"],
-            ValidateIssuer = true,
-            ValidateAudience = false,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-        };
-    });
+// OpenIddict validation scheme — validate OAuth2 PKCE tokens bằng cách đọc trực tiếp từ
+// in-memory OpenIddict server (UseLocalServer). Không cần HTTP discovery hay JWKS fetch,
+// tránh hoàn toàn hairpin NAT + transport security requirement issue trên Oracle VM.
 
 builder.Services.AddFishLoverAuthorization();
 
-// Override DefaultPolicy: accept cả Bearer (HS256) lẫn OpenIddict (RS256)
+// Override DefaultPolicy: accept cả Bearer (HS256 direct-login) lẫn OpenIddict validation (RS256 PKCE)
 builder.Services.AddAuthorization(options =>
 {
     options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder(
         Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme,
-        "OpenIddict")
+        OpenIddict.Validation.AspNetCore.OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme)
         .RequireAuthenticatedUser()
         .Build();
 });

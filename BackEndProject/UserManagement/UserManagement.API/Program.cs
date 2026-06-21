@@ -57,15 +57,24 @@ builder.Services.AddFishLoverTelemetry(builder.Configuration, "UserManagement.AP
 builder.Services.AddFishLoverJwtAuthentication(builder.Configuration);
 
 // OpenIddict RS256 scheme — validate OAuth2 PKCE tokens issued by this service
-// MetadataAddress trỏ về chính service này (internal); ValidIssuers = OpenIddict:Issuer (public URL)
+// MetadataAddress + JWKS calls đều đi qua internal URL để tránh hairpin NAT issue trên Oracle VM.
+// Khi PROD: oidcIssuer = https://api.fishlover.org; oidcInternalUrl = http://localhost:8080
+// BackchannelHttpMessageHandler rewrite mọi call tới oidcIssuer → oidcInternalUrl trong nội bộ container.
 var oidcIssuer = builder.Configuration["OpenIddict:Issuer"] ?? "http://localhost:8080";
 var oidcInternalUrl = builder.Configuration["AuthServer:InternalUrl"] ?? "http://localhost:8080";
 builder.Services.AddAuthentication()
     .AddJwtBearer("OpenIddict", options =>
     {
-        options.MetadataAddress = $"{oidcInternalUrl}/.well-known/openid-configuration";
+        options.MetadataAddress = $"{oidcInternalUrl.TrimEnd('/')}/.well-known/openid-configuration";
         options.RequireHttpsMetadata = false;
-        var issuer = oidcIssuer.TrimEnd('/');
+        // Rewrite external issuer URL → internal URL so JWKS fetch stays in-container (no hairpin NAT needed)
+        var externalBase = oidcIssuer.TrimEnd('/');
+        var internalBase = oidcInternalUrl.TrimEnd('/');
+        if (!string.Equals(externalBase, internalBase, StringComparison.OrdinalIgnoreCase))
+        {
+            options.BackchannelHttpHandler = new UserManagement.API.Infrastructure.InternalUrlRewriteHandler(externalBase, internalBase);
+        }
+        var issuer = externalBase;
         options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
         {
             ValidIssuers = [issuer, issuer + "/"],

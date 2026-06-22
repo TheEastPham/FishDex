@@ -133,7 +133,7 @@ export default function RegisterPage() {
               <input
                 type="text"
                 required
-                maxLength={8}
+                maxLength={10}
                 value={invitationCode}
                 onChange={(e) => setInvitationCode(e.target.value.toUpperCase())}
                 placeholder={t('register.invitationCodePlaceholder')}

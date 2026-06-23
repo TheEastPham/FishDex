@@ -37,7 +37,7 @@ export default function CallbackPage() {
 
     exchangeCode(code, verifier)
       .then((tokens) => {
-        setTokens(tokens.access_token, tokens.refresh_token);
+        setTokens(tokens.access_token, tokens.refresh_token, tokens.id_token);
         navigate('/dashboard', { replace: true });
       })
       .catch(() => navigate('/login', { replace: true }));

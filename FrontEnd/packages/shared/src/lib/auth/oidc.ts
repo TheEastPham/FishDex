@@ -68,6 +68,8 @@ export async function revokeToken(token: string): Promise<void> {
 }
 
 export function buildLogoutUrl(): string {
-  const params = new URLSearchParams({ post_logout_redirect_uri: postLogoutUri });
-  return `${endpoints.logout}?${params}`;
+  const params: Record<string, string> = { post_logout_redirect_uri: postLogoutUri };
+  const idToken = sessionStorage.getItem('_it');
+  if (idToken) params.id_token_hint = idToken;
+  return `${endpoints.logout}?${new URLSearchParams(params)}`;
 }

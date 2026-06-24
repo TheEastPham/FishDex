@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { getMyProfile, updateMyProfile, changePassword, useTranslation } from '@fishlover/shared';
+import { getMyProfile, updateMyProfile, changePassword, useTranslation, usePushNotification } from '@fishlover/shared';
 import type { UserProfileDto } from '@fishlover/shared';
+import { Bell, BellOff } from 'lucide-react';
 
 const LANGUAGES = [
   { value: 'vi-VN', label: 'Tiếng Việt' },
@@ -18,6 +19,7 @@ const LANGUAGES = [
 export default function ProfilePage() {
   const { t } = useTranslation();
   const [profile, setProfile] = useState<UserProfileDto | null>(null);
+  const { permission, loading: pushLoading, isSupported, subscribe, unsubscribe } = usePushNotification();
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -168,6 +170,41 @@ export default function ProfilePage() {
           {savingProfile ? t('profile.saving') : t('profile.saveProfile')}
         </button>
       </form>
+
+      {/* Push Notifications */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-3">
+        <h2 className="font-semibold text-slate-800">{t('profile.pushNotifications')}</h2>
+        <p className="text-sm text-slate-500">{t('profile.pushHint')}</p>
+
+        {!isSupported ? (
+          <p className="text-sm text-slate-400">{t('profile.pushUnsupported')}</p>
+        ) : permission === 'denied' ? (
+          <p className="text-sm text-amber-600">{t('profile.pushDenied')}</p>
+        ) : permission === 'granted' ? (
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-2 text-sm text-green-600 font-medium">
+              <Bell className="w-4 h-4" /> {t('profile.pushEnabled')}
+            </span>
+            <button
+              onClick={unsubscribe}
+              disabled={pushLoading}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50 transition-colors min-h-[44px]"
+            >
+              <BellOff className="w-4 h-4" />
+              {t('profile.pushDisable')}
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={subscribe}
+            disabled={pushLoading}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-600 disabled:opacity-50 text-white text-sm font-medium transition-colors min-h-[44px]"
+          >
+            <Bell className="w-4 h-4" />
+            {pushLoading ? '...' : t('profile.pushEnable')}
+          </button>
+        )}
+      </div>
 
       {/* Change password */}
       <form onSubmit={handleChangePassword} className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">

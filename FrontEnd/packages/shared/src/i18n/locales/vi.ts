@@ -54,6 +54,13 @@ const vi = {
     changingPwd: 'Đang đổi...',
     changePwdSuccess: 'Đã đổi mật khẩu!',
     avatarNote: 'Avatar tạm thời từ DiceBear — sẽ hỗ trợ upload ảnh trong bản sau',
+    pushNotifications: 'Thông báo đẩy',
+    pushEnable: 'Bật thông báo',
+    pushDisable: 'Tắt thông báo',
+    pushEnabled: 'Đang bật',
+    pushDenied: 'Bị chặn — vào cài đặt trình duyệt để cấp quyền',
+    pushUnsupported: 'Trình duyệt không hỗ trợ thông báo đẩy',
+    pushHint: 'Nhận nhắc nhở khi đến lịch chăm sóc hồ cá',
   },
   forgotPassword: {
     title: 'Quên mật khẩu',

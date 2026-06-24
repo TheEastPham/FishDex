@@ -54,6 +54,13 @@ const en = {
     changingPwd: 'Changing...',
     changePwdSuccess: 'Password changed!',
     avatarNote: 'Avatar temporarily from DiceBear — image upload coming in a future release',
+    pushNotifications: 'Push Notifications',
+    pushEnable: 'Enable notifications',
+    pushDisable: 'Disable notifications',
+    pushEnabled: 'Enabled',
+    pushDenied: 'Blocked — allow in browser settings to re-enable',
+    pushUnsupported: 'Your browser does not support push notifications',
+    pushHint: 'Get reminders when it\'s time to care for your tank',
   },
   forgotPassword: {
     title: 'Forgot password',

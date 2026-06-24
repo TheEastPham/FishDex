@@ -28,6 +28,8 @@ export { getMyAquariums, getAquariumById, createAquarium, updateAquarium, delete
 export type { RecentlyViewedDto } from './types/aquahome';
 export { requestOtp, registerUser, forgotPassword, resetPassword, getMyProfile, updateMyProfile, changePassword } from './lib/api/auth';
 export type { RequestOtpResponse, RegisterRequest, RegisterResponse, ForgotPasswordResponse, ResetPasswordPayload, ResetPasswordResponse, UserProfileDto, UpdateProfilePayload, ChangePasswordPayload } from './lib/api/auth';
+export { getVapidPublicKey, saveSubscription, removeSubscription } from './lib/api/push';
+export type { SaveSubscriptionPayload } from './lib/api/push';
 
 
 // ── Cache ─────────────────────────────────────────────────
@@ -42,6 +44,7 @@ export { useFishProfile }                          from './hooks/useFishProfile'
 export { useMyFavorites }                          from './hooks/useMyFavorites';
 export { useMyAquariums }                          from './hooks/useMyAquariums';
 export { useSpeciesSummaries }                     from './hooks/useSpeciesSummaries';
+export { usePushNotification }                     from './hooks/usePushNotification';
 
 // ── Utils ─────────────────────────────────────────────────
 export { cn, getCountryCode }                       from './lib/utils';

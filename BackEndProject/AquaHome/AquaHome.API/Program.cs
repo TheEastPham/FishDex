@@ -38,7 +38,7 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddMemoryCache();
 builder.Services.AddAquaHomeServices(builder.Configuration);
 builder.Services.AddAquaHomeRepositories();
-builder.Services.AddAquaHomeDomainServices();
+builder.Services.AddAquaHomeDomainServices(builder.Configuration);
 builder.Services.AddAquaHomeStorage(builder.Configuration);
 builder.Services.AddFishLoverJwtAuthentication(builder.Configuration);
 

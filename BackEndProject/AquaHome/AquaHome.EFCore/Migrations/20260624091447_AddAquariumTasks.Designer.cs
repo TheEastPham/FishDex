@@ -3,6 +3,7 @@ using System;
 using AquaHome.EFCore.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AquaHome.EFCore.Migrations
 {
     [DbContext(typeof(AquaHomeDbContext))]
-    partial class AquaHomeDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260624091447_AddAquariumTasks")]
+    partial class AddAquariumTasks
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -117,11 +120,8 @@ namespace AquaHome.EFCore.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("AquariumId")
+                    b.Property<Guid?>("AquariumId")
                         .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("CompletedAt")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -129,24 +129,23 @@ namespace AquaHome.EFCore.Migrations
                     b.Property<DateTime>("DueAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("IntervalDays")
-                        .HasColumnType("integer");
-
                     b.Property<bool>("IsCompleted")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("Reminded")
                         .HasColumnType("boolean");
 
-                    b.Property<int>("AquaTaskType")
-                        .HasColumnType("integer");
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AquariumId", "IsCompleted");
+                    b.HasIndex("AquariumId");
 
                     b.HasIndex("IsCompleted", "Reminded", "DueAt");
 
@@ -214,8 +213,7 @@ namespace AquaHome.EFCore.Migrations
                     b.HasOne("AquaHome.EFCore.Entity.Aquarium", "Aquarium")
                         .WithMany()
                         .HasForeignKey("AquariumId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Aquarium");
                 });

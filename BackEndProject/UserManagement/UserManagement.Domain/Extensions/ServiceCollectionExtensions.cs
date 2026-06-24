@@ -1,5 +1,6 @@
 ﻿using UserManagement.Domain.Services;
 using UserManagement.Domain.Services.Interfaces;
+using UserManagement.Domain.Settings;
 using UserManagement.EFCore.Data;
 using UserManagement.EFCore.Entities.User;
 using UserManagement.EFCore.Extensions;
@@ -61,6 +62,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IEmailProvider, ResendEmailProvider>();
         services.AddScoped<IWebPushService, WebPushService>();
+        services.Configure<InternalSettings>(configuration.GetSection(InternalSettings.SectionName));
 
         return services;
     }

@@ -3,6 +3,7 @@ using System;
 using AquaHome.EFCore.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AquaHome.EFCore.Migrations
 {
     [DbContext(typeof(AquaHomeDbContext))]
-    partial class AquaHomeDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260625092930_UpdateAquariumTaskAddTypeAndInterval")]
+    partial class UpdateAquariumTaskAddTypeAndInterval
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -138,7 +141,7 @@ namespace AquaHome.EFCore.Migrations
                     b.Property<bool>("Reminded")
                         .HasColumnType("boolean");
 
-                    b.Property<int>("AquaTaskType")
+                    b.Property<int>("TaskType")
                         .HasColumnType("integer");
 
                     b.Property<Guid>("UserId")

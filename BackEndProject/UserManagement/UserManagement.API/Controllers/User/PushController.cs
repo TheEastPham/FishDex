@@ -1,8 +1,10 @@
 using FishLover.Shared.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using UserManagement.Domain.DTOs.Push;
 using UserManagement.Domain.Services.Interfaces;
+using UserManagement.Domain.Settings;
 
 namespace UserManagement.API.Controllers.User;
 
@@ -11,6 +13,7 @@ namespace UserManagement.API.Controllers.User;
 public class PushController(
     IWebPushService pushService,
     ICurrentUserSession currentUser,
+    IOptions<InternalSettings> internalSettings,
     ILogger<PushController> logger) : ControllerBase
 {
     /// <summary>
@@ -61,6 +64,33 @@ public class PushController(
         catch (Exception ex)
         {
             logger.LogError(ex, "Error removing push subscription");
+            return StatusCode(500, "Internal server error");
+        }
+    }
+
+    /// <summary>
+    /// Internal endpoint — gọi từ service khác (AquaHome) để gửi push cho user.
+    /// Bảo vệ bằng X-Internal-Api-Key header, không expose qua API Gateway.
+    /// </summary>
+    [HttpPost("send")]
+    [AllowAnonymous]
+    public async Task<IActionResult> SendToUser(
+        [FromBody] SendPushRequest request,
+        [FromHeader(Name = "X-Internal-Api-Key")] string? apiKey)
+    {
+        if (apiKey != internalSettings.Value.ApiKey)
+            return Unauthorized();
+
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        try
+        {
+            await pushService.SendNotificationAsync(request.UserId, request.Title, request.Body, request.Url);
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error sending push to user {UserId}", request.UserId);
             return StatusCode(500, "Internal server error");
         }
     }

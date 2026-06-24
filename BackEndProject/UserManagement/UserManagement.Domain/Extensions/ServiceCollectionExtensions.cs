@@ -60,6 +60,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IRoleService, RoleService>();
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IEmailProvider, ResendEmailProvider>();
+        services.AddScoped<IWebPushService, WebPushService>();
 
         return services;
     }

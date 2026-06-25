@@ -5,6 +5,7 @@ import type { AquariumDto, AquariumFishDto } from '@fishlover/shared';
 import { Pencil, Trash2, FlaskConical, Ruler, Calendar, Fish, Layers, Droplets } from 'lucide-react';
 import FishInventorySection from './FishInventorySection';
 import AquariumMediaSection from './AquariumMediaSection';
+import RemindersSection from './RemindersSection';
 
 const TANK_HERO: Record<number, { from: string; via: string; to: string; accent: string }> = {
   [WaterType.Freshwater]: { from: 'from-emerald-950', via: 'via-emerald-900/80', to: 'to-teal-950',   accent: 'text-emerald-400' },
@@ -179,6 +180,9 @@ export default function AquariumDetail({ tank, onEdit, onDelete }: Props) {
         loading={fishLoading}
         onNavigateFish={specCode => navigate(`/fish/${specCode}`)}
       />
+
+      {/* Reminders */}
+      <RemindersSection aquariumId={tank.id} />
     </div>
   );
 }

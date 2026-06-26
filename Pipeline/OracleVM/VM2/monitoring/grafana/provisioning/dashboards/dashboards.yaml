@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: FishLover
+    orgId: 1
+    folder: FishLover            # tất cả dashboard JSON gom vào folder "FishLover" trong Grafana
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30    # Grafana quét lại folder mỗi 30s → thêm/sửa file là tự load
+    allowUiUpdates: true         # vẫn cho phép chỉnh trên UI (tiện export ra file)
+    options:
+      path: /var/lib/grafana/dashboards

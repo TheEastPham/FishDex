@@ -1,0 +1,40 @@
+apiVersion: 1
+
+# Xoá datasource cùng tên đã tạo tay trước đó → tránh lỗi "data source already exists"
+# và đảm bảo uid cố định (prometheus/loki) để dashboard JSON tham chiếu ổn định.
+deleteDatasources:
+  - name: Prometheus
+    orgId: 1
+  - name: Loki
+    orgId: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    uid: prometheus
+    access: proxy            # query phía server (không phải browser) → đi qua docker network
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+
+  - name: Loki
+    type: loki
+    uid: loki
+    access: proxy
+    url: http://loki:3100
+    editable: false
+
+  # ── Tempo (task 10.4) ──
+  - name: Tempo
+    type: tempo
+    uid: tempo
+    access: proxy
+    url: http://tempo:3200
+    editable: false
+    jsonData:
+      # Trace-to-logs: click span → nhảy sang Loki cùng request
+      tracesToLogsV2:
+        datasourceUid: loki
+        spanStartTimeShift: '-1h'
+        spanEndTimeShift: '1h'
+        filterByTraceID: true

@@ -17,6 +17,8 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_HTTP_PORTS=5000
       - FE_ORIGIN=${FE_ORIGIN}
+    labels:
+      - "env=prod"
     networks:
       - fishlover_prod
 
@@ -47,6 +49,8 @@ services:
       - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
     volumes:
       - openiddict_keys:/openiddict-keys
+    labels:
+      - "env=prod"
     depends_on:
       - postgres
       - redis
@@ -77,6 +81,8 @@ services:
       - Cors__AllowedOrigins__0=${FE_ORIGIN}
       - AutoMigrate__OnStartup=true
       - ASPNETCORE_HTTP_PORTS=8081
+    labels:
+      - "env=prod"
     depends_on:
       - postgres
     networks:
@@ -104,6 +110,8 @@ services:
       - Storage__Environment=${AQUAHOME_R2_ENV}
       - Storage__ForcePathStyle=false
       - ASPNETCORE_HTTP_PORTS=8082
+    labels:
+      - "env=prod"
     depends_on:
       - postgres
       - redis
@@ -162,7 +170,8 @@ services:
     container_name: node-exporter
     restart: unless-stopped
     ports:
-      - "9100:9100"
+      # Bind private IP: chỉ Prometheus VM2 (10.0.0.94) scrape qua subnet private, KHÔNG hở public
+      - "10.0.0.64:9100:9100"
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
@@ -180,7 +189,8 @@ services:
     container_name: cadvisor
     restart: unless-stopped
     ports:
-      - "9200:8080"
+      # Bind private IP: chỉ Prometheus VM2 scrape, KHÔNG hở public
+      - "10.0.0.64:9200:8080"
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro

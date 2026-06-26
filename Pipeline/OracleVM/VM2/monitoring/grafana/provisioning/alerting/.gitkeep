@@ -1,0 +1,2 @@
+# Alert rules provisioning (task 10.3) sẽ đặt file YAML vào đây.
+# Giữ folder tồn tại để Grafana không log lỗi "can't read alerting provisioning files".

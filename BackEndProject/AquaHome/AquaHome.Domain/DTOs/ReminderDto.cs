@@ -22,3 +22,14 @@ public record CompleteReminderResponse(
     Guid CompletedId,
     DateTime? SuggestedNextDueAt
 );
+
+public record UserReminderDto(
+    Guid Id,
+    Guid AquariumId,
+    string AquariumName,
+    AquaTaskType AquaTaskType,
+    DateTime DueAt,
+    int? IntervalDays,
+    bool IsCompleted,
+    DateTime? CompletedAt
+);

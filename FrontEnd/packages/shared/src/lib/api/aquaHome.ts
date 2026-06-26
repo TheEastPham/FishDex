@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import type { AquariumDto, AquariumFishDto, CreateAquariumRequest, UpdateAquariumRequest, FavoriteDto, RecentlyViewedDto, AquariumMediaDto, PresignedUploadDto, ReminderDto, CreateReminderRequest, CompleteReminderResponse } from '../../types/aquahome';
+import type { AquariumDto, AquariumFishDto, CreateAquariumRequest, UpdateAquariumRequest, FavoriteDto, RecentlyViewedDto, AquariumMediaDto, PresignedUploadDto, ReminderDto, CreateReminderRequest, CompleteReminderResponse, UserReminderDto } from '../../types/aquahome';
 
 // ── Aquariums ─────────────────────────────────────────────
 
@@ -143,6 +143,11 @@ export async function completeReminder(aquariumId: string, reminderId: string): 
 
 export async function deleteReminder(aquariumId: string, reminderId: string): Promise<void> {
   await apiClient.delete(`/aquahome/v1/aquariums/${aquariumId}/reminders/${reminderId}`);
+}
+
+export async function getAllReminders(): Promise<UserReminderDto[]> {
+  const { data } = await apiClient.get<UserReminderDto[]>('/aquahome/v1/reminders');
+  return data;
 }
 
 // ── TODO(BE): Cần API batch get species by list of specCodes ─────

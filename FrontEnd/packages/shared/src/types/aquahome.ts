@@ -111,3 +111,14 @@ export interface CompleteReminderResponse {
   completedId: string;
   suggestedNextDueAt: string | null;
 }
+
+export interface UserReminderDto {
+  id: string;
+  aquariumId: string;
+  aquariumName: string;
+  aquaTaskType: AquaTaskType;
+  dueAt: string;
+  intervalDays: number | null;
+  isCompleted: boolean;
+  completedAt: string | null;
+}

@@ -348,6 +348,16 @@ const vi = {
     tagFix: '🐛 Sửa lỗi',
     tagImprove: '⚡ Cải thiện',
   },
+  tasks: {
+    title: 'Lịch trình',
+    subtitle: 'Tất cả nhắc nhở của bạn',
+    empty: 'Chưa có nhắc nhở nào',
+    emptyHint: 'Vào từng bể để thêm lịch thay nước hoặc vệ sinh lọc',
+    goToTanks: 'Đến hồ cá của tôi',
+    overdue: 'Quá hạn',
+    upcoming: 'Sắp tới',
+    done: 'Đã xong',
+  },
   reminders: {
     title: 'Nhắc nhở',
     addBtn: 'Thêm nhắc nhở',

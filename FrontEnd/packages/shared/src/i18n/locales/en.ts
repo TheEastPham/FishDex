@@ -348,6 +348,16 @@ const en = {
     tagFix: '🐛 Bug fixes',
     tagImprove: '⚡ Improvements',
   },
+  tasks: {
+    title: 'Tasks',
+    subtitle: 'All your reminders',
+    empty: 'No reminders yet',
+    emptyHint: 'Go to a tank to add water change or filter cleaning schedules',
+    goToTanks: 'Go to my tanks',
+    overdue: 'Overdue',
+    upcoming: 'Upcoming',
+    done: 'Done',
+  },
   reminders: {
     title: 'Reminders',
     addBtn: 'Add reminder',

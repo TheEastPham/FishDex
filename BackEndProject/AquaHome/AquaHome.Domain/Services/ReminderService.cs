@@ -73,6 +73,15 @@ public class ReminderService(
         return task;
     }
 
+    public async Task<IReadOnlyList<UserReminderDto>> GetAllByUserAsync(CancellationToken ct = default)
+    {
+        var tasks = await taskRepo.GetByUserAsync(currentUser.UserId, ct);
+        return tasks.Select(ToUserDto).ToList();
+    }
+
     private static ReminderDto ToDto(AquariumTask t) => new(
         t.Id, t.AquariumId, t.AquaTaskType, t.DueAt, t.IntervalDays, t.IsCompleted, t.CompletedAt);
+
+    private static UserReminderDto ToUserDto(AquariumTask t) => new(
+        t.Id, t.AquariumId, t.Aquarium?.Name ?? string.Empty, t.AquaTaskType, t.DueAt, t.IntervalDays, t.IsCompleted, t.CompletedAt);
 }

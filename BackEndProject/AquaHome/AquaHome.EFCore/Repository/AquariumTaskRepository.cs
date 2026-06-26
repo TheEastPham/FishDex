@@ -13,6 +13,14 @@ public class AquariumTaskRepository(AquaHomeDbContext context) : IAquariumTaskRe
             .OrderBy(t => t.DueAt)
             .ToListAsync(ct);
 
+    public async Task<IReadOnlyList<AquariumTask>> GetByUserAsync(Guid userId, CancellationToken ct = default)
+        => await context.AquariumTasks
+            .Include(t => t.Aquarium)
+            .Where(t => t.UserId == userId)
+            .OrderBy(t => t.IsCompleted)
+            .ThenBy(t => t.DueAt)
+            .ToListAsync(ct);
+
     public async Task<AquariumTask?> GetByIdAsync(Guid id, CancellationToken ct = default)
         => await context.AquariumTasks.FirstOrDefaultAsync(t => t.Id == id, ct);
 

@@ -18,6 +18,7 @@ import FavoritesPage from '@/features/favorites/FavoritesPage';
 import ProfilePage from '@/features/profile/ProfilePage';
 import HistoryPage from '@/features/history/HistoryPage';
 import ReleasePage from '@/features/articles/ReleasePage';
+import TasksPage from '@/features/tasks/TasksPage';
 
 // Redirect "/" based on auth state: dashboard if logged in, fish search if not
 function RootRedirect() {
@@ -49,7 +50,7 @@ export const router = createBrowserRouter([
           { path: '/dashboard',    element: <DashboardPage /> },
           { path: '/tanks',        element: <TanksPage /> },
           { path: '/parameters',   element: <PlaceholderPage /> },
-          { path: '/tasks',        element: <PlaceholderPage /> },
+          { path: '/tasks',        element: <TasksPage /> },
           { path: '/favorites',    element: <FavoritesPage /> },
           { path: '/profile',      element: <ProfilePage /> },
           { path: '/history',      element: <HistoryPage /> },

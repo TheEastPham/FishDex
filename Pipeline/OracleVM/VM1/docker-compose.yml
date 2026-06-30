@@ -17,6 +17,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_HTTP_PORTS=5000
       - FE_ORIGIN=${FE_ORIGIN}
+      - OpenTelemetry__ExportEndpoint=http://10.0.0.94:4317   # OTLP trace → Tempo (VM2)
     labels:
       - "env=prod"
     networks:
@@ -47,6 +48,7 @@ services:
       - OpenIddict__KeyDir=/openiddict-keys
       - AllowedOrigins__0=${FE_ORIGIN}
       - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
+      - OpenTelemetry__ExportEndpoint=http://10.0.0.94:4317   # OTLP trace → Tempo (VM2)
     volumes:
       - openiddict_keys:/openiddict-keys
     labels:
@@ -81,6 +83,7 @@ services:
       - Cors__AllowedOrigins__0=${FE_ORIGIN}
       - AutoMigrate__OnStartup=true
       - ASPNETCORE_HTTP_PORTS=8081
+      - OpenTelemetry__ExportEndpoint=http://10.0.0.94:4317   # OTLP trace → Tempo (VM2)
     labels:
       - "env=prod"
     depends_on:
@@ -110,6 +113,7 @@ services:
       - Storage__Environment=${AQUAHOME_R2_ENV}
       - Storage__ForcePathStyle=false
       - ASPNETCORE_HTTP_PORTS=8082
+      - OpenTelemetry__ExportEndpoint=http://10.0.0.94:4317   # OTLP trace → Tempo (VM2)
     labels:
       - "env=prod"
     depends_on:

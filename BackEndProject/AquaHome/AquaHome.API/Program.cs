@@ -71,7 +71,7 @@ builder.Services.AddAuthorization(options =>
         .RequireAuthenticatedUser()
         .Build();
 });
-builder.Services.AddFishLoverTelemetry(builder.Configuration, "AquaHome.API");
+builder.Services.AddFishLoverTelemetry(builder.Configuration, "aquahome");
 
 builder.Services.AddCors(options =>
 {

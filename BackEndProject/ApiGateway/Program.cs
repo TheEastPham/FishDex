@@ -15,6 +15,9 @@ builder.Services.AddOcelot();
 // ADD JWT AUTHENTICATION HERE
 builder.Services.AddFishLoverJwtAuthentication(builder.Configuration);
 
+// OpenTelemetry — trace chặng gateway + propagate traceparent sang downstream services
+builder.Services.AddFishLoverTelemetry(builder.Configuration, "gateway");
+
 // Add CORS
 builder.Services.AddCors(options =>
 {

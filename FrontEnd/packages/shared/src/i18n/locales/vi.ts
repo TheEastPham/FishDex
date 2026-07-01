@@ -384,6 +384,7 @@ const vi = {
     deleteConfirmBody: 'Bạn có chắc muốn xóa nhắc nhở này không?',
     cancel: 'Hủy',
     confirm: 'Xóa',
+    save: 'Lưu',
     saving: 'Đang lưu...',
   },
   release: {

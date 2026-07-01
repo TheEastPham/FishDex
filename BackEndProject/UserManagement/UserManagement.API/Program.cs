@@ -10,6 +10,11 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// appsettings.Local.json — CHỈ local dev (dotnet run). Docker/prod dùng env var (không nạp file
+// này để tránh giá trị rỗng đè lên env — env var luôn là nguồn cấu hình ưu tiên khi deploy)
+if (builder.Environment.IsDevelopment())
+    builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+
 // Service Information
 const string serviceName = "usermanagement";
 const string serviceVersion = "1.0.0";

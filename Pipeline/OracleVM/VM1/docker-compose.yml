@@ -49,6 +49,12 @@ services:
       - AllowedOrigins__0=${FE_ORIGIN}
       - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
       - OpenTelemetry__ExportEndpoint=http://10.0.0.94:4317   # OTLP trace → Tempo (VM2)
+      # Web Push VAPID (Epic 9.2) — PrivateKey là secret, lấy từ .env, KHÔNG commit
+      - VapidSettings__PublicKey=${VAPID_PUBLIC_KEY}
+      - VapidSettings__PrivateKey=${VAPID_PRIVATE_KEY}
+      - VapidSettings__Subject=${VAPID_SUBJECT}
+      # Internal API key — AquaHome worker gọi /api/push/send xác thực bằng key này
+      - InternalSettings__ApiKey=${INTERNAL_API_KEY}
     volumes:
       - openiddict_keys:/openiddict-keys
     labels:
@@ -119,6 +125,24 @@ services:
     depends_on:
       - postgres
       - redis
+    networks:
+      - fishlover_prod
+
+  # ── AquaHome Worker (nhắc lịch — TaskReminderBackgroundService, Epic 9.7) ──
+  aquahome-worker:
+    image: ghcr.io/${GHCR_USERNAME}/aquahome-worker:latest
+    container_name: aquahome-worker
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=aquahome;Username=${AH_DB_USER};Password=${AH_DB_PASSWORD}
+      - AutoMigrate__OnStartup=false
+      - UserManagement__BaseUrl=http://usermanagement:8080
+      - UserManagement__InternalApiKey=${INTERNAL_API_KEY}
+      - OpenTelemetry__ExportEndpoint=http://10.0.0.94:4317   # OTLP trace → Tempo (VM2)
+    depends_on:
+      - postgres
+      - usermanagement
     networks:
       - fishlover_prod
 

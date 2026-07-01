@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using AquaHome.Common.Enums;
 using AquaHome.Domain.Services.Interfaces;
 using AquaHome.EFCore.Repository.Interface;
@@ -8,6 +9,10 @@ public class TaskReminderBackgroundService(
     IServiceScopeFactory scopeFactory,
     ILogger<TaskReminderBackgroundService> logger) : BackgroundService
 {
+    // Trùng tên với serviceName truyền vào AddFishLoverWorkerTracing → spans được thu vào trace
+    public const string ActivitySourceName = "aquahome-worker";
+    private static readonly ActivitySource ActivitySource = new(ActivitySourceName);
+
     private static readonly TimeSpan Interval = TimeSpan.FromMinutes(1);
     private static readonly TimeSpan LookaheadWindow = TimeSpan.FromMinutes(5);
 
@@ -24,6 +29,8 @@ public class TaskReminderBackgroundService(
 
     private async Task ProcessDueTasksAsync(CancellationToken ct)
     {
+        // Root span của 1 vòng nhắc lịch — span EF query + HttpClient push sẽ nest dưới đây
+        using var activity = ActivitySource.StartActivity("reminder-cycle");
         try
         {
             using var scope = scopeFactory.CreateScope();
@@ -32,6 +39,7 @@ public class TaskReminderBackgroundService(
 
             var cutoff = DateTime.UtcNow.Add(LookaheadWindow);
             var dueTasks = await taskRepo.GetDueUnremindedAsync(cutoff, ct);
+            activity?.SetTag("reminder.due_count", dueTasks.Count);
 
             if (dueTasks.Count == 0) return;
 

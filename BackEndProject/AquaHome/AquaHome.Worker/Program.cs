@@ -2,6 +2,7 @@ using AquaHome.Domain.Extensions;
 using AquaHome.EFCore.Data;
 using AquaHome.EFCore.Extensions;
 using AquaHome.Worker.Services;
+using FishLover.Shared.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
@@ -15,6 +16,10 @@ builder.Services.AddSerilog();
 builder.Services.AddAquaHomeServices(builder.Configuration);
 builder.Services.AddAquaHomeRepositories();
 builder.Services.AddAquaHomeDomainServices(builder.Configuration);
+
+// OpenTelemetry tracing nhẹ (HttpClient + EFCore + OTLP) → trace vòng nhắc lịch end-to-end
+builder.Services.AddFishLoverWorkerTracing(builder.Configuration, TaskReminderBackgroundService.ActivitySourceName);
+
 builder.Services.AddHostedService<TaskReminderBackgroundService>();
 
 var host = builder.Build();

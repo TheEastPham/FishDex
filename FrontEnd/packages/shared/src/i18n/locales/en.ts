@@ -384,6 +384,7 @@ const en = {
     deleteConfirmBody: 'Are you sure you want to delete this reminder?',
     cancel: 'Cancel',
     confirm: 'Delete',
+    save: 'Save',
     saving: 'Saving...',
   },
   release: {

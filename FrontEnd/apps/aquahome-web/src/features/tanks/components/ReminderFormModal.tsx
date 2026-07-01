@@ -38,12 +38,8 @@ export default function ReminderFormModal({ onClose, onSubmit }: Props) {
   return (
     <>
       <div className="fixed inset-0 bg-black/60 z-50" onClick={onClose} />
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#172033] rounded-t-2xl shadow-2xl">
-        {/* Handle */}
-        <div className="flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 rounded-full bg-slate-600" />
-        </div>
-
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+        <div className="w-full max-w-sm bg-[#172033] border border-slate-700/60 rounded-2xl shadow-2xl pointer-events-auto">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800/60">
           <h3 className="text-white font-bold text-base">{t('reminders.addTitle')}</h3>
@@ -52,7 +48,7 @@ export default function ReminderFormModal({ onClose, onSubmit }: Props) {
           </button>
         </div>
 
-        <div className="px-5 py-4 space-y-5 pb-8">
+        <div className="px-5 py-4 space-y-4">
           {/* Task type */}
           <div>
             <p className="text-slate-400 text-xs font-medium mb-2">{t('reminders.typeLabel')}</p>
@@ -116,14 +112,24 @@ export default function ReminderFormModal({ onClose, onSubmit }: Props) {
             </div>
           </div>
 
-          {/* Submit */}
-          <button
-            onClick={handleSubmit}
-            disabled={saving}
-            className="w-full py-3 rounded-xl bg-sky-500 hover:bg-sky-600 disabled:opacity-50 text-white font-bold text-sm transition-colors min-h-[48px]"
-          >
-            {saving ? t('reminders.saving') : t('reminders.confirm')}
-          </button>
+          {/* Actions: Cancel + Save */}
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={onClose}
+              disabled={saving}
+              className="flex-1 py-2.5 rounded-xl border border-slate-700 text-slate-400 hover:bg-slate-700/50 disabled:opacity-50 font-semibold text-sm transition-colors min-h-[44px]"
+            >
+              {t('reminders.cancel')}
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={saving}
+              className="flex-1 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-600 disabled:opacity-50 text-white font-bold text-sm transition-colors min-h-[44px]"
+            >
+              {saving ? t('reminders.saving') : t('reminders.save')}
+            </button>
+          </div>
+        </div>
         </div>
       </div>
     </>

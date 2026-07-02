@@ -1,10 +1,10 @@
 # AquaHome API — Build & Deploy to Oracle Cloud VM
-# Trigger: push lên release/v1.0 + thay đổi trong AquaHome hoặc Share
+# Trigger: push lên release/v1.1 + thay đổi trong AquaHome hoặc Share
 
 trigger:
   branches:
     include:
-      - release/v1.0
+      - release/v1.1
   paths:
     include:
       - BackEndProject/AquaHome/**
@@ -17,6 +17,8 @@ variables:
   - group: oracle-prod-secrets
   - name: IMAGE
     value: ghcr.io/$(GHCR_USERNAME)/aquahome-api
+  - name: WORKER_IMAGE
+    value: ghcr.io/$(GHCR_USERNAME)/aquahome-worker
   - name: SERVICE
     value: aquahome
 
@@ -43,7 +45,17 @@ stages:
           -t $(IMAGE):$(Build.BuildId) \
           -t $(IMAGE):latest \
           BackEndProject/
-      displayName: Build & Push image (ARM64)
+      displayName: Build & Push API image (ARM64)
+
+    - script: |
+        docker buildx build \
+          --platform linux/arm64 \
+          --push \
+          -f Pipeline/local/AquaHome/Dockerfile.worker \
+          -t $(WORKER_IMAGE):$(Build.BuildId) \
+          -t $(WORKER_IMAGE):latest \
+          BackEndProject/
+      displayName: Build & Push Worker image (ARM64)
 
 - stage: Deploy
   displayName: Deploy → Oracle VM
@@ -67,9 +79,9 @@ stages:
           - script: |
               ssh -i /tmp/oracle.key -o StrictHostKeyChecking=no ubuntu@$(ORACLE_VM_IP) "
                 echo '$(GHCR_TOKEN)' | docker login ghcr.io -u '$(GHCR_USERNAME)' --password-stdin &&
-                GHCR_USERNAME='$(GHCR_USERNAME)' docker compose -f ~/app/docker-compose.prod.yml pull $(SERVICE) &&
-                GHCR_USERNAME='$(GHCR_USERNAME)' docker compose -f ~/app/docker-compose.prod.yml up -d --no-deps $(SERVICE) &&
-                echo 'Deploy $(SERVICE) done'
+                GHCR_USERNAME='$(GHCR_USERNAME)' docker compose -f ~/app/docker-compose.prod.yml pull $(SERVICE) aquahome-worker &&
+                GHCR_USERNAME='$(GHCR_USERNAME)' docker compose -f ~/app/docker-compose.prod.yml up -d --no-deps $(SERVICE) aquahome-worker &&
+                echo 'Deploy $(SERVICE) + worker done'
               "
             displayName: Pull & restart AquaHome
 

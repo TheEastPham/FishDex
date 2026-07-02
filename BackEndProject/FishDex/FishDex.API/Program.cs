@@ -45,7 +45,7 @@ try
         builder.Configuration.GetSection(StorageSettings.SectionName));
 
     // OpenTelemetry Configuration
-    builder.Services.AddFishLoverTelemetry(builder.Configuration, "FishDex.API");
+    builder.Services.AddFishLoverTelemetry(builder.Configuration, "fishdex");
 
     // JWT Authentication — symmetric scheme (direct-login tokens từ UserManagement)
     builder.Services.AddFishLoverJwtAuthentication(builder.Configuration);

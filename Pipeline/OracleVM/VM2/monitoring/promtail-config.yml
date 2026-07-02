@@ -17,5 +17,11 @@ scrape_configs:
       - source_labels: [__meta_docker_container_name]
         regex: '/(.*)'
         target_label: container
+      # service: lấy tự động từ label compose (gateway/usermanagement/fishdex/aquahome/postgres...)
+      - source_labels: [__meta_docker_container_label_com_docker_compose_service]
+        target_label: service
+      # env: lấy từ docker label `env=prod` khai trong docker-compose VM1
+      - source_labels: [__meta_docker_container_label_env]
+        target_label: env
       - source_labels: [__meta_docker_container_image]
         target_label: image

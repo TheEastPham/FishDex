@@ -10,8 +10,13 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// appsettings.Local.json — CHỈ local dev (dotnet run). Docker/prod dùng env var (không nạp file
+// này để tránh giá trị rỗng đè lên env — env var luôn là nguồn cấu hình ưu tiên khi deploy)
+if (builder.Environment.IsDevelopment())
+    builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+
 // Service Information
-const string serviceName = "UserManagement.API";
+const string serviceName = "usermanagement";
 const string serviceVersion = "1.0.0";
 
 // Serilog Configuration
@@ -52,7 +57,7 @@ builder.Services.AddHostedService<OpenIddictSeeder>();
 builder.Services.AddHostedService<AdminSeeder>();
 
 // OpenTelemetry Configuration
-builder.Services.AddFishLoverTelemetry(builder.Configuration, "UserManagement.API");
+builder.Services.AddFishLoverTelemetry(builder.Configuration, serviceName);
 // JWT Authentication — HS256 symmetric scheme (direct-login tokens)
 builder.Services.AddFishLoverJwtAuthentication(builder.Configuration);
 

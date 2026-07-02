@@ -84,3 +84,41 @@ export interface PresignedUploadDto {
   uploadUrl: string;
   objectKey: string;
 }
+
+// ── Reminders ─────────────────────────────────────────────
+export enum AquaTaskType {
+  WaterChange    = 0,
+  FilterCleaning = 1,
+}
+
+export interface ReminderDto {
+  id: string;
+  aquariumId: string;
+  aquaTaskType: AquaTaskType;
+  dueAt: string;
+  intervalDays: number | null;
+  isCompleted: boolean;
+  completedAt: string | null;
+}
+
+export interface CreateReminderRequest {
+  aquaTaskType: AquaTaskType;
+  dueAt: string;
+  intervalDays: number | null;
+}
+
+export interface CompleteReminderResponse {
+  completedId: string;
+  suggestedNextDueAt: string | null;
+}
+
+export interface UserReminderDto {
+  id: string;
+  aquariumId: string;
+  aquariumName: string;
+  aquaTaskType: AquaTaskType;
+  dueAt: string;
+  intervalDays: number | null;
+  isCompleted: boolean;
+  completedAt: string | null;
+}

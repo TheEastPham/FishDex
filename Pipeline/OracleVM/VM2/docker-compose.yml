@@ -27,7 +27,8 @@ services:
     container_name: loki
     restart: unless-stopped
     ports:
-      - "3100:3100"
+      # Bind private IP: Promtail trên VM1 push qua subnet private, KHÔNG hở public
+      - "10.0.0.94:3100:3100"
     volumes:
       - loki_data:/loki
       - ./loki-config.yml:/etc/loki/local-config.yaml:ro
@@ -41,16 +42,38 @@ services:
     container_name: grafana
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      # Chỉ localhost: nginx (native trên VM2) reverse-proxy qua https://grafana.fishlover.org
+      - "127.0.0.1:3000:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_USER}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
       - GF_USERS_ALLOW_SIGN_UP=false
+      # Grafana đứng sau reverse proxy → set root_url để redirect/share link đúng domain
+      - GF_SERVER_ROOT_URL=https://grafana.fishlover.org
     volumes:
       - grafana_data:/var/lib/grafana
+      # Provisioning as code (task 10.6): datasource + dashboard load từ file, version-control trong git
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
     depends_on:
       - prometheus
       - loki
+    networks:
+      - monitoring
+
+  # ── Tempo (tracing backend — task 10.4) ──────────────────────────────────────
+  tempo:
+    image: grafana/tempo:latest
+    container_name: tempo
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3200:3200"     # Grafana datasource (cùng VM2 → localhost)
+      - "10.0.0.94:4317:4317"     # OTLP gRPC — nhận trace từ VM1 qua private network
+      - "10.0.0.94:4318:4318"     # OTLP HTTP
+    volumes:
+      - tempo_data:/tmp/tempo
+      - ./tempo-config.yml:/etc/tempo.yaml:ro
+    command: -config.file=/etc/tempo.yaml
     networks:
       - monitoring
 
@@ -58,6 +81,7 @@ volumes:
   prometheus_data:
   loki_data:
   grafana_data:
+  tempo_data:
 
 networks:
   monitoring:

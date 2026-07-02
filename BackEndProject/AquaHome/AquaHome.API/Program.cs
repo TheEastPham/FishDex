@@ -38,7 +38,7 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddMemoryCache();
 builder.Services.AddAquaHomeServices(builder.Configuration);
 builder.Services.AddAquaHomeRepositories();
-builder.Services.AddAquaHomeDomainServices();
+builder.Services.AddAquaHomeDomainServices(builder.Configuration);
 builder.Services.AddAquaHomeStorage(builder.Configuration);
 builder.Services.AddFishLoverJwtAuthentication(builder.Configuration);
 
@@ -71,7 +71,7 @@ builder.Services.AddAuthorization(options =>
         .RequireAuthenticatedUser()
         .Build();
 });
-builder.Services.AddFishLoverTelemetry(builder.Configuration, "AquaHome.API");
+builder.Services.AddFishLoverTelemetry(builder.Configuration, "aquahome");
 
 builder.Services.AddCors(options =>
 {

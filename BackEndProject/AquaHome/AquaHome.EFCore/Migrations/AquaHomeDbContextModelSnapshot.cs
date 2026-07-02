@@ -111,6 +111,48 @@ namespace AquaHome.EFCore.Migrations
                     b.ToTable("AquariumMedia");
                 });
 
+            modelBuilder.Entity("AquaHome.EFCore.Entity.AquariumTask", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AquariumId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("DueAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("IntervalDays")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("Reminded")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("AquaTaskType")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AquariumId", "IsCompleted");
+
+                    b.HasIndex("IsCompleted", "Reminded", "DueAt");
+
+                    b.ToTable("AquariumTasks");
+                });
+
             modelBuilder.Entity("AquaHome.EFCore.Entity.RecentlyViewed", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -157,6 +199,17 @@ namespace AquaHome.EFCore.Migrations
                 });
 
             modelBuilder.Entity("AquaHome.EFCore.Entity.AquariumMedia", b =>
+                {
+                    b.HasOne("AquaHome.EFCore.Entity.Aquarium", "Aquarium")
+                        .WithMany()
+                        .HasForeignKey("AquariumId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Aquarium");
+                });
+
+            modelBuilder.Entity("AquaHome.EFCore.Entity.AquariumTask", b =>
                 {
                     b.HasOne("AquaHome.EFCore.Entity.Aquarium", "Aquarium")
                         .WithMany()

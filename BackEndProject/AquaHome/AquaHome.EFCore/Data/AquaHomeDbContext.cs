@@ -10,6 +10,7 @@ public class AquaHomeDbContext(DbContextOptions<AquaHomeDbContext> options) : Db
     public DbSet<AquariumMedia>  AquariumMedia   => Set<AquariumMedia>();
     public DbSet<UserFavorite>   UserFavorites   => Set<UserFavorite>();
     public DbSet<RecentlyViewed> RecentlyViewed  => Set<RecentlyViewed>();
+    public DbSet<AquariumTask>   AquariumTasks   => Set<AquariumTask>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -46,6 +47,18 @@ e.Property(x => x.Description).HasMaxLength(500);
             e.HasKey(x => x.Id);
             e.Property(x => x.FileName).HasMaxLength(260).IsRequired();
             e.Property(x => x.ContentType).HasMaxLength(50).IsRequired();
+            e.HasOne(x => x.Aquarium)
+             .WithMany()
+             .HasForeignKey(x => x.AquariumId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        model.Entity<AquariumTask>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.AquaTaskType).IsRequired();
+            e.HasIndex(x => new { x.IsCompleted, x.Reminded, x.DueAt });
+            e.HasIndex(x => new { x.AquariumId, x.IsCompleted });
             e.HasOne(x => x.Aquarium)
              .WithMany()
              .HasForeignKey(x => x.AquariumId)

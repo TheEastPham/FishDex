@@ -17,6 +17,9 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_HTTP_PORTS=5000
       - FE_ORIGIN=${FE_ORIGIN}
+      - OpenTelemetry__ExportEndpoint=http://10.0.0.94:4317   # OTLP trace → Tempo (VM2)
+    labels:
+      - "env=prod"
     networks:
       - fishlover_prod
 
@@ -45,8 +48,17 @@ services:
       - OpenIddict__KeyDir=/openiddict-keys
       - AllowedOrigins__0=${FE_ORIGIN}
       - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
+      - OpenTelemetry__ExportEndpoint=http://10.0.0.94:4317   # OTLP trace → Tempo (VM2)
+      # Web Push VAPID (Epic 9.2) — PrivateKey là secret, lấy từ .env, KHÔNG commit
+      - VapidSettings__PublicKey=${VAPID_PUBLIC_KEY}
+      - VapidSettings__PrivateKey=${VAPID_PRIVATE_KEY}
+      - VapidSettings__Subject=${VAPID_SUBJECT}
+      # Internal API key — AquaHome worker gọi /api/push/send xác thực bằng key này
+      - InternalSettings__ApiKey=${INTERNAL_API_KEY}
     volumes:
       - openiddict_keys:/openiddict-keys
+    labels:
+      - "env=prod"
     depends_on:
       - postgres
       - redis
@@ -77,6 +89,9 @@ services:
       - Cors__AllowedOrigins__0=${FE_ORIGIN}
       - AutoMigrate__OnStartup=true
       - ASPNETCORE_HTTP_PORTS=8081
+      - OpenTelemetry__ExportEndpoint=http://10.0.0.94:4317   # OTLP trace → Tempo (VM2)
+    labels:
+      - "env=prod"
     depends_on:
       - postgres
     networks:
@@ -104,9 +119,30 @@ services:
       - Storage__Environment=${AQUAHOME_R2_ENV}
       - Storage__ForcePathStyle=false
       - ASPNETCORE_HTTP_PORTS=8082
+      - OpenTelemetry__ExportEndpoint=http://10.0.0.94:4317   # OTLP trace → Tempo (VM2)
+    labels:
+      - "env=prod"
     depends_on:
       - postgres
       - redis
+    networks:
+      - fishlover_prod
+
+  # ── AquaHome Worker (nhắc lịch — TaskReminderBackgroundService, Epic 9.7) ──
+  aquahome-worker:
+    image: ghcr.io/${GHCR_USERNAME}/aquahome-worker:latest
+    container_name: aquahome-worker
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=aquahome;Username=${AH_DB_USER};Password=${AH_DB_PASSWORD}
+      - AutoMigrate__OnStartup=false
+      - UserManagement__BaseUrl=http://usermanagement:8080
+      - UserManagement__InternalApiKey=${INTERNAL_API_KEY}
+      - OpenTelemetry__ExportEndpoint=http://10.0.0.94:4317   # OTLP trace → Tempo (VM2)
+    depends_on:
+      - postgres
+      - usermanagement
     networks:
       - fishlover_prod
 
@@ -162,7 +198,8 @@ services:
     container_name: node-exporter
     restart: unless-stopped
     ports:
-      - "9100:9100"
+      # Bind private IP: chỉ Prometheus VM2 (10.0.0.94) scrape qua subnet private, KHÔNG hở public
+      - "10.0.0.64:9100:9100"
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
@@ -180,7 +217,8 @@ services:
     container_name: cadvisor
     restart: unless-stopped
     ports:
-      - "9200:8080"
+      # Bind private IP: chỉ Prometheus VM2 scrape, KHÔNG hở public
+      - "10.0.0.64:9200:8080"
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro

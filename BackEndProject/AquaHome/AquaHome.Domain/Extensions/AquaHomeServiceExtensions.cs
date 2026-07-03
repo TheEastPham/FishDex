@@ -28,6 +28,7 @@ public static class AquaHomeServiceExtensions
         services.AddScoped<IAquariumMediaService, AquariumMediaService>();
         services.AddScoped<IWebPushNotifier, WebPushNotifier>();
         services.AddScoped<IReminderService, ReminderService>();
+        services.AddScoped<IQuotaService, QuotaService>();
 
         var umBaseUrl = configuration["UserManagement:BaseUrl"] ?? "http://localhost:8080";
         var internalApiKey = configuration["UserManagement:InternalApiKey"] ?? string.Empty;

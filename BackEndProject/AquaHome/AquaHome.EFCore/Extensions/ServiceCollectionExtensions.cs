@@ -13,6 +13,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IRecentlyViewedRepository, RecentlyViewedRepository>();
         services.AddScoped<IAquariumMediaRepository, AquariumMediaRepository>();
         services.AddScoped<IAquariumTaskRepository, AquariumTaskRepository>();
+        services.AddScoped<IQuotaRepository, QuotaRepository>();
         return services;
     }
 }

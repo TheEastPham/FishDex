@@ -61,6 +61,8 @@ const en = {
     pushDenied: 'Blocked — allow in browser settings to re-enable',
     pushUnsupported: 'Your browser does not support push notifications',
     pushHint: 'Get reminders when it\'s time to care for your tank',
+    pushIOSInstallHint:
+      'On iPhone, open this page in Safari, tap the Share button, then choose "Add to Home Screen". Reopen the app from your Home Screen to enable notifications.',
   },
   forgotPassword: {
     title: 'Forgot password',

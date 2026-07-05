@@ -61,6 +61,8 @@ const vi = {
     pushDenied: 'Bị chặn — vào cài đặt trình duyệt để cấp quyền',
     pushUnsupported: 'Trình duyệt không hỗ trợ thông báo đẩy',
     pushHint: 'Nhận nhắc nhở khi đến lịch chăm sóc hồ cá',
+    pushIOSInstallHint:
+      'Trên iPhone, mở trang này bằng Safari, nhấn nút Chia sẻ (hình vuông có mũi tên) rồi chọn "Thêm vào MH chính". Sau đó mở lại app từ màn hình chính để bật thông báo.',
   },
   forgotPassword: {
     title: 'Quên mật khẩu',

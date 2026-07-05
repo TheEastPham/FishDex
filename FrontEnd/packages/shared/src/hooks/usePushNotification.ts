@@ -10,6 +10,19 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
 }
 
+function isIOSDevice(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  return /iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+
+function isStandaloneDisplay(): boolean {
+  if (typeof window === 'undefined') return false;
+  return (
+    window.matchMedia?.('(display-mode: standalone)').matches === true ||
+    (window.navigator as { standalone?: boolean }).standalone === true
+  );
+}
+
 export function usePushNotification() {
   const [permission, setPermission] = useState<PermissionState>('default');
   const [loading, setLoading] = useState(false);
@@ -19,6 +32,12 @@ export function usePushNotification() {
     'serviceWorker' in navigator &&
     'PushManager' in window &&
     'Notification' in window;
+
+  // iOS Safari only exposes the Push API to Home Screen apps running in
+  // standalone mode (since iOS 16.4) — a regular browser tab never has
+  // `PushManager`, so `isSupported` alone can't tell "unsupported" apart
+  // from "supported, but needs Add to Home Screen first".
+  const needsIOSInstall = !isSupported && isIOSDevice() && !isStandaloneDisplay();
 
   useEffect(() => {
     if (!isSupported) {
@@ -77,5 +96,5 @@ export function usePushNotification() {
     }
   }, [isSupported]);
 
-  return { permission, loading, isSupported, subscribe, unsubscribe };
+  return { permission, loading, isSupported, needsIOSInstall, subscribe, unsubscribe };
 }

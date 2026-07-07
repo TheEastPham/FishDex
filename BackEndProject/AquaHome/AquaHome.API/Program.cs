@@ -14,7 +14,11 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 builder.Services.AddControllers(options =>
-    options.Filters.Add<AquaHome.API.Filters.QuotaExceededExceptionFilter>()); // quota vượt → 429
+{
+    options.Filters.Add<AquaHome.API.Filters.QuotaExceededExceptionFilter>(); // quota vượt → 429
+    options.Filters.Add<AquaHome.API.Filters.ContestValidationExceptionFilter>(); // video contest invalid → 422
+    options.Filters.Add<AquaHome.API.Filters.StorageOverloadedExceptionFilter>(); // R2 staging quá tải → 503
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {

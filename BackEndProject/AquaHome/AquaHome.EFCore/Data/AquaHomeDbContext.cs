@@ -13,6 +13,10 @@ public class AquaHomeDbContext(DbContextOptions<AquaHomeDbContext> options) : Db
     public DbSet<AquariumTask>   AquariumTasks   => Set<AquariumTask>();
     public DbSet<RoleQuota>      RoleQuotas      => Set<RoleQuota>();
     public DbSet<QuotaUsage>     QuotaUsages     => Set<QuotaUsage>();
+    public DbSet<AquariumSnapshot>     AquariumSnapshots     => Set<AquariumSnapshot>();
+    public DbSet<AquariumSnapshotLike> AquariumSnapshotLikes => Set<AquariumSnapshotLike>();
+    public DbSet<Contest>              Contests              => Set<Contest>();
+    public DbSet<ContestEntry>         ContestEntries        => Set<ContestEntry>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -83,6 +87,60 @@ e.Property(x => x.Description).HasMaxLength(500);
         model.Entity<QuotaUsage>(e =>
         {
             e.HasKey(x => new { x.UserId, x.QuotaType, x.Day });
+        });
+
+        model.Entity<AquariumSnapshot>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Slug).HasMaxLength(150).IsRequired();
+            e.HasIndex(x => x.Slug).IsUnique();
+            e.Property(x => x.CoverImageUrl).HasMaxLength(500);
+            e.Property(x => x.YoutubeVideoUrl).HasMaxLength(500);
+            e.Property(x => x.SnapshotData).HasColumnType("jsonb"); // render-only, KHÔNG query/index vào JSON
+            e.HasIndex(x => new { x.IsActive, x.WaterType, x.Style, x.ContestAward, x.LikeCount })
+             .IsDescending(false, false, false, false, true); // phục vụ gallery filter + sort likes DESC
+            e.HasOne(x => x.Aquarium)
+             .WithMany()
+             .HasForeignKey(x => x.AquariumId)
+             .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.ContestEntry)
+             .WithOne()
+             .HasForeignKey<AquariumSnapshot>(x => x.ContestEntryId)
+             .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        model.Entity<AquariumSnapshotLike>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.SnapshotId, x.UserId }).IsUnique();
+            e.HasOne(x => x.Snapshot)
+             .WithMany()
+             .HasForeignKey(x => x.SnapshotId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        model.Entity<Contest>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Title).HasMaxLength(150).IsRequired();
+            e.Property(x => x.Description).HasMaxLength(1000);
+            e.Property(x => x.YouTubePlaylistId).HasMaxLength(100);
+        });
+
+        model.Entity<ContestEntry>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.VideoR2Key).HasMaxLength(500);
+            e.Property(x => x.YouTubeVideoId).HasMaxLength(20);
+            e.HasIndex(x => x.Status);
+            e.HasOne(x => x.Contest)
+             .WithMany(c => c.Entries)
+             .HasForeignKey(x => x.ContestId)
+             .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.AquariumSnapshot)
+             .WithMany()
+             .HasForeignKey(x => x.AquariumSnapshotId)
+             .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

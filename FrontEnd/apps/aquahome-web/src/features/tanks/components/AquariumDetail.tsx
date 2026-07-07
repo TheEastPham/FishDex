@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAquariumFish, getCached, setCached, CacheKeys, USER_DATA_TTL, cn, WaterType, AquariumStyle, useTranslation } from '@fishlover/shared';
 import type { AquariumDto, AquariumFishDto } from '@fishlover/shared';
-import { Pencil, Trash2, FlaskConical, Ruler, Calendar, Fish, Layers, Droplets } from 'lucide-react';
+import { Pencil, Trash2, FlaskConical, Ruler, Calendar, Fish, Layers, Droplets, Globe } from 'lucide-react';
 import FishInventorySection from './FishInventorySection';
 import AquariumMediaSection from './AquariumMediaSection';
 import RemindersSection from './RemindersSection';
+import PublishSnapshotModal from './PublishSnapshotModal';
 
 const TANK_HERO: Record<number, { from: string; via: string; to: string; accent: string }> = {
   [WaterType.Freshwater]: { from: 'from-emerald-950', via: 'via-emerald-900/80', to: 'to-teal-950',   accent: 'text-emerald-400' },
@@ -76,6 +77,7 @@ export default function AquariumDetail({ tank, onEdit, onDelete }: Props) {
 
   const [fishList, setFishList]     = useState<AquariumFishDto[]>([]);
   const [fishLoading, setFishLoading] = useState(true);
+  const [publishOpen, setPublishOpen] = useState(false);
 
   useEffect(() => {
     setFishLoading(true);
@@ -124,6 +126,13 @@ export default function AquariumDetail({ tank, onEdit, onDelete }: Props) {
               )}
             </div>
             <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setPublishOpen(true)}
+                className="p-2 rounded-lg bg-sky-500/20 hover:bg-sky-500/40 transition-colors"
+                title={t('publish.buttonTitle')}
+              >
+                <Globe className="w-3.5 h-3.5 text-sky-300" />
+              </button>
               <button
                 onClick={() => onEdit(tank)}
                 className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
@@ -183,6 +192,15 @@ export default function AquariumDetail({ tank, onEdit, onDelete }: Props) {
 
       {/* Reminders */}
       <RemindersSection aquariumId={tank.id} />
+
+      {/* Publish snapshot modal */}
+      {publishOpen && (
+        <PublishSnapshotModal
+          aquariumId={tank.id}
+          aquariumName={tank.name}
+          onClose={() => setPublishOpen(false)}
+        />
+      )}
     </div>
   );
 }

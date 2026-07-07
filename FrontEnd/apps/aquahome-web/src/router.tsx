@@ -19,6 +19,10 @@ import ProfilePage from '@/features/profile/ProfilePage';
 import HistoryPage from '@/features/history/HistoryPage';
 import ReleasePage from '@/features/articles/ReleasePage';
 import TasksPage from '@/features/tasks/TasksPage';
+import PublicTanksPage from '@/features/public-tanks/PublicTanksPage';
+import PublicTankDetailPage from '@/features/public-tanks/PublicTankDetailPage';
+import ContestsPage from '@/features/contests/ContestsPage';
+import AdminContestsPage from '@/features/admin-contests/AdminContestsPage';
 
 // Redirect "/" based on auth state: dashboard if logged in, fish search if not
 function RootRedirect() {
@@ -42,6 +46,9 @@ export const router = createBrowserRouter([
       { path: '/fish/:specCode',      element: <FishProfilePage /> },
       { path: '/articles/release',    element: <ReleasePage /> },
       { path: '/articles',            element: <Navigate to="/articles/release" replace /> },
+      { path: '/public/tanks',        element: <PublicTanksPage /> },
+      { path: '/public/tanks/:slug',  element: <PublicTankDetailPage /> },
+      { path: '/contests',            element: <ContestsPage /> },
 
       // ── Auth-required routes ───────────────────────────────
       {
@@ -66,6 +73,12 @@ export const router = createBrowserRouter([
         children: [
           { path: '/admin/articles', element: <PlaceholderPage /> },
           { path: '/admin/media',    element: <PlaceholderPage /> },
+        ],
+      },
+      {
+        element: <RoleGuard roles={['SystemAdmin']} />,
+        children: [
+          { path: '/admin/contests', element: <AdminContestsPage /> },
         ],
       },
 

@@ -3,7 +3,8 @@ import { NavLink, Link, Outlet, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Search, MessageCircle, Camera, Fish, LogOut, ChevronRight,
   Droplets, TestTube, Calendar, Heart, History, BookOpen, ChevronDown,
-  Shield, Home, Settings, FileText, ImageIcon, User, LogIn, Menu, X, Globe, Bell, MoreHorizontal
+  Shield, Home, Settings, FileText, ImageIcon, User, LogIn, Menu, X, Globe, Bell, MoreHorizontal,
+  Users, Waves, Trophy
 } from 'lucide-react';
 import { cn, useLogout, useTranslation, setLanguage, useAuthStore } from '@fishlover/shared';
 
@@ -109,6 +110,15 @@ export default function AppShell() {
       ],
     },
     {
+      icon: Users,
+      label: t('nav.communityGroup'),
+      product: 'Community',
+      subItems: [
+        { to: '/public/tanks', icon: Waves,  label: t('nav.publicTanks') },
+        { to: '/contests',     icon: Trophy, label: t('nav.contests') },
+      ],
+    },
+    {
       icon: Settings,
       label: t('nav.utilitiesGroup'),
       product: 'Utilities',
@@ -126,6 +136,7 @@ export default function AppShell() {
       subItems: [
         { to: '/admin/articles', icon: FileText,  label: t('nav.articlesManager') },
         { to: '/admin/media',    icon: ImageIcon, label: t('nav.mediaManager') },
+        { to: '/admin/contests', icon: Trophy,    label: t('nav.contestsManager'), requireRoles: ['SystemAdmin'] },
       ],
     },
   ], [t]);

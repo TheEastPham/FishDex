@@ -94,7 +94,6 @@ e.Property(x => x.Description).HasMaxLength(500);
             e.HasKey(x => x.Id);
             e.Property(x => x.Slug).HasMaxLength(150).IsRequired();
             e.HasIndex(x => x.Slug).IsUnique();
-            e.Property(x => x.CoverImageUrl).HasMaxLength(500);
             e.Property(x => x.YoutubeVideoUrl).HasMaxLength(500);
             e.Property(x => x.SnapshotData).HasColumnType("jsonb"); // render-only, KHÔNG query/index vào JSON
             e.HasIndex(x => new { x.IsActive, x.WaterType, x.Style, x.ContestAward, x.LikeCount })

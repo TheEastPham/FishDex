@@ -13,6 +13,7 @@ public record SnapshotFishDto(
 /// <summary>Nội dung JSONB render-only của AquariumSnapshot — KHÔNG query bên trong.</summary>
 public record SnapshotDataDto(
     string AquariumName,
+    string? OwnerNickname,   // nickname chủ bể tại thời điểm publish — hiển thị trên trang public
     double? LengthCm,
     double? WidthCm,
     double? HeightCm,
@@ -26,18 +27,24 @@ public record SnapshotPreviewDto(
     int FishSpeciesCount,
     SnapshotDataDto SnapshotData);
 
-public record PublishSnapshotRequest(string? CoverImageUrl);
+public record PublishSnapshotRequest(
+    Guid? CoverMediaId,
+    /// <summary>Null = tạo snapshot mới. Có giá trị = ghi đè (giữ nguyên Slug/Id/LikeCount) snapshot đang active này.</summary>
+    Guid? TargetSnapshotId);
 
-/// <summary>Bản gọn cho GET /snapshots/mine — FE contest entry form chỉ cần chọn bể, không cần fish list.</summary>
+/// <summary>Bản gọn cho GET /snapshots/mine — trang quản lý "bể đã public của tôi" + contest entry form chọn bể.</summary>
 public record MySnapshotDto(
     Guid Id,
+    Guid AquariumId,
     string Slug,
     string AquariumName,
     WaterType WaterType,
     AquariumStyle Style,
     int FishSpeciesCount,
     int LikeCount,
-    DateTime CreatedAt);
+    string? CoverImageUrl,
+    DateTime CreatedAt,
+    DateTime UpdatedAt);
 
 public record AquariumSnapshotDto(
     Guid Id,
@@ -50,5 +57,6 @@ public record AquariumSnapshotDto(
     string? CoverImageUrl,
     string? YoutubeVideoUrl,
     DateTime CreatedAt,
+    DateTime UpdatedAt,
     SnapshotDataDto? SnapshotData,
     bool LikedByMe);

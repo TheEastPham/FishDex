@@ -3,11 +3,13 @@ using System.Text.Json;
 using AquaHome.Domain.DTOs;
 using AquaHome.Domain.Enums;
 using AquaHome.Domain.Services.Interfaces;
+using AquaHome.Domain.Settings;
 using AquaHome.EFCore.Entity;
 using AquaHome.EFCore.Repository.Interface;
 using FishLover.Shared.Common;
 using FishLover.Shared.Services;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace AquaHome.Domain.Services;
 
@@ -15,12 +17,16 @@ public class SnapshotService(
     IAquariumSnapshotRepository snapshotRepo,
     IAquariumSnapshotLikeRepository likeRepo,
     IAquariumRepository aquariumRepo,
+    IAquariumMediaRepository mediaRepo,
     IFishDexClient fishDexClient,
+    IStorageService storage,
+    IOptions<StorageSettings> storageOptions,
     ICurrentUserSession currentUser,
     ILogger<SnapshotService> logger) : ISnapshotService
 {
     private const int MaxSnapshotsPerAquarium = 5;
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    private string Env => storageOptions.Value.Environment;
 
     public async Task<SnapshotPreviewDto?> PreviewAsync(Guid aquariumId, CancellationToken ct = default)
     {
@@ -42,38 +48,65 @@ public class SnapshotService(
         if (aquarium is null) return null;
 
         var snapshotData = await BuildSnapshotDataAsync(aquarium, ct);
+        var now = DateTime.UtcNow;
 
-        // Max 5 snapshot/aquarium — khi đủ 5, auto-archive (IsActive=false) snapshot cũ nhất
-        var active = await snapshotRepo.GetActiveByAquariumAsync(aquariumId, ct);
-        if (active.Count >= MaxSnapshotsPerAquarium)
+        AquariumSnapshot snapshot;
+
+        if (request.TargetSnapshotId.HasValue)
         {
-            var oldest = active[0]; // đã ORDER BY CreatedAt ASC
-            oldest.IsActive = false;
-            logger.LogInformation("Auto-archived oldest snapshot {SnapshotId} for aquarium {AquariumId}", oldest.Id, aquariumId);
+            // Ghi đè snapshot đang active — giữ nguyên Slug/Id/LikeCount/ContestAward, chỉ refresh nội dung
+            var target = await snapshotRepo.GetByIdAsync(request.TargetSnapshotId.Value, ct);
+            if (target is null || target.AquariumId != aquariumId || target.UserId != currentUser.UserId || !target.IsActive)
+            {
+                logger.LogWarning("TargetSnapshotId {SnapshotId} không hợp lệ để ghi đè cho aquarium {AquariumId}", request.TargetSnapshotId, aquariumId);
+                return null;
+            }
+
+            target.WaterType = aquarium.WaterType ?? 0;
+            target.Style = aquarium.Style ?? 0;
+            target.FishSpeciesCount = snapshotData.Fish.Count;
+            target.CoverMediaId = request.CoverMediaId;
+            target.SnapshotData = JsonSerializer.Serialize(snapshotData, JsonOptions);
+            target.UpdatedAt = now;
+
+            await snapshotRepo.SaveChangesAsync(ct);
+            snapshot = target;
+        }
+        else
+        {
+            // Max 5 snapshot/aquarium — khi đủ 5, auto-archive (IsActive=false) snapshot cũ nhất
+            var active = await snapshotRepo.GetActiveByAquariumAsync(aquariumId, ct);
+            if (active.Count >= MaxSnapshotsPerAquarium)
+            {
+                var oldest = active[0]; // đã ORDER BY CreatedAt ASC
+                oldest.IsActive = false;
+                logger.LogInformation("Auto-archived oldest snapshot {SnapshotId} for aquarium {AquariumId}", oldest.Id, aquariumId);
+            }
+
+            var slug = await GenerateUniqueSlugAsync(aquarium.Name, ct);
+
+            snapshot = new AquariumSnapshot
+            {
+                Id = Guid.NewGuid(),
+                AquariumId = aquariumId,
+                UserId = currentUser.UserId,
+                Slug = slug,
+                CreatedAt = now,
+                UpdatedAt = now,
+                IsActive = true,
+                WaterType = aquarium.WaterType ?? 0,
+                Style = aquarium.Style ?? 0,
+                LikeCount = 0,
+                FishSpeciesCount = snapshotData.Fish.Count,
+                CoverMediaId = request.CoverMediaId,
+                SnapshotData = JsonSerializer.Serialize(snapshotData, JsonOptions),
+            };
+
+            await snapshotRepo.AddAsync(snapshot, ct);
+            await snapshotRepo.SaveChangesAsync(ct);
         }
 
-        var slug = await GenerateUniqueSlugAsync(aquarium.Name, ct);
-
-        var snapshot = new AquariumSnapshot
-        {
-            Id = Guid.NewGuid(),
-            AquariumId = aquariumId,
-            UserId = currentUser.UserId,
-            Slug = slug,
-            CreatedAt = DateTime.UtcNow,
-            IsActive = true,
-            WaterType = aquarium.WaterType ?? 0,
-            Style = aquarium.Style ?? 0,
-            LikeCount = 0,
-            FishSpeciesCount = snapshotData.Fish.Count,
-            CoverImageUrl = request.CoverImageUrl,
-            SnapshotData = JsonSerializer.Serialize(snapshotData, JsonOptions),
-        };
-
-        await snapshotRepo.AddAsync(snapshot, ct);
-        await snapshotRepo.SaveChangesAsync(ct);
-
-        return ToDto(snapshot, snapshotData, likedByMe: false);
+        return await ToDtoAsync(snapshot, snapshotData, likedByMe: false, ct);
     }
 
     public async Task<bool> UnpublishAsync(Guid snapshotId, CancellationToken ct = default)
@@ -89,14 +122,19 @@ public class SnapshotService(
     public async Task<IReadOnlyList<MySnapshotDto>> GetMineAsync(CancellationToken ct = default)
     {
         var snapshots = await snapshotRepo.GetActiveByUserAsync(currentUser.UserId, ct);
-        return snapshots.Select(s =>
+
+        var result = new List<MySnapshotDto>(snapshots.Count);
+        foreach (var s in snapshots)
         {
-            // Chỉ cần aquariumName từ JSONB — không trả cả fish list cho form chọn bể
+            // Chỉ cần aquariumName từ JSONB — không trả cả fish list cho trang quản lý / form chọn bể
             var name = TryGetAquariumName(s.SnapshotData) ?? s.Slug;
-            return new MySnapshotDto(
-                s.Id, s.Slug, name, (WaterType)s.WaterType, (AquariumStyle)s.Style,
-                s.FishSpeciesCount, s.LikeCount, s.CreatedAt);
-        }).ToList();
+            var coverUrl = await ResolveCoverUrlAsync(s.CoverMediaId, ct);
+
+            result.Add(new MySnapshotDto(
+                s.Id, s.AquariumId, s.Slug, name, (WaterType)s.WaterType, (AquariumStyle)s.Style,
+                s.FishSpeciesCount, s.LikeCount, coverUrl, s.CreatedAt, s.UpdatedAt));
+        }
+        return result;
     }
 
     private static string? TryGetAquariumName(string snapshotJson)
@@ -115,7 +153,10 @@ public class SnapshotService(
         int? waterType, int? style, string? contest, string sort, int page, int pageSize, CancellationToken ct = default)
     {
         var (items, total) = await snapshotRepo.GetGalleryAsync(waterType, style, contest, sort, page, pageSize, ct);
-        var dtos = items.Select(s => ToDto(s, snapshotData: null, likedByMe: false)).ToList();
+
+        var dtos = new List<AquariumSnapshotDto>(items.Count);
+        foreach (var s in items)
+            dtos.Add(await ToDtoAsync(s, snapshotData: null, likedByMe: false, ct));
 
         return new PagedResult<AquariumSnapshotDto>
         {
@@ -132,11 +173,13 @@ public class SnapshotService(
         if (snapshot is null) return null;
 
         var snapshotData = JsonSerializer.Deserialize<SnapshotDataDto>(snapshot.SnapshotData, JsonOptions);
+        if (snapshotData is not null)
+            snapshotData = await RefreshFishImagesAsync(snapshotData, ct);
 
         var likedByMe = currentUser.IsAuthenticated
             && await likeRepo.ExistsAsync(snapshot.Id, currentUser.UserId, ct);
 
-        return ToDto(snapshot, snapshotData, likedByMe);
+        return await ToDtoAsync(snapshot, snapshotData, likedByMe, ct);
     }
 
     public async Task<bool> LikeAsync(Guid snapshotId, CancellationToken ct = default)
@@ -153,6 +196,30 @@ public class SnapshotService(
 
     public async Task<bool> UnlikeAsync(Guid snapshotId, CancellationToken ct = default)
         => await likeRepo.RemoveAsync(snapshotId, currentUser.UserId, ct);
+
+    /// <summary>Ký lại presigned URL mỗi lần đọc — không lưu URL cố định vì sẽ hết hạn sau PresignedUrlExpiryMinutes.</summary>
+    private async Task<string?> ResolveCoverUrlAsync(Guid? coverMediaId, CancellationToken ct)
+    {
+        if (coverMediaId is null) return null;
+
+        var media = await mediaRepo.GetByIdAsync(coverMediaId.Value, ct);
+        return media is null ? null : await storage.GetPresignedUrlAsync(media.ObjectKey(Env), ct);
+    }
+
+    /// <summary>Ảnh loài cá trong JSONB cũng là presigned URL từ FishDex — gọi lại để lấy URL còn hiệu lực.</summary>
+    private async Task<SnapshotDataDto> RefreshFishImagesAsync(SnapshotDataDto data, CancellationToken ct)
+    {
+        if (data.Fish.Count == 0) return data;
+
+        var specCodes = data.Fish.Select(f => f.SpecCode).Distinct().ToList();
+        var summaries = (await fishDexClient.GetSpeciesSummariesAsync(specCodes, ct)).ToDictionary(s => s.SpecCode);
+
+        var fish = data.Fish
+            .Select(f => summaries.TryGetValue(f.SpecCode, out var s) ? f with { ImageUrl = s.ImageUrl } : f)
+            .ToList();
+
+        return data with { Fish = fish };
+    }
 
     private async Task<SnapshotDataDto> BuildSnapshotDataAsync(Aquarium aquarium, CancellationToken ct)
     {
@@ -178,17 +245,26 @@ public class SnapshotService(
         }
 
         return new SnapshotDataDto(
-            aquarium.Name, aquarium.LengthCm, aquarium.WidthCm, aquarium.HeightCm,
+            aquarium.Name, currentUser.UserName, aquarium.LengthCm, aquarium.WidthCm, aquarium.HeightCm,
             aquarium.VolumeLiters, aquarium.Description, fish);
     }
 
+    /// <summary>Slug rõ ràng: {tên bể}-{nickname user}. Trùng (vd 2 bể cùng tên) thì thêm hậu tố số.</summary>
     private async Task<string> GenerateUniqueSlugAsync(string aquariumName, CancellationToken ct)
     {
         var baseSlug = Slugify(aquariumName);
+        var nicknameSlug = Slugify(currentUser.UserName ?? string.Empty);
+        var candidate = string.IsNullOrEmpty(nicknameSlug) ? baseSlug : $"{baseSlug}-{nicknameSlug}";
+
+        if (!await snapshotRepo.SlugExistsAsync(candidate, ct))
+            return candidate;
+
+        var suffix = 2;
         string slug;
         do
         {
-            slug = $"{baseSlug}-{RandomSuffix(4)}";
+            slug = $"{candidate}-{suffix}";
+            suffix++;
         } while (await snapshotRepo.SlugExistsAsync(slug, ct));
 
         return slug;
@@ -226,17 +302,12 @@ public class SnapshotService(
         return string.IsNullOrEmpty(slug) ? "aquarium" : slug;
     }
 
-    private static string RandomSuffix(int length)
+    private async Task<AquariumSnapshotDto> ToDtoAsync(AquariumSnapshot s, SnapshotDataDto? snapshotData, bool likedByMe, CancellationToken ct)
     {
-        const string chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-        var buffer = new char[length];
-        for (var i = 0; i < length; i++)
-            buffer[i] = chars[Random.Shared.Next(chars.Length)];
-        return new string(buffer);
+        var coverImageUrl = await ResolveCoverUrlAsync(s.CoverMediaId, ct);
+        return new AquariumSnapshotDto(
+            s.Id, s.Slug, (WaterType)s.WaterType, (AquariumStyle)s.Style, s.LikeCount, s.FishSpeciesCount,
+            s.ContestAward.HasValue ? (ContestAward)s.ContestAward.Value : null,
+            coverImageUrl, s.YoutubeVideoUrl, s.CreatedAt, s.UpdatedAt, snapshotData, likedByMe);
     }
-
-    private static AquariumSnapshotDto ToDto(AquariumSnapshot s, SnapshotDataDto? snapshotData, bool likedByMe) => new(
-        s.Id, s.Slug, (WaterType)s.WaterType, (AquariumStyle)s.Style, s.LikeCount, s.FishSpeciesCount,
-        s.ContestAward.HasValue ? (ContestAward)s.ContestAward.Value : null,
-        s.CoverImageUrl, s.YoutubeVideoUrl, s.CreatedAt, snapshotData, likedByMe);
 }

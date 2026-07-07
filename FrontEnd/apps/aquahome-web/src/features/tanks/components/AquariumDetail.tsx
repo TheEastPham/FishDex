@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAquariumFish, getCached, setCached, CacheKeys, USER_DATA_TTL, cn, WaterType, AquariumStyle, useTranslation } from '@fishlover/shared';
 import type { AquariumDto, AquariumFishDto } from '@fishlover/shared';
-import { Pencil, Trash2, FlaskConical, Ruler, Calendar, Fish, Layers, Droplets } from 'lucide-react';
+import { Pencil, Trash2, FlaskConical, Ruler, Calendar, Fish, Layers, Droplets, Globe } from 'lucide-react';
 import FishInventorySection from './FishInventorySection';
 import AquariumMediaSection from './AquariumMediaSection';
 import RemindersSection from './RemindersSection';
+import PublishSnapshotModal from './PublishSnapshotModal';
 
 const TANK_HERO: Record<number, { from: string; via: string; to: string; accent: string }> = {
   [WaterType.Freshwater]: { from: 'from-emerald-950', via: 'via-emerald-900/80', to: 'to-teal-950',   accent: 'text-emerald-400' },
@@ -76,6 +77,7 @@ export default function AquariumDetail({ tank, onEdit, onDelete }: Props) {
 
   const [fishList, setFishList]     = useState<AquariumFishDto[]>([]);
   const [fishLoading, setFishLoading] = useState(true);
+  const [publishOpen, setPublishOpen] = useState(false);
 
   useEffect(() => {
     setFishLoading(true);
@@ -110,8 +112,8 @@ export default function AquariumDetail({ tank, onEdit, onDelete }: Props) {
 
         {/* Content */}
         <div className="absolute inset-0 flex flex-col justify-between p-5">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-2">
+          <div className="flex items-start justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
               {typeLabel && (
                 <span className={cn('text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-white/10 border border-white/15', hero.accent)}>
                   {typeLabel}
@@ -123,7 +125,15 @@ export default function AquariumDetail({ tank, onEdit, onDelete }: Props) {
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 shrink-0">
+              {/* Public bể — action nổi bật (solid fill + label), tách biệt khỏi Edit/Delete */}
+              <button
+                onClick={() => setPublishOpen(true)}
+                className="flex items-center gap-1.5 pl-2.5 pr-3 py-2 rounded-full bg-sky-500 hover:bg-sky-400 transition-colors shadow-lg shadow-sky-950/40"
+              >
+                <Globe className="w-3.5 h-3.5 text-white" />
+                <span className="text-[11px] font-bold text-white whitespace-nowrap">{t('publish.buttonTitle')}</span>
+              </button>
               <button
                 onClick={() => onEdit(tank)}
                 className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
@@ -183,6 +193,15 @@ export default function AquariumDetail({ tank, onEdit, onDelete }: Props) {
 
       {/* Reminders */}
       <RemindersSection aquariumId={tank.id} />
+
+      {/* Publish snapshot modal */}
+      {publishOpen && (
+        <PublishSnapshotModal
+          aquariumId={tank.id}
+          aquariumName={tank.name}
+          onClose={() => setPublishOpen(false)}
+        />
+      )}
     </div>
   );
 }

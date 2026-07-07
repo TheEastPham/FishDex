@@ -11,6 +11,12 @@ public class AquaHomeDbContext(DbContextOptions<AquaHomeDbContext> options) : Db
     public DbSet<UserFavorite>   UserFavorites   => Set<UserFavorite>();
     public DbSet<RecentlyViewed> RecentlyViewed  => Set<RecentlyViewed>();
     public DbSet<AquariumTask>   AquariumTasks   => Set<AquariumTask>();
+    public DbSet<RoleQuota>      RoleQuotas      => Set<RoleQuota>();
+    public DbSet<QuotaUsage>     QuotaUsages     => Set<QuotaUsage>();
+    public DbSet<AquariumSnapshot>     AquariumSnapshots     => Set<AquariumSnapshot>();
+    public DbSet<AquariumSnapshotLike> AquariumSnapshotLikes => Set<AquariumSnapshotLike>();
+    public DbSet<Contest>              Contests              => Set<Contest>();
+    public DbSet<ContestEntry>         ContestEntries        => Set<ContestEntry>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -62,6 +68,77 @@ e.Property(x => x.Description).HasMaxLength(500);
             e.HasOne(x => x.Aquarium)
              .WithMany()
              .HasForeignKey(x => x.AquariumId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        model.Entity<RoleQuota>(e =>
+        {
+            e.HasKey(x => x.Role);
+            e.Property(x => x.Role).HasMaxLength(50);
+            // Seed mặc định (giá trị -1 = không giới hạn). UpdatedAt cố định để migration deterministic.
+            var seededAt = new DateTime(2026, 7, 3, 0, 0, 0, DateTimeKind.Utc);
+            e.HasData(
+                new RoleQuota { Role = "Guest",        MaxFavorites = 10,  MaxAquariums = 2,  SearchPerDay = 20,  AiQaPerDay = 3,  ImageSearchPerDay = 3,  UpdatedAt = seededAt },
+                new RoleQuota { Role = "Member",       MaxFavorites = 100, MaxAquariums = 10, SearchPerDay = 115, AiQaPerDay = 15, ImageSearchPerDay = 20, UpdatedAt = seededAt },
+                new RoleQuota { Role = "ContentAdmin", MaxFavorites = -1,  MaxAquariums = -1, SearchPerDay = -1,  AiQaPerDay = -1, ImageSearchPerDay = -1, UpdatedAt = seededAt },
+                new RoleQuota { Role = "SystemAdmin",  MaxFavorites = -1,  MaxAquariums = -1, SearchPerDay = -1,  AiQaPerDay = -1, ImageSearchPerDay = -1, UpdatedAt = seededAt });
+        });
+
+        model.Entity<QuotaUsage>(e =>
+        {
+            e.HasKey(x => new { x.UserId, x.QuotaType, x.Day });
+        });
+
+        model.Entity<AquariumSnapshot>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Slug).HasMaxLength(150).IsRequired();
+            e.HasIndex(x => x.Slug).IsUnique();
+            e.Property(x => x.YoutubeVideoUrl).HasMaxLength(500);
+            e.Property(x => x.SnapshotData).HasColumnType("jsonb"); // render-only, KHÔNG query/index vào JSON
+            e.HasIndex(x => new { x.IsActive, x.WaterType, x.Style, x.ContestAward, x.LikeCount })
+             .IsDescending(false, false, false, false, true); // phục vụ gallery filter + sort likes DESC
+            e.HasOne(x => x.Aquarium)
+             .WithMany()
+             .HasForeignKey(x => x.AquariumId)
+             .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.ContestEntry)
+             .WithOne()
+             .HasForeignKey<AquariumSnapshot>(x => x.ContestEntryId)
+             .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        model.Entity<AquariumSnapshotLike>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.SnapshotId, x.UserId }).IsUnique();
+            e.HasOne(x => x.Snapshot)
+             .WithMany()
+             .HasForeignKey(x => x.SnapshotId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        model.Entity<Contest>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Title).HasMaxLength(150).IsRequired();
+            e.Property(x => x.Description).HasMaxLength(1000);
+            e.Property(x => x.YouTubePlaylistId).HasMaxLength(100);
+        });
+
+        model.Entity<ContestEntry>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.VideoR2Key).HasMaxLength(500);
+            e.Property(x => x.YouTubeVideoId).HasMaxLength(20);
+            e.HasIndex(x => x.Status);
+            e.HasOne(x => x.Contest)
+             .WithMany(c => c.Entries)
+             .HasForeignKey(x => x.ContestId)
+             .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.AquariumSnapshot)
+             .WithMany()
+             .HasForeignKey(x => x.AquariumSnapshotId)
              .OnDelete(DeleteBehavior.Cascade);
         });
     }

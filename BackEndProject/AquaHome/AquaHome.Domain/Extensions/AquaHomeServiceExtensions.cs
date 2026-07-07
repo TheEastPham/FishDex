@@ -28,6 +28,13 @@ public static class AquaHomeServiceExtensions
         services.AddScoped<IAquariumMediaService, AquariumMediaService>();
         services.AddScoped<IWebPushNotifier, WebPushNotifier>();
         services.AddScoped<IReminderService, ReminderService>();
+        services.AddScoped<IQuotaService, QuotaService>();
+        services.AddScoped<IFishDexClient, FishDexClient>();
+        services.AddScoped<ISnapshotService, SnapshotService>();
+        services.AddScoped<IContestService, ContestService>();
+        services.Configure<YouTubeSettings>(configuration.GetSection(YouTubeSettings.SectionName));
+        services.AddScoped<IYouTubeUploadService, YouTubeUploadService>();
+        services.AddHttpClient(); // dùng cho YouTubeUploadService download video từ R2 presigned URL
 
         var umBaseUrl = configuration["UserManagement:BaseUrl"] ?? "http://localhost:8080";
         var internalApiKey = configuration["UserManagement:InternalApiKey"] ?? string.Empty;
@@ -35,6 +42,13 @@ public static class AquaHomeServiceExtensions
         {
             client.BaseAddress = new Uri(umBaseUrl);
             client.DefaultRequestHeaders.Add("X-Internal-Api-Key", internalApiKey);
+            client.Timeout = TimeSpan.FromSeconds(10);
+        });
+
+        var fishDexBaseUrl = configuration["FishDex:BaseUrl"] ?? "http://localhost:8081";
+        services.AddHttpClient("FishDex", client =>
+        {
+            client.BaseAddress = new Uri(fishDexBaseUrl);
             client.Timeout = TimeSpan.FromSeconds(10);
         });
 

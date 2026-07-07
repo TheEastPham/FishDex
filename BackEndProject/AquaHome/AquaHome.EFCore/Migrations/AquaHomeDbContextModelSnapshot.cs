@@ -111,11 +111,108 @@ namespace AquaHome.EFCore.Migrations
                     b.ToTable("AquariumMedia");
                 });
 
+            modelBuilder.Entity("AquaHome.EFCore.Entity.AquariumSnapshot", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AquariumId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("ContestAward")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("ContestEntryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CoverMediaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("FishSpeciesCount")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("LikeCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("SnapshotData")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<int>("Style")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("WaterType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("YoutubeVideoUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AquariumId");
+
+                    b.HasIndex("ContestEntryId")
+                        .IsUnique();
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.HasIndex("IsActive", "WaterType", "Style", "ContestAward", "LikeCount")
+                        .IsDescending(false, false, false, false, true);
+
+                    b.ToTable("AquariumSnapshots");
+                });
+
+            modelBuilder.Entity("AquaHome.EFCore.Entity.AquariumSnapshotLike", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("SnapshotId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SnapshotId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("AquariumSnapshotLikes");
+                });
+
             modelBuilder.Entity("AquaHome.EFCore.Entity.AquariumTask", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<int>("AquaTaskType")
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("AquariumId")
                         .HasColumnType("uuid");
@@ -138,9 +235,6 @@ namespace AquaHome.EFCore.Migrations
                     b.Property<bool>("Reminded")
                         .HasColumnType("boolean");
 
-                    b.Property<int>("AquaTaskType")
-                        .HasColumnType("integer");
-
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
@@ -151,6 +245,113 @@ namespace AquaHome.EFCore.Migrations
                     b.HasIndex("IsCompleted", "Reminded", "DueAt");
 
                     b.ToTable("AquariumTasks");
+                });
+
+            modelBuilder.Entity("AquaHome.EFCore.Entity.Contest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime>("EndAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("StartAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("YouTubePlaylistId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Contests");
+                });
+
+            modelBuilder.Entity("AquaHome.EFCore.Entity.ContestEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AquariumSnapshotId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ContestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("Rank")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("SubmittedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("VideoDurationSeconds")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("VideoR2Key")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<long?>("VideoSizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("YouTubeVideoId")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<long>("YouTubeViewCount")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AquariumSnapshotId");
+
+                    b.HasIndex("ContestId");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("ContestEntries");
+                });
+
+            modelBuilder.Entity("AquaHome.EFCore.Entity.QuotaUsage", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("QuotaType")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly>("Day")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Count")
+                        .HasColumnType("integer");
+
+                    b.HasKey("UserId", "QuotaType", "Day");
+
+                    b.ToTable("QuotaUsages");
                 });
 
             modelBuilder.Entity("AquaHome.EFCore.Entity.RecentlyViewed", b =>
@@ -169,6 +370,77 @@ namespace AquaHome.EFCore.Migrations
                     b.HasIndex("UserId", "ViewedAt");
 
                     b.ToTable("RecentlyViewed");
+                });
+
+            modelBuilder.Entity("AquaHome.EFCore.Entity.RoleQuota", b =>
+                {
+                    b.Property<string>("Role")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("AiQaPerDay")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ImageSearchPerDay")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MaxAquariums")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MaxFavorites")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SearchPerDay")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Role");
+
+                    b.ToTable("RoleQuotas");
+
+                    b.HasData(
+                        new
+                        {
+                            Role = "Guest",
+                            AiQaPerDay = 3,
+                            ImageSearchPerDay = 3,
+                            MaxAquariums = 2,
+                            MaxFavorites = 10,
+                            SearchPerDay = 20,
+                            UpdatedAt = new DateTime(2026, 7, 3, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Role = "Member",
+                            AiQaPerDay = 15,
+                            ImageSearchPerDay = 20,
+                            MaxAquariums = 10,
+                            MaxFavorites = 100,
+                            SearchPerDay = 115,
+                            UpdatedAt = new DateTime(2026, 7, 3, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Role = "ContentAdmin",
+                            AiQaPerDay = -1,
+                            ImageSearchPerDay = -1,
+                            MaxAquariums = -1,
+                            MaxFavorites = -1,
+                            SearchPerDay = -1,
+                            UpdatedAt = new DateTime(2026, 7, 3, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            Role = "SystemAdmin",
+                            AiQaPerDay = -1,
+                            ImageSearchPerDay = -1,
+                            MaxAquariums = -1,
+                            MaxFavorites = -1,
+                            SearchPerDay = -1,
+                            UpdatedAt = new DateTime(2026, 7, 3, 0, 0, 0, 0, DateTimeKind.Utc)
+                        });
                 });
 
             modelBuilder.Entity("AquaHome.EFCore.Entity.UserFavorite", b =>
@@ -209,6 +481,35 @@ namespace AquaHome.EFCore.Migrations
                     b.Navigation("Aquarium");
                 });
 
+            modelBuilder.Entity("AquaHome.EFCore.Entity.AquariumSnapshot", b =>
+                {
+                    b.HasOne("AquaHome.EFCore.Entity.Aquarium", "Aquarium")
+                        .WithMany()
+                        .HasForeignKey("AquariumId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AquaHome.EFCore.Entity.ContestEntry", "ContestEntry")
+                        .WithOne()
+                        .HasForeignKey("AquaHome.EFCore.Entity.AquariumSnapshot", "ContestEntryId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Aquarium");
+
+                    b.Navigation("ContestEntry");
+                });
+
+            modelBuilder.Entity("AquaHome.EFCore.Entity.AquariumSnapshotLike", b =>
+                {
+                    b.HasOne("AquaHome.EFCore.Entity.AquariumSnapshot", "Snapshot")
+                        .WithMany()
+                        .HasForeignKey("SnapshotId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Snapshot");
+                });
+
             modelBuilder.Entity("AquaHome.EFCore.Entity.AquariumTask", b =>
                 {
                     b.HasOne("AquaHome.EFCore.Entity.Aquarium", "Aquarium")
@@ -220,9 +521,33 @@ namespace AquaHome.EFCore.Migrations
                     b.Navigation("Aquarium");
                 });
 
+            modelBuilder.Entity("AquaHome.EFCore.Entity.ContestEntry", b =>
+                {
+                    b.HasOne("AquaHome.EFCore.Entity.AquariumSnapshot", "AquariumSnapshot")
+                        .WithMany()
+                        .HasForeignKey("AquariumSnapshotId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AquaHome.EFCore.Entity.Contest", "Contest")
+                        .WithMany("Entries")
+                        .HasForeignKey("ContestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AquariumSnapshot");
+
+                    b.Navigation("Contest");
+                });
+
             modelBuilder.Entity("AquaHome.EFCore.Entity.Aquarium", b =>
                 {
                     b.Navigation("Fish");
+                });
+
+            modelBuilder.Entity("AquaHome.EFCore.Entity.Contest", b =>
+                {
+                    b.Navigation("Entries");
                 });
 #pragma warning restore 612, 618
         }

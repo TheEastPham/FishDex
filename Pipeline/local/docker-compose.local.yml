@@ -216,6 +216,14 @@ services:
       # Gọi push qua UserManagement (service name trong docker network, KHÔNG phải localhost)
       UserManagement__BaseUrl:              http://usermanagement-api:8080
       UserManagement__InternalApiKey:       ${INTERNAL_API_KEY}
+      # Epic 11.0 — snapshot preview/publish gọi FishDex lấy species summaries + distribution points
+      FishDex__BaseUrl:                     http://fishdex-api:8080
+      # Epic 11.3 — contest video upload YouTube (rỗng = confirm-upload/approve/reject fail êm, không crash)
+      ExternalServices__YouTube__ClientId:     ${YOUTUBE_CLIENT_ID}
+      ExternalServices__YouTube__ClientSecret: ${YOUTUBE_CLIENT_SECRET}
+      ExternalServices__YouTube__RefreshToken: ${YOUTUBE_REFRESH_TOKEN}
+      ExternalServices__YouTube__ChannelId:     ${YOUTUBE_CHANNEL_ID}
+      AdminAlerts__R2WarningEmail:              ${ADMIN_R2_WARNING_EMAIL}
     ports:
       - "8082:8080"
     networks:
@@ -242,6 +250,11 @@ services:
       AutoMigrate__OnStartup:               "false"   # API đã migrate, worker không migrate (tránh race)
       UserManagement__BaseUrl:              http://usermanagement-api:8080
       UserManagement__InternalApiKey:       ${INTERNAL_API_KEY}
+      # Epic 11.3 — SyncContestViewCountsBackgroundService (mỗi 6h)
+      ExternalServices__YouTube__ClientId:     ${YOUTUBE_CLIENT_ID}
+      ExternalServices__YouTube__ClientSecret: ${YOUTUBE_CLIENT_SECRET}
+      ExternalServices__YouTube__RefreshToken: ${YOUTUBE_REFRESH_TOKEN}
+      ExternalServices__YouTube__ChannelId:     ${YOUTUBE_CHANNEL_ID}
     networks:
       - fishlover_local
     depends_on:

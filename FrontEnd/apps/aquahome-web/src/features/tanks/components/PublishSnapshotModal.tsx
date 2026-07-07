@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import {
-  previewSnapshot, publishSnapshot, getAquariumMedia,
+  previewSnapshot, publishSnapshot, getAquariumMedia, getMySnapshots,
   useTranslation, cn,
 } from '@fishlover/shared';
-import type { SnapshotPreviewDto, AquariumMediaDto } from '@fishlover/shared';
-import { Loader2, Globe, Fish, Check, Copy, X, ImageIcon } from 'lucide-react';
+import type { SnapshotPreviewDto, AquariumMediaDto, MySnapshotDto } from '@fishlover/shared';
+import { Loader2, Globe, Fish, Check, Copy, X, ImageIcon, RefreshCw, Sparkles } from 'lucide-react';
 import SnapshotFishSection from '../../public-tanks/components/SnapshotFishSection';
 
 interface Props {
@@ -18,7 +18,10 @@ export default function PublishSnapshotModal({ aquariumId, aquariumName, onClose
 
   const [preview, setPreview] = useState<SnapshotPreviewDto | null>(null);
   const [media, setMedia] = useState<AquariumMediaDto[]>([]);
-  const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  const [existing, setExisting] = useState<MySnapshotDto[]>([]);
+  const [coverMediaId, setCoverMediaId] = useState<string | null>(null);
+  // null = publish mới (link mới); có giá trị = ghi đè snapshot đã chọn (giữ nguyên link/lượt thích)
+  const [targetSnapshotId, setTargetSnapshotId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState(false);
@@ -30,10 +33,12 @@ export default function PublishSnapshotModal({ aquariumId, aquariumName, onClose
     Promise.all([
       previewSnapshot(aquariumId),
       getAquariumMedia(aquariumId).catch(() => [] as AquariumMediaDto[]),
+      getMySnapshots().catch(() => [] as MySnapshotDto[]),
     ])
-      .then(([previewData, mediaList]) => {
+      .then(([previewData, mediaList, mySnapshots]) => {
         setPreview(previewData);
         setMedia(mediaList.filter(m => m.url));
+        setExisting(mySnapshots.filter(s => s.aquariumId === aquariumId));
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
@@ -43,7 +48,7 @@ export default function PublishSnapshotModal({ aquariumId, aquariumName, onClose
     setPublishing(true);
     setError(false);
     try {
-      const snapshot = await publishSnapshot(aquariumId, { coverImageUrl: coverUrl });
+      const snapshot = await publishSnapshot(aquariumId, { coverMediaId, targetSnapshotId });
       setPublishedSlug(snapshot.slug);
     } catch {
       setError(true);
@@ -126,16 +131,54 @@ export default function PublishSnapshotModal({ aquariumId, aquariumName, onClose
               <>
                 <p className="text-sm text-slate-400 mb-4">{t('publish.previewHint')}</p>
 
+                {/* Publish mới vs ghi đè bể đã public */}
+                {existing.length > 0 && (
+                  <div className="mb-5 space-y-2">
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{t('publish.modeLabel')}</p>
+
+                    <button
+                      onClick={() => setTargetSnapshotId(null)}
+                      className={cn(
+                        'w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-colors',
+                        targetSnapshotId === null ? 'border-sky-500 bg-sky-500/10' : 'border-slate-700 hover:border-slate-500',
+                      )}
+                    >
+                      <Sparkles className="w-4 h-4 text-sky-400 shrink-0" />
+                      <div>
+                        <p className="text-sm font-semibold text-white">{t('publish.modeNew')}</p>
+                        <p className="text-xs text-slate-500">{t('publish.modeNewHint')}</p>
+                      </div>
+                    </button>
+
+                    {existing.map(s => (
+                      <button
+                        key={s.id}
+                        onClick={() => setTargetSnapshotId(s.id)}
+                        className={cn(
+                          'w-full flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-colors',
+                          targetSnapshotId === s.id ? 'border-sky-500 bg-sky-500/10' : 'border-slate-700 hover:border-slate-500',
+                        )}
+                      >
+                        <RefreshCw className="w-4 h-4 text-amber-400 shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-white truncate">{t('publish.modeOverwrite')}: /{s.slug}</p>
+                          <p className="text-xs text-slate-500">{t('publish.modeOverwriteHint', { count: s.likeCount })}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 {/* Cover picker */}
                 {media.length > 0 && (
                   <div className="mb-5">
                     <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{t('publish.coverLabel')}</p>
                     <div className="flex gap-2 overflow-x-auto pb-1">
                       <button
-                        onClick={() => setCoverUrl(null)}
+                        onClick={() => setCoverMediaId(null)}
                         className={cn(
                           'w-16 h-16 rounded-lg border-2 shrink-0 flex items-center justify-center bg-[#0F172A] transition-colors',
-                          coverUrl === null ? 'border-sky-500' : 'border-slate-700 hover:border-slate-500',
+                          coverMediaId === null ? 'border-sky-500' : 'border-slate-700 hover:border-slate-500',
                         )}
                         title={t('publish.noCover')}
                       >
@@ -144,12 +187,13 @@ export default function PublishSnapshotModal({ aquariumId, aquariumName, onClose
                       {media.map(m => (
                         <button
                           key={m.id}
-                          onClick={() => setCoverUrl(m.url)}
+                          onClick={() => setCoverMediaId(m.id)}
                           className={cn(
                             'w-16 h-16 rounded-lg border-2 shrink-0 overflow-hidden transition-colors',
-                            coverUrl === m.url ? 'border-sky-500' : 'border-slate-700 hover:border-slate-500',
+                            coverMediaId === m.id ? 'border-sky-500' : 'border-slate-700 hover:border-slate-500',
                           )}
                         >
+                          {/* Thumbnail hiển thị bằng presigned URL hiện tại — chỉ để chọn, publish sẽ copy bằng m.id */}
                           <img src={m.url!} alt="" className="w-full h-full object-cover" />
                         </button>
                       ))}

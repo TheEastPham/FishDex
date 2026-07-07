@@ -116,6 +116,7 @@ export default function AppShell() {
       subItems: [
         { to: '/public/tanks', icon: Waves,  label: t('nav.publicTanks') },
         { to: '/contests',     icon: Trophy, label: t('nav.contests') },
+        { to: '/my-published-tanks', icon: Globe, label: t('nav.myPublishedTanks'), requireAuth: true },
       ],
     },
     {

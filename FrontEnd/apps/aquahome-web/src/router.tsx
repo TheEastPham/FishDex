@@ -23,6 +23,7 @@ import PublicTanksPage from '@/features/public-tanks/PublicTanksPage';
 import PublicTankDetailPage from '@/features/public-tanks/PublicTankDetailPage';
 import ContestsPage from '@/features/contests/ContestsPage';
 import AdminContestsPage from '@/features/admin-contests/AdminContestsPage';
+import MyPublishedTanksPage from '@/features/my-published-tanks/MyPublishedTanksPage';
 
 // Redirect "/" based on auth state: dashboard if logged in, fish search if not
 function RootRedirect() {
@@ -56,6 +57,7 @@ export const router = createBrowserRouter([
         children: [
           { path: '/dashboard',    element: <DashboardPage /> },
           { path: '/tanks',        element: <TanksPage /> },
+          { path: '/my-published-tanks', element: <MyPublishedTanksPage /> },
           { path: '/parameters',   element: <PlaceholderPage /> },
           { path: '/tasks',        element: <TasksPage /> },
           { path: '/favorites',    element: <FavoritesPage /> },

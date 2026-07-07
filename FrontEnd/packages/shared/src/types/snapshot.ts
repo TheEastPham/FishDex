@@ -41,6 +41,7 @@ export interface SnapshotFishDto {
 /** Nội dung JSONB render-only của snapshot — BE denorm sẵn, public page không gọi thêm API */
 export interface SnapshotDataDto {
   aquariumName: string;
+  ownerNickname: string | null;
   lengthCm: number | null;
   widthCm: number | null;
   heightCm: number | null;
@@ -57,7 +58,10 @@ export interface SnapshotPreviewDto {
 }
 
 export interface PublishSnapshotRequest {
-  coverImageUrl?: string | null;
+  /** Id của AquariumMedia đã upload — server ký lại presigned URL mỗi lần trang public được xem */
+  coverMediaId?: string | null;
+  /** Có giá trị = ghi đè (giữ nguyên URL/slug/lượt thích) snapshot đang active này thay vì tạo mới */
+  targetSnapshotId?: string | null;
 }
 
 export interface AquariumSnapshotDto {
@@ -71,20 +75,24 @@ export interface AquariumSnapshotDto {
   coverImageUrl: string | null;
   youtubeVideoUrl: string | null;
   createdAt: string;
+  updatedAt: string;
   snapshotData: SnapshotDataDto | null; // null trong gallery list, có data ở detail
   likedByMe: boolean;
 }
 
-/** Bản gọn từ GET /snapshots/mine — cho contest entry form chọn bể, không kèm fish list */
+/** Bản gọn từ GET /snapshots/mine — trang quản lý "bể đã public của tôi" + contest entry form chọn bể */
 export interface MySnapshotDto {
   id: string;
+  aquariumId: string;
   slug: string;
   aquariumName: string;
   waterType: WaterType;
   style: AquariumStyle;
   fishSpeciesCount: number;
   likeCount: number;
+  coverImageUrl: string | null;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface GetPublicSnapshotsParams {

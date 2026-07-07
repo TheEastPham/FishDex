@@ -172,6 +172,9 @@ export default function PublicTankDetailPage() {
 
           <div>
             <h1 className="text-xl sm:text-2xl font-black text-white leading-tight">{name}</h1>
+            {data?.ownerNickname && (
+              <p className="text-white/70 text-sm mt-0.5 font-medium">{t('publicTanks.byOwner', { name: data.ownerNickname })}</p>
+            )}
             {data?.description && (
               <p className="text-white/50 text-sm mt-1 line-clamp-2">{data.description}</p>
             )}

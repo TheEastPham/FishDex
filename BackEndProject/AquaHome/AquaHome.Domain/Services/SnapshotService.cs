@@ -86,6 +86,31 @@ public class SnapshotService(
         return true;
     }
 
+    public async Task<IReadOnlyList<MySnapshotDto>> GetMineAsync(CancellationToken ct = default)
+    {
+        var snapshots = await snapshotRepo.GetActiveByUserAsync(currentUser.UserId, ct);
+        return snapshots.Select(s =>
+        {
+            // Chỉ cần aquariumName từ JSONB — không trả cả fish list cho form chọn bể
+            var name = TryGetAquariumName(s.SnapshotData) ?? s.Slug;
+            return new MySnapshotDto(
+                s.Id, s.Slug, name, (WaterType)s.WaterType, (AquariumStyle)s.Style,
+                s.FishSpeciesCount, s.LikeCount, s.CreatedAt);
+        }).ToList();
+    }
+
+    private static string? TryGetAquariumName(string snapshotJson)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<SnapshotDataDto>(snapshotJson, JsonOptions)?.AquariumName;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     public async Task<PagedResult<AquariumSnapshotDto>> GetGalleryAsync(
         int? waterType, int? style, string? contest, string sort, int page, int pageSize, CancellationToken ct = default)
     {

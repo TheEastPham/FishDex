@@ -7,6 +7,7 @@ public interface IAquariumSnapshotRepository
     Task<AquariumSnapshot?> GetByIdAsync(Guid id, CancellationToken ct = default);
     Task<AquariumSnapshot?> GetBySlugAsync(string slug, CancellationToken ct = default);
     Task<IReadOnlyList<AquariumSnapshot>> GetActiveByAquariumAsync(Guid aquariumId, CancellationToken ct = default);
+    Task<IReadOnlyList<AquariumSnapshot>> GetActiveByUserAsync(Guid userId, CancellationToken ct = default);
     Task<bool> SlugExistsAsync(string slug, CancellationToken ct = default);
 
     Task<(IReadOnlyList<AquariumSnapshot> Items, int TotalCount)> GetGalleryAsync(

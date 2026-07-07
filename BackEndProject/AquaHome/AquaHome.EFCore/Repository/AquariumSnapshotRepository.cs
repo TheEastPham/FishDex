@@ -19,6 +19,12 @@ public class AquariumSnapshotRepository(AquaHomeDbContext db) : IAquariumSnapsho
             .OrderBy(s => s.CreatedAt)
             .ToListAsync(ct);
 
+    public async Task<IReadOnlyList<AquariumSnapshot>> GetActiveByUserAsync(Guid userId, CancellationToken ct = default)
+        => await db.AquariumSnapshots
+            .Where(s => s.UserId == userId && s.IsActive)
+            .OrderByDescending(s => s.CreatedAt)
+            .ToListAsync(ct);
+
     public Task<bool> SlugExistsAsync(string slug, CancellationToken ct = default)
         => db.AquariumSnapshots.AnyAsync(s => s.Slug == slug, ct);
 

@@ -32,6 +32,11 @@ public class AquariumSnapshotController(ISnapshotService snapshotService) : Cont
 [Route("api/snapshots")]
 public class SnapshotsController(ISnapshotService snapshotService) : ControllerBase
 {
+    /// <summary>Snapshot active của user hiện tại — bản gọn cho contest entry form.</summary>
+    [HttpGet("mine")]
+    public async Task<IActionResult> GetMine(CancellationToken ct)
+        => Ok(await snapshotService.GetMineAsync(ct));
+
     /// <summary>User có thể unpublish bất kỳ lúc nào.</summary>
     [HttpPatch("{id:guid}/unpublish")]
     public async Task<IActionResult> Unpublish(Guid id, CancellationToken ct)

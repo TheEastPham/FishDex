@@ -28,6 +28,17 @@ public record SnapshotPreviewDto(
 
 public record PublishSnapshotRequest(string? CoverImageUrl);
 
+/// <summary>Bản gọn cho GET /snapshots/mine — FE contest entry form chỉ cần chọn bể, không cần fish list.</summary>
+public record MySnapshotDto(
+    Guid Id,
+    string Slug,
+    string AquariumName,
+    WaterType WaterType,
+    AquariumStyle Style,
+    int FishSpeciesCount,
+    int LikeCount,
+    DateTime CreatedAt);
+
 public record AquariumSnapshotDto(
     Guid Id,
     string Slug,

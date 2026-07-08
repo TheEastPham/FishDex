@@ -34,8 +34,9 @@ public class FishDexClient(
         {
             var client = CreateClient();
             var codes = string.Join(",", specCodes);
+            // Route public (AllowAnonymous) — snapshot public được xem bởi người chưa login (không có JWT để forward).
             var result = await client.GetFromJsonAsync<List<SpeciesSummaryDto>>(
-                $"/api/species/summaries?codes={codes}", ct);
+                $"/api/public/species/summaries?codes={codes}", ct);
             return result ?? [];
         }
         catch (Exception ex)

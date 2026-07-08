@@ -2,6 +2,7 @@ using FishDex.Domain.DTOs.Occurrence;
 using FishDex.Domain.Helpers;
 using FishDex.Domain.Mappings;
 using FishDex.Domain.Services.Interfaces;
+using FishDex.EFCore.Entity.Occurrence;
 using FishDex.EFCore.Repository.Interface;
 
 namespace FishDex.Domain.Services;
@@ -29,8 +30,25 @@ public class OccurrenceService(
     public async Task<SpeciesDistributionDto> GetDistributionAsync(int specCode, CancellationToken ct = default)
     {
         var all = await occurrenceRepo.GetAllWithCoordsAsync(specCode, ct);
+        return BuildDistribution(all);
+    }
 
-        var countries = all
+    public async Task<IReadOnlyDictionary<int, SpeciesDistributionDto>> GetDistributionsBatchAsync(
+        IReadOnlyList<int> specCodes, CancellationToken ct = default)
+    {
+        if (specCodes.Count == 0)
+            return new Dictionary<int, SpeciesDistributionDto>();
+
+        var all = await occurrenceRepo.GetAllWithCoordsAsync(specCodes, ct);
+
+        return all
+            .GroupBy(o => o.SpecCode)
+            .ToDictionary(g => g.Key, g => BuildDistribution(g.ToList()));
+    }
+
+    private static SpeciesDistributionDto BuildDistribution(IReadOnlyList<Occurrence> occurrences)
+    {
+        var countries = occurrences
             .Where(o => o.CountryCode is not null)
             .GroupBy(o => o.CountryCode!)
             .Select(g =>
@@ -50,6 +68,6 @@ public class OccurrenceService(
             .OrderByDescending(c => c.Count)
             .ToList();
 
-        return new SpeciesDistributionDto(all.Count, countries);
+        return new SpeciesDistributionDto(occurrences.Count, countries);
     }
 }

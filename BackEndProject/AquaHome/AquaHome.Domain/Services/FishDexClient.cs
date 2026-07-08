@@ -46,19 +46,42 @@ public class FishDexClient(
         }
     }
 
-    public async Task<IReadOnlyList<DistributionPointDto>> GetOccurrencesAsync(int specCode, CancellationToken ct = default)
+    // Giới hạn số điểm phân bố nhúng vào JSONB mỗi loài — tránh snapshot phình to
+    private const int MaxPointsPerSpecies = 200;
+
+    public async Task<IReadOnlyDictionary<int, IReadOnlyList<DistributionPointDto>>> GetDistributionsAsync(
+        IReadOnlyList<int> specCodes, CancellationToken ct = default)
     {
+        var empty = new Dictionary<int, IReadOnlyList<DistributionPointDto>>();
+        if (specCodes.Count == 0) return empty;
+
         try
         {
             var client = CreateClient();
-            var result = await client.GetFromJsonAsync<List<DistributionPointDto>>(
-                $"/api/species/{specCode}/occurrences?limit=200", ct);
-            return result ?? [];
+            var codes = string.Join(",", specCodes);
+            // Route public (AllowAnonymous), batch — 1 request thay vì N. Không cần JWT.
+            var result = await client.GetFromJsonAsync<Dictionary<int, SpeciesDistributionResponse>>(
+                $"/api/public/species/distributions?codes={codes}", ct);
+
+            if (result is null) return empty;
+
+            return result.ToDictionary(
+                kv => kv.Key,
+                kv => (IReadOnlyList<DistributionPointDto>)kv.Value.Countries
+                    .SelectMany(c => c.Occurrences.Select(o =>
+                        new DistributionPointDto(o.Lat, o.Lon, c.Code, o.Locality)))
+                    .Take(MaxPointsPerSpecies)
+                    .ToList());
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to fetch occurrences for specCode {SpecCode}", specCode);
-            return [];
+            logger.LogWarning(ex, "Failed to fetch distributions for {Count} specCodes", specCodes.Count);
+            return empty;
         }
     }
+
+    // Shape khớp SpeciesDistributionDto của FishDex (chỉ field cần dùng)
+    private sealed record SpeciesDistributionResponse(List<CountryDistribution> Countries);
+    private sealed record CountryDistribution(string Code, List<OccurrencePoint> Occurrences);
+    private sealed record OccurrencePoint(double Lat, double Lon, string? Locality);
 }

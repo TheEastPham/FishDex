@@ -23,5 +23,12 @@ public class OccurrenceRepository(FishDexDbContext context) : GenericRepository<
             .Where(o => o.SpecCode == specCode && o.LatitudeDec != 0 && o.LongitudeDec != 0)
             .OrderBy(o => o.CountryCode)
             .ToListAsync(ct);
+
+    // Batch: 1 query cho nhiều loài — tránh N+1 khi build snapshot / render aquarium detail
+    public async Task<IReadOnlyList<Occurrence>> GetAllWithCoordsAsync(IReadOnlyList<int> specCodes, CancellationToken ct = default)
+        => await _db.Occurrences
+            .Where(o => specCodes.Contains(o.SpecCode) && o.LatitudeDec != 0 && o.LongitudeDec != 0)
+            .OrderBy(o => o.CountryCode)
+            .ToListAsync(ct);
 }
 

@@ -7,5 +7,6 @@ public interface IOccurrenceRepository : IGenericRepository<Occurrence>
 {
     Task<IReadOnlyList<string>> GetDistinctCountryCodesAsync(int specCode, CancellationToken ct = default);
     Task<IReadOnlyList<Occurrence>> GetAllWithCoordsAsync(int specCode, CancellationToken ct = default);
+    Task<IReadOnlyList<Occurrence>> GetAllWithCoordsAsync(IReadOnlyList<int> specCodes, CancellationToken ct = default);
 }
 

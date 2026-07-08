@@ -237,14 +237,16 @@ public class SnapshotService(
         var fishEntries = await aquariumRepo.GetFishListAsync(aquarium.Id, ct);
         var specCodes = fishEntries.Select(f => f.SpecCode).Distinct().ToList();
 
+        // 2 batch call thay vì 1 + N: summaries (1) + distributions (1)
         var summaries = (await fishDexClient.GetSpeciesSummariesAsync(specCodes, ct))
             .ToDictionary(s => s.SpecCode);
+        var distributions = await fishDexClient.GetDistributionsAsync(specCodes, ct);
 
         var fish = new List<SnapshotFishDto>(fishEntries.Count);
         foreach (var entry in fishEntries)
         {
-            var points = await fishDexClient.GetOccurrencesAsync(entry.SpecCode, ct);
             summaries.TryGetValue(entry.SpecCode, out var summary);
+            var points = distributions.TryGetValue(entry.SpecCode, out var p) ? p : [];
 
             fish.Add(new SnapshotFishDto(
                 entry.SpecCode,

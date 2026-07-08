@@ -25,7 +25,7 @@ export {
 // TODO(mobile): client.ts uses window.location — wrap in platform-specific impl
 export { apiClient }                               from './lib/api/client';
 // TODO(mobile): fishDex.ts uses import.meta.env — pass baseUrl via config object
-export { searchSpecies, getFamilies, getSpeciesDetail, getSpeciesSummaries, getSpeciesMedia, getSpeciesOccurrences, getSpeciesCountries, getSpeciesDistribution, getRelatedSpecies } from './lib/api/fishDex';
+export { searchSpecies, getFamilies, getSpeciesDetail, getSpeciesSummaries, getSpeciesMedia, getSpeciesOccurrences, getSpeciesCountries, getSpeciesDistribution, getSpeciesDistributionsBatch, getRelatedSpecies } from './lib/api/fishDex';
 export { getMyAquariums, getAquariumById, createAquarium, updateAquarium, deleteAquarium, addFishToAquarium, getAquariumFish, getMyFavorites, checkFavorite, addFavorite, removeFavorite, getRecentlyViewed, recordView, getAquariumMedia, requestMediaUpload, uploadToR2, confirmMediaUpload, deleteAquariumMedia, getReminders, createReminder, completeReminder, deleteReminder, getAllReminders } from './lib/api/aquaHome';
 export type { RecentlyViewedDto } from './types/aquahome';
 export { requestOtp, registerUser, forgotPassword, resetPassword, getMyProfile, updateMyProfile, changePassword } from './lib/api/auth';

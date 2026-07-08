@@ -3,7 +3,7 @@ import { useMap, MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaf
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
-  getSpeciesSummaries, getSpeciesDistribution,
+  getSpeciesSummaries, getSpeciesDistributionsBatch,
   getCached, setCached, CacheKeys, SPECIES_DATA_TTL, useTranslation,
 } from '@fishlover/shared';
 import type { AquariumFishDto, SpeciesSummary, SpeciesDistributionDto } from '@fishlover/shared';
@@ -101,17 +101,27 @@ export default function FishInventorySection({ aquariumId: _aquariumId, fishList
       .catch(console.error)
       .finally(() => setSummaryLoading(false));
 
+    // Distribution: lấy từ cache trước, chỉ batch 1 request cho các loài chưa cache
+    const missing: number[] = [];
     specCodes.forEach(specCode => {
-      const cacheKey = CacheKeys.speciesDistribution(specCode);
-      const cached = getCached<SpeciesDistributionDto>(cacheKey);
-      if (cached) { setDistributions(prev => ({ ...prev, [specCode]: cached })); return; }
-      getSpeciesDistribution(specCode)
-        .then(data => {
-          setCached(cacheKey, data, SPECIES_DATA_TTL);
-          setDistributions(prev => ({ ...prev, [specCode]: data }));
+      const cached = getCached<SpeciesDistributionDto>(CacheKeys.speciesDistribution(specCode));
+      if (cached) setDistributions(prev => ({ ...prev, [specCode]: cached }));
+      else missing.push(specCode);
+    });
+
+    if (missing.length > 0) {
+      getSpeciesDistributionsBatch(missing)
+        .then(batch => {
+          Object.entries(batch).forEach(([code, data]) => {
+            setCached(CacheKeys.speciesDistribution(Number(code)), data, SPECIES_DATA_TTL);
+          });
+          setDistributions(prev => ({
+            ...prev,
+            ...Object.fromEntries(Object.entries(batch).map(([code, data]) => [Number(code), data])),
+          }));
         })
         .catch(() => {});
-    });
+    }
   }, [loading, fishList]);
 
   const mapPoints = useMemo(() => {

@@ -65,6 +65,16 @@ export async function getSpeciesDistribution(specCode: number): Promise<SpeciesD
   return data;
 }
 
+/** Batch distribution cho nhiều loài trong 1 request — key = specCode. Route public (no auth). */
+export async function getSpeciesDistributionsBatch(specCodes: number[]): Promise<Record<number, SpeciesDistributionDto>> {
+  if (specCodes.length === 0) return {};
+  const { data } = await fishDexClient.get<Record<number, SpeciesDistributionDto>>(
+    '/fishdex/v1/public/species/distributions',
+    { params: { codes: specCodes.join(',') } },
+  );
+  return data;
+}
+
 export async function getRelatedSpecies(specCode: number, limit: number = 6, language?: string): Promise<SpeciesSearchResult[]> {
   const params = language ? { limit, language } : { limit };
   const { data } = await fishDexClient.get<SpeciesSearchResult[]>(`/fishdex/v1/species/${specCode}/related`, { params });

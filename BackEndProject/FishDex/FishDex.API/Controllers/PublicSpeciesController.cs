@@ -1,3 +1,4 @@
+using FishDex.Domain.DTOs.Occurrence;
 using FishDex.Domain.DTOs.Species;
 using FishDex.Domain.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -12,22 +13,28 @@ namespace FishDex.API.Controllers;
 [ApiController]
 [Route("api/public/species")]
 [AllowAnonymous]
-public class PublicSpeciesController(ISpeciesService speciesService) : ControllerBase
+public class PublicSpeciesController(
+    ISpeciesService speciesService,
+    IOccurrenceService occurrenceService) : ControllerBase
 {
+    private static List<int> ParseCodes(string codes) => codes
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Select(c => int.TryParse(c, out var n) ? n : (int?)null)
+        .Where(n => n.HasValue)
+        .Select(n => n!.Value)
+        .Distinct()
+        .Take(100)
+        .ToList();
+
     /// <summary>Batch species summaries (name + commonName + presigned imageUrl mới ký) cho danh sách specCode.</summary>
     [HttpGet("summaries")]
-    public async Task<IReadOnlyList<SpeciesSummaryDto>> GetSummaries(
+    public Task<IReadOnlyList<SpeciesSummaryDto>> GetSummaries(
         [FromQuery] string codes, [FromQuery] string? language, CancellationToken ct)
-    {
-        var specCodes = codes
-            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(c => int.TryParse(c, out var n) ? n : (int?)null)
-            .Where(n => n.HasValue)
-            .Select(n => n!.Value)
-            .Distinct()
-            .Take(100)
-            .ToList();
+        => speciesService.GetSummariesAsync(ParseCodes(codes), language, ct);
 
-        return await speciesService.GetSummariesAsync(specCodes, language, ct);
-    }
+    /// <summary>Batch distribution cho nhiều loài trong 1 request — thay cho gọi /{specCode}/distribution N lần.</summary>
+    [HttpGet("distributions")]
+    public Task<IReadOnlyDictionary<int, SpeciesDistributionDto>> GetDistributions(
+        [FromQuery] string codes, CancellationToken ct)
+        => occurrenceService.GetDistributionsBatchAsync(ParseCodes(codes), ct);
 }

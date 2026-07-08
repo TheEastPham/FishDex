@@ -206,7 +206,11 @@ public class SnapshotService(
         return media is null ? null : await storage.GetPresignedUrlAsync(media.ObjectKey(Env), ct);
     }
 
-    /// <summary>Ảnh loài cá trong JSONB cũng là presigned URL từ FishDex — gọi lại để lấy URL còn hiệu lực.</summary>
+    /// <summary>
+    /// Ảnh loài cá trong JSONB là presigned URL từ FishDex → hết hạn, phải ký lại mỗi lần đọc.
+    /// Tiện thể refresh luôn tên loài để "chữa lành" snapshot cũ lỡ lưu fallback "Species #{code}"
+    /// (do lookup thất bại lúc publish). 1 call batch cho toàn bộ specCode của snapshot.
+    /// </summary>
     private async Task<SnapshotDataDto> RefreshFishImagesAsync(SnapshotDataDto data, CancellationToken ct)
     {
         if (data.Fish.Count == 0) return data;
@@ -215,7 +219,14 @@ public class SnapshotService(
         var summaries = (await fishDexClient.GetSpeciesSummariesAsync(specCodes, ct)).ToDictionary(s => s.SpecCode);
 
         var fish = data.Fish
-            .Select(f => summaries.TryGetValue(f.SpecCode, out var s) ? f with { ImageUrl = s.ImageUrl } : f)
+            .Select(f => summaries.TryGetValue(f.SpecCode, out var s)
+                ? f with
+                {
+                    ImageUrl = s.ImageUrl,
+                    SpeciesName = string.IsNullOrWhiteSpace(s.SpeciesName) ? f.SpeciesName : s.SpeciesName,
+                    CommonName = s.CommonName ?? f.CommonName,
+                }
+                : f)
             .ToList();
 
         return data with { Fish = fish };

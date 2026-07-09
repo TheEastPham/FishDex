@@ -166,6 +166,9 @@ try
             name: "fishdex-db",
             tags: ["db", "postgres"]);
 
+    // ── Rate limiting — unauthenticated IPs only ───────────────
+    builder.Services.AddFishLoverRateLimiter();
+
     var app = builder.Build();
 
     // ── Auto-migrate — chỉ chạy khi AutoMigrate:OnStartup=true (Docker/Dev) ──
@@ -198,6 +201,7 @@ try
     app.UseCors("FishDexCors");
     app.UseAuthentication();
     app.UseAuthorization();
+    app.UseRateLimiter();
 
     app.MapControllers();
     app.MapHealthChecks("/health");

@@ -92,6 +92,9 @@ builder.Services.AddCors(options =>
 builder.Services.AddHealthChecks()
     .AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection") ?? string.Empty);
 
+// ── Rate limiting — unauthenticated IPs only ───────────────
+builder.Services.AddFishLoverRateLimiter();
+
 var app = builder.Build();
 
 if (app.Configuration.GetValue<bool>("AutoMigrate:OnStartup"))
@@ -111,6 +114,7 @@ if (!app.Environment.IsProduction())
 app.UseCors("AllowFE");
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 app.MapControllers();
 app.MapHealthChecks("/health");
 app.MapPrometheusScrapingEndpoint();

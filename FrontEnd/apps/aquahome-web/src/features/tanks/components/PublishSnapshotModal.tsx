@@ -161,7 +161,7 @@ export default function PublishSnapshotModal({ aquariumId, aquariumName, onClose
                       >
                         <RefreshCw className="w-4 h-4 text-amber-400 shrink-0" />
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-white truncate">{t('publish.modeOverwrite')}: /{s.slug}</p>
+                          <p className="text-sm font-semibold text-white truncate">{t('publish.modeOverwrite')} - /{s.slug}</p>
                           <p className="text-xs text-slate-500">{t('publish.modeOverwriteHint', { count: s.likeCount })}</p>
                         </div>
                       </button>

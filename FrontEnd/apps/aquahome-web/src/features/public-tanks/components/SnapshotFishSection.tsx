@@ -4,7 +4,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useTranslation } from '@fishlover/shared';
 import type { SnapshotFishDto } from '@fishlover/shared';
-import { Fish, Globe, ExternalLink } from 'lucide-react';
+import { Fish, Globe, ExternalLink, MapPin } from 'lucide-react';
 
 // ── Color palette — giống FishInventorySection ───────────────────────────────
 const FISH_COLORS = [
@@ -18,6 +18,21 @@ function getFishColor(index: number) {
 
 function MapController({ points }: { points: Array<{ lat: number; lon: number }> }) {
   const map = useMap();
+
+  // Fix Leaflet lệch tile: container đổi kích thước sau khi map mount (flex layout, scrollbar, đổi tab)
+  useEffect(() => {
+    const invalidate = () => map.invalidateSize();
+    const raf = requestAnimationFrame(invalidate);
+    const ro = new ResizeObserver(invalidate);
+    ro.observe(map.getContainer());
+    window.addEventListener('resize', invalidate);
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+      window.removeEventListener('resize', invalidate);
+    };
+  }, [map]);
+
   useEffect(() => {
     if (!points.length) {
       map.setView([20, 0], 2);
@@ -88,6 +103,9 @@ export default function SnapshotFishSection({ fish, onNavigateFish }: Props) {
           <MapContainer
             center={[20, 0]}
             zoom={2}
+            minZoom={2}
+            maxBounds={[[-85, -180], [85, 180]]}
+            maxBoundsViscosity={1.0}
             style={{ height: '100%', width: '100%' }}
             zoomControl={false}
           >
@@ -121,14 +139,24 @@ export default function SnapshotFishSection({ fish, onNavigateFish }: Props) {
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 w-8 text-right shrink-0">{t('tanks_detail.colQty')}</span>
             <span className="w-5 shrink-0" />
           </div>
-          {selected !== null && (
-            <button
-              onClick={() => setSelected(null)}
-              className="mx-2 mt-1.5 flex items-center gap-1 px-2 py-0.5 rounded-full bg-sky-500/15 border border-sky-500/30 text-sky-400 text-[10px] font-semibold hover:bg-sky-500/25 transition-colors self-start shrink-0"
-            >
-              <span>✕</span> All
-            </button>
-          )}
+          {selected !== null && (() => {
+            const sel = fish.find(f => f.specCode === selected);
+            const name = sel?.commonName ?? sel?.speciesName ?? `#${selected}`;
+            return (
+              <div className="mx-2 mt-1.5 flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg bg-sky-500/10 border border-sky-500/25 shrink-0">
+                <span className="flex items-center gap-1.5 text-[11px] text-sky-300 min-w-0">
+                  <MapPin className="w-3 h-3 shrink-0" />
+                  <span className="truncate">{t('tanks_detail.mapFocusHint')}: <span className="font-semibold text-white">{name}</span></span>
+                </span>
+                <button
+                  onClick={() => setSelected(null)}
+                  className="px-2.5 py-1 rounded-full bg-sky-500/20 border border-sky-500/40 text-sky-300 text-[11px] font-semibold hover:bg-sky-500/30 hover:text-white transition-colors shrink-0"
+                >
+                  {t('tanks_detail.showAll')}
+                </button>
+              </div>
+            );
+          })()}
           <div className="overflow-y-auto flex-1 p-2 space-y-0.5 max-h-[200px] md:max-h-[320px]">
             {fish.map(f => {
               const isSelected = selected === f.specCode;

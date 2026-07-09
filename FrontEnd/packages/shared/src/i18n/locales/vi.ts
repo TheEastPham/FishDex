@@ -137,6 +137,7 @@ const vi = {
     genus: 'Chi',
     detail: 'Chi tiết',
     viewProfile: 'Xem hồ sơ',
+    loginToViewDetail: 'Đăng nhập để xem chi tiết loài',
     viewProfileDetails: 'Xem chi tiết hồ sơ',
     viewFamily: 'Xem tất cả loài thuộc họ {{family}}',
     unknownFamily: 'Chưa rõ họ',

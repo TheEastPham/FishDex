@@ -26,6 +26,7 @@ export default function SpeciesCard({ species, index = 0, onFamilyClick, aquariu
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const bgGradient = GRADIENTS[index % GRADIENTS.length];
+  const [loginHint, setLoginHint] = useState(false);
 
   // ── Favorites ────────────────────────────────────────────
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
@@ -183,7 +184,10 @@ export default function SpeciesCard({ species, index = 0, onFamilyClick, aquariu
         <div className="flex mt-auto gap-2">
           {/* View Profile */}
           <button
-            onClick={() => navigate(`/fish/${species.specCode}`)}
+            onClick={() => {
+              if (!isAuthenticated) { setLoginHint(true); return; }
+              navigate(`/fish/${species.specCode}`);
+            }}
             className="flex-1 flex items-center justify-center bg-[#2a2d32] hover:bg-[#32363c] text-white py-2 px-3 text-sm font-bold rounded-lg transition-colors"
           >
             {t('fish.viewProfile')}
@@ -255,6 +259,19 @@ export default function SpeciesCard({ species, index = 0, onFamilyClick, aquariu
             </div>
           )}
         </div>
+
+        {/* Chưa login → nhắc đăng nhập thay vì vào trang chi tiết (BE chưa có endpoint public cho detail) */}
+        {loginHint && (
+          <div className="mt-3 flex items-center justify-between gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+            <span>{t('fish.loginToViewDetail')}</span>
+            <button
+              onClick={() => navigate('/login')}
+              className="shrink-0 px-2.5 py-1 rounded-md bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-200 font-semibold transition-colors"
+            >
+              {t('login.button')}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

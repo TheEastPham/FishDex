@@ -156,10 +156,10 @@ public class AuthService(
                 return new RegisterResponse(false, "Invalid verification code");
             }
             
-            var user = await CreateUserAsync(request);
+            var (user, createError) = await CreateUserAsync(request);
             if (user == null)
             {
-                return new RegisterResponse(false, "Failed to create user");
+                return new RegisterResponse(false, createError ?? "Failed to create user");
             }
 
             await emailService.SendWelcomeEmailAsync(user.Email!, user.FirstName!);
@@ -217,6 +217,9 @@ public class AuthService(
     
     public async Task<EmailVerificationResponse> GetVerificationCode(string email, string? invitationCode)
     {
+        if (!email.EndsWith("@gmail.com", StringComparison.OrdinalIgnoreCase))
+            return new EmailVerificationResponse(false, "Only Gmail addresses are allowed");
+
         var existingUser = await userManager.FindByEmailAsync(email);
         if (existingUser != null)
         {
@@ -231,12 +234,13 @@ public class AuthService(
             CreatedAt = DateTime.UtcNow
         };
 
-        if (configuration.GetValue<bool>("RequireInvitation"))
+        var requireInvitation = configuration.GetValue<bool>("RequireInvitation");
+        if (requireInvitation || !string.IsNullOrWhiteSpace(invitationCode))
         {
             var validation = await ValidateInvitationCodeAsync(invitationCode);
             cacheData.InvitationId = validation.InvitationId;
-            
-            if(!validation.IsValid)
+
+            if (requireInvitation && !validation.IsValid)
                 return new EmailVerificationResponse(false, validation.Message);
         }
         
@@ -250,7 +254,7 @@ public class AuthService(
         return new EmailVerificationResponse(true, string.Empty);
     }
 
-     private async Task<UserEntity?> CreateUserAsync(RegisterRequest request)
+    private async Task<(UserEntity? User, string? Error)> CreateUserAsync(RegisterRequest request)
     {
         var user = new UserEntity
         {
@@ -268,13 +272,13 @@ public class AuthService(
         var result = await userManager.CreateAsync(user, request.Password);
         if (!result.Succeeded)
         {
-            logger.LogError("Failed to create user: {Errors}",
-                string.Join(", ", result.Errors.Select(e => e.Description)));
-            return null;
+            var error = string.Join(", ", result.Errors.Select(e => e.Description));
+            logger.LogError("Failed to create user: {Errors}", error);
+            return (null, error);
         }
 
         await userManager.AddToRoleAsync(user, "Member");
-        return user;
+        return (user, null);
     }
 
     private async Task<ValidateInvitationResponse> ValidateInvitationCodeAsync(string? code)
@@ -338,5 +342,52 @@ public class AuthService(
     }
     
     private static string GetCacheKey(string email) => $"verification_code:{email.ToLowerInvariant()}";
+
+    public async Task<bool> ForgotPasswordAsync(string email)
+    {
+        try
+        {
+            var user = await userManager.FindByEmailAsync(email);
+            // Always return true — don't leak whether email exists
+            if (user == null || !user.IsActive)
+                return true;
+
+            var token = await userManager.GeneratePasswordResetTokenAsync(user);
+            var encodedToken = Uri.EscapeDataString(token);
+            var feBaseUrl = configuration["AppSettings:FeBaseUrl"] ?? "http://localhost:5173";
+            var resetUrl = $"{feBaseUrl}/reset-password?email={Uri.EscapeDataString(email)}&token={encodedToken}";
+
+            var language = user.Language ?? configuration["AppSettings:DefaultLanguage"] ?? "vi";
+            await emailService.SendPasswordResetAsync(email, user.FirstName ?? email, resetUrl, language);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error during forgot password for {Email}", email);
+            return false;
+        }
+    }
+
+    public async Task<bool> ResetPasswordAsync(ResetPasswordRequest request)
+    {
+        try
+        {
+            if (request.NewPassword != request.ConfirmPassword)
+                return false;
+
+            var user = await userManager.FindByEmailAsync(request.Email);
+            if (user == null || !user.IsActive)
+                return false;
+
+            var result = await userManager.ResetPasswordAsync(user, request.Token, request.NewPassword);
+            return result.Succeeded;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error during reset password for {Email}", request.Email);
+            return false;
+        }
+    }
 
 }

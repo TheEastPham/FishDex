@@ -1,4 +1,5 @@
 using FishDex.Domain.DTOs.Ecologies;
+using FishDex.Domain.Helpers;
 using FishDex.Domain.DTOs.Ecosystem;
 using FishDex.Domain.DTOs.Media;
 using FishDex.Domain.DTOs.MorphData;
@@ -150,13 +151,16 @@ internal static class EntityToDtoExtensions
 
     internal static StockEnvironmentDto ToDto(this StockEnvironment e) => new()
     {
-        StockCode = e.StockCode,
-        TempMin   = e.TempMin,
-        TempMax   = e.TempMax,
-        PHMin     = e.PHMin,
-        PHMax     = e.PHMax,
-        DHMin     = e.DHMin,
-        DHMax     = e.DHMax
+        StockCode        = e.StockCode,
+        TempMin          = e.TempMin,
+        TempMax          = e.TempMax,
+        PHMin            = e.PHMin,
+        PHMax            = e.PHMax,
+        DHMin            = e.DHMin,
+        DHMax            = e.DHMax,
+        TempPreferred    = e.TempPreferred,
+        Resilience       = e.Resilience?.ToString(),
+        ResilienceRemark = e.ResilienceRemark
     };
 
     internal static EcosystemRefDto ToDto(this EcosystemRef e) => new()
@@ -216,5 +220,22 @@ internal static class EntityToDtoExtensions
                      : e.PicPreferredFem  == true ? ImageGender.Female
                      : e.PicPreferredJuv  == true ? ImageGender.Juvenile
                      : ImageGender.Unknown
+    };
+
+    internal static SubstrateDto ToDto(this Substrate e) => new()
+    {
+        EcologyId           = e.EcologyId,
+        PreferredSubstrates = HabitatMappingHelper.MapSubstrates(e),
+        BurrowingCapable    = e.Endofauna
+    };
+
+    internal static SpecialHabitatDto ToDto(this SpecialHabitat e) => new()
+    {
+        EcologyId          = e.EcologyId,
+        SpecialHabitats    = HabitatMappingHelper.MapSpecialHabitats(e),
+        RequiresCaves      = e.Burrows || e.Crevices || e.Tunnels,
+        RequiresDriftwood  = e.Driftwood,
+        RequiresVegetation = e.Macrophyte || e.Vegetation || e.Leaves || e.Stems || e.Roots,
+        RequiresCoralReefs = e.CoralReefs || e.ReefExclusive
     };
 }

@@ -136,7 +136,7 @@ export default function FishSearchPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t('fish.placeholder')}
-            className="w-full rounded-xl bg-[#141518] pl-12 pr-4 py-3 text-sm text-slate-200 font-medium
+            className="w-full rounded-xl bg-[#141518] pl-12 pr-4 py-3 text-base sm:text-sm text-slate-200 font-medium
                        placeholder:text-slate-500 placeholder:font-normal border border-transparent
                        focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/20 hover:bg-[#1a1c20]
                        transition-all"

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   useTranslation, cn,
-  checkFavorite, addFavorite, removeFavorite,
+  checkFavorite, addFavorite, removeFavorite, recordView,
   useFishProfile, getCached, setCached, invalidateCache, CacheKeys, FAVORITE_CHECK_TTL,
 } from '@fishlover/shared';
 import type { CountryDistributionDto, OccurrencePointDto } from '@fishlover/shared';
@@ -10,7 +10,7 @@ import {
   ArrowLeft, Share2, Heart, Fish, Ruler, Droplets, Map as MapIcon,
   Image as ImageIcon, Scale, AlertTriangle, Shield,
   Thermometer, TestTube, BookOpen, FileText, Activity, Clock,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, Layers
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -96,6 +96,33 @@ function MapController({ points }: { points: OccurrencePointDto[] }) {
   return null;
 }
 
+/* ── Helpers ──────────────────────────────────────────────── */
+
+function formatRange(min: number | null | undefined, max: number | null | undefined): string {
+  if (min == null && max == null) return '—';
+  if (min == null) return `≤ ${max}`;
+  if (max == null) return `≥ ${min}`;
+  return `${min} – ${max}`;
+}
+
+function HabitatFlag({ label, icon }: { label: string; icon: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 text-xs bg-slate-800 text-slate-300 border border-slate-700/60 px-2.5 py-1 rounded-full">
+      <span>{icon}</span>{label}
+    </span>
+  );
+}
+
+function resilienceColor(level: string): string {
+  switch (level) {
+    case 'High':    return 'bg-emerald-900/60 text-emerald-300';
+    case 'Medium':  return 'bg-yellow-900/60 text-yellow-300';
+    case 'Low':     return 'bg-orange-900/60 text-orange-300';
+    case 'VeryLow': return 'bg-red-900/60 text-red-300';
+    default:        return 'bg-slate-800 text-slate-400';
+  }
+}
+
 /* ── Main Component ───────────────────────────────────────── */
 
 export default function FishProfilePage() {
@@ -115,6 +142,12 @@ export default function FishProfilePage() {
   useEffect(() => {
     setSelectedCountry(null);
     setSelectedImageIndex(null);
+  }, [id]);
+
+  // Record view for recently-viewed history — fire-and-forget, auth failure is silent
+  useEffect(() => {
+    if (!id) return;
+    recordView(id).catch(() => {});
   }, [id]);
 
   // Check favorite status — cached, AquaHome failure must not crash this page
@@ -267,15 +300,18 @@ export default function FishProfilePage() {
                 <Thermometer className="w-5 h-5 text-red-400 mx-auto mb-2" />
                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Temp</p>
                 <p className="text-xl font-black text-slate-200">
-                  {detail.environment?.tempMin ?? '?'} – {detail.environment?.tempMax ?? '?'}
+                  {formatRange(detail.environment?.tempMin, detail.environment?.tempMax)}
                 </p>
                 <p className="text-xs text-slate-500">°C</p>
+                {detail.environment?.tempPreferred != null && (
+                  <p className="text-[10px] text-amber-400 mt-1">{t('fish.tempPreferred')}: {detail.environment.tempPreferred}°C</p>
+                )}
               </div>
               <div className="bg-[#141518] rounded-xl p-4 border border-slate-800/50 text-center">
                 <TestTube className="w-5 h-5 text-violet-400 mx-auto mb-2" />
                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">pH</p>
                 <p className="text-xl font-black text-slate-200">
-                  {detail.environment?.phMin ?? '?'} – {detail.environment?.phMax ?? '?'}
+                  {formatRange(detail.environment?.phMin, detail.environment?.phMax)}
                 </p>
                 <p className="text-xs text-slate-500">Level</p>
               </div>
@@ -283,11 +319,22 @@ export default function FishProfilePage() {
                 <Activity className="w-5 h-5 text-cyan-400 mx-auto mb-2" />
                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">{t('fish.waterHardness')}</p>
                 <p className="text-xl font-black text-slate-200">
-                  {detail.environment?.dHMin ?? '?'} – {detail.environment?.dHMax ?? '?'}
+                  {formatRange(detail.environment?.dHMin, detail.environment?.dHMax)}
                 </p>
                 <p className="text-xs text-slate-500">dGH</p>
               </div>
             </div>
+            {detail.environment?.resilience && (
+              <div className="mt-3 flex items-center gap-2">
+                <span className="text-xs text-slate-400">{t('fish.resilience')}:</span>
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${resilienceColor(detail.environment.resilience)}`}>
+                  {t(`fish.resilience${detail.environment.resilience}`)}
+                </span>
+                {detail.environment.resilienceRemark && (
+                  <span className="text-xs text-slate-500 truncate">{detail.environment.resilienceRemark}</span>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Ecology */}
@@ -295,12 +342,52 @@ export default function FishProfilePage() {
             <SectionHeader icon={<Fish className="w-5 h-5 text-teal-400" />} title={t('fish.ecology')} />
             <div className="space-y-3">
               <InfoRow label={t('fish.feedingType')} value={detail.ecology?.feedingType} />
-              <InfoRow label={t('fish.trophicLevel')} value={detail.ecology?.dietTroph ? `${detail.ecology.dietTroph.toFixed(1)}` : null} />
+              <InfoRow label={t('fish.trophicLevel')} value={detail.ecology?.dietTroph != null ? `${detail.ecology.dietTroph.toFixed(1)}` : null} />
               <InfoRow label={t('fish.demerspelagic')} value={detail.demersPelag} />
               <InfoRow label={t('fish.socialBehavior')} value={socialBehavior} />
             </div>
           </div>
         </div>
+
+        {/* ─── Row 2.5: Habitat Preferences ─── */}
+        {detail.habitat && (detail.habitat.preferredSubstrates.length > 0 || detail.habitat.specialHabitats.length > 0 || detail.habitat.requiresCaves || detail.habitat.requiresDriftwood || detail.habitat.requiresVegetation || detail.habitat.requiresCoralReefs) && (
+          <div className="bg-[#202226] rounded-2xl p-6 shadow-lg border border-slate-800/80">
+            <SectionHeader icon={<Layers className="w-5 h-5 text-lime-400" />} title={t('fish.habitat')} />
+            <div className="space-y-4">
+              {detail.habitat.preferredSubstrates.length > 0 && (
+                <div>
+                  <p className="text-xs text-slate-500 uppercase tracking-widest mb-2">{t('fish.preferredSubstrates')}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {detail.habitat.preferredSubstrates.map(s => (
+                      <span key={s} className="text-xs bg-amber-900/40 text-amber-300 border border-amber-700/40 px-2.5 py-1 rounded-full">
+                        {t(`fish.substrate_${s}`, { defaultValue: s })}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {detail.habitat.specialHabitats.length > 0 && (
+                <div>
+                  <p className="text-xs text-slate-500 uppercase tracking-widest mb-2">{t('fish.specialHabitats')}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {detail.habitat.specialHabitats.map(h => (
+                      <span key={h} className="text-xs bg-teal-900/40 text-teal-300 border border-teal-700/40 px-2.5 py-1 rounded-full">
+                        {t(`fish.habitat_${h}`, { defaultValue: h })}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="flex flex-wrap gap-3">
+                {detail.habitat.burrowingCapable && <HabitatFlag label={t('fish.burrowingCapable')} icon="⛏️" />}
+                {detail.habitat.requiresCaves && <HabitatFlag label={t('fish.requiresCaves')} icon="🕳️" />}
+                {detail.habitat.requiresDriftwood && <HabitatFlag label={t('fish.requiresDriftwood')} icon="🪵" />}
+                {detail.habitat.requiresVegetation && <HabitatFlag label={t('fish.requiresVegetation')} icon="🌿" />}
+                {detail.habitat.requiresCoralReefs && <HabitatFlag label={t('fish.requiresCoralReefs')} icon="🪸" />}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ─── Row 3: Conservation + Dangerous ─── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -407,10 +494,10 @@ export default function FishProfilePage() {
               )}
             </div>
 
-            {/* Two-column layout: country list | map */}
-            <div className="flex gap-4">
-              {/* Country sidebar */}
-              <div className="w-44 shrink-0 flex flex-col gap-1 max-h-[400px] overflow-y-auto pr-1">
+            {/* Two-column layout: country list | map — stacks vertically on mobile */}
+            <div className="flex flex-col md:flex-row gap-4">
+              {/* Country list */}
+              <div className="md:w-44 md:shrink-0 flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-x-visible md:max-h-[400px] md:overflow-y-auto pb-1 md:pb-0 pr-0 md:pr-1">
                 {distribution.countries.map(c => {
                   const isSelected = selectedCountry?.code === c.code;
                   return (
@@ -437,8 +524,8 @@ export default function FishProfilePage() {
               </div>
 
               {/* Map — no remount on filter change */}
-              <div className="flex-1 h-[400px] rounded-xl overflow-hidden border border-slate-800/50 relative z-0">
-                <MapContainer center={[0, 0]} zoom={2} scrollWheelZoom={false} className="h-full w-full z-0" style={{ background: '#141518' }}>
+              <div className="flex-1 h-[280px] md:h-[400px] rounded-xl overflow-hidden border border-slate-800/50 relative z-0">
+                <MapContainer center={[0, 0]} zoom={2} scrollWheelZoom={true} className="h-full w-full z-0" style={{ background: '#141518' }}>
                   <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                     url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
@@ -464,7 +551,7 @@ export default function FishProfilePage() {
         {media.length > 0 && (
           <div className="bg-[#202226] rounded-2xl p-6 shadow-lg border border-slate-800/80">
             <SectionHeader icon={<ImageIcon className="w-5 h-5 text-indigo-400" />} title={`${t('fish.gallery')} (${media.length})`} />
-            <div className="relative w-full h-[400px] rounded-xl overflow-hidden border border-slate-800/50 bg-[#141518] group">
+            <div className="relative w-full h-[280px] md:h-[400px] rounded-xl overflow-hidden border border-slate-800/50 bg-[#141518] group">
               {/* Display Current Image */}
               {media[selectedImageIndex || 0].url ? (
                 <img 

@@ -53,9 +53,24 @@ builder.Services.AddHostedService<AdminSeeder>();
 
 // OpenTelemetry Configuration
 builder.Services.AddFishLoverTelemetry(builder.Configuration, "UserManagement.API");
-// JWT Authentication
+// JWT Authentication — HS256 symmetric scheme (direct-login tokens)
 builder.Services.AddFishLoverJwtAuthentication(builder.Configuration);
+
+// OpenIddict validation scheme — validate OAuth2 PKCE tokens bằng cách đọc trực tiếp từ
+// in-memory OpenIddict server (UseLocalServer). Không cần HTTP discovery hay JWKS fetch,
+// tránh hoàn toàn hairpin NAT + transport security requirement issue trên Oracle VM.
+
 builder.Services.AddFishLoverAuthorization();
+
+// Override DefaultPolicy: accept cả Bearer (HS256 direct-login) lẫn OpenIddict validation (RS256 PKCE)
+builder.Services.AddAuthorization(options =>
+{
+    options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder(
+        Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme,
+        OpenIddict.Validation.AspNetCore.OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme)
+        .RequireAuthenticatedUser()
+        .Build();
+});
 
 
 // CORS — origins đọc từ config; local dev set trong appsettings.Development.json,

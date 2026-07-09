@@ -32,6 +32,7 @@ public class SpeciesDetailDto
     public SpeciesDetailEcologyDto? Ecology { get; init; }
     public SpeciesDetailConservationDto? Conservation { get; init; }
     public SpeciesDetailEnvironmentDto? Environment { get; init; }
+    public SpeciesDetailHabitatDto? Habitat { get; init; }
 }
 
 public class SpeciesDetailEcologyDto
@@ -52,13 +53,27 @@ public class SpeciesDetailConservationDto
     public string? CitesCode { get; init; }
 }
 
+public class SpeciesDetailHabitatDto
+{
+    public IReadOnlyList<string> PreferredSubstrates { get; init; } = [];
+    public bool BurrowingCapable { get; init; }
+    public bool RequiresCaves { get; init; }
+    public bool RequiresDriftwood { get; init; }
+    public bool RequiresVegetation { get; init; }
+    public bool RequiresCoralReefs { get; init; }
+    public IReadOnlyList<string> SpecialHabitats { get; init; } = [];
+}
+
 public class SpeciesDetailEnvironmentDto
 {
     public double? TempMin { get; init; }
     public double? TempMax { get; init; }
+    public double? TempPreferred { get; init; }
     public double? PhMin { get; init; }
     public double? PhMax { get; init; }
     /// <summary>Water hardness in dGH (German degrees). GH ≈ dGH × 17.8 ppm.</summary>
     public double? DHMin { get; init; }
     public double? DHMax { get; init; }
+    public string? Resilience { get; init; }
+    public string? ResilienceRemark { get; init; }
 }

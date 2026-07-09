@@ -18,7 +18,7 @@ export function useAuthRestore() {
     if (!restorePromise) {
       restorePromise = refreshAccessToken(rt)
         .then((tokens) => {
-          setTokens(tokens.access_token, tokens.refresh_token);
+          setTokens(tokens.access_token, tokens.refresh_token, tokens.id_token);
         })
         .catch((error) => {
           console.error('Failed to restore session on reload', error);

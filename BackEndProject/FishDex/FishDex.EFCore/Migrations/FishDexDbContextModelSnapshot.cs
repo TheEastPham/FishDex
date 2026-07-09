@@ -22,6 +22,132 @@ namespace FishDex.EFCore.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("FishDex.EFCore.Entity.Cache.SpeciesSnapshot", b =>
+                {
+                    b.Property<int>("SpecCode")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("SpecCode"));
+
+                    b.Property<string>("ActivityPattern")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Aggressiveness")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("CareLevel")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CommonName")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("ContributedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DataSource")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("DemersPelag")
+                        .HasColumnType("text");
+
+                    b.Property<double?>("DhMax")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("DhMin")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("FamilyName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("FeedingPosition")
+                        .HasColumnType("text");
+
+                    b.Property<string>("FeedingType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("FemaleImageObjectKey")
+                        .HasColumnType("text");
+
+                    b.Property<bool?>("FinNippingRisk")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("GenusName")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsVerified")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool?>("JumpingRisk")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal?>("Length")
+                        .HasColumnType("numeric");
+
+                    b.Property<double?>("LongevityCaptive")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("MaleImageObjectKey")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("MinTankLiters")
+                        .HasColumnType("integer");
+
+                    b.Property<double?>("PhMax")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("PhMin")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTime>("PopulatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("PopulatedFrom")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("text");
+
+                    b.Property<bool?>("RequiresLiveFood")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid?>("ReviewedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool?>("Schooling")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool?>("Shoaling")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool?>("Solitary")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("SpeciesName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<double?>("TempMax")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("TempMin")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("ThumbnailObjectKey")
+                        .HasColumnType("text");
+
+                    b.Property<int>("WaterType")
+                        .HasColumnType("integer");
+
+                    b.HasKey("SpecCode");
+
+                    b.HasIndex("DataSource");
+
+                    b.HasIndex("PopulatedAt");
+
+                    b.ToTable("SpeciesSnapshots");
+                });
+
             modelBuilder.Entity("FishDex.EFCore.Entity.Ecologies.Associations", b =>
                 {
                     b.Property<int>("AssociationId")

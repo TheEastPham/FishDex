@@ -1,3 +1,5 @@
+using AquaHome.Domain.Enums;
+
 namespace AquaHome.Domain.DTOs;
 
 public record AquariumDto(
@@ -7,17 +9,20 @@ public record AquariumDto(
     double? WidthCm,
     double? HeightCm,
     double? VolumeLiters,   // computed: L×W×H/1000
-    string? Type,
+    WaterType? WaterType,
+    AquariumStyle? Style,
     string? Description,
     DateTime CreatedAt,
-    int FishCount);
+    int FishCount,
+    int TotalQuantity);
 
 public record CreateAquariumRequest(
     string Name,
     double? LengthCm,
     double? WidthCm,
     double? HeightCm,
-    string? Type,
+    WaterType? WaterType,
+    AquariumStyle? Style,
     string? Description);
 
 public record UpdateAquariumRequest(
@@ -25,7 +30,8 @@ public record UpdateAquariumRequest(
     double? LengthCm,
     double? WidthCm,
     double? HeightCm,
-    string? Type,
+    WaterType? WaterType,
+    AquariumStyle? Style,
     string? Description);
 
 public record AddFishRequest(int SpecCode, int Quantity = 1);

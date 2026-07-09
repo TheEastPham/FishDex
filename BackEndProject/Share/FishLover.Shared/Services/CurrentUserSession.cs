@@ -22,8 +22,10 @@ public class CurrentUserSession : ICurrentUserSession
         
         _userId = new Lazy<Guid>(() =>
         {
-            var userIdClaim = _httpContextAccessor.HttpContext?.User?
-                .FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var user = _httpContextAccessor.HttpContext?.User;
+            // JwtBearer maps sub → NameIdentifier; OpenIddict validation keeps sub as "sub"
+            var userIdClaim = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                           ?? user?.FindFirst("sub")?.Value;
 
             if (!Guid.TryParse(userIdClaim, out var guid))
                 throw new UnauthorizedAccessException("Authenticated user has no valid NameIdentifier claim.");

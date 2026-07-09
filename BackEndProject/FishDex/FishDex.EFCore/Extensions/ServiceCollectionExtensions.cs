@@ -1,4 +1,5 @@
 ﻿using System;
+using FishDex.EFCore.Cache;
 using FishDex.EFCore.DbContexts;
 using FishDex.EFCore.Repository;
 using FishDex.EFCore.Repository.Interface;
@@ -75,6 +76,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IEcosystemRepository,           EcosystemRepository>();
         services.AddScoped<IEcosystemRefRepository,        EcosystemRefRepository>();
         services.AddScoped<ISystemImageRepository,         SystemImageRepository>();
+        services.AddScoped<FishBaseFlattener>();
+        services.AddScoped<ISpeciesCache,                  DbSpeciesCache>();
         return services;
     }
 }

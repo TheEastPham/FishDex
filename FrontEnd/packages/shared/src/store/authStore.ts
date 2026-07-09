@@ -26,7 +26,7 @@ interface AuthState {
   userName: string | null;
   userEmail: string | null;
   setInitializing: (val: boolean) => void;
-  setTokens: (access: string, refresh?: string) => void;
+  setTokens: (access: string, refresh?: string, idToken?: string) => void;
   clearTokens: () => void;
   getRefreshToken: () => string | null;
   hasRole: (role: string) => boolean;
@@ -46,8 +46,10 @@ export const useAuthStore = create<AuthState>()((_set, get) => ({
     useAuthStore.setState({ isInitializing: val });
   },
 
-  setTokens: (access, refresh) => {
+  setTokens: (access, refresh, idToken) => {
     if (refresh) sessionStorage.setItem('_rt', refresh);
+    if (idToken) sessionStorage.setItem('_it', idToken);
+    else sessionStorage.removeItem('_it');
     const claims = parseJwt(access);
     useAuthStore.setState({
       accessToken: access,
@@ -60,6 +62,7 @@ export const useAuthStore = create<AuthState>()((_set, get) => ({
 
   clearTokens: () => {
     sessionStorage.removeItem('_rt');
+    sessionStorage.removeItem('_it');
     useAuthStore.setState({
       accessToken: null,
       isAuthenticated: false,

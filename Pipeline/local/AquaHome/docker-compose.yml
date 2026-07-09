@@ -55,6 +55,13 @@ services:
       JwtSettings__ExpiryMinutes: ${JWT_EXPIRY_MINUTES}
       AuthServer__Url:         ${AUTH_SERVER_URL}
       AuthServer__Authority:   ${AUTH_SERVER_AUTHORITY}
+      Storage__Provider:       r2
+      Storage__ServiceUrl:     ${AQUAHOME_STORAGE_SERVICE_URL}
+      Storage__AccessKey:      ${AQUAHOME_STORAGE_ACCESS_KEY}
+      Storage__SecretKey:      ${AQUAHOME_STORAGE_SECRET_KEY}
+      Storage__BucketName:     ${AQUAHOME_STORAGE_BUCKET}
+      Storage__Environment:    ${AQUAHOME_STORAGE_ENV}
+      Storage__ForcePathStyle: "false"
     ports:
       - "8082:8080"
     networks:

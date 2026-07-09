@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { createAquarium, updateAquarium, deleteAquarium, getMyAquariums } from '@fishlover/shared';
+import { createAquarium, updateAquarium, deleteAquarium, getMyAquariums, useTranslation } from '@fishlover/shared';
 import type { AquariumDto, CreateAquariumRequest } from '@fishlover/shared';
-import { Plus, Droplets, Fish } from 'lucide-react';
+import { PlusCircle, Fish } from 'lucide-react';
 import AquariumForm from './components/AquariumForm';
 import AquariumDetail from './components/AquariumDetail';
 import { getTankStyle } from './components/AquariumCard';
@@ -57,73 +57,78 @@ export default function TanksPage() {
     }
   };
 
+  const { t } = useTranslation();
   const activeTank = tanks.find(t => t.id === activeId) ?? null;
 
   return (
     <div className="min-h-screen bg-[#0F172A] pb-20 font-sans">
 
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 pt-6 pb-4">
-        <div>
-          <h1 className="text-2xl font-black text-white flex items-center gap-2.5">
-            <Droplets className="w-6 h-6 text-sky-400" />
-            Hồ cá của tôi
-          </h1>
-          <p className="text-slate-500 text-sm mt-0.5">{tanks.length} hồ đang quản lý</p>
-        </div>
+      {/* ── Header ── */}
+      <div className="px-4 sm:px-6 pt-5 pb-3 flex items-center justify-between">
+        <h1 className="text-xl sm:text-2xl font-black text-white">
+          {t('tanks.pageTitle')}
+          {!loading && tanks.length > 0 && (
+            <span className="ml-2 text-sm font-semibold text-slate-500">
+              · {t('tanks.tankCount', { count: tanks.length })}
+            </span>
+          )}
+        </h1>
         <button
           onClick={() => { setEditing(null); setFormOpen(true); }}
-          className="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-white font-bold px-4 py-2 rounded-xl transition-colors shadow-lg shadow-sky-500/20 text-sm"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/30 border border-sky-500/30 hover:border-sky-400/60 text-sky-400 text-sm font-semibold transition-colors"
+          title={t('tanks.addBtn')}
         >
-          <Plus className="w-4 h-4" />
-          Thêm hồ
+          <PlusCircle className="w-4 h-4" />
+          <span className="hidden sm:inline">{t('tanks.addBtn')}</span>
         </button>
       </div>
 
-      {/* Loading */}
+      {/* ── Loading ── */}
       {loading && (
         <div className="flex items-center justify-center py-32">
           <Fish className="w-10 h-10 text-slate-700 animate-bounce" />
         </div>
       )}
 
-      {/* Empty */}
+      {/* ── Empty ── */}
       {!loading && tanks.length === 0 && (
         <div className="flex flex-col items-center justify-center py-28 text-center px-6">
           <div className="w-20 h-20 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center mb-4">
-            <Droplets className="w-10 h-10 text-sky-400" />
+            <Fish className="w-10 h-10 text-sky-400" />
           </div>
-          <h3 className="text-xl font-bold text-white mb-2">Chưa có hồ cá nào</h3>
-          <p className="text-slate-500 mb-6">Hãy tạo hồ cá đầu tiên của bạn!</p>
+          <h3 className="text-xl font-bold text-white mb-2">{t('tanks.emptyTitle')}</h3>
+          <p className="text-slate-500 mb-6">{t('tanks.emptyHint')}</p>
           <button
             onClick={() => { setEditing(null); setFormOpen(true); }}
             className="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-white font-bold px-5 py-2.5 rounded-xl transition-colors"
           >
-            <Plus className="w-4 h-4" /> Tạo hồ đầu tiên
+            <PlusCircle className="w-4 h-4" /> {t('tanks.createFirstBtn')}
           </button>
         </div>
       )}
 
-      {/* Tab view */}
+      {/* ── Tab bar + content ── */}
       {!loading && tanks.length > 0 && (
         <>
-          {/* Tab bar */}
-          <div className="flex overflow-x-auto border-b border-slate-800/60 px-6 gap-1 scrollbar-none">
+          {/* Tab bar: tank tabs + "+" at end */}
+          <div className="flex items-end overflow-x-auto border-b border-slate-800/60 px-4 sm:px-6 gap-0.5 scrollbar-none">
             {tanks.map(tank => {
-              const style = getTankStyle(tank.type);
+              const style = getTankStyle(tank.waterType);
               const isActive = tank.id === activeId;
               return (
                 <button
                   key={tank.id}
                   onClick={() => setActiveId(tank.id)}
-                  className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold whitespace-nowrap border-b-2 transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-semibold whitespace-nowrap border-b-2 transition-all ${
                     isActive
                       ? 'border-sky-500 text-white'
                       : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-600'
                   }`}
                 >
-                  <Droplets className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-sky-400' : style.text}`} />
-                  <span className="max-w-[140px] truncate">{tank.name}</span>
+                  <span
+                    className={`w-2 h-2 rounded-full shrink-0 ${isActive ? 'bg-sky-400' : style.text.replace('text-', 'bg-') + ' opacity-60'}`}
+                  />
+                  <span className="max-w-[120px] truncate">{tank.name}</span>
                   {tank.fishCount > 0 && (
                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isActive ? 'bg-sky-500/20 text-sky-300' : 'bg-slate-800 text-slate-500'}`}>
                       {tank.fishCount}
@@ -132,9 +137,9 @@ export default function TanksPage() {
                 </button>
               );
             })}
+
           </div>
 
-          {/* Active tab content */}
           {activeTank && (
             <AquariumDetail
               key={activeTank.id}
@@ -146,7 +151,7 @@ export default function TanksPage() {
         </>
       )}
 
-      {/* Form drawer */}
+      {/* ── Form drawer ── */}
       <AquariumForm
         isOpen={formOpen}
         onClose={() => { setFormOpen(false); setEditing(null); }}
@@ -154,17 +159,21 @@ export default function TanksPage() {
         editing={editing}
       />
 
-      {/* Delete confirm */}
+      {/* ── Delete confirm ── */}
       {deleteId && (
         <>
           <div className="fixed inset-0 bg-black/60 z-50" onClick={() => setDeleteId(null)} />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="bg-[#1E293B] border border-slate-700 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
-              <h3 className="text-white font-bold text-lg mb-2">Xoá hồ cá?</h3>
-              <p className="text-slate-400 text-sm mb-6">Hành động này không thể hoàn tác.</p>
+              <h3 className="text-white font-bold text-lg mb-2">{t('tanks.deleteConfirmTitle')}</h3>
+              <p className="text-slate-400 text-sm mb-6">{t('tanks.deleteConfirmBody')}</p>
               <div className="flex gap-3">
-                <button onClick={() => setDeleteId(null)} className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 font-bold transition-colors">Huỷ</button>
-                <button onClick={confirmDelete} className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-400 text-white font-bold transition-colors">Xoá</button>
+                <button onClick={() => setDeleteId(null)} className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 font-bold transition-colors">
+                  {t('tanks.cancel')}
+                </button>
+                <button onClick={confirmDelete} className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-400 text-white font-bold transition-colors">
+                  {t('tanks.confirmDelete')}
+                </button>
               </div>
             </div>
           </div>

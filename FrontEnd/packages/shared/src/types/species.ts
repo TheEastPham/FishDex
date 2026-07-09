@@ -65,6 +65,16 @@ export interface SpeciesDetail {
     solitary: boolean | null;
   } | null;
 
+  habitat: {
+    preferredSubstrates: string[];
+    burrowingCapable: boolean;
+    requiresCaves: boolean;
+    requiresDriftwood: boolean;
+    requiresVegetation: boolean;
+    requiresCoralReefs: boolean;
+    specialHabitats: string[];
+  } | null;
+
   conservation: {
     iucnCode: string | null;
     iucnAssessment: string | null;
@@ -75,10 +85,13 @@ export interface SpeciesDetail {
   environment: {
     tempMin: number | null;
     tempMax: number | null;
+    tempPreferred: number | null;
     phMin: number | null;
     phMax: number | null;
     dHMin: number | null;
     dHMax: number | null;
+    resilience: 'VeryLow' | 'Low' | 'Medium' | 'High' | null;
+    resilienceRemark: string | null;
   } | null;
 }
 

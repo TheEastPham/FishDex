@@ -5,6 +5,7 @@ using FishDex.Domain.DTOs.Stocks;
 using FishDex.Domain.Mappings;
 using FishDex.Domain.Services.Interfaces;
 using FishDex.Domain.Settings;
+using FishDex.EFCore.Cache;
 using FishDex.EFCore.Repository.Interface;
 using FishLover.Shared.Common;
 using Microsoft.Extensions.Caching.Memory;
@@ -20,6 +21,7 @@ public class SpeciesService(
     IStorageService storage,
     IEcologyService ecologyService,
     IStockService stockService,
+    ISpeciesCache speciesCache,
     IMemoryCache cache,
     IOptions<FishDexSettings> settings) : ISpeciesService
 {
@@ -110,6 +112,10 @@ public class SpeciesService(
     {
         language = NormalizeLanguage(language);
 
+        // Trigger cache population (cache-aside) — does nothing if already cached
+        // Must await: shares the same scoped DbContext, concurrent use is not safe
+        await speciesCache.GetOrPopulateAsync(specCode, ct);
+
         var species = await speciesRepo.GetWithDetailsAsync(specCode, ct);
         if (species == null) return null;
 
@@ -118,9 +124,11 @@ public class SpeciesService(
         var stocks     = await stockService.GetBySpecCodeAsync(specCode, ct);
         var firstStock = stocks.FirstOrDefault();
 
-        FeedingAndDietDto?      feeding      = ecology    != null ? await ecologyService.GetFeedingAsync(ecology.EcologyId, ct)        : null;
-        HabitatZoneDto?         habitat      = ecology    != null ? await ecologyService.GetHabitatZoneAsync(ecology.EcologyId, ct)    : null;
-        AssociationsDto?        associations = ecology    != null ? await ecologyService.GetAssociationsAsync(ecology.EcologyId, ct)   : null;
+        FeedingAndDietDto?      feeding        = ecology != null ? await ecologyService.GetFeedingAsync(ecology.EcologyId, ct)         : null;
+        HabitatZoneDto?         habitat        = ecology != null ? await ecologyService.GetHabitatZoneAsync(ecology.EcologyId, ct)     : null;
+        AssociationsDto?        associations   = ecology != null ? await ecologyService.GetAssociationsAsync(ecology.EcologyId, ct)    : null;
+        SubstrateDto?           substrate      = ecology != null ? await ecologyService.GetSubstrateAsync(ecology.EcologyId, ct)       : null;
+        SpecialHabitatDto?      specialHabitat = ecology != null ? await ecologyService.GetSpecialHabitatAsync(ecology.EcologyId, ct)  : null;
         StockConservationDto?   conservation = firstStock != null ? await stockService.GetConservationAsync(firstStock.StockCode, ct)  : null;
         StockEnvironmentDto?    environment  = firstStock != null ? await stockService.GetEnvironmentAsync(firstStock.StockCode, ct)   : null;
 
@@ -177,14 +185,27 @@ public class SpeciesService(
                 IucnDateAssessed = conservation.IUCN_DateAssessed,
                 CitesCode        = conservation.CITES_Code
             } : null,
+            Habitat = substrate != null || specialHabitat != null ? new SpeciesDetailHabitatDto
+            {
+                PreferredSubstrates = substrate?.PreferredSubstrates ?? [],
+                BurrowingCapable    = substrate?.BurrowingCapable ?? false,
+                RequiresCaves       = specialHabitat?.RequiresCaves ?? false,
+                RequiresDriftwood   = specialHabitat?.RequiresDriftwood ?? false,
+                RequiresVegetation  = specialHabitat?.RequiresVegetation ?? false,
+                RequiresCoralReefs  = specialHabitat?.RequiresCoralReefs ?? false,
+                SpecialHabitats     = specialHabitat?.SpecialHabitats ?? []
+            } : null,
             Environment = environment != null ? new SpeciesDetailEnvironmentDto
             {
-                TempMin = environment.TempMin,
-                TempMax = environment.TempMax,
-                PhMin   = environment.PHMin,
-                PhMax   = environment.PHMax,
-                DHMin   = environment.DHMin,
-                DHMax   = environment.DHMax
+                TempMin          = environment.TempMin,
+                TempMax          = environment.TempMax,
+                TempPreferred    = environment.TempPreferred,
+                PhMin            = environment.PHMin,
+                PhMax            = environment.PHMax,
+                DHMin            = environment.DHMin,
+                DHMax            = environment.DHMax,
+                Resilience       = environment.Resilience,
+                ResilienceRemark = environment.ResilienceRemark
             } : null
         };
     }
@@ -242,19 +263,20 @@ public class SpeciesService(
         IEnumerable<int> specCodes, string? language = null, CancellationToken ct = default)
     {
         language = NormalizeLanguage(language);
-        var speciesList = await speciesRepo.GetBySpecCodesAsync(specCodes, ct);
 
-        return await Task.WhenAll(speciesList.Select(async s =>
+        // Use snapshot cache — avoids loading 16 FishBase tables per species
+        var snapshots = await speciesCache.GetOrPopulateManyAsync(specCodes, ct);
+
+        return await Task.WhenAll(snapshots.Select(async snap =>
         {
-            var pic      = s.Pictures?.FirstOrDefault(p => p.PicPreferred == true);
-            var imageUrl = pic != null
-                ? await storage.GetPresignedUrlAsync(pic.ObjectKey, ct)
+            var imageUrl = snap.ThumbnailObjectKey is not null
+                ? await storage.GetPresignedUrlAsync(snap.ThumbnailObjectKey, ct)
                 : null;
             return new SpeciesSummaryDto
             {
-                SpecCode    = s.SpecCode,
-                SpeciesName = s.SpeciesName,
-                CommonName  = s.CommonNames.PickPreferredName(language),
+                SpecCode    = snap.SpecCode,
+                SpeciesName = snap.SpeciesName,
+                CommonName  = snap.CommonName,
                 ImageUrl    = imageUrl
             };
         }));

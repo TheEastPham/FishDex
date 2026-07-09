@@ -14,3 +14,29 @@ __pycache__/
 # IDEs
 .idea/
 .vscode/
+
+# VM3 AI service models (too large, download at runtime)
+Pipeline/OracleVM/VM3/embedding_service/models/
+Pipeline/OracleVM/VM3/image_search_service/models/
+
+# VM1/VM2/VM3 data volumes (not committed)
+Pipeline/OracleVM/VM*/data/
+Pipeline/OracleVM/*/data/
+
+# Prod seed scripts (contain credentials — run manually on server)
+Pipeline/OracleVM/shared/seed-*.sql
+
+# Node modules + JS
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build outputs
+bin/
+obj/
+*.dll
+*.exe
+
+# Docker artifacts
+.docker/
+docker-compose.override.yml

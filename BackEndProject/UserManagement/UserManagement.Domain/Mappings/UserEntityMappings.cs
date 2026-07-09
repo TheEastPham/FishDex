@@ -36,6 +36,12 @@ internal static class UserEntityMappings
         Preferences = ParsePreferences(entity.Preferences)
     };
 
+    // TODO: replace DiceBear with real avatar URL once storage strategy (R2 vs separate bucket) is decided
+    private static string ResolveAvatar(string userId, string? avatarUrl) =>
+        string.IsNullOrEmpty(avatarUrl)
+            ? $"https://api.dicebear.com/9.x/bottts-neutral/svg?seed={userId}"
+            : avatarUrl;
+
     internal static UserDto ToDto(this User user) => new(
         Id:          user.Id.ToString(),
         Email:       user.Email,
@@ -43,7 +49,7 @@ internal static class UserEntityMappings
         LastName:    user.LastName,
         FullName:    user.FullName,
         DateOfBirth: user.DateOfBirth,
-        Avatar:      user.Avatar,
+        Avatar:      ResolveAvatar(user.Id.ToString(), user.Avatar),
         TimeZone:    user.TimeZone,
         Language:    user.Language,
         CreatedAt:   user.CreatedAt,

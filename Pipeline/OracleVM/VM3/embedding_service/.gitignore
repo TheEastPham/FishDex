@@ -1,0 +1,9 @@
+# Models (too large, download at runtime)
+models/
+*.bin
+*.safetensors
+__pycache__/
+*.pyc
+.env
+.venv/
+venv/

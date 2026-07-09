@@ -119,6 +119,15 @@ services:
       - Storage__Environment=${AQUAHOME_R2_ENV}
       - Storage__ForcePathStyle=false
       - ASPNETCORE_HTTP_PORTS=8082
+      # Epic 11.0 — snapshot preview/publish gọi FishDex lấy species summaries + distribution points.
+      # THIẾU biến này → AquaHome fallback localhost:8081 → enrich fail → tên "Species #NNNNN" + map trống.
+      - FishDex__BaseUrl=http://fishdex:8081
+      # Epic 11 contest — YouTube upload + R2 warning email (rỗng = tính năng contest fail êm, không crash)
+      - ExternalServices__YouTube__ClientId=${YOUTUBE_CLIENT_ID}
+      - ExternalServices__YouTube__ClientSecret=${YOUTUBE_CLIENT_SECRET}
+      - ExternalServices__YouTube__RefreshToken=${YOUTUBE_REFRESH_TOKEN}
+      - ExternalServices__YouTube__ChannelId=${YOUTUBE_CHANNEL_ID}
+      - AdminAlerts__R2WarningEmail=${ADMIN_R2_WARNING_EMAIL}
       - OpenTelemetry__ExportEndpoint=http://10.0.0.94:4317   # OTLP trace → Tempo (VM2)
     labels:
       - "env=prod"
@@ -139,6 +148,11 @@ services:
       - AutoMigrate__OnStartup=false
       - UserManagement__BaseUrl=http://usermanagement:8080
       - UserManagement__InternalApiKey=${INTERNAL_API_KEY}
+      # Epic 11.3 — SyncContestViewCountsBackgroundService (mỗi 6h) gọi YouTube Data API
+      - ExternalServices__YouTube__ClientId=${YOUTUBE_CLIENT_ID}
+      - ExternalServices__YouTube__ClientSecret=${YOUTUBE_CLIENT_SECRET}
+      - ExternalServices__YouTube__RefreshToken=${YOUTUBE_REFRESH_TOKEN}
+      - ExternalServices__YouTube__ChannelId=${YOUTUBE_CHANNEL_ID}
       - OpenTelemetry__ExportEndpoint=http://10.0.0.94:4317   # OTLP trace → Tempo (VM2)
     depends_on:
       - postgres

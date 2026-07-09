@@ -322,6 +322,8 @@ const en = {
     colSpecies: 'Species',
     colQty: 'Qty',
     colOrigin: 'Origin',
+    mapFocusHint: 'Showing on map',
+    showAll: 'Show all',
   },
   dashboard: {
     title: 'Your Collection',
@@ -436,11 +438,11 @@ const en = {
   publish: {
     buttonTitle: 'Publish tank',
     title: 'Publish your tank',
-    previewHint: 'Preview the public page — the snapshot freezes your fish list at this moment.',
+    previewHint: 'Preview - saved snapshot version',
     modeLabel: 'You want to',
-    modeNew: 'Publish as a new link',
+    modeNew: 'Create a new snapshot',
     modeNewHint: 'Create a separate public page, up to 5 per tank',
-    modeOverwrite: 'Update a published tank',
+    modeOverwrite: 'Overwrite an existing one',
     modeOverwriteHint: 'Keep the same link + {{count}} likes, just refresh the content',
     coverLabel: 'Cover photo',
     noCover: 'No cover photo',

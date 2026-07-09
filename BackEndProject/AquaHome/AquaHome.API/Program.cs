@@ -63,18 +63,35 @@ builder.Services.AddAuthentication()
             ValidateAudience = false,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
+            // Token OpenIddict để role ở claim "role" — map để RequireRole("SystemAdmin") khớp
+            RoleClaimType = "role",
+            NameClaimType = "name",
         };
     });
 
 builder.Services.AddFishLoverAuthorization();
-// [Authorize] chấp nhận cả Bearer (direct login) lẫn OpenIddict (OAuth2 PKCE)
+// [Authorize] + policy admin đều phải chấp nhận cả Bearer (direct login) lẫn OpenIddict (OAuth2 PKCE).
+// Policy shared RequireSystemAdmin/RequireContentAdmin KHÔNG khai báo scheme → chỉ dùng default (Bearer)
+// → token OpenIddict bị 401 (FE hiểu là hết phiên → logout). Đăng ký đè ở đây với cả 2 scheme.
 builder.Services.AddAuthorization(options =>
 {
-    options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder(
+    string[] bothSchemes =
+    [
         Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme,
-        "OpenIddict")
+        "OpenIddict",
+    ];
+
+    options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder(bothSchemes)
         .RequireAuthenticatedUser()
         .Build();
+
+    options.AddPolicy("RequireSystemAdmin", p => p
+        .AddAuthenticationSchemes(bothSchemes)
+        .RequireRole("SystemAdmin"));
+
+    options.AddPolicy("RequireContentAdmin", p => p
+        .AddAuthenticationSchemes(bothSchemes)
+        .RequireRole("SystemAdmin", "ContentAdmin"));
 });
 builder.Services.AddFishLoverTelemetry(builder.Configuration, "aquahome");
 

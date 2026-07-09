@@ -13,11 +13,23 @@ fishDexClient.interceptors.request.use((config) => {
   return config;
 });
 
+/**
+ * Prefix cho species API theo trạng thái đăng nhập:
+ * - Chưa login → route `/public/` ([AllowAnonymous] trên BE)
+ * - Đã login  → route gốc ([Authorize])
+ * Chỉ dùng cho các endpoint đã có bản public tương ứng: families, search, summaries.
+ */
+function speciesPrefix(): string {
+  return useAuthStore.getState().isAuthenticated
+    ? '/fishdex/v1/species'
+    : '/fishdex/v1/public/species';
+}
+
 export async function searchSpecies(
   params: SearchSpeciesParams,
 ): Promise<PagedResult<SpeciesSearchResult>> {
   const { data } = await fishDexClient.get<PagedResult<SpeciesSearchResult>>(
-    '/fishdex/v1/species/search',
+    `${speciesPrefix()}/search`,
     { params },
   );
   return data;
@@ -25,7 +37,7 @@ export async function searchSpecies(
 
 export async function getFamilies(): Promise<import('../../types/species').Family[]> {
   const { data } = await fishDexClient.get<import('../../types/species').Family[]>(
-    '/fishdex/v1/species/families'
+    `${speciesPrefix()}/families`
   );
   return data;
 }
@@ -54,7 +66,7 @@ export async function getSpeciesCountries(specCode: number): Promise<CountryDto[
 }
 
 export async function getSpeciesSummaries(specCodes: number[], language?: string): Promise<SpeciesSummary[]> {
-  const { data } = await fishDexClient.get<SpeciesSummary[]>('/fishdex/v1/species/summaries', {
+  const { data } = await fishDexClient.get<SpeciesSummary[]>(`${speciesPrefix()}/summaries`, {
     params: { codes: specCodes.join(','), ...(language ? { language } : {}) },
   });
   return data;

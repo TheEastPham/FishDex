@@ -139,6 +139,7 @@ const en = {
     genus: 'Genus',
     detail: 'Detail',
     viewProfile: 'View Profile',
+    loginToViewDetail: 'Sign in to view species detail',
     viewProfileDetails: 'View Profile Details',
     viewFamily: 'View all in {{family}} family',
     unknownFamily: 'Unknown',

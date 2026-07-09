@@ -1,6 +1,7 @@
 using FishDex.Domain.DTOs.Occurrence;
 using FishDex.Domain.DTOs.Species;
 using FishDex.Domain.Services.Interfaces;
+using FishLover.Shared.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -37,4 +38,14 @@ public class PublicSpeciesController(
     public Task<IReadOnlyDictionary<int, SpeciesDistributionDto>> GetDistributions(
         [FromQuery] string codes, CancellationToken ct)
         => occurrenceService.GetDistributionsBatchAsync(ParseCodes(codes), ct);
+
+    /// <summary>Danh sách họ cá (chỉ họ có loài) — clone public của SpeciesController.GetFamilies cho người chưa đăng nhập.</summary>
+    [HttpGet("families")]
+    public Task<IReadOnlyList<FamilyDto>> GetFamilies(CancellationToken ct)
+        => speciesService.GetFamiliesAsync(ct);
+
+    /// <summary>Search loài — clone public của SpeciesController.Search. Tách riêng để sau này dễ hạn chế field trả về cho public.</summary>
+    [HttpGet("search")]
+    public Task<PagedResult<SpeciesSearchResultDto>> Search([FromQuery] GetSpeciesSearchRequest request, CancellationToken ct)
+        => speciesService.SearchSpeciesAsync(request, ct);
 }

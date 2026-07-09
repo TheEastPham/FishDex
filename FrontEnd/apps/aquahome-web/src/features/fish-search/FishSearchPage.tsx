@@ -55,13 +55,6 @@ export default function FishSearchPage() {
       return;
     }
 
-    if (!isAuthenticated) {
-      setRequiresLogin(true);
-      setResult(null);
-      setError(null);
-      return;
-    }
-
     let cancelled = false;
     setLoading(true);
     setError(null);

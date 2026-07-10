@@ -17,6 +17,8 @@ public class AquaHomeDbContext(DbContextOptions<AquaHomeDbContext> options) : Db
     public DbSet<AquariumSnapshotLike> AquariumSnapshotLikes => Set<AquariumSnapshotLike>();
     public DbSet<Contest>              Contests              => Set<Contest>();
     public DbSet<ContestEntry>         ContestEntries        => Set<ContestEntry>();
+    public DbSet<ContestPrizeTier>     ContestPrizeTiers     => Set<ContestPrizeTier>();
+    public DbSet<ContestSponsor>       ContestSponsors       => Set<ContestSponsor>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -96,7 +98,7 @@ e.Property(x => x.Description).HasMaxLength(500);
             e.HasIndex(x => x.Slug).IsUnique();
             e.Property(x => x.YoutubeVideoUrl).HasMaxLength(500);
             e.Property(x => x.SnapshotData).HasColumnType("jsonb"); // render-only, KHÔNG query/index vào JSON
-            e.HasIndex(x => new { x.IsActive, x.WaterType, x.Style, x.ContestAward, x.LikeCount })
+            e.HasIndex(x => new { x.IsActive, x.WaterType, x.Style, x.AwardTierLevel, x.LikeCount })
              .IsDescending(false, false, false, false, true); // phục vụ gallery filter + sort likes DESC
             e.HasOne(x => x.Aquarium)
              .WithMany()
@@ -139,6 +141,35 @@ e.Property(x => x.Description).HasMaxLength(500);
             e.HasOne(x => x.AquariumSnapshot)
              .WithMany()
              .HasForeignKey(x => x.AquariumSnapshotId)
+             .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.PrizeTier)
+             .WithMany()
+             .HasForeignKey(x => x.PrizeTierId)
+             .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        model.Entity<ContestPrizeTier>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Name).HasMaxLength(100).IsRequired();
+            e.Property(x => x.Description).HasMaxLength(500);
+            e.HasIndex(x => new { x.ContestId, x.DisplayOrder });
+            e.HasOne(x => x.Contest)
+             .WithMany(c => c.PrizeTiers)
+             .HasForeignKey(x => x.ContestId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        model.Entity<ContestSponsor>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Name).HasMaxLength(150).IsRequired();
+            e.Property(x => x.WebsiteUrl).HasMaxLength(500);
+            e.Property(x => x.LogoObjectKey).HasMaxLength(500);
+            e.HasIndex(x => new { x.ContestId, x.SponsorTier, x.DisplayOrder });
+            e.HasOne(x => x.Contest)
+             .WithMany(c => c.Sponsors)
+             .HasForeignKey(x => x.ContestId)
              .OnDelete(DeleteBehavior.Cascade);
         });
     }

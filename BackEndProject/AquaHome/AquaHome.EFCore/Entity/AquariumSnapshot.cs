@@ -17,7 +17,9 @@ public class AquariumSnapshot
     public int FishSpeciesCount { get; set; }
 
     public Guid? ContestEntryId { get; set; }
-    public int? ContestAward { get; set; } // null = chưa tham gia contest
+    // Denorm từ ContestEntry.PrizeTier lúc admin finalize contest — null = chưa đoạt giải (hoặc chưa tham gia)
+    public string? AwardTierName { get; set; }
+    public int? AwardTierLevel { get; set; } // PrizeTierLevel — cho FE chọn màu badge, không JOIN
 
     /// <summary>Trỏ tới AquariumMedia đã upload — resolve presigned URL mới mỗi lần serve (tránh lưu URL hết hạn).</summary>
     public Guid? CoverMediaId { get; set; }

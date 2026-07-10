@@ -19,4 +19,19 @@ public interface IContestService
     Task<bool> RejectEntryAsync(Guid contestId, Guid entryId, CancellationToken ct = default);
     Task<IReadOnlyList<LeaderboardEntryDto>> GetLeaderboardAsync(Guid contestId, CancellationToken ct = default);
     Task<IReadOnlyList<ContestEntryDto>> GetPendingReviewAsync(CancellationToken ct = default);
+
+    // ── Prize tiers ────────────────────────────────────────
+    Task<ContestPrizeTierDto> CreatePrizeTierAsync(Guid contestId, CreatePrizeTierRequest request, CancellationToken ct = default);
+    Task<ContestPrizeTierDto?> UpdatePrizeTierAsync(Guid contestId, Guid tierId, UpdatePrizeTierRequest request, CancellationToken ct = default);
+    Task<bool> DeletePrizeTierAsync(Guid contestId, Guid tierId, CancellationToken ct = default);
+
+    // ── Sponsors ───────────────────────────────────────────
+    Task<ContestSponsorDto> CreateSponsorAsync(Guid contestId, CreateSponsorRequest request, CancellationToken ct = default);
+    Task<ContestSponsorDto?> UpdateSponsorAsync(Guid contestId, Guid sponsorId, UpdateSponsorRequest request, CancellationToken ct = default);
+    Task<bool> DeleteSponsorAsync(Guid contestId, Guid sponsorId, CancellationToken ct = default);
+    Task<SponsorLogoUploadResultDto?> RequestSponsorLogoUploadAsync(Guid contestId, Guid sponsorId, string fileName, string contentType, CancellationToken ct = default);
+
+    /// <summary>Admin chốt giải: gán PrizeTierId cho các entry đã Published, denorm xuống Snapshot, set Contest.Status=Ended.
+    /// Ném ContestValidationException (422) nếu vượt SlotCount của tier hoặc entry chưa Published.</summary>
+    Task<bool> FinalizeAsync(Guid contestId, FinalizeContestRequest request, CancellationToken ct = default);
 }

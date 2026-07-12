@@ -5,16 +5,17 @@ import {
   ContestStatus, useTranslation, cn,
 } from '@fishlover/shared';
 import type { ContestDto, ContestEntryDto, CreateContestRequest } from '@fishlover/shared';
-import { Trophy, Plus, Pencil, Youtube, Check, X, Loader2, ClipboardCheck } from 'lucide-react';
+import { Trophy, Plus, Pencil, Youtube, Check, X, Loader2, ClipboardCheck, Settings2, ChevronUp } from 'lucide-react';
+import ContestManagePanel from './ContestManagePanel';
 
 function formatDate(iso: string, locale: string) {
   return new Date(iso).toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
-// datetime-local input cần format yyyy-MM-ddTHH:mm
-function toInputValue(iso: string | null): string {
+// input type="date" cần format yyyy-MM-dd — contest chỉ cần chọn ngày, không cần giờ
+function toDateInputValue(iso: string | null): string {
   if (!iso) return '';
-  return new Date(iso).toISOString().slice(0, 16);
+  return new Date(iso).toISOString().slice(0, 10);
 }
 
 const STATUS_STYLES: Record<number, string> = {
@@ -33,8 +34,8 @@ function ContestFormModal({ contest, onClose, onSaved, t }: {
   const [title, setTitle] = useState(contest?.title ?? '');
   const [description, setDescription] = useState(contest?.description ?? '');
   const [playlistId, setPlaylistId] = useState(contest?.youTubePlaylistId ?? '');
-  const [startAt, setStartAt] = useState(toInputValue(contest?.startAt ?? null));
-  const [endAt, setEndAt] = useState(toInputValue(contest?.endAt ?? null));
+  const [startAt, setStartAt] = useState(toDateInputValue(contest?.startAt ?? null));
+  const [endAt, setEndAt] = useState(toDateInputValue(contest?.endAt ?? null));
   const [status, setStatus] = useState<ContestStatus>(contest?.status ?? ContestStatus.Draft);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(false);
@@ -50,8 +51,8 @@ function ContestFormModal({ contest, onClose, onSaved, t }: {
         title: title.trim(),
         description: description.trim() || null,
         youTubePlaylistId: playlistId.trim() || null,
-        startAt: new Date(startAt).toISOString(),
-        endAt: new Date(endAt).toISOString(),
+        startAt: new Date(`${startAt}T00:00:00`).toISOString(),
+        endAt: new Date(`${endAt}T23:59:59`).toISOString(),
       };
       if (contest) {
         await updateContest(contest.id, { ...payload, status });
@@ -69,6 +70,9 @@ function ContestFormModal({ contest, onClose, onSaved, t }: {
 
   const inputCls = 'w-full bg-[#0F172A] border border-slate-700 rounded-xl px-3 py-3 text-base text-white min-h-[44px] placeholder:text-slate-600';
   const labelCls = 'block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2';
+  // color-scheme:dark → browser tự đổi icon lịch sang màu sáng (mặc định tối, gần như vô hình trên nền tối)
+  // Icon lịch to hơn + cả input clickable để mở picker (native picker indicator chiếm toàn bộ vùng bên phải)
+  const dateInputCls = '[color-scheme:dark] [&::-webkit-calendar-picker-indicator]:scale-125 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:p-1';
 
   return (
     <>
@@ -100,17 +104,29 @@ function ContestFormModal({ contest, onClose, onSaved, t }: {
               <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} className={inputCls} />
             </div>
             <div>
-              <label className={labelCls}>{t('adminContests.fieldPlaylist')}</label>
+              <label className={labelCls}>
+                {t('adminContests.fieldPlaylist')} <span className="normal-case font-normal text-slate-600">({t('adminContests.optional')})</span>
+              </label>
               <input value={playlistId} onChange={e => setPlaylistId(e.target.value)} placeholder="PLxxxxxxxx" className={inputCls} />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className={labelCls}>{t('adminContests.fieldStartAt')}</label>
-                <input type="datetime-local" value={startAt} onChange={e => setStartAt(e.target.value)} className={inputCls} />
+                <input
+                  type="date"
+                  value={startAt}
+                  onChange={e => setStartAt(e.target.value)}
+                  className={cn(inputCls, dateInputCls)}
+                />
               </div>
               <div>
                 <label className={labelCls}>{t('adminContests.fieldEndAt')}</label>
-                <input type="datetime-local" value={endAt} onChange={e => setEndAt(e.target.value)} className={inputCls} />
+                <input
+                  type="date"
+                  value={endAt}
+                  onChange={e => setEndAt(e.target.value)}
+                  className={cn(inputCls, dateInputCls)}
+                />
               </div>
             </div>
             {contest && (
@@ -208,6 +224,7 @@ export default function AdminContestsPage() {
   const [loading, setLoading] = useState(true);
   const [formContest, setFormContest] = useState<ContestDto | null>(null);
   const [formOpen, setFormOpen] = useState(false);
+  const [managingId, setManagingId] = useState<string | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -263,28 +280,48 @@ export default function AdminContestsPage() {
                 <p className="text-slate-500 text-sm">{t('adminContests.noContests')}</p>
               </div>
             )}
-            {contests.map(c => (
-              <div key={c.id} className="flex items-center gap-3 rounded-xl border border-slate-800/60 bg-[#1E293B] p-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-bold text-white truncate">{c.title}</p>
-                    <span className={cn('text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0', STATUS_STYLES[c.status])}>
-                      {statusLabel(c.status)}
-                    </span>
+            {contests.map(c => {
+              const isManaging = managingId === c.id;
+              return (
+                <div key={c.id}>
+                  <div className="flex items-center gap-3 rounded-xl border border-slate-800/60 bg-[#1E293B] p-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-bold text-white truncate">{c.title}</p>
+                        <span className={cn('text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0', STATUS_STYLES[c.status])}>
+                          {statusLabel(c.status)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {formatDate(c.startAt, t('aquarium.dateLocale'))} → {formatDate(c.endAt, t('aquarium.dateLocale'))}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setManagingId(isManaging ? null : c.id)}
+                      className={cn(
+                        'flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-bold transition-colors min-h-[44px] shrink-0',
+                        isManaging ? 'bg-sky-500/20 text-sky-400' : 'bg-white/5 hover:bg-white/10 text-slate-400',
+                      )}
+                    >
+                      {isManaging ? <ChevronUp className="w-3.5 h-3.5" /> : <Settings2 className="w-3.5 h-3.5" />}
+                      {isManaging ? t('adminContests.collapse') : t('adminContests.manage')}
+                    </button>
+                    <button
+                      onClick={() => { setFormContest(c); setFormOpen(true); }}
+                      className="p-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center shrink-0"
+                      title={t('adminContests.editTitle')}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
                   </div>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    {formatDate(c.startAt, t('aquarium.dateLocale'))} → {formatDate(c.endAt, t('aquarium.dateLocale'))}
-                  </p>
+                  {isManaging && (
+                    <div className="mt-2">
+                      <ContestManagePanel contest={c} onChanged={load} />
+                    </div>
+                  )}
                 </div>
-                <button
-                  onClick={() => { setFormContest(c); setFormOpen(true); }}
-                  className="p-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-                  title={t('adminContests.editTitle')}
-                >
-                  <Pencil className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Pending review entries */}

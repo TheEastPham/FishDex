@@ -165,6 +165,7 @@ e.Property(x => x.Description).HasMaxLength(500);
             e.HasKey(x => x.Id);
             e.Property(x => x.Name).HasMaxLength(150).IsRequired();
             e.Property(x => x.WebsiteUrl).HasMaxLength(500);
+            e.Property(x => x.Address).HasMaxLength(300);
             e.Property(x => x.LogoObjectKey).HasMaxLength(500);
             e.HasIndex(x => new { x.ContestId, x.SponsorTier, x.DisplayOrder });
             e.HasOne(x => x.Contest)

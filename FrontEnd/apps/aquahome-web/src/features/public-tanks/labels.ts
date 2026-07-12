@@ -1,4 +1,4 @@
-import { WaterType, AquariumStyle, ContestAward } from '@fishlover/shared';
+import { WaterType, AquariumStyle, PrizeTierLevel } from '@fishlover/shared';
 import type { TFunction } from 'i18next';
 
 /**
@@ -32,11 +32,13 @@ export const STYLE_LABELS: Record<number, string> = {
   [AquariumStyle.Paludarium]: 'Paludarium',
 };
 
-export function awardLabel(t: TFunction, award: ContestAward | null): string | null {
-  switch (award) {
-    case ContestAward.Winner:      return t('publicTanks.awardWinner');
-    case ContestAward.Top3:        return t('publicTanks.awardTop3');
-    case ContestAward.Participant: return t('publicTanks.awardParticipant');
-    default: return null;
+/** Tên hạng giải do admin tự đặt (vd "Giải Nhất") — hiển thị thẳng, không dịch qua i18n. */
+export function awardBadgeStyle(level: PrizeTierLevel | null): string {
+  switch (level) {
+    case PrizeTierLevel.Gold:          return 'bg-amber-500/90 text-amber-950';
+    case PrizeTierLevel.Silver:        return 'bg-slate-300/90 text-slate-900';
+    case PrizeTierLevel.Bronze:        return 'bg-orange-700/90 text-orange-50';
+    case PrizeTierLevel.Encouragement: return 'bg-sky-500/90 text-sky-950';
+    default:                           return 'bg-white/20 text-white';
   }
 }

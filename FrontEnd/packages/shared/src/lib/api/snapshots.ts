@@ -4,6 +4,9 @@ import type {
   SnapshotPreviewDto, PublishSnapshotRequest, AquariumSnapshotDto, GetPublicSnapshotsParams, MySnapshotDto,
   ContestDto, CreateContestRequest, UpdateContestRequest,
   SubmitEntryRequest, SubmitEntryResultDto, ContestEntryDto, LeaderboardEntryDto,
+  ContestPrizeTierDto, CreatePrizeTierRequest, UpdatePrizeTierRequest,
+  ContestSponsorDto, CreateSponsorRequest, UpdateSponsorRequest, SponsorLogoUploadResultDto,
+  FinalizeContestRequest,
 } from '../../types/snapshot';
 
 // ── Snapshot: publish flow (auth) ─────────────────────────
@@ -110,4 +113,51 @@ export async function approveContestEntry(contestId: string, entryId: string): P
 
 export async function rejectContestEntry(contestId: string, entryId: string): Promise<void> {
   await apiClient.patch(`/aquahome/v1/contests/${contestId}/entries/${entryId}/reject`);
+}
+
+/** Chốt giải — gán hạng cho từng entry đã Published, đóng contest (Status=Ended). SystemAdmin only. */
+export async function finalizeContest(contestId: string, req: FinalizeContestRequest): Promise<void> {
+  await apiClient.patch(`/aquahome/v1/admin/contests/${contestId}/finalize`, req);
+}
+
+// ── Prize tiers (SystemAdmin) ──────────────────────────────
+
+export async function createPrizeTier(contestId: string, req: CreatePrizeTierRequest): Promise<ContestPrizeTierDto> {
+  const { data } = await apiClient.post<ContestPrizeTierDto>(`/aquahome/v1/admin/contests/${contestId}/prize-tiers`, req);
+  return data;
+}
+
+export async function updatePrizeTier(contestId: string, tierId: string, req: UpdatePrizeTierRequest): Promise<ContestPrizeTierDto> {
+  const { data } = await apiClient.put<ContestPrizeTierDto>(`/aquahome/v1/admin/contests/${contestId}/prize-tiers/${tierId}`, req);
+  return data;
+}
+
+export async function deletePrizeTier(contestId: string, tierId: string): Promise<void> {
+  await apiClient.delete(`/aquahome/v1/admin/contests/${contestId}/prize-tiers/${tierId}`);
+}
+
+// ── Sponsors (SystemAdmin) ─────────────────────────────────
+
+export async function createSponsor(contestId: string, req: CreateSponsorRequest): Promise<ContestSponsorDto> {
+  const { data } = await apiClient.post<ContestSponsorDto>(`/aquahome/v1/admin/contests/${contestId}/sponsors`, req);
+  return data;
+}
+
+export async function updateSponsor(contestId: string, sponsorId: string, req: UpdateSponsorRequest): Promise<ContestSponsorDto> {
+  const { data } = await apiClient.put<ContestSponsorDto>(`/aquahome/v1/admin/contests/${contestId}/sponsors/${sponsorId}`, req);
+  return data;
+}
+
+export async function deleteSponsor(contestId: string, sponsorId: string): Promise<void> {
+  await apiClient.delete(`/aquahome/v1/admin/contests/${contestId}/sponsors/${sponsorId}`);
+}
+
+export async function requestSponsorLogoUpload(
+  contestId: string, sponsorId: string, fileName: string, contentType: string,
+): Promise<SponsorLogoUploadResultDto> {
+  const { data } = await apiClient.post<SponsorLogoUploadResultDto>(
+    `/aquahome/v1/admin/contests/${contestId}/sponsors/${sponsorId}/logo/presign`,
+    { fileName, contentType },
+  );
+  return data;
 }

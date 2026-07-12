@@ -1,10 +1,21 @@
 import type { WaterType, AquariumStyle } from './aquahome';
 
 // ── Enums (phải khớp với BE AquaHome.Domain.Enums) ────────
-export enum ContestAward {
-  Participant = 1,
-  Top3        = 2,
-  Winner      = 3,
+/** Chỉ dùng để chọn màu/icon huy chương — không ảnh hưởng logic xếp hạng */
+export enum PrizeTierLevel {
+  Gold          = 1, // Giải Nhất
+  Silver        = 2, // Giải Nhì
+  Bronze        = 3, // Giải Ba
+  Encouragement = 4, // Giải Khuyến khích
+  Custom        = 5, // Hạng giải admin tự đặt thêm
+}
+
+export enum SponsorTier {
+  Platinum = 1,
+  Gold     = 2,
+  Silver   = 3,
+  Bronze   = 4,
+  Partner  = 5,
 }
 
 export enum ContestStatus {
@@ -71,7 +82,8 @@ export interface AquariumSnapshotDto {
   style: AquariumStyle;
   likeCount: number;
   fishSpeciesCount: number;
-  contestAward: ContestAward | null;
+  awardTierName: string | null;
+  awardTierLevel: PrizeTierLevel | null;
   coverImageUrl: string | null;
   youtubeVideoUrl: string | null;
   createdAt: string;
@@ -113,6 +125,76 @@ export interface ContestDto {
   startAt: string;
   endAt: string;
   status: ContestStatus;
+  prizeTiers: ContestPrizeTierDto[];
+  sponsors: ContestSponsorDto[];
+}
+
+// ── Prize tiers ────────────────────────────────────────────
+export interface ContestPrizeTierDto {
+  id: string;
+  name: string;
+  tierLevel: PrizeTierLevel;
+  slotCount: number;
+  displayOrder: number;
+  description: string | null;
+}
+
+export interface CreatePrizeTierRequest {
+  name: string;
+  tierLevel: PrizeTierLevel;
+  slotCount: number;
+  description?: string | null;
+}
+
+export interface UpdatePrizeTierRequest {
+  name?: string | null;
+  tierLevel?: PrizeTierLevel | null;
+  slotCount?: number | null;
+  displayOrder?: number | null;
+  description?: string | null;
+}
+
+// ── Sponsors ───────────────────────────────────────────────
+export interface ContestSponsorDto {
+  id: string;
+  name: string;
+  /** Website hoặc Facebook Page — link chung, không phân biệt loại */
+  websiteUrl: string | null;
+  address: string | null;
+  logoUrl: string | null;
+  sponsorTier: SponsorTier;
+  displayOrder: number;
+}
+
+export interface CreateSponsorRequest {
+  name: string;
+  websiteUrl?: string | null;
+  address?: string | null;
+  sponsorTier: SponsorTier;
+}
+
+export interface UpdateSponsorRequest {
+  name?: string | null;
+  websiteUrl?: string | null;
+  address?: string | null;
+  sponsorTier?: SponsorTier | null;
+  displayOrder?: number | null;
+  isActive?: boolean | null;
+}
+
+export interface SponsorLogoUploadResultDto {
+  uploadUrl: string;
+  objectKey: string;
+}
+
+// ── Finalize ───────────────────────────────────────────────
+export interface EntryAwardAssignment {
+  entryId: string;
+  prizeTierId: string | null;
+}
+
+export interface FinalizeContestRequest {
+  assignments: EntryAwardAssignment[];
 }
 
 export interface CreateContestRequest {
@@ -152,7 +234,8 @@ export interface ContestEntryDto {
   aquariumSnapshotId: string;
   youTubeVideoId: string | null;
   youTubeViewCount: number;
-  rank: number | null;
+  prizeTierId: string | null;
+  prizeTierName: string | null;
   status: ContestEntryStatus;
   submittedAt: string;
 }
@@ -162,5 +245,7 @@ export interface LeaderboardEntryDto {
   aquariumSnapshotId: string;
   youTubeVideoId: string | null;
   youTubeViewCount: number;
-  rank: number | null;
+  prizeTierId: string | null;
+  prizeTierName: string | null;
+  prizeTierLevel: PrizeTierLevel | null;
 }

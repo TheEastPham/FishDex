@@ -29,13 +29,14 @@ public record UpdatePrizeTierRequest(string? Name, PrizeTierLevel? TierLevel, in
 public record ContestSponsorDto(
     Guid Id,
     string Name,
-    string? WebsiteUrl,
+    string? WebsiteUrl, // website hoặc Facebook Page — link chung, không phân biệt loại
+    string? Address,
     string? LogoUrl,
     SponsorTier SponsorTier,
     int DisplayOrder);
 
-public record CreateSponsorRequest(string Name, string? WebsiteUrl, SponsorTier SponsorTier);
-public record UpdateSponsorRequest(string? Name, string? WebsiteUrl, SponsorTier? SponsorTier, int? DisplayOrder, bool? IsActive);
+public record CreateSponsorRequest(string Name, string? WebsiteUrl, string? Address, SponsorTier SponsorTier);
+public record UpdateSponsorRequest(string? Name, string? WebsiteUrl, string? Address, SponsorTier? SponsorTier, int? DisplayOrder, bool? IsActive);
 public record SponsorLogoUploadResultDto(string UploadUrl, string ObjectKey);
 
 // ── Finalize ───────────────────────────────────────────────

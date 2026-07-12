@@ -55,6 +55,10 @@ builder.Services.AddAuthentication()
     {
         options.MetadataAddress = $"{authServerInternalUrl}/.well-known/openid-configuration";
         options.RequireHttpsMetadata = false;
+        // Tắt legacy inbound claim mapping — mặc định .NET tự đổi "role" → URI dài
+        // (http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role) khiến RoleClaimType="role" bên dưới
+        // không khớp claim thực tế → RequireRole("SystemAdmin") luôn fail → 403 dù token có đúng role.
+        options.MapInboundClaims = false;
         var issuer = authServerPublicUrl.TrimEnd('/');
         options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
         {

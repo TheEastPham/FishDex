@@ -288,6 +288,7 @@ public class ContestService(
             ContestId = contestId,
             Name = request.Name,
             WebsiteUrl = request.WebsiteUrl,
+            Address = request.Address,
             SponsorTier = (int)request.SponsorTier,
             DisplayOrder = existing.Count == 0 ? 1 : existing.Max(s => s.DisplayOrder) + 1,
             IsActive = true,
@@ -305,6 +306,7 @@ public class ContestService(
 
         if (request.Name is not null) sponsor.Name = request.Name;
         if (request.WebsiteUrl is not null) sponsor.WebsiteUrl = request.WebsiteUrl;
+        if (request.Address is not null) sponsor.Address = request.Address;
         if (request.SponsorTier.HasValue) sponsor.SponsorTier = (int)request.SponsorTier.Value;
         if (request.DisplayOrder.HasValue) sponsor.DisplayOrder = request.DisplayOrder.Value;
         if (request.IsActive.HasValue) sponsor.IsActive = request.IsActive.Value;
@@ -422,7 +424,7 @@ public class ContestService(
     private async Task<ContestSponsorDto> ToDtoAsync(ContestSponsor s, CancellationToken ct)
     {
         var logoUrl = string.IsNullOrEmpty(s.LogoObjectKey) ? null : await storage.GetPresignedUrlAsync(s.LogoObjectKey, ct);
-        return new ContestSponsorDto(s.Id, s.Name, s.WebsiteUrl, logoUrl, (SponsorTier)s.SponsorTier, s.DisplayOrder);
+        return new ContestSponsorDto(s.Id, s.Name, s.WebsiteUrl, s.Address, logoUrl, (SponsorTier)s.SponsorTier, s.DisplayOrder);
     }
 
     private static ContestEntryDto ToDto(ContestEntry e, string? prizeTierName) => new(

@@ -4,8 +4,8 @@ export type { PagedResult }                        from './types/common';
 export type { SpeciesSearchResult, SpeciesSummary, SearchSpeciesParams, Family, SpeciesDetail, SystemImageDto, OccurrenceDto, CountryDto, OccurrencePointDto, CountryDistributionDto, SpeciesDistributionDto } from './types/species';
 export type { AquariumDto, AquariumFishDto, CreateAquariumRequest, UpdateAquariumRequest, FavoriteDto, AquariumMediaDto, PresignedUploadDto, ReminderDto, CreateReminderRequest, CompleteReminderResponse, UserReminderDto } from './types/aquahome';
 export { WaterType, AquariumStyle, AquaTaskType } from './types/aquahome';
-export type { DistributionPointDto, SnapshotFishDto, SnapshotDataDto, SnapshotPreviewDto, PublishSnapshotRequest, AquariumSnapshotDto, GetPublicSnapshotsParams, MySnapshotDto, ContestDto, CreateContestRequest, UpdateContestRequest, SubmitEntryRequest, SubmitEntryResultDto, ContestEntryDto, LeaderboardEntryDto } from './types/snapshot';
-export { ContestAward, ContestStatus, ContestEntryStatus } from './types/snapshot';
+export type { DistributionPointDto, SnapshotFishDto, SnapshotDataDto, SnapshotPreviewDto, PublishSnapshotRequest, AquariumSnapshotDto, GetPublicSnapshotsParams, MySnapshotDto, ContestDto, CreateContestRequest, UpdateContestRequest, SubmitEntryRequest, SubmitEntryResultDto, ContestEntryDto, LeaderboardEntryDto, ContestPrizeTierDto, CreatePrizeTierRequest, UpdatePrizeTierRequest, ContestSponsorDto, CreateSponsorRequest, UpdateSponsorRequest, SponsorLogoUploadResultDto, EntryAwardAssignment, FinalizeContestRequest } from './types/snapshot';
+export { PrizeTierLevel, SponsorTier, ContestStatus, ContestEntryStatus } from './types/snapshot';
 
 
 // ── Store ─────────────────────────────────────────────────
@@ -30,7 +30,7 @@ export { getMyAquariums, getAquariumById, createAquarium, updateAquarium, delete
 export type { RecentlyViewedDto } from './types/aquahome';
 export { requestOtp, registerUser, forgotPassword, resetPassword, getMyProfile, updateMyProfile, changePassword } from './lib/api/auth';
 export type { RequestOtpResponse, RegisterRequest, RegisterResponse, ForgotPasswordResponse, ResetPasswordPayload, ResetPasswordResponse, UserProfileDto, UpdateProfilePayload, ChangePasswordPayload } from './lib/api/auth';
-export { previewSnapshot, publishSnapshot, unpublishSnapshot, getMySnapshots, getPublicSnapshots, getPublicSnapshotBySlug, likeSnapshot, unlikeSnapshot, getActiveContests, getContestLeaderboard, submitContestEntry, confirmEntryUpload, getAllContests, createContest, updateContest, getPendingReviewEntries, approveContestEntry, rejectContestEntry } from './lib/api/snapshots';
+export { previewSnapshot, publishSnapshot, unpublishSnapshot, getMySnapshots, getPublicSnapshots, getPublicSnapshotBySlug, likeSnapshot, unlikeSnapshot, getActiveContests, getContestLeaderboard, submitContestEntry, confirmEntryUpload, getAllContests, createContest, updateContest, getPendingReviewEntries, approveContestEntry, rejectContestEntry, finalizeContest, createPrizeTier, updatePrizeTier, deletePrizeTier, createSponsor, updateSponsor, deleteSponsor, requestSponsorLogoUpload } from './lib/api/snapshots';
 export { getVapidPublicKey, saveSubscription, removeSubscription } from './lib/api/push';
 export type { SaveSubscriptionPayload } from './lib/api/push';
 

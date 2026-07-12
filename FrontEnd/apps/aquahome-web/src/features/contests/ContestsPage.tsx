@@ -4,6 +4,7 @@ import { getActiveContests, getContestLeaderboard, SponsorTier, useAuthStore, us
 import type { ContestDto, LeaderboardEntryDto, ContestPrizeTierDto, ContestSponsorDto } from '@fishlover/shared';
 import { Trophy, Youtube, Eye, Loader2, Upload, Medal, CalendarRange } from 'lucide-react';
 import ContestEntryFormModal from './components/ContestEntryFormModal';
+import ContestGuideSection from './components/ContestGuideSection';
 import { awardBadgeStyle } from '../public-tanks/labels';
 
 function formatDate(iso: string, locale: string) {
@@ -221,6 +222,8 @@ export default function ContestsPage() {
         <h1 className="text-xl sm:text-2xl font-black text-white">{t('contests.title')}</h1>
         <p className="text-sm text-slate-500 mt-1">{t('contests.subtitle')}</p>
       </div>
+
+      <ContestGuideSection />
 
       {loading && (
         <div className="flex items-center justify-center py-20 text-slate-600">

@@ -153,6 +153,7 @@ e.Property(x => x.Description).HasMaxLength(500);
             e.HasKey(x => x.Id);
             e.Property(x => x.Name).HasMaxLength(100).IsRequired();
             e.Property(x => x.Description).HasMaxLength(500);
+            e.Property(x => x.ImageObjectKey).HasMaxLength(500);
             e.HasIndex(x => new { x.ContestId, x.DisplayOrder });
             e.HasOne(x => x.Contest)
              .WithMany(c => c.PrizeTiers)

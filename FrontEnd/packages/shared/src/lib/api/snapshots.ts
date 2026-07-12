@@ -4,7 +4,7 @@ import type {
   SnapshotPreviewDto, PublishSnapshotRequest, AquariumSnapshotDto, GetPublicSnapshotsParams, MySnapshotDto,
   ContestDto, CreateContestRequest, UpdateContestRequest,
   SubmitEntryRequest, SubmitEntryResultDto, ContestEntryDto, LeaderboardEntryDto,
-  ContestPrizeTierDto, CreatePrizeTierRequest, UpdatePrizeTierRequest,
+  ContestPrizeTierDto, CreatePrizeTierRequest, UpdatePrizeTierRequest, PrizeTierImageUploadResultDto,
   ContestSponsorDto, CreateSponsorRequest, UpdateSponsorRequest, SponsorLogoUploadResultDto,
   FinalizeContestRequest,
 } from '../../types/snapshot';
@@ -134,6 +134,16 @@ export async function updatePrizeTier(contestId: string, tierId: string, req: Up
 
 export async function deletePrizeTier(contestId: string, tierId: string): Promise<void> {
   await apiClient.delete(`/aquahome/v1/admin/contests/${contestId}/prize-tiers/${tierId}`);
+}
+
+export async function requestPrizeTierImageUpload(
+  contestId: string, tierId: string, fileName: string, contentType: string,
+): Promise<PrizeTierImageUploadResultDto> {
+  const { data } = await apiClient.post<PrizeTierImageUploadResultDto>(
+    `/aquahome/v1/admin/contests/${contestId}/prize-tiers/${tierId}/image/presign`,
+    { fileName, contentType },
+  );
+  return data;
 }
 
 // ── Sponsors (SystemAdmin) ─────────────────────────────────

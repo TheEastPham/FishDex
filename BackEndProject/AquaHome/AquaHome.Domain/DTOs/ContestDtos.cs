@@ -20,10 +20,12 @@ public record ContestPrizeTierDto(
     PrizeTierLevel TierLevel,
     int SlotCount,
     int DisplayOrder,
-    string? Description);
+    string? Description,
+    string? ImageUrl);
 
 public record CreatePrizeTierRequest(string Name, PrizeTierLevel TierLevel, int SlotCount, string? Description);
 public record UpdatePrizeTierRequest(string? Name, PrizeTierLevel? TierLevel, int? SlotCount, int? DisplayOrder, string? Description);
+public record PrizeTierImageUploadResultDto(string UploadUrl, string ObjectKey);
 
 // ── Sponsors ───────────────────────────────────────────────
 public record ContestSponsorDto(

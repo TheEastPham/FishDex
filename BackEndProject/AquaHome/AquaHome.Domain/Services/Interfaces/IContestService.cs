@@ -24,6 +24,7 @@ public interface IContestService
     Task<ContestPrizeTierDto> CreatePrizeTierAsync(Guid contestId, CreatePrizeTierRequest request, CancellationToken ct = default);
     Task<ContestPrizeTierDto?> UpdatePrizeTierAsync(Guid contestId, Guid tierId, UpdatePrizeTierRequest request, CancellationToken ct = default);
     Task<bool> DeletePrizeTierAsync(Guid contestId, Guid tierId, CancellationToken ct = default);
+    Task<PrizeTierImageUploadResultDto?> RequestPrizeTierImageUploadAsync(Guid contestId, Guid tierId, string fileName, string contentType, CancellationToken ct = default);
 
     // ── Sponsors ───────────────────────────────────────────
     Task<ContestSponsorDto> CreateSponsorAsync(Guid contestId, CreateSponsorRequest request, CancellationToken ct = default);

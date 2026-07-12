@@ -14,5 +14,8 @@ public class ContestPrizeTier
     public int DisplayOrder { get; set; }
     public string? Description { get; set; } // mô tả giải thưởng, vd "5.000.000đ + áo FishLover"
 
+    /// <summary>Ảnh giải thưởng (optional) — resolve presigned URL mới mỗi lần đọc, giống CoverMediaId/sponsor logo.</summary>
+    public string? ImageObjectKey { get; set; }
+
     public Contest Contest { get; set; } = null!;
 }

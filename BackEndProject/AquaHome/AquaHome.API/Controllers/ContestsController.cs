@@ -109,6 +109,15 @@ public class AdminContestsController(IContestService contestService) : Controlle
         return ok ? NoContent() : NotFound();
     }
 
+    /// <summary>Presigned PUT URL để upload ảnh giải thưởng (optional) lên R2.</summary>
+    [HttpPost("{id:guid}/prize-tiers/{tierId:guid}/image/presign")]
+    public async Task<IActionResult> RequestPrizeTierImageUpload(
+        Guid id, Guid tierId, [FromBody] SponsorLogoPresignRequest request, CancellationToken ct)
+    {
+        var result = await contestService.RequestPrizeTierImageUploadAsync(id, tierId, request.FileName, request.ContentType, ct);
+        return result is null ? BadRequest(new { error = "Không thể tạo upload URL — kiểm tra content-type hoặc hạng giải tồn tại." }) : Ok(result);
+    }
+
     // ── Sponsors ─────────────────────────────────────────────
     [HttpPost("{id:guid}/sponsors")]
     public async Task<IActionResult> CreateSponsor(Guid id, [FromBody] CreateSponsorRequest request, CancellationToken ct)

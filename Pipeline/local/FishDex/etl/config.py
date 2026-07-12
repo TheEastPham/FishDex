@@ -36,7 +36,7 @@ PARQUET_FILES = {
 AQUARIUM_VALUES: set[str] = {
     "highly commercial",
     "commercial",
-    # "of minor importance",  # bỏ comment nếu muốn lấy thêm
+    "potential",
 }
 
 # Lấy thêm brackish water không? (Fresh=0, Brack=1)

@@ -250,7 +250,7 @@ public class ContestService(
 
         await prizeTierRepo.AddAsync(tier, ct);
         await prizeTierRepo.SaveChangesAsync(ct);
-        return ToDto(tier);
+        return await ToDtoAsync(tier, ct);
     }
 
     public async Task<ContestPrizeTierDto?> UpdatePrizeTierAsync(Guid contestId, Guid tierId, UpdatePrizeTierRequest request, CancellationToken ct = default)
@@ -265,7 +265,7 @@ public class ContestService(
         if (request.Description is not null) tier.Description = request.Description;
 
         await prizeTierRepo.SaveChangesAsync(ct);
-        return ToDto(tier);
+        return await ToDtoAsync(tier, ct);
     }
 
     public async Task<bool> DeletePrizeTierAsync(Guid contestId, Guid tierId, CancellationToken ct = default)
@@ -273,9 +273,32 @@ public class ContestService(
         var tier = await prizeTierRepo.GetByIdAsync(tierId, ct);
         if (tier is null || tier.ContestId != contestId) return false;
 
+        if (!string.IsNullOrEmpty(tier.ImageObjectKey))
+            await storage.DeleteAsync(tier.ImageObjectKey, ct);
+
         prizeTierRepo.Remove(tier);
         await prizeTierRepo.SaveChangesAsync(ct);
         return true;
+    }
+
+    public async Task<PrizeTierImageUploadResultDto?> RequestPrizeTierImageUploadAsync(
+        Guid contestId, Guid tierId, string fileName, string contentType, CancellationToken ct = default)
+    {
+        if (!AllowedLogoContentTypes.Contains(contentType)) return null;
+
+        var tier = await prizeTierRepo.GetByIdAsync(tierId, ct);
+        if (tier is null || tier.ContestId != contestId) return null;
+
+        var ext = Path.GetExtension(fileName);
+        var objectKey = $"aquahome/{Env}/contests/{contestId}/prize-tiers/{tierId}{ext}";
+
+        var uploadUrl = await storage.GeneratePresignedPutUrlAsync(objectKey, contentType, MaxLogoUploadBytes, ct);
+        if (uploadUrl is null) return null;
+
+        tier.ImageObjectKey = objectKey;
+        await prizeTierRepo.SaveChangesAsync(ct);
+
+        return new PrizeTierImageUploadResultDto(uploadUrl, objectKey);
     }
 
     // ── Sponsors ─────────────────────────────────────────────────
@@ -413,13 +436,19 @@ public class ContestService(
         var sponsorDtos = new List<ContestSponsorDto>(sponsors.Count);
         foreach (var s in sponsors) sponsorDtos.Add(await ToDtoAsync(s, ct));
 
+        var tierDtos = new List<ContestPrizeTierDto>(tiers.Count);
+        foreach (var t in tiers) tierDtos.Add(await ToDtoAsync(t, ct));
+
         return new ContestDto(
             c.Id, c.Title, c.Description, c.YouTubePlaylistId, c.StartAt, c.EndAt, (ContestStatus)c.Status,
-            tiers.Select(ToDto).ToList(), sponsorDtos);
+            tierDtos, sponsorDtos);
     }
 
-    private static ContestPrizeTierDto ToDto(ContestPrizeTier t) => new(
-        t.Id, t.Name, (PrizeTierLevel)t.TierLevel, t.SlotCount, t.DisplayOrder, t.Description);
+    private async Task<ContestPrizeTierDto> ToDtoAsync(ContestPrizeTier t, CancellationToken ct)
+    {
+        var imageUrl = string.IsNullOrEmpty(t.ImageObjectKey) ? null : await storage.GetPresignedUrlAsync(t.ImageObjectKey, ct);
+        return new ContestPrizeTierDto(t.Id, t.Name, (PrizeTierLevel)t.TierLevel, t.SlotCount, t.DisplayOrder, t.Description, imageUrl);
+    }
 
     private async Task<ContestSponsorDto> ToDtoAsync(ContestSponsor s, CancellationToken ct)
     {

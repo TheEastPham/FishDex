@@ -137,6 +137,7 @@ export interface ContestPrizeTierDto {
   slotCount: number;
   displayOrder: number;
   description: string | null;
+  imageUrl: string | null;
 }
 
 export interface CreatePrizeTierRequest {
@@ -152,6 +153,11 @@ export interface UpdatePrizeTierRequest {
   slotCount?: number | null;
   displayOrder?: number | null;
   description?: string | null;
+}
+
+export interface PrizeTierImageUploadResultDto {
+  uploadUrl: string;
+  objectKey: string;
 }
 
 // ── Sponsors ───────────────────────────────────────────────

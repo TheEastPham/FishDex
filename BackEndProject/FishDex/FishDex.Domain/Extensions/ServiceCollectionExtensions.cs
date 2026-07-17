@@ -10,6 +10,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddScoped<ISpeciesService, SpeciesService>();
         services.AddScoped<ICommunitySpeciesService, CommunitySpeciesService>();
+        services.AddScoped<ICommunityCommonNameService, CommunityCommonNameService>();
         services.AddScoped<IEcologyService, EcologyService>();
         services.AddScoped<IStockService, StockService>();
         services.AddScoped<IMorphDataService, MorphDataService>();

@@ -79,6 +79,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<FishBaseFlattener>();
         services.AddScoped<ISpeciesCache,                  DbSpeciesCache>();
         services.AddScoped<ICommunitySpeciesRepository,    CommunitySpeciesRepository>();
+        services.AddScoped<ICommunityCommonNameRepository, CommunityCommonNameRepository>();
         return services;
     }
 }

@@ -238,6 +238,10 @@ public class FishDexDbContext : DbContext
             entity.HasKey(e => e.AutoCtr);
             entity.HasIndex(e => e.SpecCode);
             entity.HasIndex(e => new { e.Language, e.IsPreferred });
+            // Default true → tất cả row FishBase hiện có (và ETL upsert không set cột này) = verified.
+            entity.Property(e => e.IsVerified).HasDefaultValue(true);
+            // Lọc nhanh danh sách chờ duyệt của admin.
+            entity.HasIndex(e => new { e.ContributedBy, e.IsVerified });
         });
 
         // ── Occurrence ───────────────────────────────────────────

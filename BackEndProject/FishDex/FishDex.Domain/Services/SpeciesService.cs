@@ -74,14 +74,14 @@ public class SpeciesService(
 
     public async Task<IReadOnlyList<CommonNameDto>> GetCommonNamesBySpecCodeAsync(int specCode, CancellationToken ct = default)
     {
-        var names = await commonNameRepo.FindAsync(c => c.SpecCode == specCode);
+        var names = await commonNameRepo.FindAsync(c => c.SpecCode == specCode && c.IsVerified);
         return names.OrderByDescending(c => c.IsPreferred).ThenBy(c => c.Rank).Select(c => c.ToDto()).ToList();
     }
 
     public async Task<IReadOnlyList<CommonNameDto>> SearchCommonNamesAsync(string term, string? language = null, CancellationToken ct = default)
     {
         var names = await commonNameRepo.FindAsync(c =>
-            c.ComName.Contains(term) &&
+            c.ComName.Contains(term) && c.IsVerified &&
             (language == null || c.Language == language));
         return names.OrderByDescending(c => c.IsPreferred).ThenBy(c => c.Rank).Select(c => c.ToDto()).ToList();
     }

@@ -40,12 +40,13 @@ public class SpeciesRepository(FishDexDbContext context)
         var q = _db.Species
             .Include(s => s.Genus)
             .Include(s => s.Family)
-            .Include(s => s.CommonNames)
+            .Include(s => s.CommonNames.Where(c => c.IsVerified))
             .Include(s => s.Pictures.Where(p => p.PicPreferred == true))
             .Where(s =>
                 !hasQuery ||
                 EF.Functions.ILike(s.SpeciesName, $"%{query}%") ||
                 s.CommonNames.Any(c =>
+                    c.IsVerified &&
                     EF.Functions.ILike(c.ComName, $"%{query}%") &&
                     (language == null || c.Language == language)));
 
@@ -60,7 +61,7 @@ public class SpeciesRepository(FishDexDbContext context)
         return await _db.Species
             .Include(s => s.Genus)
             .Include(s => s.Family)
-            .Include(s => s.CommonNames)
+            .Include(s => s.CommonNames.Where(c => c.IsVerified))
             .Include(s => s.Pictures)
             .FirstOrDefaultAsync(s => s.SpecCode == specCode, ct);
     }
@@ -71,7 +72,7 @@ public class SpeciesRepository(FishDexDbContext context)
         var baseQuery = _db.Species
             .Include(s => s.Genus)
             .Include(s => s.Family)
-            .Include(s => s.CommonNames)
+            .Include(s => s.CommonNames.Where(c => c.IsVerified))
             .Include(s => s.Pictures.Where(p => p.PicPreferred == true))
             .Where(s => s.SpecCode != specCode);
 
@@ -102,7 +103,7 @@ public class SpeciesRepository(FishDexDbContext context)
     {
         var codeList = specCodes.ToList();
         return await _db.Species
-            .Include(s => s.CommonNames)
+            .Include(s => s.CommonNames.Where(c => c.IsVerified))
             .Include(s => s.Pictures.Where(p => p.PicPreferred == true))
             .Where(s => codeList.Contains(s.SpecCode))
             .AsNoTracking()

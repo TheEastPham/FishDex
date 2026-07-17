@@ -4,9 +4,13 @@ namespace FishDex.Domain.DTOs.Species;
 public record SubmitCommonNameRequest(
     string ComName,
     string Language = "Vietnamese",
-    string? Transliteration = null);
+    string? Transliteration = null,
+    string? CountryCode = null);
 
 public record RejectCommonNameRequest(string Reason);
+
+/// <summary>Duyệt hàng loạt — danh sách AutoCtr các tên chờ duyệt.</summary>
+public record VerifyCommonNamesBatchRequest(IReadOnlyList<int> AutoCtrs);
 
 /// <summary>Bản gọn cho "tên tôi đã gửi" + trang admin duyệt.</summary>
 public record CommunityCommonNameDto(
@@ -14,6 +18,7 @@ public record CommunityCommonNameDto(
     int SpecCode,
     string ComName,
     string? Language,
+    string? CountryCode,
     bool IsVerified,
     string? RejectionReason,
     Guid? ContributedBy);

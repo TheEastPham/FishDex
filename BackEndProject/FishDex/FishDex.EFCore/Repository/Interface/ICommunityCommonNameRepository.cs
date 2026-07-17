@@ -19,6 +19,9 @@ public interface ICommunityCommonNameRepository
     /// <summary>1 tên do user đóng góp theo PK (chỉ trả về nếu ContributedBy != null).</summary>
     Task<CommonName?> GetContributedByIdAsync(int autoCtr, CancellationToken ct = default);
 
+    /// <summary>Nhiều tên do user đóng góp theo danh sách PK — cho duyệt hàng loạt.</summary>
+    Task<IReadOnlyList<CommonName>> GetContributedByIdsAsync(IReadOnlyList<int> autoCtrs, CancellationToken ct = default);
+
     /// <summary>Tên community đang chờ duyệt: ContributedBy != null, chưa verified, chưa bị reject.</summary>
     Task<IReadOnlyList<CommonName>> GetPendingAsync(CancellationToken ct = default);
 

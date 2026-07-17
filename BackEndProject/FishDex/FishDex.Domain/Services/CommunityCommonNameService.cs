@@ -41,6 +41,7 @@ public class CommunityCommonNameService(
             SpecCode        = specCode,
             ComName         = comName,
             Language        = language,
+            CountryCode     = string.IsNullOrWhiteSpace(request.CountryCode) ? null : request.CountryCode.Trim().ToUpperInvariant(),
             Transliteration = request.Transliteration?.Trim(),
             NameType        = "Vernacular",
             IsPreferred     = false,
@@ -78,6 +79,29 @@ public class CommunityCommonNameService(
         return true;
     }
 
+    public async Task<int> VerifyBatchAsync(IReadOnlyList<int> autoCtrs, CancellationToken ct = default)
+    {
+        if (autoCtrs.Count == 0) return 0;
+
+        var names = await repo.GetContributedByIdsAsync(autoCtrs, ct);
+        if (names.Count == 0) return 0;
+
+        foreach (var n in names)
+        {
+            n.IsVerified      = true;
+            n.RejectionReason = null;
+            n.ReviewedBy      = currentUser.UserId;
+        }
+        await repo.SaveChangesAsync(ct);
+
+        // Invalidate 1 lần cho mỗi specCode bị ảnh hưởng (nhiều tên có thể cùng 1 loài).
+        foreach (var specCode in names.Select(n => n.SpecCode).Distinct())
+            await speciesCache.InvalidateAsync(specCode, ct);
+
+        logger.LogInformation("Batch-verified {Count} community common names by {UserId}", names.Count, currentUser.UserId);
+        return names.Count;
+    }
+
     public async Task<bool> RejectAsync(int autoCtr, string reason, CancellationToken ct = default)
     {
         var name = await repo.GetContributedByIdAsync(autoCtr, ct);
@@ -92,7 +116,7 @@ public class CommunityCommonNameService(
     }
 
     private static CommunityCommonNameDto ToDto(CommonName c) => new(
-        c.AutoCtr, c.SpecCode, c.ComName, c.Language, c.IsVerified, c.RejectionReason, c.ContributedBy);
+        c.AutoCtr, c.SpecCode, c.ComName, c.Language, c.CountryCode, c.IsVerified, c.RejectionReason, c.ContributedBy);
 
     private static string NormalizeLanguage(string? lang) => lang?.Trim().ToLowerInvariant() switch
     {

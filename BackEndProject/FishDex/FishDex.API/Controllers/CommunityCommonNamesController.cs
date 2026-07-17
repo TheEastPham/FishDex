@@ -48,6 +48,15 @@ public class CommunityCommonNamesController(ICommunityCommonNameService service)
     public async Task<IActionResult> Verify(int autoCtr, CancellationToken ct)
         => await service.VerifyAsync(autoCtr, ct) ? NoContent() : NotFound();
 
+    /// <summary>Duyệt hàng loạt nhiều tên trong 1 request.</summary>
+    [HttpPatch("common-names/verify-batch")]
+    [Authorize(Policy = "RequireContentAdmin")]
+    public async Task<IActionResult> VerifyBatch([FromBody] VerifyCommonNamesBatchRequest request, CancellationToken ct)
+    {
+        var count = await service.VerifyBatchAsync(request.AutoCtrs ?? [], ct);
+        return Ok(new { verified = count });
+    }
+
     [HttpPatch("common-names/{autoCtr:int}/reject")]
     [Authorize(Policy = "RequireContentAdmin")]
     public async Task<IActionResult> Reject(int autoCtr, [FromBody] RejectCommonNameRequest request, CancellationToken ct)

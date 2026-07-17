@@ -23,5 +23,8 @@ public interface ICommunityCommonNameService
     /// <summary>Admin duyệt → tên hiện public; invalidate SpeciesSnapshot để re-flatten tên preferred.</summary>
     Task<bool> VerifyAsync(int autoCtr, CancellationToken ct = default);
 
+    /// <summary>Duyệt hàng loạt — trả về số tên đã duyệt.</summary>
+    Task<int> VerifyBatchAsync(IReadOnlyList<int> autoCtrs, CancellationToken ct = default);
+
     Task<bool> RejectAsync(int autoCtr, string reason, CancellationToken ct = default);
 }

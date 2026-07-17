@@ -26,6 +26,11 @@ public class CommunityCommonNameRepository(FishDexDbContext db) : ICommunityComm
         => await db.CommonNames
             .FirstOrDefaultAsync(c => c.AutoCtr == autoCtr && c.ContributedBy != null, ct);
 
+    public async Task<IReadOnlyList<CommonName>> GetContributedByIdsAsync(IReadOnlyList<int> autoCtrs, CancellationToken ct = default)
+        => await db.CommonNames
+            .Where(c => c.ContributedBy != null && autoCtrs.Contains(c.AutoCtr))
+            .ToListAsync(ct);
+
     public async Task<IReadOnlyList<CommonName>> GetPendingAsync(CancellationToken ct = default)
         => await db.CommonNames
             .Where(c => c.ContributedBy != null && !c.IsVerified && c.RejectionReason == null)

@@ -58,6 +58,9 @@ try
         {
             options.MetadataAddress = $"{authServerInternalUrl}/.well-known/openid-configuration";
             options.RequireHttpsMetadata = false;
+            // Tắt legacy inbound claim mapping — mặc định .NET đổi "role" → URI dài khiến
+            // RoleClaimType="role" không khớp claim thực tế → RequireRole luôn fail (giống fix ở AquaHome).
+            options.MapInboundClaims = false;
             var issuer = authServerPublicUrl.TrimEnd('/');
             options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
             {
@@ -67,18 +70,35 @@ try
                 ValidateAudience = false,
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
+                // Token OpenIddict để role ở claim "role" — map để RequireRole khớp
+                RoleClaimType = "role",
+                NameClaimType = "name",
             };
         });
 
     builder.Services.AddFishLoverAuthorization();
-    // [Authorize] chấp nhận cả Bearer (direct login) lẫn OpenIddict (OAuth2 PKCE)
+    // [Authorize] + policy admin đều phải chấp nhận cả Bearer (direct login) lẫn OpenIddict (OAuth2 PKCE).
+    // Policy shared RequireContentAdmin/RequireSystemAdmin KHÔNG khai scheme → chỉ default → token
+    // OpenIddict bị 401. Đăng ký đè ở đây với cả 2 scheme (giống AquaHome).
     builder.Services.AddAuthorization(options =>
     {
-        options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder(
+        string[] bothSchemes =
+        [
             Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme,
-            "OpenIddict")
+            "OpenIddict",
+        ];
+
+        options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder(bothSchemes)
             .RequireAuthenticatedUser()
             .Build();
+
+        options.AddPolicy("RequireSystemAdmin", p => p
+            .AddAuthenticationSchemes(bothSchemes)
+            .RequireRole("SystemAdmin"));
+
+        options.AddPolicy("RequireContentAdmin", p => p
+            .AddAuthenticationSchemes(bothSchemes)
+            .RequireRole("SystemAdmin", "ContentAdmin"));
     });
 
 

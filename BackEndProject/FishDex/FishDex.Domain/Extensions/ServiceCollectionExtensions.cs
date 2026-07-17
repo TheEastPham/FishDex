@@ -9,6 +9,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddFishDexServices(this IServiceCollection services)
     {
         services.AddScoped<ISpeciesService, SpeciesService>();
+        services.AddScoped<ICommunitySpeciesService, CommunitySpeciesService>();
         services.AddScoped<IEcologyService, EcologyService>();
         services.AddScoped<IStockService, StockService>();
         services.AddScoped<IMorphDataService, MorphDataService>();

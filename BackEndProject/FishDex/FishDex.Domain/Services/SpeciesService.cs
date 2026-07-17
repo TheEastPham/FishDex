@@ -6,6 +6,7 @@ using FishDex.Domain.Mappings;
 using FishDex.Domain.Services.Interfaces;
 using FishDex.Domain.Settings;
 using FishDex.EFCore.Cache;
+using FishDex.EFCore.Entity.Cache;
 using FishDex.EFCore.Repository.Interface;
 using FishLover.Shared.Common;
 using Microsoft.Extensions.Caching.Memory;
@@ -22,10 +23,14 @@ public class SpeciesService(
     IEcologyService ecologyService,
     IStockService stockService,
     ISpeciesCache speciesCache,
+    ICommunitySpeciesRepository communityRepo,
     IMemoryCache cache,
     IOptions<FishDexSettings> settings) : ISpeciesService
 {
     private readonly int _languageTopCount = settings.Value.LanguageTopCount;
+
+    // Loài community (lai tạo, do user submit) dùng SpecCode ≥ ngưỡng này; dưới ngưỡng là FishBase.
+    private const int CommunityMinSpecCode = 500_000;
 
     public async Task<PagedResult<SpeciesDto>> GetSpeciesAsync(GetSpeciesRequest request, CancellationToken ct = default)
     {
@@ -85,12 +90,26 @@ public class SpeciesService(
         GetSpeciesSearchRequest request, CancellationToken ct = default)
     {
         var language = NormalizeLanguage(request.Language);
+        var skip = (request.Page - 1) * request.PageSize;
 
-        var (items, total) = await speciesRepo.SearchWithCountAsync(
-            request.Query, request.FamId, request.GenusCode, language,
-            request.Page, request.PageSize, ct);
+        // Loài community (lai tạo, verified) chỉ xuất hiện khi KHÔNG lọc theo họ/chi FishBase —
+        // chúng lưu FamilyName/GenusName dạng free text, không có FK taxonomy để filter.
+        var includeCommunity = request.FamId is null && request.GenusCode is null;
 
-        var mapped = await Task.WhenAll(items.Select(async s =>
+        var communityAll = includeCommunity
+            ? await MapCommunitySearchAsync(await communityRepo.SearchVerifiedAsync(request.Query, ct), ct)
+            : [];
+        var commCount = communityAll.Count;
+
+        // Thứ tự: community trước, FishBase sau — phân trang xuyên suốt 2 nguồn.
+        var communityPage = communityAll.Skip(skip).Take(request.PageSize).ToList();
+        var remaining = request.PageSize - communityPage.Count;
+
+        var fbSkip = Math.Max(0, skip - commCount);
+        var (fbItems, fbTotal) = await speciesRepo.SearchSliceAsync(
+            request.Query, request.FamId, request.GenusCode, language, fbSkip, remaining, ct);
+
+        var fbMapped = await Task.WhenAll(fbItems.Select(async s =>
         {
             var pic      = s.Pictures.FirstOrDefault(p => p.PicPreferred == true);
             var imageUrl = pic != null
@@ -101,16 +120,86 @@ public class SpeciesService(
 
         return new PagedResult<SpeciesSearchResultDto>
         {
-            Items      = mapped,
-            TotalCount = total,
+            Items      = [.. communityPage, .. fbMapped],
+            TotalCount = commCount + fbTotal,
             Page       = request.Page,
             PageSize   = request.PageSize
+        };
+    }
+
+    private async Task<List<SpeciesSearchResultDto>> MapCommunitySearchAsync(
+        IReadOnlyList<SpeciesSnapshot> items, CancellationToken ct)
+    {
+        var result = new List<SpeciesSearchResultDto>(items.Count);
+        foreach (var s in items)
+        {
+            var imageUrl = s.ThumbnailObjectKey != null
+                ? await storage.GetPresignedUrlAsync(s.ThumbnailObjectKey, ct)
+                : null;
+            result.Add(new SpeciesSearchResultDto
+            {
+                SpecCode            = s.SpecCode,
+                SpeciesName         = s.SpeciesName,
+                PreferredCommonName = s.CommonName,
+                GenusName           = s.GenusName,
+                FamilyName          = s.FamilyName,
+                ImageUrl            = imageUrl,
+            });
+        }
+        return result;
+    }
+
+    private async Task<SpeciesDetailDto?> BuildCommunityDetailAsync(int specCode, CancellationToken ct)
+    {
+        var s = await communityRepo.GetVerifiedByCodeAsync(specCode, ct);
+        if (s is null) return null;
+
+        var imageUrl = s.ThumbnailObjectKey != null
+            ? await storage.GetPresignedUrlAsync(s.ThumbnailObjectKey, ct)
+            : null;
+
+        var hasEcology = s.FeedingType != null || s.Schooling != null || s.Shoaling != null || s.Solitary != null;
+        var hasEnv = s.TempMin != null || s.TempMax != null || s.PhMin != null
+                     || s.PhMax != null || s.DhMin != null || s.DhMax != null;
+
+        return new SpeciesDetailDto
+        {
+            SpecCode            = s.SpecCode,
+            SpeciesName         = s.SpeciesName,
+            PreferredCommonName = s.CommonName,
+            GenusName           = s.GenusName,
+            FamilyName          = s.FamilyName,
+            WaterType           = s.WaterType.ToString(),
+            Length              = s.Length,
+            DemersPelag         = s.DemersPelag,
+            LongevityCaptive    = s.LongevityCaptive,
+            PreferredImageUrl   = imageUrl,
+            Ecology = hasEcology ? new SpeciesDetailEcologyDto
+            {
+                FeedingType = s.FeedingType,
+                Schooling   = s.Schooling,
+                Shoaling    = s.Shoaling,
+                Solitary    = s.Solitary,
+            } : null,
+            Environment = hasEnv ? new SpeciesDetailEnvironmentDto
+            {
+                TempMin = s.TempMin,
+                TempMax = s.TempMax,
+                PhMin   = s.PhMin,
+                PhMax   = s.PhMax,
+                DHMin   = s.DhMin,
+                DHMax   = s.DhMax,
+            } : null,
         };
     }
 
     public async Task<SpeciesDetailDto?> GetDetailAsync(int specCode, string? language = null, CancellationToken ct = default)
     {
         language = NormalizeLanguage(language);
+
+        // Community codes (≥ 500000) không nằm trong FishBase tables → build detail từ SpeciesSnapshot.
+        if (specCode >= CommunityMinSpecCode)
+            return await BuildCommunityDetailAsync(specCode, ct);
 
         // Trigger cache population (cache-aside) — does nothing if already cached
         // Must await: shares the same scoped DbContext, concurrent use is not safe

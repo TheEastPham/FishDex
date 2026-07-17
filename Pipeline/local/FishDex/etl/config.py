@@ -11,6 +11,13 @@ DB_URL = os.getenv(
     "postgresql://fishdex:fishdex_local_pwd@localhost:5433/fishdex",
 )
 
+# ── Explicit include list ───────────────────────────────────────────────────
+# Các SpecCode chỉ định thêm NGOÀI Aquarium filter — mỗi loài người chơi yêu cầu
+# thêm nhưng không pass bộ lọc phổ biến (vd Fresh nhưng Aquarium=null, hoặc brackish).
+# File: new_spec_codes.txt (ngăn cách bởi dấu phẩy / khoảng trắng / xuống dòng đều được).
+# Các code này BỎ QUA filter — chỉ cần tồn tại trong species.parquet là sẽ được load.
+NEW_SPEC_CODES_FILE = Path(__file__).parent.parent / "new_spec_codes.txt"
+
 # ── Parquet file paths ────────────────────────────────────────────────────────
 PARQUET_DIR = Path(__file__).parent.parent / "parquetData"
 

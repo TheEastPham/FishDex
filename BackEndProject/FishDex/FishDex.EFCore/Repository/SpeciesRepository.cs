@@ -11,9 +11,30 @@ public class SpeciesRepository(FishDexDbContext context)
 {
     private readonly FishDexDbContext _db = context;
 
-    public async Task<(IReadOnlyList<Species> Items, int TotalCount)> SearchWithCountAsync(
+    public Task<(IReadOnlyList<Species> Items, int TotalCount)> SearchWithCountAsync(
         string? query, Guid? famId, int? genusCode, string? language,
         int page, int pageSize, CancellationToken ct = default)
+        => SearchSliceAsync(query, famId, genusCode, language, (page - 1) * pageSize, pageSize, ct);
+
+    public async Task<(IReadOnlyList<Species> Items, int TotalCount)> SearchSliceAsync(
+        string? query, Guid? famId, int? genusCode, string? language,
+        int skip, int take, CancellationToken ct = default)
+    {
+        var q = BuildSearchQuery(query, famId, genusCode, language);
+
+        var total = await q.CountAsync(ct);
+        var items = take <= 0
+            ? []
+            : await q
+                .OrderBy(s => s.SpeciesName)
+                .Skip(Math.Max(0, skip))
+                .Take(take)
+                .ToListAsync(ct);
+
+        return (items, total);
+    }
+
+    private IQueryable<Species> BuildSearchQuery(string? query, Guid? famId, int? genusCode, string? language)
     {
         var hasQuery = !string.IsNullOrWhiteSpace(query);
         var q = _db.Species
@@ -31,14 +52,7 @@ public class SpeciesRepository(FishDexDbContext context)
         if (famId.HasValue)    q = q.Where(s => s.FamId == famId.Value);
         if (genusCode.HasValue) q = q.Where(s => s.GenusCode == genusCode.Value);
 
-        var total = await q.CountAsync(ct);
-        var items = await q
-            .OrderBy(s => s.SpeciesName)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync(ct);
-
-        return (items, total);
+        return q;
     }
 
     public async Task<Species?> GetWithDetailsAsync(int specCode, CancellationToken ct = default)

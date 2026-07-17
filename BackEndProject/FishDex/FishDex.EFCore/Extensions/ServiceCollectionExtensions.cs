@@ -78,6 +78,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ISystemImageRepository,         SystemImageRepository>();
         services.AddScoped<FishBaseFlattener>();
         services.AddScoped<ISpeciesCache,                  DbSpeciesCache>();
+        services.AddScoped<ICommunitySpeciesRepository,    CommunitySpeciesRepository>();
         return services;
     }
 }

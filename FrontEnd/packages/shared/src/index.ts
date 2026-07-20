@@ -6,6 +6,8 @@ export type { AquariumDto, AquariumFishDto, CreateAquariumRequest, UpdateAquariu
 export { WaterType, AquariumStyle, AquaTaskType } from './types/aquahome';
 export type { DistributionPointDto, SnapshotFishDto, SnapshotDataDto, SnapshotPreviewDto, PublishSnapshotRequest, AquariumSnapshotDto, GetPublicSnapshotsParams, MySnapshotDto, ContestDto, CreateContestRequest, UpdateContestRequest, SubmitEntryRequest, SubmitEntryResultDto, ContestEntryDto, LeaderboardEntryDto, ContestPrizeTierDto, CreatePrizeTierRequest, UpdatePrizeTierRequest, PrizeTierImageUploadResultDto, ContestSponsorDto, CreateSponsorRequest, UpdateSponsorRequest, SponsorLogoUploadResultDto, EntryAwardAssignment, FinalizeContestRequest } from './types/snapshot';
 export { PrizeTierLevel, SponsorTier, ContestStatus, ContestEntryStatus } from './types/snapshot';
+export type { CommunitySpeciesDto, SubmitCommunitySpeciesRequest, CommunityCommonNameDto, SubmitCommonNameRequest } from './types/community';
+export { CommunityCareLevel } from './types/community';
 
 
 // ── Store ─────────────────────────────────────────────────
@@ -32,6 +34,7 @@ export { requestOtp, registerUser, forgotPassword, resetPassword, getMyProfile, 
 export type { RequestOtpResponse, RegisterRequest, RegisterResponse, ForgotPasswordResponse, ResetPasswordPayload, ResetPasswordResponse, UserProfileDto, UpdateProfilePayload, ChangePasswordPayload } from './lib/api/auth';
 export { previewSnapshot, publishSnapshot, unpublishSnapshot, getMySnapshots, getPublicSnapshots, getPublicSnapshotBySlug, likeSnapshot, unlikeSnapshot, getActiveContests, getContestLeaderboard, submitContestEntry, confirmEntryUpload, getAllContests, createContest, updateContest, getPendingReviewEntries, approveContestEntry, rejectContestEntry, finalizeContest, createPrizeTier, updatePrizeTier, deletePrizeTier, requestPrizeTierImageUpload, createSponsor, updateSponsor, deleteSponsor, requestSponsorLogoUpload } from './lib/api/snapshots';
 export { getVapidPublicKey, saveSubscription, removeSubscription } from './lib/api/push';
+export { submitCommunitySpecies, getMyCommunitySpecies, getPendingCommunitySpecies, verifyCommunitySpecies, rejectCommunitySpecies, submitCommonName, getMyCommonNames, getPendingCommonNames, verifyCommonName, verifyCommonNamesBatch, rejectCommonName } from './lib/api/community';
 export type { SaveSubscriptionPayload } from './lib/api/push';
 
 

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### General
 - **Mobile context**: FE được truy cập chủ yếu qua iPhone 12+ (390px). Khi thiết kế API response — tránh payload thừa, pagination hợp lý, error message rõ ràng để FE hiển thị được trên màn hình nhỏ.
-- **Khi làm task BE**: chỉ `git add` và commit các file trong `BackEndProject/` và `Pipeline/`. KHÔNG bao giờ stage hoặc commit file trong `FrontEnd/` — đó là phần của team FE, họ tự quản lý commit riêng.
+- **Tách commit BE và FE**: KHÔNG gộp code BE (`BackEndProject/`, `Pipeline/`) và FE (`FrontEnd/`) trong cùng 1 commit khi implement feature — tách thành commit riêng cho mỗi bên. **Ngoại lệ**: fix bug thì được gộp BE+FE trong 1 commit.
 - **MinIO object key cho SystemImage**: LUÔN dùng `pic.ObjectKey` (computed property trên entity `SystemImage`) khi gọi `IStorageService.GetPresignedUrlAsync`. KHÔNG tự ghép path thủ công, KHÔNG dùng `pic.Name` trực tiếp. `ObjectKey` trả về `{SpecCode}/{Id}{ext}` — đây là nguồn sự thật duy nhất cho đường dẫn ảnh trên MinIO.
 
 ### v2.0 AI Stack (Groq + VM3)

@@ -37,11 +37,11 @@ public class CommunitySpeciesController(ICommunitySpeciesService service) : Cont
     public Task<IReadOnlyList<CommunitySpeciesDto>> GetPending(CancellationToken ct)
         => service.GetPendingAsync(ct);
 
-    /// <summary>Admin duyệt → loài xuất hiện ở search/detail.</summary>
+    /// <summary>Admin duyệt → loài xuất hiện ở search/detail. Body optional để xác nhận lại Kind.</summary>
     [HttpPatch("{specCode:int}/verify")]
     [Authorize(Policy = "RequireContentAdmin")]
-    public async Task<IActionResult> Verify(int specCode, CancellationToken ct)
-        => await service.VerifyAsync(specCode, ct) ? NoContent() : NotFound();
+    public async Task<IActionResult> Verify(int specCode, [FromBody] VerifyCommunitySpeciesRequest? request, CancellationToken ct)
+        => await service.VerifyAsync(specCode, request?.Kind, ct) ? NoContent() : NotFound();
 
     /// <summary>Admin từ chối (kèm lý do).</summary>
     [HttpPatch("{specCode:int}/reject")]
@@ -52,5 +52,14 @@ public class CommunitySpeciesController(ICommunitySpeciesService service) : Cont
             return BadRequest("Reason là bắt buộc.");
 
         return await service.RejectAsync(specCode, request.Reason, ct) ? NoContent() : NotFound();
+    }
+
+    /// <summary>Chủ sở hữu (người submit) xin presigned URL để upload ảnh cho loài vừa gửi.</summary>
+    [HttpPost("{specCode:int}/image/presign")]
+    public async Task<ActionResult<CommunityImageUploadResultDto>> RequestImageUpload(
+        int specCode, [FromBody] CommunityImageUploadRequest request, CancellationToken ct)
+    {
+        var result = await service.RequestImageUploadAsync(specCode, request.FileName, request.ContentType, ct);
+        return result is null ? BadRequest("Không thể tạo upload URL — kiểm tra định dạng ảnh hoặc quyền sở hữu.") : Ok(result);
     }
 }

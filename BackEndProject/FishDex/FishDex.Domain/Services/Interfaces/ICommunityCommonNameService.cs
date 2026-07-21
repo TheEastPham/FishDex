@@ -8,6 +8,7 @@ public enum SubmitCommonNameOutcome
     SpeciesNotFound,   // không có loài FishBase với SpecCode này
     InvalidSpecies,    // SpecCode ≥ 500000 (community/hybrid — tên sửa trên snapshot, không qua đây)
     Duplicate,         // đã có tên trùng (SpecCode + Language + ComName)
+    PendingExists,     // user này đã có 1 tên khác đang chờ duyệt cho cùng loài + ngôn ngữ
 }
 
 public record SubmitCommonNameResult(SubmitCommonNameOutcome Outcome, CommunityCommonNameDto? Dto = null);

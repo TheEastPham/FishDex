@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { submitCommonName, useTranslation } from '@fishlover/shared';
-import { Loader2, X, Check, Languages } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { submitCommonName, getMyCommonNames, useTranslation } from '@fishlover/shared';
+import type { CommunityCommonNameDto } from '@fishlover/shared';
+import { Loader2, X, Check, Languages, Clock } from 'lucide-react';
 
 interface Props {
   specCode: number;
@@ -11,26 +12,32 @@ const inputCls =
   'w-full rounded-xl bg-[#0F172A] border border-slate-700 px-4 py-3 text-base text-slate-200 ' +
   'placeholder:text-slate-500 focus:outline-none focus:border-sky-500 min-h-[44px]';
 
+const isPending = (n: CommunityCommonNameDto) => !n.isVerified && !n.rejectionReason;
+
 export default function AddLocalNameModal({ specCode, onClose }: Props) {
   const { t } = useTranslation();
   const [comName, setComName] = useState('');
   const [language, setLanguage] = useState('Vietnamese');
-  const [country, setCountry] = useState('');
-  const [transliteration, setTransliteration] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [loadingMine, setLoadingMine] = useState(true);
+  const [pendingForLang, setPendingForLang] = useState<CommunityCommonNameDto | null>(null);
+
+  useEffect(() => {
+    getMyCommonNames()
+      .then((mine) => setPendingForLang(mine.find((n) => n.specCode === specCode && n.language === language && isPending(n)) ?? null))
+      .finally(() => setLoadingMine(false));
+  }, [specCode, language]);
 
   const handleSubmit = async () => {
-    if (!comName.trim()) return;
+    if (!comName.trim() || pendingForLang) return;
     setSaving(true);
     setError(null);
     try {
       await submitCommonName(specCode, {
         comName: comName.trim(),
         language,
-        transliteration: transliteration.trim() || null,
-        countryCode: country.trim() || null,
       });
       setDone(true);
     } catch (e) {
@@ -82,6 +89,13 @@ export default function AddLocalNameModal({ specCode, onClose }: Props) {
                   </div>
                 )}
 
+                {pendingForLang && (
+                  <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-300 mb-4">
+                    <Clock className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>{t('contribute.errorPendingExists', { name: pendingForLang.comName })}</span>
+                  </div>
+                )}
+
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
                   {t('contribute.nameLabel')}
                 </label>
@@ -90,41 +104,17 @@ export default function AddLocalNameModal({ specCode, onClose }: Props) {
                   value={comName}
                   onChange={(e) => setComName(e.target.value)}
                   placeholder={t('contribute.namePlaceholder')}
+                  disabled={!!pendingForLang}
                   autoFocus
                 />
 
-                <div className="grid grid-cols-2 gap-3 mt-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                      {t('contribute.languageLabel')}
-                    </label>
-                    <select className={inputCls} value={language} onChange={(e) => setLanguage(e.target.value)}>
-                      <option value="Vietnamese">{t('contribute.langVietnamese')}</option>
-                      <option value="English">{t('contribute.langEnglish')}</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                      {t('contribute.countryLabel')}
-                    </label>
-                    <input
-                      className={inputCls}
-                      value={country}
-                      maxLength={2}
-                      onChange={(e) => setCountry(e.target.value.toUpperCase())}
-                      placeholder={t('contribute.countryPlaceholder')}
-                    />
-                  </div>
-                </div>
-
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 mt-4">
-                  {t('contribute.transliterationLabel')}
+                  {t('contribute.languageLabel')}
                 </label>
-                <input
-                  className={inputCls}
-                  value={transliteration}
-                  onChange={(e) => setTransliteration(e.target.value)}
-                />
+                <select className={inputCls} value={language} onChange={(e) => setLanguage(e.target.value)}>
+                  <option value="Vietnamese">{t('contribute.langVietnamese')}</option>
+                  <option value="English">{t('contribute.langEnglish')}</option>
+                </select>
 
                 <div className="flex gap-3 mt-6">
                   <button
@@ -135,7 +125,7 @@ export default function AddLocalNameModal({ specCode, onClose }: Props) {
                   </button>
                   <button
                     onClick={handleSubmit}
-                    disabled={saving || !comName.trim()}
+                    disabled={saving || loadingMine || !!pendingForLang || !comName.trim()}
                     className="flex-1 py-3 rounded-xl bg-sky-500 text-white text-sm font-bold hover:bg-sky-400 disabled:opacity-50 flex items-center justify-center gap-2 min-h-[44px]"
                   >
                     {saving && <Loader2 className="w-4 h-4 animate-spin" />}

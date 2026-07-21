@@ -17,6 +17,9 @@ public class StorageSettings
     /// <summary>Expiry của presigned URL tính theo phút.</summary>
     public int PresignedUrlExpiryMinutes { get; set; } = 60;
 
+    /// <summary>Expiry của presigned PUT URL (upload) tính theo phút.</summary>
+    public int PresignedPutUrlExpiryMinutes { get; set; } = 15;
+
     /// <summary>True nếu MinIO chạy local không có HTTPS.</summary>
     public bool ForcePathStyle { get; set; } = true;
 }

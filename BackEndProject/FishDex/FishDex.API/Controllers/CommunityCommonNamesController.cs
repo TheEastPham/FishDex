@@ -28,6 +28,7 @@ public class CommunityCommonNamesController(ICommunityCommonNameService service)
             SubmitCommonNameOutcome.SpeciesNotFound => NotFound($"Không tìm thấy loài #{specCode}."),
             SubmitCommonNameOutcome.InvalidSpecies  => BadRequest("Tên địa phương chỉ áp dụng cho loài FishBase (SpecCode < 500000)."),
             SubmitCommonNameOutcome.Duplicate       => Conflict("Tên này đã tồn tại cho loài."),
+            SubmitCommonNameOutcome.PendingExists    => Conflict("Bạn đã gửi 1 tên khác cho loài này và đang chờ duyệt."),
             _                                       => BadRequest(),
         };
     }

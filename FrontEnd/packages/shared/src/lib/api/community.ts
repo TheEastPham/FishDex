@@ -1,6 +1,6 @@
 import { apiClient } from './client';
 import type {
-  CommunitySpeciesDto, SubmitCommunitySpeciesRequest,
+  CommunitySpeciesDto, SubmitCommunitySpeciesRequest, CommunitySpeciesKind, CommunityImageUploadResultDto,
   CommunityCommonNameDto, SubmitCommonNameRequest,
 } from '../../types/community';
 
@@ -22,8 +22,17 @@ export async function getPendingCommunitySpecies(): Promise<CommunitySpeciesDto[
   return data;
 }
 
-export async function verifyCommunitySpecies(specCode: number): Promise<void> {
-  await apiClient.patch(`${BASE}/community/${specCode}/verify`);
+export async function verifyCommunitySpecies(specCode: number, kind?: CommunitySpeciesKind | null): Promise<void> {
+  await apiClient.patch(`${BASE}/community/${specCode}/verify`, { kind: kind ?? null });
+}
+
+export async function requestCommunitySpeciesImageUpload(
+  specCode: number, fileName: string, contentType: string,
+): Promise<CommunityImageUploadResultDto> {
+  const { data } = await apiClient.post<CommunityImageUploadResultDto>(
+    `${BASE}/community/${specCode}/image/presign`, { fileName, contentType },
+  );
+  return data;
 }
 
 export async function rejectCommunitySpecies(specCode: number, reason: string): Promise<void> {

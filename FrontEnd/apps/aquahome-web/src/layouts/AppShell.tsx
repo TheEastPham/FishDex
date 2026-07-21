@@ -107,6 +107,7 @@ export default function AppShell() {
         { to: '/favorites', icon: Heart,    label: t('nav.favorites'), requireAuth: true },
         { to: '/history',   icon: History,  label: t('nav.history'),   requireAuth: true },
         { to: '/my-fish',   icon: BookOpen, label: t('nav.myFish'),    requireAuth: true },
+        { to: '/submit-species', icon: Fish, label: t('nav.submitSpecies'), requireAuth: true },
       ],
     },
     {

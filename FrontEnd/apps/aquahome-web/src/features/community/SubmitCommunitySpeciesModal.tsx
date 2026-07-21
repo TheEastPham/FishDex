@@ -1,7 +1,10 @@
-import { useState } from 'react';
-import { submitCommunitySpecies, useTranslation, WaterType, CommunityCareLevel } from '@fishlover/shared';
-import type { SubmitCommunitySpeciesRequest } from '@fishlover/shared';
-import { Loader2, X, Check, Fish } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import {
+  submitCommunitySpecies, requestCommunitySpeciesImageUpload, uploadToR2, getFamilies,
+  useTranslation, WaterType, CommunityCareLevel, CommunitySpeciesKind,
+} from '@fishlover/shared';
+import type { SubmitCommunitySpeciesRequest, Family } from '@fishlover/shared';
+import { Loader2, X, Check, Fish, ImagePlus } from 'lucide-react';
 
 interface Props {
   onClose: () => void;
@@ -28,7 +31,7 @@ export default function SubmitCommunitySpeciesModal({ onClose, initialName = '' 
   const [speciesName, setSpeciesName] = useState(initialName);
   const [commonName, setCommonName] = useState('');
   const [familyName, setFamilyName] = useState('');
-  const [genusName, setGenusName] = useState('');
+  const [suggestedKind, setSuggestedKind] = useState<CommunitySpeciesKind | ''>('');
   const [waterType, setWaterType] = useState<WaterType>(WaterType.Freshwater);
   const [tempMin, setTempMin] = useState('');
   const [tempMax, setTempMax] = useState('');
@@ -37,10 +40,16 @@ export default function SubmitCommunitySpeciesModal({ onClose, initialName = '' 
   const [length, setLength] = useState('');
   const [minTankLiters, setMinTankLiters] = useState('');
   const [careLevel, setCareLevel] = useState<CommunityCareLevel | ''>('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
+  const [families, setFamilies] = useState<Family[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(false);
   const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    getFamilies().then(setFamilies).catch(() => {});
+  }, []);
 
   const canSave = speciesName.trim().length > 0 && !saving;
 
@@ -54,7 +63,7 @@ export default function SubmitCommunitySpeciesModal({ onClose, initialName = '' 
         waterType,
         commonName: commonName.trim() || null,
         familyName: familyName.trim() || null,
-        genusName: genusName.trim() || null,
+        suggestedKind: suggestedKind === '' ? null : suggestedKind,
         tempMin: num(tempMin) ?? null,
         tempMax: num(tempMax) ?? null,
         phMin: num(phMin) ?? null,
@@ -63,7 +72,11 @@ export default function SubmitCommunitySpeciesModal({ onClose, initialName = '' 
         minTankLiters: num(minTankLiters) ?? null,
         careLevel: careLevel === '' ? null : careLevel,
       };
-      await submitCommunitySpecies(req);
+      const created = await submitCommunitySpecies(req);
+      if (imageFile) {
+        const { uploadUrl } = await requestCommunitySpeciesImageUpload(created.specCode, imageFile.name, imageFile.type);
+        await uploadToR2(uploadUrl, imageFile, imageFile.type);
+      }
       setDone(true);
     } catch {
       setError(true);
@@ -138,12 +151,32 @@ export default function SubmitCommunitySpeciesModal({ onClose, initialName = '' 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className={labelCls}>{t('contribute.familyLabel')}</label>
-                      <input className={inputCls} value={familyName} onChange={(e) => setFamilyName(e.target.value)} />
+                      <select className={inputCls} value={familyName} onChange={(e) => setFamilyName(e.target.value)}>
+                        <option value="">{t('contribute.familyNone')}</option>
+                        {families.map((f) => (
+                          <option key={f.id} value={f.name}>{f.name}</option>
+                        ))}
+                      </select>
                     </div>
                     <div>
-                      <label className={labelCls}>{t('contribute.genusLabel')}</label>
-                      <input className={inputCls} value={genusName} onChange={(e) => setGenusName(e.target.value)} />
+                      <label className={labelCls}>{t('contribute.kindLabel')}</label>
+                      <select className={inputCls} value={suggestedKind}
+                        onChange={(e) => setSuggestedKind(e.target.value === '' ? '' : (Number(e.target.value) as CommunitySpeciesKind))}>
+                        <option value="">{t('contribute.kindNone')}</option>
+                        <option value={CommunitySpeciesKind.Natural}>{t('contribute.kindNatural')}</option>
+                        <option value={CommunitySpeciesKind.Hybrid}>{t('contribute.kindHybrid')}</option>
+                      </select>
                     </div>
+                  </div>
+
+                  <div>
+                    <label className={labelCls}>{t('contribute.imageLabel')}</label>
+                    <label className="flex items-center gap-2 rounded-xl bg-[#0F172A] border border-slate-700 px-4 py-3 text-sm text-slate-300 cursor-pointer hover:border-sky-500 min-h-[44px]">
+                      <ImagePlus className="w-4 h-4 text-sky-400 shrink-0" />
+                      <span className="truncate">{imageFile ? imageFile.name : t('contribute.imagePick')}</span>
+                      <input type="file" accept="image/*" className="hidden"
+                        onChange={(e) => setImageFile(e.target.files?.[0] ?? null)} />
+                    </label>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">

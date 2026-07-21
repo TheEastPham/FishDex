@@ -14,6 +14,9 @@ public interface ICommunityCommonNameRepository
     /// <summary>Đã có tên trùng (cùng SpecCode + Language + ComName, không phân biệt hoa thường)?</summary>
     Task<bool> ExistsAsync(int specCode, string comName, string? language, CancellationToken ct = default);
 
+    /// <summary>User này đã có 1 tên khác đang chờ duyệt cho cùng SpecCode + Language chưa? (safety net — FE đã tự chặn trước qua GetMineAsync)</summary>
+    Task<bool> HasPendingByUserAsync(Guid userId, int specCode, string? language, CancellationToken ct = default);
+
     Task AddAsync(CommonName name, CancellationToken ct = default);
 
     /// <summary>1 tên do user đóng góp theo PK (chỉ trả về nếu ContributedBy != null).</summary>

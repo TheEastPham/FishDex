@@ -36,6 +36,9 @@ public class CommunityCommonNameService(
         if (await repo.ExistsAsync(specCode, comName, language, ct))
             return new SubmitCommonNameResult(SubmitCommonNameOutcome.Duplicate);
 
+        if (await repo.HasPendingByUserAsync(currentUser.UserId, specCode, language, ct))
+            return new SubmitCommonNameResult(SubmitCommonNameOutcome.PendingExists);
+
         var name = new CommonName
         {
             SpecCode        = specCode,

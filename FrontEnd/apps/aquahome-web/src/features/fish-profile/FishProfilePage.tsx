@@ -10,7 +10,7 @@ import {
   ArrowLeft, Share2, Heart, Fish, Ruler, Droplets, Map as MapIcon,
   Image as ImageIcon, Scale, AlertTriangle, Shield,
   Thermometer, TestTube, BookOpen, FileText, Activity, Clock,
-  ChevronLeft, ChevronRight, Layers, Languages
+  ChevronLeft, ChevronRight, Layers, Pencil
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -252,7 +252,7 @@ export default function FishProfilePage() {
           <div className="flex gap-2">
             {canAddName && (
               <button onClick={() => setShowAddName(true)} className="p-2.5 bg-black/30 backdrop-blur-md text-white rounded-full hover:bg-black/60 transition-colors border border-white/10" title={t('contribute.addLocalName')}>
-                <Languages className="w-5 h-5" />
+                <Pencil className="w-5 h-5" />
               </button>
             )}
             <button className="p-2.5 bg-black/30 backdrop-blur-md text-white rounded-full hover:bg-black/60 transition-colors border border-white/10" title={t('fish.share')}>

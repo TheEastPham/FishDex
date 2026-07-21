@@ -19,6 +19,11 @@ public class CommunityCommonNameRepository(FishDexDbContext db) : ICommunityComm
                  && c.ComName.ToLower() == name.ToLower(), ct);
     }
 
+    public async Task<bool> HasPendingByUserAsync(Guid userId, int specCode, string? language, CancellationToken ct = default)
+        => await db.CommonNames.AnyAsync(
+            c => c.ContributedBy == userId && c.SpecCode == specCode && c.Language == language
+                 && !c.IsVerified && c.RejectionReason == null, ct);
+
     public async Task AddAsync(CommonName name, CancellationToken ct = default)
         => await db.CommonNames.AddAsync(name, ct);
 

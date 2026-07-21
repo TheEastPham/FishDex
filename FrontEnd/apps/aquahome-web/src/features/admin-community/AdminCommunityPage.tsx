@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   getPendingCommunitySpecies, verifyCommunitySpecies, rejectCommunitySpecies,
   getPendingCommonNames, verifyCommonName, verifyCommonNamesBatch, rejectCommonName,
-  useTranslation,
+  useTranslation, CommunitySpeciesKind,
 } from '@fishlover/shared';
 import type { CommunitySpeciesDto, CommunityCommonNameDto } from '@fishlover/shared';
 import { Loader2, Check, X, Fish, Languages, ShieldCheck } from 'lucide-react';
@@ -12,6 +12,7 @@ type T = ReturnType<typeof useTranslation>['t'];
 /* ── Species pending row ─────────────────────────────────── */
 function SpeciesRow({ item, t, onDone }: { item: CommunitySpeciesDto; t: T; onDone: () => void }) {
   const [busy, setBusy] = useState<'approve' | 'reject' | null>(null);
+  const [kind, setKind] = useState<CommunitySpeciesKind | ''>(item.suggestedKind ?? '');
 
   const act = async (action: 'approve' | 'reject') => {
     let reason = '';
@@ -22,7 +23,7 @@ function SpeciesRow({ item, t, onDone }: { item: CommunitySpeciesDto; t: T; onDo
     }
     setBusy(action);
     try {
-      if (action === 'approve') await verifyCommunitySpecies(item.specCode);
+      if (action === 'approve') await verifyCommunitySpecies(item.specCode, kind === '' ? null : kind);
       else await rejectCommunitySpecies(item.specCode, reason);
       onDone();
     } catch {
@@ -40,6 +41,12 @@ function SpeciesRow({ item, t, onDone }: { item: CommunitySpeciesDto; t: T; onDo
           {` · #${item.specCode}`}
         </p>
       </div>
+      <select value={kind} onChange={(e) => setKind(e.target.value === '' ? '' : (Number(e.target.value) as CommunitySpeciesKind))}
+        className="shrink-0 rounded-lg bg-[#141518] border border-slate-700 px-2.5 py-2 text-xs text-slate-300 min-h-[44px]">
+        <option value="">{t('contribute.kindNone')}</option>
+        <option value={CommunitySpeciesKind.Natural}>{t('contribute.kindNatural')}</option>
+        <option value={CommunitySpeciesKind.Hybrid}>{t('contribute.kindHybrid')}</option>
+      </select>
       <div className="flex gap-2 shrink-0">
         <button onClick={() => act('approve')} disabled={!!busy}
           className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-xs font-bold hover:bg-emerald-500/25 disabled:opacity-50 min-h-[44px]">

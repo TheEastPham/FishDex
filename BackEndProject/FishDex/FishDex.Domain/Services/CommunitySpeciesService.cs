@@ -20,6 +20,8 @@ public class CommunitySpeciesService(
     ILogger<CommunitySpeciesService> logger) : ICommunitySpeciesService
 {
     private const int MaxAllocationRetries = 3;
+    private const long MaxImageUploadBytes = 5 * 1024 * 1024;
+    private static readonly HashSet<string> AllowedImageContentTypes = ["image/jpeg", "image/png", "image/webp"];
 
     public async Task<CommunitySpeciesDto> SubmitAsync(SubmitCommunitySpeciesRequest request, CancellationToken ct = default)
     {
@@ -57,7 +59,7 @@ public class CommunitySpeciesService(
         return await MapManyAsync(items, ct);
     }
 
-    public async Task<bool> VerifyAsync(int specCode, CancellationToken ct = default)
+    public async Task<bool> VerifyAsync(int specCode, CommunitySpeciesKind? kind, CancellationToken ct = default)
     {
         var snapshot = await repo.GetCommunityByCodeAsync(specCode, ct);
         if (snapshot is null) return false;
@@ -65,8 +67,9 @@ public class CommunitySpeciesService(
         snapshot.IsVerified = true;
         snapshot.RejectionReason = null;
         snapshot.ReviewedBy = currentUser.UserId;
+        snapshot.Kind = kind ?? snapshot.SuggestedKind;
         await repo.SaveChangesAsync(ct);
-        logger.LogInformation("Community species {SpecCode} verified by {UserId}", specCode, currentUser.UserId);
+        logger.LogInformation("Community species {SpecCode} verified by {UserId} as {Kind}", specCode, currentUser.UserId, snapshot.Kind);
         return true;
     }
 
@@ -83,6 +86,26 @@ public class CommunitySpeciesService(
         return true;
     }
 
+    public async Task<CommunityImageUploadResultDto?> RequestImageUploadAsync(
+        int specCode, string fileName, string contentType, CancellationToken ct = default)
+    {
+        if (!AllowedImageContentTypes.Contains(contentType)) return null;
+
+        var snapshot = await repo.GetCommunityByCodeAsync(specCode, ct);
+        if (snapshot is null || snapshot.ContributedBy != currentUser.UserId) return null;
+
+        var ext = Path.GetExtension(fileName);
+        var objectKey = $"community/{specCode}/cover{ext}";
+
+        var uploadUrl = await storage.GeneratePresignedPutUrlAsync(objectKey, contentType, MaxImageUploadBytes, ct);
+        if (uploadUrl is null) return null;
+
+        snapshot.ThumbnailObjectKey = objectKey;
+        await repo.SaveChangesAsync(ct);
+
+        return new CommunityImageUploadResultDto(uploadUrl, objectKey);
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
 
     private SpeciesSnapshot BuildSnapshot(int specCode, SubmitCommunitySpeciesRequest r) => new()
@@ -94,6 +117,7 @@ public class CommunitySpeciesService(
         CommonName       = r.CommonName?.Trim(),
         FamilyName       = r.FamilyName?.Trim(),
         GenusName        = r.GenusName?.Trim(),
+        SuggestedKind    = r.SuggestedKind,
         WaterType        = r.WaterType,
         TempMin          = r.TempMin,
         TempMax          = r.TempMax,
@@ -133,6 +157,7 @@ public class CommunitySpeciesService(
 
         return new CommunitySpeciesDto(
             s.SpecCode, s.SpeciesName, s.CommonName, s.FamilyName, s.GenusName,
-            s.WaterType, s.IsVerified, s.RejectionReason, s.ContributedBy, imageUrl, s.PopulatedAt);
+            s.WaterType, s.IsVerified, s.RejectionReason, s.ContributedBy, imageUrl, s.PopulatedAt,
+            s.SuggestedKind, s.Kind);
     }
 }

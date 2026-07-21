@@ -604,7 +604,6 @@ const vi = {
     tierSlotCount: 'Số lượng',
     tierDescription: 'Mô tả giải thưởng (tùy chọn) — vd: 5.000.000đ + áo FishLover',
     tierImagePick: 'Chọn ảnh giải thưởng (tùy chọn)',
-    tierDescription: 'Mô tả giải thưởng (tùy chọn)',
     tierLevelGold: 'Vàng',
     tierLevelSilver: 'Bạc',
     tierLevelBronze: 'Đồng',

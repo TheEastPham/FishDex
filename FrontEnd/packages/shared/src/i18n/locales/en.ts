@@ -604,7 +604,6 @@ const en = {
     tierSlotCount: 'Slot count',
     tierDescription: 'Prize description (optional) — e.g. 5,000,000đ + FishLover T-shirt',
     tierImagePick: 'Choose prize image (optional)',
-    tierDescription: 'Prize description (optional)',
     tierLevelGold: 'Gold',
     tierLevelSilver: 'Silver',
     tierLevelBronze: 'Bronze',

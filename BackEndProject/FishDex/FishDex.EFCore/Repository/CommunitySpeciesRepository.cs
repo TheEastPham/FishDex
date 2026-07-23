@@ -25,6 +25,9 @@ public class CommunitySpeciesRepository(FishDexDbContext db) : ICommunitySpecies
     public void Detach(SpeciesSnapshot snapshot)
         => db.Entry(snapshot).State = EntityState.Detached;
 
+    public void Remove(SpeciesSnapshot snapshot)
+        => db.SpeciesSnapshots.Remove(snapshot);
+
     public async Task<SpeciesSnapshot?> GetCommunityByCodeAsync(int specCode, CancellationToken ct = default)
         => await db.SpeciesSnapshots
             .FirstOrDefaultAsync(s => s.SpecCode == specCode && s.DataSource == SnapshotDataSource.Community, ct);

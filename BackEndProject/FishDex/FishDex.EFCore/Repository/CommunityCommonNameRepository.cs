@@ -10,13 +10,14 @@ public class CommunityCommonNameRepository(FishDexDbContext db) : ICommunityComm
     public async Task<bool> SpeciesExistsAsync(int specCode, CancellationToken ct = default)
         => await db.Species.AnyAsync(s => s.SpecCode == specCode, ct);
 
-    public async Task<bool> ExistsAsync(int specCode, string comName, string? language, CancellationToken ct = default)
+    public async Task<bool> ExistsAsync(int specCode, string comName, string? language, int? excludeAutoCtr = null, CancellationToken ct = default)
     {
         var name = comName.Trim();
         return await db.CommonNames.AnyAsync(
             c => c.SpecCode == specCode
                  && c.Language == language
-                 && c.ComName.ToLower() == name.ToLower(), ct);
+                 && c.ComName.ToLower() == name.ToLower()
+                 && (excludeAutoCtr == null || c.AutoCtr != excludeAutoCtr), ct);
     }
 
     public async Task<bool> HasPendingByUserAsync(Guid userId, int specCode, string? language, CancellationToken ct = default)
@@ -26,6 +27,9 @@ public class CommunityCommonNameRepository(FishDexDbContext db) : ICommunityComm
 
     public async Task AddAsync(CommonName name, CancellationToken ct = default)
         => await db.CommonNames.AddAsync(name, ct);
+
+    public void Remove(CommonName name)
+        => db.CommonNames.Remove(name);
 
     public async Task<CommonName?> GetContributedByIdAsync(int autoCtr, CancellationToken ct = default)
         => await db.CommonNames

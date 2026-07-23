@@ -7,6 +7,8 @@ public record SubmitCommonNameRequest(
     string? Transliteration = null,
     string? CountryCode = null);
 
+public record UpdateCommonNameRequest(string ComName);
+
 public record RejectCommonNameRequest(string Reason);
 
 /// <summary>Duyệt hàng loạt — danh sách AutoCtr các tên chờ duyệt.</summary>

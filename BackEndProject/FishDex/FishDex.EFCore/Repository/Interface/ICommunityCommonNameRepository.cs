@@ -11,13 +11,16 @@ public interface ICommunityCommonNameRepository
     /// <summary>Loài FishBase có tồn tại không (SpecCode &lt; 500000, có row trong Species)?</summary>
     Task<bool> SpeciesExistsAsync(int specCode, CancellationToken ct = default);
 
-    /// <summary>Đã có tên trùng (cùng SpecCode + Language + ComName, không phân biệt hoa thường)?</summary>
-    Task<bool> ExistsAsync(int specCode, string comName, string? language, CancellationToken ct = default);
+    /// <summary>Đã có tên trùng (cùng SpecCode + Language + ComName, không phân biệt hoa thường)? excludeAutoCtr để bỏ qua chính bản ghi đang sửa.</summary>
+    Task<bool> ExistsAsync(int specCode, string comName, string? language, int? excludeAutoCtr = null, CancellationToken ct = default);
 
     /// <summary>User này đã có 1 tên khác đang chờ duyệt cho cùng SpecCode + Language chưa? (safety net — FE đã tự chặn trước qua GetMineAsync)</summary>
     Task<bool> HasPendingByUserAsync(Guid userId, int specCode, string? language, CancellationToken ct = default);
 
     Task AddAsync(CommonName name, CancellationToken ct = default);
+
+    /// <summary>Xoá hẳn 1 tên (user tự xoá đóng góp của mình chưa được duyệt).</summary>
+    void Remove(CommonName name);
 
     /// <summary>1 tên do user đóng góp theo PK (chỉ trả về nếu ContributedBy != null).</summary>
     Task<CommonName?> GetContributedByIdAsync(int autoCtr, CancellationToken ct = default);

@@ -1,11 +1,16 @@
 import { useEffect, useState } from 'react';
-import { submitCommonName, getMyCommonNames, useTranslation } from '@fishlover/shared';
+import { submitCommonName, updateCommonName, getMyCommonNames, useTranslation } from '@fishlover/shared';
 import type { CommunityCommonNameDto } from '@fishlover/shared';
-import { Loader2, X, Check, Languages, Clock } from 'lucide-react';
+import { Loader2, X, Languages, Pencil } from 'lucide-react';
+import ResultModal from '@/components/common/ResultModal';
 
 interface Props {
   specCode: number;
   onClose: () => void;
+  /** Ngôn ngữ mở sẵn (vd khi bấm Sửa từ 1 dòng cụ thể trong "Đóng góp của tôi"). */
+  initialLanguage?: string;
+  /** Gọi lại sau khi submit/update thành công — dùng để refresh list ở trang cha. */
+  onSaved?: () => void;
 }
 
 const inputCls =
@@ -14,32 +19,41 @@ const inputCls =
 
 const isPending = (n: CommunityCommonNameDto) => !n.isVerified && !n.rejectionReason;
 
-export default function AddLocalNameModal({ specCode, onClose }: Props) {
+export default function AddLocalNameModal({ specCode, onClose, initialLanguage = 'Vietnamese', onSaved }: Props) {
   const { t } = useTranslation();
   const [comName, setComName] = useState('');
-  const [language, setLanguage] = useState('Vietnamese');
+  const [language, setLanguage] = useState(initialLanguage);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [loadingMine, setLoadingMine] = useState(true);
   const [pendingForLang, setPendingForLang] = useState<CommunityCommonNameDto | null>(null);
+  const isEditing = !!pendingForLang;
 
   useEffect(() => {
+    setLoadingMine(true);
     getMyCommonNames()
-      .then((mine) => setPendingForLang(mine.find((n) => n.specCode === specCode && n.language === language && isPending(n)) ?? null))
+      .then((mine) => {
+        const p = mine.find((n) => n.specCode === specCode && n.language === language && isPending(n)) ?? null;
+        setPendingForLang(p);
+        if (p) setComName(p.comName);
+      })
       .finally(() => setLoadingMine(false));
   }, [specCode, language]);
 
+  if (done) {
+    return <ResultModal title={t(isEditing ? 'contribute.updated' : 'contribute.submitted')} onClose={onClose} />;
+  }
+
   const handleSubmit = async () => {
-    if (!comName.trim() || pendingForLang) return;
+    if (!comName.trim()) return;
     setSaving(true);
     setError(null);
     try {
-      await submitCommonName(specCode, {
-        comName: comName.trim(),
-        language,
-      });
+      if (pendingForLang) await updateCommonName(pendingForLang.autoCtr, comName.trim());
+      else await submitCommonName(specCode, { comName: comName.trim(), language });
       setDone(true);
+      onSaved?.();
     } catch (e) {
       const status = (e as { response?: { status?: number } })?.response?.status;
       setError(status === 409 ? t('contribute.errorDuplicate') : t('contribute.error'));
@@ -67,32 +81,17 @@ export default function AddLocalNameModal({ specCode, onClose }: Props) {
           </div>
 
           <div className="p-5">
-            {done ? (
-              <div className="text-center py-6">
-                <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mx-auto mb-4">
-                  <Check className="w-7 h-7 text-emerald-400" />
-                </div>
-                <p className="text-white font-bold mb-5">{t('contribute.submitted')}</p>
-                <button
-                  onClick={onClose}
-                  className="px-6 py-3 rounded-xl bg-sky-500 text-white text-sm font-bold hover:bg-sky-400 min-h-[44px]"
-                >
-                  {t('contribute.cancel')}
-                </button>
+            <p className="text-sm text-slate-400 mb-4">{t('contribute.addLocalNameHint')}</p>
+            {error && (
+              <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400 mb-4">
+                {error}
               </div>
-            ) : (
-              <>
-                <p className="text-sm text-slate-400 mb-4">{t('contribute.addLocalNameHint')}</p>
-                {error && (
-                  <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400 mb-4">
-                    {error}
-                  </div>
-                )}
+            )}
 
-                {pendingForLang && (
+                {isEditing && (
                   <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-300 mb-4">
-                    <Clock className="w-4 h-4 shrink-0 mt-0.5" />
-                    <span>{t('contribute.errorPendingExists', { name: pendingForLang.comName })}</span>
+                    <Pencil className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>{t('contribute.editingPending')}</span>
                   </div>
                 )}
 
@@ -104,7 +103,6 @@ export default function AddLocalNameModal({ specCode, onClose }: Props) {
                   value={comName}
                   onChange={(e) => setComName(e.target.value)}
                   placeholder={t('contribute.namePlaceholder')}
-                  disabled={!!pendingForLang}
                   autoFocus
                 />
 
@@ -125,15 +123,13 @@ export default function AddLocalNameModal({ specCode, onClose }: Props) {
                   </button>
                   <button
                     onClick={handleSubmit}
-                    disabled={saving || loadingMine || !!pendingForLang || !comName.trim()}
+                    disabled={saving || loadingMine || !comName.trim()}
                     className="flex-1 py-3 rounded-xl bg-sky-500 text-white text-sm font-bold hover:bg-sky-400 disabled:opacity-50 flex items-center justify-center gap-2 min-h-[44px]"
                   >
                     {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                    {saving ? t('contribute.submitting') : t('contribute.submit')}
+                    {saving ? t('contribute.submitting') : t(isEditing ? 'contribute.update' : 'contribute.submit')}
                   </button>
                 </div>
-              </>
-            )}
           </div>
         </div>
       </div>

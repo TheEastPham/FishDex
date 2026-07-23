@@ -16,6 +16,9 @@ public interface ICommunitySpeciesRepository
     /// <summary>Gỡ tracking 1 entity (dùng khi insert lỗi do trùng SpecCode, cần cấp lại code).</summary>
     void Detach(SpeciesSnapshot snapshot);
 
+    /// <summary>Xoá hẳn 1 loài community (user tự xoá draft chưa duyệt).</summary>
+    void Remove(SpeciesSnapshot snapshot);
+
     Task<SpeciesSnapshot?> GetCommunityByCodeAsync(int specCode, CancellationToken ct = default);
 
     /// <summary>Loài do 1 user gửi (mọi trạng thái) — cho trang "loài tôi gửi".</summary>

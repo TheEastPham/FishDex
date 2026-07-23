@@ -26,6 +26,23 @@ public class CommunitySpeciesController(ICommunitySpeciesService service) : Cont
         return CreatedAtAction(nameof(GetMine), new { }, created);
     }
 
+    /// <summary>Chủ sở hữu sửa lại loài đang chờ duyệt (vd: gõ nhầm). Chỉ cho sửa khi chưa duyệt/từ chối.</summary>
+    [HttpPatch("{specCode:int}")]
+    public async Task<IActionResult> Update(int specCode, [FromBody] SubmitCommunitySpeciesRequest request, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(request.SpeciesName))
+            return BadRequest("SpeciesName là bắt buộc.");
+
+        var result = await service.UpdateAsync(specCode, request, ct);
+        return result.Outcome switch
+        {
+            UpdateCommunitySpeciesOutcome.Updated    => Ok(result.Dto),
+            UpdateCommunitySpeciesOutcome.NotFound   => NotFound(),
+            UpdateCommunitySpeciesOutcome.NotPending => BadRequest("Loài này đã được duyệt hoặc từ chối, không thể sửa."),
+            _                                        => BadRequest(),
+        };
+    }
+
     /// <summary>Danh sách loài community do user hiện tại gửi (mọi trạng thái).</summary>
     [HttpGet("mine")]
     public Task<IReadOnlyList<CommunitySpeciesDto>> GetMine(CancellationToken ct)
@@ -53,6 +70,11 @@ public class CommunitySpeciesController(ICommunitySpeciesService service) : Cont
 
         return await service.RejectAsync(specCode, request.Reason, ct) ? NoContent() : NotFound();
     }
+
+    /// <summary>Chủ sở hữu tự xoá hẳn loài mình đã gửi (chưa được duyệt — kể cả đã bị admin từ chối).</summary>
+    [HttpDelete("{specCode:int}")]
+    public async Task<IActionResult> Delete(int specCode, CancellationToken ct)
+        => await service.DeleteAsync(specCode, ct) ? NoContent() : NotFound();
 
     /// <summary>Chủ sở hữu (người submit) xin presigned URL để upload ảnh cho loài vừa gửi.</summary>
     [HttpPost("{specCode:int}/image/presign")]

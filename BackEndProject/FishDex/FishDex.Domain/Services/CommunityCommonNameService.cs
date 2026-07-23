@@ -33,7 +33,7 @@ public class CommunityCommonNameService(
         var language = NormalizeLanguage(request.Language);
         var comName = request.ComName.Trim();
 
-        if (await repo.ExistsAsync(specCode, comName, language, ct))
+        if (await repo.ExistsAsync(specCode, comName, language, ct: ct))
             return new SubmitCommonNameResult(SubmitCommonNameOutcome.Duplicate);
 
         if (await repo.HasPendingByUserAsync(currentUser.UserId, specCode, language, ct))
@@ -58,6 +58,25 @@ public class CommunityCommonNameService(
         logger.LogInformation("Community common name submitted for SpecCode {SpecCode} by {UserId}", specCode, currentUser.UserId);
 
         return new SubmitCommonNameResult(SubmitCommonNameOutcome.Created, ToDto(name));
+    }
+
+    public async Task<UpdateCommonNameResult> UpdateAsync(int autoCtr, string comName, CancellationToken ct = default)
+    {
+        var name = await repo.GetContributedByIdAsync(autoCtr, ct);
+        if (name is null || name.ContributedBy != currentUser.UserId)
+            return new UpdateCommonNameResult(UpdateCommonNameOutcome.NotFound);
+
+        if (name.IsVerified || name.RejectionReason != null)
+            return new UpdateCommonNameResult(UpdateCommonNameOutcome.NotPending);
+
+        var trimmed = comName.Trim();
+        if (await repo.ExistsAsync(name.SpecCode, trimmed, name.Language, excludeAutoCtr: autoCtr, ct: ct))
+            return new UpdateCommonNameResult(UpdateCommonNameOutcome.Duplicate);
+
+        name.ComName = trimmed;
+        await repo.SaveChangesAsync(ct);
+        logger.LogInformation("Community common name {AutoCtr} updated by {UserId}", autoCtr, currentUser.UserId);
+        return new UpdateCommonNameResult(UpdateCommonNameOutcome.Updated, ToDto(name));
     }
 
     public async Task<IReadOnlyList<CommunityCommonNameDto>> GetMineAsync(CancellationToken ct = default)
@@ -115,6 +134,20 @@ public class CommunityCommonNameService(
         name.ReviewedBy      = currentUser.UserId;
         await repo.SaveChangesAsync(ct);
         logger.LogInformation("Community common name {AutoCtr} rejected by {UserId}", autoCtr, currentUser.UserId);
+        return true;
+    }
+
+    public async Task<bool> DeleteAsync(int autoCtr, CancellationToken ct = default)
+    {
+        var name = await repo.GetContributedByIdAsync(autoCtr, ct);
+        if (name is null || name.ContributedBy != currentUser.UserId) return false;
+
+        // Đã verified = đang public — không cho tự xoá.
+        if (name.IsVerified) return false;
+
+        repo.Remove(name);
+        await repo.SaveChangesAsync(ct);
+        logger.LogInformation("Community common name {AutoCtr} deleted by {UserId}", autoCtr, currentUser.UserId);
         return true;
     }
 

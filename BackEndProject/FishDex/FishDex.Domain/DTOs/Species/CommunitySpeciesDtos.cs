@@ -39,7 +39,10 @@ public record RejectCommunitySpeciesRequest(string Reason);
 /// <summary>Admin duyệt — có thể xác nhận lại Kind (mặc định giữ SuggestedKind nếu không truyền).</summary>
 public record VerifyCommunitySpeciesRequest(CommunitySpeciesKind? Kind = null);
 
-/// <summary>Bản gọn để list — dùng cho "loài tôi gửi" và trang admin duyệt.</summary>
+/// <summary>
+/// Dùng cho "loài tôi gửi", trang admin duyệt, và làm nguồn prefill khi sửa (Update) — vì vậy mang đủ
+/// field editable (khớp SubmitCommunitySpeciesRequest), không chỉ set gọn để hiển thị list.
+/// </summary>
 public record CommunitySpeciesDto(
     int SpecCode,
     string SpeciesName,
@@ -53,7 +56,24 @@ public record CommunitySpeciesDto(
     string? ImageUrl,
     DateTime PopulatedAt,
     CommunitySpeciesKind? SuggestedKind,
-    CommunitySpeciesKind? Kind);
+    CommunitySpeciesKind? Kind,
+    double? TempMin,
+    double? TempMax,
+    double? PhMin,
+    double? PhMax,
+    double? DhMin,
+    double? DhMax,
+    decimal? Length,
+    double? LongevityCaptive,
+    string? FeedingType,
+    string? FeedingPosition,
+    string? ActivityPattern,
+    bool? RequiresLiveFood,
+    string? Aggressiveness,
+    bool? FinNippingRisk,
+    bool? JumpingRisk,
+    SnapshotCareLevel? CareLevel,
+    int? MinTankLiters);
 
 public record CommunityImageUploadResultDto(string UploadUrl, string ObjectKey);
 public record CommunityImageUploadRequest(string FileName, string ContentType);

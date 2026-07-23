@@ -33,6 +33,24 @@ public class CommunityCommonNamesController(ICommunityCommonNameService service)
         };
     }
 
+    /// <summary>Chủ sở hữu sửa lại tên đang chờ duyệt (vd: gõ nhầm). Chỉ cho sửa khi chưa được duyệt/từ chối.</summary>
+    [HttpPatch("common-names/{autoCtr:int}")]
+    public async Task<IActionResult> Update(int autoCtr, [FromBody] UpdateCommonNameRequest request, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(request.ComName))
+            return BadRequest("ComName là bắt buộc.");
+
+        var result = await service.UpdateAsync(autoCtr, request.ComName, ct);
+        return result.Outcome switch
+        {
+            UpdateCommonNameOutcome.Updated    => Ok(result.Dto),
+            UpdateCommonNameOutcome.NotFound   => NotFound(),
+            UpdateCommonNameOutcome.NotPending => BadRequest("Tên này đã được duyệt hoặc từ chối, không thể sửa."),
+            UpdateCommonNameOutcome.Duplicate  => Conflict("Tên này đã tồn tại cho loài."),
+            _                                  => BadRequest(),
+        };
+    }
+
     /// <summary>Tên do user hiện tại đã gửi (mọi trạng thái).</summary>
     [HttpGet("common-names/mine")]
     public Task<IReadOnlyList<CommunityCommonNameDto>> GetMine(CancellationToken ct)
@@ -67,4 +85,9 @@ public class CommunityCommonNamesController(ICommunityCommonNameService service)
 
         return await service.RejectAsync(autoCtr, request.Reason, ct) ? NoContent() : NotFound();
     }
+
+    /// <summary>Chủ sở hữu tự xoá hẳn tên mình đã gửi (chưa được duyệt — kể cả đã bị từ chối).</summary>
+    [HttpDelete("common-names/{autoCtr:int}")]
+    public async Task<IActionResult> Delete(int autoCtr, CancellationToken ct)
+        => await service.DeleteAsync(autoCtr, ct) ? NoContent() : NotFound();
 }

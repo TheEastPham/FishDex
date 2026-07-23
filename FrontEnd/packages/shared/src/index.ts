@@ -34,7 +34,7 @@ export { requestOtp, registerUser, forgotPassword, resetPassword, getMyProfile, 
 export type { RequestOtpResponse, RegisterRequest, RegisterResponse, ForgotPasswordResponse, ResetPasswordPayload, ResetPasswordResponse, UserProfileDto, UpdateProfilePayload, ChangePasswordPayload } from './lib/api/auth';
 export { previewSnapshot, publishSnapshot, unpublishSnapshot, getMySnapshots, getPublicSnapshots, getPublicSnapshotBySlug, likeSnapshot, unlikeSnapshot, getActiveContests, getContestLeaderboard, submitContestEntry, confirmEntryUpload, getAllContests, createContest, updateContest, getPendingReviewEntries, approveContestEntry, rejectContestEntry, finalizeContest, createPrizeTier, updatePrizeTier, deletePrizeTier, requestPrizeTierImageUpload, createSponsor, updateSponsor, deleteSponsor, requestSponsorLogoUpload } from './lib/api/snapshots';
 export { getVapidPublicKey, saveSubscription, removeSubscription } from './lib/api/push';
-export { submitCommunitySpecies, getMyCommunitySpecies, getPendingCommunitySpecies, verifyCommunitySpecies, rejectCommunitySpecies, requestCommunitySpeciesImageUpload, submitCommonName, getMyCommonNames, getPendingCommonNames, verifyCommonName, verifyCommonNamesBatch, rejectCommonName } from './lib/api/community';
+export { submitCommunitySpecies, updateCommunitySpecies, deleteCommunitySpecies, getMyCommunitySpecies, getPendingCommunitySpecies, verifyCommunitySpecies, rejectCommunitySpecies, requestCommunitySpeciesImageUpload, submitCommonName, updateCommonName, deleteCommonName, getMyCommonNames, getPendingCommonNames, verifyCommonName, verifyCommonNamesBatch, rejectCommonName } from './lib/api/community';
 export type { SaveSubscriptionPayload } from './lib/api/push';
 
 

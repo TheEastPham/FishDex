@@ -1,15 +1,18 @@
 import { useEffect, useState } from 'react';
 import {
-  submitCommunitySpecies, requestCommunitySpeciesImageUpload, uploadToR2, getFamilies,
+  submitCommunitySpecies, updateCommunitySpecies, requestCommunitySpeciesImageUpload, uploadToR2, getFamilies,
   useTranslation, WaterType, CommunityCareLevel, CommunitySpeciesKind,
 } from '@fishlover/shared';
-import type { SubmitCommunitySpeciesRequest, Family } from '@fishlover/shared';
-import { Loader2, X, Check, Fish, ImagePlus } from 'lucide-react';
+import type { SubmitCommunitySpeciesRequest, CommunitySpeciesDto, Family } from '@fishlover/shared';
+import { Loader2, X, Fish, ImagePlus } from 'lucide-react';
+import ResultModal from '@/components/common/ResultModal';
 
 interface Props {
   onClose: () => void;
   /** Prefill tên loài từ ô search khi user không tìm thấy. */
   initialName?: string;
+  /** Có giá trị → chế độ sửa loài đã submit (chỉ khi đang pending), thay vì tạo mới. */
+  editing?: CommunitySpeciesDto | null;
 }
 
 const inputCls =
@@ -25,26 +28,28 @@ function num(v: string): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
-export default function SubmitCommunitySpeciesModal({ onClose, initialName = '' }: Props) {
+export default function SubmitCommunitySpeciesModal({ onClose, initialName = '', editing = null }: Props) {
   const { t } = useTranslation();
+  const isEditing = !!editing;
 
-  const [speciesName, setSpeciesName] = useState(initialName);
-  const [commonName, setCommonName] = useState('');
-  const [familyName, setFamilyName] = useState('');
-  const [suggestedKind, setSuggestedKind] = useState<CommunitySpeciesKind | ''>('');
-  const [waterType, setWaterType] = useState<WaterType>(WaterType.Freshwater);
-  const [tempMin, setTempMin] = useState('');
-  const [tempMax, setTempMax] = useState('');
-  const [phMin, setPhMin] = useState('');
-  const [phMax, setPhMax] = useState('');
-  const [length, setLength] = useState('');
-  const [minTankLiters, setMinTankLiters] = useState('');
-  const [careLevel, setCareLevel] = useState<CommunityCareLevel | ''>('');
+  const [speciesName, setSpeciesName] = useState(editing?.speciesName ?? initialName);
+  const [commonName, setCommonName] = useState(editing?.commonName ?? '');
+  const [familyName, setFamilyName] = useState(editing?.familyName ?? '');
+  const [suggestedKind, setSuggestedKind] = useState<CommunitySpeciesKind | ''>(editing?.suggestedKind ?? '');
+  const [waterType, setWaterType] = useState<WaterType>(editing?.waterType ?? WaterType.Freshwater);
+  const [tempMin, setTempMin] = useState(editing?.tempMin?.toString() ?? '');
+  const [tempMax, setTempMax] = useState(editing?.tempMax?.toString() ?? '');
+  const [phMin, setPhMin] = useState(editing?.phMin?.toString() ?? '');
+  const [phMax, setPhMax] = useState(editing?.phMax?.toString() ?? '');
+  const [length, setLength] = useState(editing?.length?.toString() ?? '');
+  const [minTankLiters, setMinTankLiters] = useState(editing?.minTankLiters?.toString() ?? '');
+  const [careLevel, setCareLevel] = useState<CommunityCareLevel | ''>(editing?.careLevel ?? '');
   const [imageFile, setImageFile] = useState<File | null>(null);
 
   const [families, setFamilies] = useState<Family[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(false);
+  const [imageWarning, setImageWarning] = useState(false);
   const [done, setDone] = useState(false);
 
   useEffect(() => {
@@ -53,10 +58,21 @@ export default function SubmitCommunitySpeciesModal({ onClose, initialName = '' 
 
   const canSave = speciesName.trim().length > 0 && !saving;
 
+  if (done) {
+    return (
+      <ResultModal
+        title={t(isEditing ? 'contribute.updated' : 'contribute.submitted')}
+        message={imageWarning ? t('contribute.imageUploadFailed') : undefined}
+        onClose={onClose}
+      />
+    );
+  }
+
   const handleSubmit = async () => {
     if (!canSave) return;
     setSaving(true);
     setError(false);
+    setImageWarning(false);
     try {
       const req: SubmitCommunitySpeciesRequest = {
         speciesName: speciesName.trim(),
@@ -72,10 +88,18 @@ export default function SubmitCommunitySpeciesModal({ onClose, initialName = '' 
         minTankLiters: num(minTankLiters) ?? null,
         careLevel: careLevel === '' ? null : careLevel,
       };
-      const created = await submitCommunitySpecies(req);
+      const saved = editing
+        ? await updateCommunitySpecies(editing.specCode, req)
+        : await submitCommunitySpecies(req);
+
+      // Ảnh là phụ — nếu upload lỗi vẫn coi là thành công (loài đã lưu), chỉ cảnh báo riêng.
       if (imageFile) {
-        const { uploadUrl } = await requestCommunitySpeciesImageUpload(created.specCode, imageFile.name, imageFile.type);
-        await uploadToR2(uploadUrl, imageFile, imageFile.type);
+        try {
+          const { uploadUrl } = await requestCommunitySpeciesImageUpload(saved.specCode, imageFile.name, imageFile.type);
+          await uploadToR2(uploadUrl, imageFile, imageFile.type);
+        } catch {
+          setImageWarning(true);
+        }
       }
       setDone(true);
     } catch {
@@ -93,7 +117,7 @@ export default function SubmitCommunitySpeciesModal({ onClose, initialName = '' 
           <div className="sticky top-0 bg-[#172033] flex items-center justify-between px-5 py-4 border-b border-slate-800 z-10">
             <h2 className="text-base font-bold text-white flex items-center gap-2">
               <Fish className="w-4 h-4 text-sky-400" />
-              {t('contribute.addSpeciesTitle')}
+              {t(isEditing ? 'contribute.editSpeciesTitle' : 'contribute.addSpeciesTitle')}
             </h2>
             <button
               onClick={onClose}
@@ -104,27 +128,12 @@ export default function SubmitCommunitySpeciesModal({ onClose, initialName = '' 
           </div>
 
           <div className="p-5">
-            {done ? (
-              <div className="text-center py-6">
-                <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mx-auto mb-4">
-                  <Check className="w-7 h-7 text-emerald-400" />
-                </div>
-                <p className="text-white font-bold mb-5">{t('contribute.submitted')}</p>
-                <button
-                  onClick={onClose}
-                  className="px-6 py-3 rounded-xl bg-sky-500 text-white text-sm font-bold hover:bg-sky-400 min-h-[44px]"
-                >
-                  {t('contribute.cancel')}
-                </button>
+            <p className="text-sm text-slate-400 mb-4">{t(isEditing ? 'contribute.editSpeciesHint' : 'contribute.addSpeciesHint')}</p>
+            {error && (
+              <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400 mb-4">
+                {t('contribute.error')}
               </div>
-            ) : (
-              <>
-                <p className="text-sm text-slate-400 mb-4">{t('contribute.addSpeciesHint')}</p>
-                {error && (
-                  <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400 mb-4">
-                    {t('contribute.error')}
-                  </div>
-                )}
+            )}
 
                 <div className="space-y-4">
                   <div>
@@ -232,11 +241,9 @@ export default function SubmitCommunitySpeciesModal({ onClose, initialName = '' 
                     className="flex-1 py-3 rounded-xl bg-sky-500 text-white text-sm font-bold hover:bg-sky-400 disabled:opacity-50 flex items-center justify-center gap-2 min-h-[44px]"
                   >
                     {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                    {saving ? t('contribute.submitting') : t('contribute.submit')}
+                    {saving ? t('contribute.submitting') : t(isEditing ? 'contribute.update' : 'contribute.submit')}
                   </button>
                 </div>
-              </>
-            )}
           </div>
         </div>
       </div>

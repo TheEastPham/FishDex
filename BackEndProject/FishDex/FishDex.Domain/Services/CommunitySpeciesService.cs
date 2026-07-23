@@ -47,6 +47,21 @@ public class CommunitySpeciesService(
         }
     }
 
+    public async Task<UpdateCommunitySpeciesResult> UpdateAsync(int specCode, SubmitCommunitySpeciesRequest r, CancellationToken ct = default)
+    {
+        var snapshot = await repo.GetCommunityByCodeAsync(specCode, ct);
+        if (snapshot is null || snapshot.ContributedBy != currentUser.UserId)
+            return new UpdateCommunitySpeciesResult(UpdateCommunitySpeciesOutcome.NotFound);
+
+        if (snapshot.IsVerified || snapshot.RejectionReason != null)
+            return new UpdateCommunitySpeciesResult(UpdateCommunitySpeciesOutcome.NotPending);
+
+        ApplyRequest(snapshot, r);
+        await repo.SaveChangesAsync(ct);
+        logger.LogInformation("Community species {SpecCode} updated by {UserId}", specCode, currentUser.UserId);
+        return new UpdateCommunitySpeciesResult(UpdateCommunitySpeciesOutcome.Updated, await ToDtoAsync(snapshot, ct));
+    }
+
     public async Task<IReadOnlyList<CommunitySpeciesDto>> GetMineAsync(CancellationToken ct = default)
     {
         var items = await repo.GetByContributorAsync(currentUser.UserId, ct);
@@ -86,6 +101,23 @@ public class CommunitySpeciesService(
         return true;
     }
 
+    public async Task<bool> DeleteAsync(int specCode, CancellationToken ct = default)
+    {
+        var snapshot = await repo.GetCommunityByCodeAsync(specCode, ct);
+        if (snapshot is null || snapshot.ContributedBy != currentUser.UserId) return false;
+
+        // Đã verified = đang public (search/detail đã đọc snapshot này) — không cho tự xoá, chỉ admin mới xử lý được.
+        if (snapshot.IsVerified) return false;
+
+        if (!string.IsNullOrEmpty(snapshot.ThumbnailObjectKey))
+            await storage.DeleteAsync(snapshot.ThumbnailObjectKey, ct);
+
+        repo.Remove(snapshot);
+        await repo.SaveChangesAsync(ct);
+        logger.LogInformation("Community species {SpecCode} deleted by {UserId}", specCode, currentUser.UserId);
+        return true;
+    }
+
     public async Task<CommunityImageUploadResultDto?> RequestImageUploadAsync(
         int specCode, string fileName, string contentType, CancellationToken ct = default)
     {
@@ -108,38 +140,48 @@ public class CommunitySpeciesService(
 
     // ─────────────────────────────────────────────────────────────────────────
 
-    private SpeciesSnapshot BuildSnapshot(int specCode, SubmitCommunitySpeciesRequest r) => new()
+    private SpeciesSnapshot BuildSnapshot(int specCode, SubmitCommunitySpeciesRequest r)
     {
-        SpecCode         = specCode,
-        DataSource       = SnapshotDataSource.Community,
-        IsVerified       = false,
-        SpeciesName      = r.SpeciesName.Trim(),
-        CommonName       = r.CommonName?.Trim(),
-        FamilyName       = r.FamilyName?.Trim(),
-        GenusName        = r.GenusName?.Trim(),
-        SuggestedKind    = r.SuggestedKind,
-        WaterType        = r.WaterType,
-        TempMin          = r.TempMin,
-        TempMax          = r.TempMax,
-        PhMin            = r.PhMin,
-        PhMax            = r.PhMax,
-        DhMin            = r.DhMin,
-        DhMax            = r.DhMax,
-        Length           = r.Length,
-        LongevityCaptive = r.LongevityCaptive,
-        FeedingType      = r.FeedingType,
-        FeedingPosition  = r.FeedingPosition,
-        ActivityPattern  = r.ActivityPattern,
-        RequiresLiveFood = r.RequiresLiveFood,
-        Aggressiveness   = r.Aggressiveness,
-        FinNippingRisk   = r.FinNippingRisk,
-        JumpingRisk      = r.JumpingRisk,
-        CareLevel        = r.CareLevel,
-        MinTankLiters    = r.MinTankLiters,
-        ContributedBy    = currentUser.UserId,
-        PopulatedFrom    = SnapshotPopulatedFrom.Manual,
-        PopulatedAt      = DateTime.UtcNow,
-    };
+        var snapshot = new SpeciesSnapshot
+        {
+            SpecCode      = specCode,
+            DataSource    = SnapshotDataSource.Community,
+            IsVerified    = false,
+            ContributedBy = currentUser.UserId,
+            PopulatedFrom = SnapshotPopulatedFrom.Manual,
+            PopulatedAt   = DateTime.UtcNow,
+        };
+        ApplyRequest(snapshot, r);
+        return snapshot;
+    }
+
+    /// <summary>Gán các field editable từ request lên snapshot — dùng chung cho submit (tạo mới) và update.</summary>
+    private static void ApplyRequest(SpeciesSnapshot snapshot, SubmitCommunitySpeciesRequest r)
+    {
+        snapshot.SpeciesName      = r.SpeciesName.Trim();
+        snapshot.CommonName       = r.CommonName?.Trim();
+        snapshot.FamilyName       = r.FamilyName?.Trim();
+        snapshot.GenusName        = r.GenusName?.Trim();
+        snapshot.SuggestedKind    = r.SuggestedKind;
+        snapshot.WaterType        = r.WaterType;
+        snapshot.TempMin          = r.TempMin;
+        snapshot.TempMax          = r.TempMax;
+        snapshot.PhMin            = r.PhMin;
+        snapshot.PhMax            = r.PhMax;
+        snapshot.DhMin            = r.DhMin;
+        snapshot.DhMax            = r.DhMax;
+        snapshot.Length           = r.Length;
+        snapshot.LongevityCaptive = r.LongevityCaptive;
+        snapshot.FeedingType      = r.FeedingType;
+        snapshot.FeedingPosition  = r.FeedingPosition;
+        snapshot.ActivityPattern  = r.ActivityPattern;
+        snapshot.RequiresLiveFood = r.RequiresLiveFood;
+        snapshot.Aggressiveness   = r.Aggressiveness;
+        snapshot.FinNippingRisk   = r.FinNippingRisk;
+        snapshot.JumpingRisk      = r.JumpingRisk;
+        snapshot.CareLevel        = r.CareLevel;
+        snapshot.MinTankLiters    = r.MinTankLiters;
+    }
 
     private async Task<IReadOnlyList<CommunitySpeciesDto>> MapManyAsync(IReadOnlyList<SpeciesSnapshot> items, CancellationToken ct)
     {
@@ -158,6 +200,10 @@ public class CommunitySpeciesService(
         return new CommunitySpeciesDto(
             s.SpecCode, s.SpeciesName, s.CommonName, s.FamilyName, s.GenusName,
             s.WaterType, s.IsVerified, s.RejectionReason, s.ContributedBy, imageUrl, s.PopulatedAt,
-            s.SuggestedKind, s.Kind);
+            s.SuggestedKind, s.Kind,
+            s.TempMin, s.TempMax, s.PhMin, s.PhMax, s.DhMin, s.DhMax,
+            s.Length, s.LongevityCaptive, s.FeedingType, s.FeedingPosition, s.ActivityPattern,
+            s.RequiresLiveFood, s.Aggressiveness, s.FinNippingRisk, s.JumpingRisk,
+            s.CareLevel, s.MinTankLiters);
     }
 }

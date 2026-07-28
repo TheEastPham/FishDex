@@ -56,6 +56,11 @@ public class SpeciesSnapshot
     public Guid? ReviewedBy { get; set; }
     public string? RejectionReason { get; set; }
 
+    /// <summary>Loại loài user tự chọn khi submit — chỉ là gợi ý, admin xác nhận lại ở <see cref="Kind"/> khi duyệt.</summary>
+    public CommunitySpeciesKind? SuggestedKind { get; set; }
+    /// <summary>Loại loài admin xác nhận khi duyệt. Null cho tới khi verify lần đầu.</summary>
+    public CommunitySpeciesKind? Kind { get; set; }
+
     // ── Metadata ──────────────────────────────────────────────────
     public DateTime PopulatedAt { get; set; }
     public SnapshotPopulatedFrom PopulatedFrom { get; set; }
@@ -78,4 +83,15 @@ public enum SnapshotPopulatedFrom
 {
     FishBase = 0,
     Manual   = 1,
+}
+
+/// <summary>
+/// Phân loại do user submit gợi ý (SuggestedKind) và admin xác nhận (Kind) khi duyệt community species.
+/// Natural = loài có thật, cần admin tự đối chiếu SpecCode FishBase và chạy lại ETL để lấy full data + ảnh gốc
+/// (quy trình thủ công, ngoài phạm vi app). Hybrid = loài lai tạo, dùng thẳng data user submit.
+/// </summary>
+public enum CommunitySpeciesKind
+{
+    Natural = 0,
+    Hybrid  = 1,
 }

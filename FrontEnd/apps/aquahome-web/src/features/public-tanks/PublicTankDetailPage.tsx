@@ -10,7 +10,7 @@ import {
   Loader2, ArrowLeft, Youtube, Droplets,
 } from 'lucide-react';
 import SnapshotFishSection from './components/SnapshotFishSection';
-import { displayNameFromSlug, waterTypeLabel, STYLE_LABELS, awardLabel } from './labels';
+import { displayNameFromSlug, waterTypeLabel, STYLE_LABELS, awardBadgeStyle } from './labels';
 
 const TANK_HERO: Record<number, { from: string; via: string; to: string; accent: string }> = {
   [WaterType.Freshwater]: { from: 'from-emerald-950', via: 'via-emerald-900/80', to: 'to-teal-950',   accent: 'text-emerald-400' },
@@ -105,7 +105,8 @@ export default function PublicTankDetailPage() {
   const hero = TANK_HERO[snapshot.waterType] ?? DEFAULT_HERO;
   const wtLabel = waterTypeLabel(t, snapshot.waterType);
   const styleLabel = STYLE_LABELS[snapshot.style] ?? null;
-  const award = awardLabel(t, snapshot.contestAward);
+  const awardName = snapshot.awardTierName;
+  const awardStyle = awardBadgeStyle(snapshot.awardTierLevel);
   const name = data?.aquariumName ?? displayNameFromSlug(snapshot.slug);
 
   const volumeLabel = data?.volumeLiters != null ? `${data.volumeLiters.toFixed(1)} L` : '—';
@@ -146,9 +147,9 @@ export default function PublicTankDetailPage() {
                   {styleLabel}
                 </span>
               )}
-              {award && (
-                <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-500/90 text-amber-950">
-                  <Trophy className="w-3 h-3" /> {award}
+              {awardName && (
+                <span className={cn('flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full', awardStyle)}>
+                  <Trophy className="w-3 h-3" /> {awardName}
                 </span>
               )}
             </div>

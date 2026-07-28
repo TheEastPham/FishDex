@@ -120,8 +120,11 @@ namespace AquaHome.EFCore.Migrations
                     b.Property<Guid>("AquariumId")
                         .HasColumnType("uuid");
 
-                    b.Property<int?>("ContestAward")
+                    b.Property<int?>("AwardTierLevel")
                         .HasColumnType("integer");
+
+                    b.Property<string>("AwardTierName")
+                        .HasColumnType("text");
 
                     b.Property<Guid?>("ContestEntryId")
                         .HasColumnType("uuid");
@@ -176,7 +179,7 @@ namespace AquaHome.EFCore.Migrations
                     b.HasIndex("Slug")
                         .IsUnique();
 
-                    b.HasIndex("IsActive", "WaterType", "Style", "ContestAward", "LikeCount")
+                    b.HasIndex("IsActive", "WaterType", "Style", "AwardTierLevel", "LikeCount")
                         .IsDescending(false, false, false, false, true);
 
                     b.ToTable("AquariumSnapshots");
@@ -295,8 +298,8 @@ namespace AquaHome.EFCore.Migrations
                     b.Property<Guid>("ContestId")
                         .HasColumnType("uuid");
 
-                    b.Property<int?>("Rank")
-                        .HasColumnType("integer");
+                    b.Property<Guid?>("PrizeTierId")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -330,9 +333,91 @@ namespace AquaHome.EFCore.Migrations
 
                     b.HasIndex("ContestId");
 
+                    b.HasIndex("PrizeTierId");
+
                     b.HasIndex("Status");
 
                     b.ToTable("ContestEntries");
+                });
+
+            modelBuilder.Entity("AquaHome.EFCore.Entity.ContestPrizeTier", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ContestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ImageObjectKey")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("SlotCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TierLevel")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContestId", "DisplayOrder");
+
+                    b.ToTable("ContestPrizeTiers");
+                });
+
+            modelBuilder.Entity("AquaHome.EFCore.Entity.ContestSponsor", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<Guid>("ContestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LogoObjectKey")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<int>("SponsorTier")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("WebsiteUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContestId", "SponsorTier", "DisplayOrder");
+
+                    b.ToTable("ContestSponsors");
                 });
 
             modelBuilder.Entity("AquaHome.EFCore.Entity.QuotaUsage", b =>
@@ -535,7 +620,36 @@ namespace AquaHome.EFCore.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("AquaHome.EFCore.Entity.ContestPrizeTier", "PrizeTier")
+                        .WithMany()
+                        .HasForeignKey("PrizeTierId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("AquariumSnapshot");
+
+                    b.Navigation("Contest");
+
+                    b.Navigation("PrizeTier");
+                });
+
+            modelBuilder.Entity("AquaHome.EFCore.Entity.ContestPrizeTier", b =>
+                {
+                    b.HasOne("AquaHome.EFCore.Entity.Contest", "Contest")
+                        .WithMany("PrizeTiers")
+                        .HasForeignKey("ContestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Contest");
+                });
+
+            modelBuilder.Entity("AquaHome.EFCore.Entity.ContestSponsor", b =>
+                {
+                    b.HasOne("AquaHome.EFCore.Entity.Contest", "Contest")
+                        .WithMany("Sponsors")
+                        .HasForeignKey("ContestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Contest");
                 });
@@ -548,6 +662,10 @@ namespace AquaHome.EFCore.Migrations
             modelBuilder.Entity("AquaHome.EFCore.Entity.Contest", b =>
                 {
                     b.Navigation("Entries");
+
+                    b.Navigation("PrizeTiers");
+
+                    b.Navigation("Sponsors");
                 });
 #pragma warning restore 612, 618
         }

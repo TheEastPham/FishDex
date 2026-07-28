@@ -41,7 +41,7 @@ public class FishBaseFlattener(FishDexDbContext db, ILogger<FishBaseFlattener> l
         // ── Common name — language preference → English → first preferred ─────
         var commonName = await db.CommonNames
             .AsNoTracking()
-            .Where(c => c.SpecCode == specCode && c.IsPreferred)
+            .Where(c => c.SpecCode == specCode && c.IsPreferred && c.IsVerified)
             .OrderByDescending(c => c.Language == language)
             .ThenByDescending(c => c.Language == "English")
             .Select(c => c.ComName)

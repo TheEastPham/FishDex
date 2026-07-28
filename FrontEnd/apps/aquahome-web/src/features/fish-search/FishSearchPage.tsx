@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Search, Sparkles, LogIn } from 'lucide-react';
+import { Search, Sparkles, LogIn, Plus } from 'lucide-react';
 import { useDebounce, searchSpecies, getFamilies, getMyFavorites, useTranslation, useAuthStore, useMyAquariums, getCached, setCached, CacheKeys, USER_DATA_TTL } from '@fishlover/shared';
 import type { PagedResult, SpeciesSearchResult, Family } from '@fishlover/shared';
 import { useNavigate } from 'react-router-dom';
 import SpeciesCard from './components/SpeciesCard';
 import SpeciesCardSkeleton from './components/SpeciesCardSkeleton';
 import FamilySelect from './components/FamilySelect';
+import SubmitCommunitySpeciesModal from '../community/SubmitCommunitySpeciesModal';
 
 const PAGE_SIZE = 12;
 
@@ -23,6 +24,7 @@ export default function FishSearchPage() {
   const [requiresLogin, setRequiresLogin] = useState(false);
   const [families, setFamilies] = useState<Family[]>([]);
   const [selectedFamily, setSelectedFamily] = useState<string>('');
+  const [showAddSpecies, setShowAddSpecies] = useState(false);
 
   const debouncedQuery = useDebounce(query, 400);
 
@@ -212,6 +214,15 @@ export default function FishSearchPage() {
             {t('fish.emptyResult')}{' '}
             <span className="font-medium text-slate-300">"{debouncedQuery}"</span>. Try adjusting your search or filters.
           </p>
+          {isAuthenticated && (
+            <button
+              onClick={() => setShowAddSpecies(true)}
+              className="mt-5 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary/20 hover:bg-primary/30 border border-primary/40 text-primary font-semibold text-sm transition-colors min-h-[44px]"
+            >
+              <Plus className="w-4 h-4" />
+              {t('contribute.requestSpeciesCta')}
+            </button>
+          )}
         </div>
       )}
 
@@ -256,6 +267,13 @@ export default function FishSearchPage() {
             {t('pagination.next')}
           </button>
         </div>
+      )}
+
+      {showAddSpecies && (
+        <SubmitCommunitySpeciesModal
+          initialName={debouncedQuery.trim()}
+          onClose={() => setShowAddSpecies(false)}
+        />
       )}
 
     </div>

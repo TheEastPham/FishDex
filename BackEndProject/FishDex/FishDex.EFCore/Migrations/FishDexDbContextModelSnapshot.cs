@@ -81,6 +81,9 @@ namespace FishDex.EFCore.Migrations
                     b.Property<bool?>("JumpingRisk")
                         .HasColumnType("boolean");
 
+                    b.Property<int?>("Kind")
+                        .HasColumnType("integer");
+
                     b.Property<decimal?>("Length")
                         .HasColumnType("numeric");
 
@@ -126,6 +129,9 @@ namespace FishDex.EFCore.Migrations
                     b.Property<string>("SpeciesName")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int?>("SuggestedKind")
+                        .HasColumnType("integer");
 
                     b.Property<double?>("TempMax")
                         .HasColumnType("double precision");
@@ -1505,11 +1511,19 @@ namespace FishDex.EFCore.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("ContributedBy")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("CountryCode")
                         .HasColumnType("text");
 
                     b.Property<bool>("IsPreferred")
                         .HasColumnType("boolean");
+
+                    b.Property<bool>("IsVerified")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
 
                     b.Property<string>("Language")
                         .HasColumnType("text");
@@ -1520,8 +1534,14 @@ namespace FishDex.EFCore.Migrations
                     b.Property<int>("Rank")
                         .HasColumnType("integer");
 
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("text");
+
                     b.Property<string>("Remarks")
                         .HasColumnType("text");
+
+                    b.Property<Guid?>("ReviewedBy")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("SpecCode")
                         .HasColumnType("integer");
@@ -1535,6 +1555,8 @@ namespace FishDex.EFCore.Migrations
                     b.HasKey("AutoCtr");
 
                     b.HasIndex("SpecCode");
+
+                    b.HasIndex("ContributedBy", "IsVerified");
 
                     b.HasIndex("Language", "IsPreferred");
 

@@ -81,4 +81,70 @@ public class AdminContestsController(IContestService contestService) : Controlle
         var updated = await contestService.UpdateAsync(id, request, ct);
         return updated is null ? NotFound() : Ok(updated);
     }
+
+    /// <summary>Chốt giải: gán PrizeTier cho từng entry đã Published, denorm xuống snapshot, set contest Ended.</summary>
+    [HttpPatch("{id:guid}/finalize")]
+    public async Task<IActionResult> Finalize(Guid id, [FromBody] FinalizeContestRequest request, CancellationToken ct)
+    {
+        var ok = await contestService.FinalizeAsync(id, request, ct);
+        return ok ? NoContent() : NotFound();
+    }
+
+    // ── Prize tiers ──────────────────────────────────────────
+    [HttpPost("{id:guid}/prize-tiers")]
+    public async Task<IActionResult> CreatePrizeTier(Guid id, [FromBody] CreatePrizeTierRequest request, CancellationToken ct)
+        => Ok(await contestService.CreatePrizeTierAsync(id, request, ct));
+
+    [HttpPut("{id:guid}/prize-tiers/{tierId:guid}")]
+    public async Task<IActionResult> UpdatePrizeTier(Guid id, Guid tierId, [FromBody] UpdatePrizeTierRequest request, CancellationToken ct)
+    {
+        var updated = await contestService.UpdatePrizeTierAsync(id, tierId, request, ct);
+        return updated is null ? NotFound() : Ok(updated);
+    }
+
+    [HttpDelete("{id:guid}/prize-tiers/{tierId:guid}")]
+    public async Task<IActionResult> DeletePrizeTier(Guid id, Guid tierId, CancellationToken ct)
+    {
+        var ok = await contestService.DeletePrizeTierAsync(id, tierId, ct);
+        return ok ? NoContent() : NotFound();
+    }
+
+    /// <summary>Presigned PUT URL để upload ảnh giải thưởng (optional) lên R2.</summary>
+    [HttpPost("{id:guid}/prize-tiers/{tierId:guid}/image/presign")]
+    public async Task<IActionResult> RequestPrizeTierImageUpload(
+        Guid id, Guid tierId, [FromBody] SponsorLogoPresignRequest request, CancellationToken ct)
+    {
+        var result = await contestService.RequestPrizeTierImageUploadAsync(id, tierId, request.FileName, request.ContentType, ct);
+        return result is null ? BadRequest(new { error = "Không thể tạo upload URL — kiểm tra content-type hoặc hạng giải tồn tại." }) : Ok(result);
+    }
+
+    // ── Sponsors ─────────────────────────────────────────────
+    [HttpPost("{id:guid}/sponsors")]
+    public async Task<IActionResult> CreateSponsor(Guid id, [FromBody] CreateSponsorRequest request, CancellationToken ct)
+        => Ok(await contestService.CreateSponsorAsync(id, request, ct));
+
+    [HttpPut("{id:guid}/sponsors/{sponsorId:guid}")]
+    public async Task<IActionResult> UpdateSponsor(Guid id, Guid sponsorId, [FromBody] UpdateSponsorRequest request, CancellationToken ct)
+    {
+        var updated = await contestService.UpdateSponsorAsync(id, sponsorId, request, ct);
+        return updated is null ? NotFound() : Ok(updated);
+    }
+
+    [HttpDelete("{id:guid}/sponsors/{sponsorId:guid}")]
+    public async Task<IActionResult> DeleteSponsor(Guid id, Guid sponsorId, CancellationToken ct)
+    {
+        var ok = await contestService.DeleteSponsorAsync(id, sponsorId, ct);
+        return ok ? NoContent() : NotFound();
+    }
+
+    /// <summary>Presigned PUT URL để upload logo sponsor lên R2.</summary>
+    [HttpPost("{id:guid}/sponsors/{sponsorId:guid}/logo/presign")]
+    public async Task<IActionResult> RequestSponsorLogoUpload(
+        Guid id, Guid sponsorId, [FromBody] SponsorLogoPresignRequest request, CancellationToken ct)
+    {
+        var result = await contestService.RequestSponsorLogoUploadAsync(id, sponsorId, request.FileName, request.ContentType, ct);
+        return result is null ? BadRequest(new { error = "Không thể tạo upload URL — kiểm tra content-type hoặc sponsor tồn tại." }) : Ok(result);
+    }
 }
+
+public record SponsorLogoPresignRequest(string FileName, string ContentType);

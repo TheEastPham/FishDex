@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  useTranslation, cn,
+  useTranslation, cn, useAuthStore,
   checkFavorite, addFavorite, removeFavorite, recordView,
   useFishProfile, getCached, setCached, invalidateCache, CacheKeys, FAVORITE_CHECK_TTL,
 } from '@fishlover/shared';
@@ -10,12 +10,13 @@ import {
   ArrowLeft, Share2, Heart, Fish, Ruler, Droplets, Map as MapIcon,
   Image as ImageIcon, Scale, AlertTriangle, Shield,
   Thermometer, TestTube, BookOpen, FileText, Activity, Clock,
-  ChevronLeft, ChevronRight, Layers
+  ChevronLeft, ChevronRight, Layers, Pencil
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import SpeciesCard from '../fish-search/components/SpeciesCard';
+import AddLocalNameModal from '../community/AddLocalNameModal';
 
 // Fix leaflet default icon issue
 import iconUrl from 'leaflet/dist/images/marker-icon.png';
@@ -131,6 +132,10 @@ export default function FishProfilePage() {
   const { t, i18n } = useTranslation();
 
   const id = specCode ? parseInt(specCode, 10) : null;
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const [showAddName, setShowAddName] = useState(false);
+  // Chỉ loài FishBase (< 500000) mới đóng góp tên được — loài community sửa tên trên snapshot.
+  const canAddName = isAuthenticated && id !== null && id < 500000;
   const { detail, media, distribution, relatedSpecies, loading } = useFishProfile(id, i18n.language);
 
   const [isFavorite, setIsFavorite] = useState(false);
@@ -245,6 +250,11 @@ export default function FishProfilePage() {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex gap-2">
+            {canAddName && (
+              <button onClick={() => setShowAddName(true)} className="p-2.5 bg-black/30 backdrop-blur-md text-white rounded-full hover:bg-black/60 transition-colors border border-white/10" title={t('contribute.addLocalName')}>
+                <Pencil className="w-5 h-5" />
+              </button>
+            )}
             <button className="p-2.5 bg-black/30 backdrop-blur-md text-white rounded-full hover:bg-black/60 transition-colors border border-white/10" title={t('fish.share')}>
               <Share2 className="w-5 h-5" />
             </button>
@@ -253,6 +263,10 @@ export default function FishProfilePage() {
             </button>
           </div>
         </div>
+
+        {showAddName && id !== null && (
+          <AddLocalNameModal specCode={id} onClose={() => setShowAddName(false)} />
+        )}
 
         {/* Title content */}
         <div className="relative z-10 w-full px-6 md:px-12 text-center max-w-5xl mx-auto">

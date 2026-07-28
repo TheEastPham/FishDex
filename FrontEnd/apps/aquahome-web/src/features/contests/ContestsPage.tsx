@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getActiveContests, getContestLeaderboard, useAuthStore, useTranslation, cn } from '@fishlover/shared';
-import type { ContestDto, LeaderboardEntryDto } from '@fishlover/shared';
+import { getActiveContests, getContestLeaderboard, SponsorTier, useAuthStore, useTranslation, cn } from '@fishlover/shared';
+import type { ContestDto, LeaderboardEntryDto, ContestPrizeTierDto, ContestSponsorDto } from '@fishlover/shared';
 import { Trophy, Youtube, Eye, Loader2, Upload, Medal, CalendarRange } from 'lucide-react';
 import ContestEntryFormModal from './components/ContestEntryFormModal';
+import ContestGuideSection from './components/ContestGuideSection';
+import { awardBadgeStyle } from '../public-tanks/labels';
 
 function formatDate(iso: string, locale: string) {
   return new Date(iso).toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -20,7 +22,7 @@ function LeaderboardRow({ entry, index, t }: {
   index: number;
   t: ReturnType<typeof useTranslation>['t'];
 }) {
-  const position = entry.rank ?? index + 1;
+  const position = index + 1; // thứ hạng theo lượt xem hiện tại — giải chính thức xem ở badge prizeTierName
   const rankStyle = RANK_STYLES[position] ?? 'bg-white/5 text-slate-500 border-white/10';
 
   return (
@@ -32,9 +34,16 @@ function LeaderboardRow({ entry, index, t }: {
         <p className="text-sm text-white font-semibold truncate">
           {t('contests.entryN', { n: index + 1 })}
         </p>
-        <p className="text-xs text-slate-500 flex items-center gap-1">
-          <Eye className="w-3 h-3" /> {entry.youTubeViewCount.toLocaleString()} {t('contests.views')}
-        </p>
+        <div className="flex items-center gap-2">
+          <p className="text-xs text-slate-500 flex items-center gap-1">
+            <Eye className="w-3 h-3" /> {entry.youTubeViewCount.toLocaleString()} {t('contests.views')}
+          </p>
+          {entry.prizeTierName && (
+            <span className={cn('text-[10px] font-bold px-1.5 py-0.5 rounded-full', awardBadgeStyle(entry.prizeTierLevel))}>
+              {entry.prizeTierName}
+            </span>
+          )}
+        </div>
       </div>
       {entry.youTubeVideoId && (
         <a
@@ -46,6 +55,75 @@ function LeaderboardRow({ entry, index, t }: {
         >
           <Youtube className="w-4 h-4" />
         </a>
+      )}
+    </div>
+  );
+}
+
+function PrizeTiersRow({ tiers, t }: { tiers: ContestPrizeTierDto[]; t: ReturnType<typeof useTranslation>['t'] }) {
+  const visible = tiers.filter(tier => tier.slotCount > 0);
+  if (visible.length === 0) return null;
+
+  return (
+    <div className="px-3 pt-3">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-600 pb-2">{t('contests.prizeTiersTitle')}</p>
+      <div className="flex flex-wrap gap-1.5">
+        {visible.map(tier => (
+          <span
+            key={tier.id}
+            title={tier.description ?? undefined}
+            className={cn('text-[10px] font-bold px-2 py-1 rounded-full', awardBadgeStyle(tier.tierLevel))}
+          >
+            {tier.name} ×{tier.slotCount}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Logo sponsor — cỡ tự thích ứng theo cấp: Platinum to nhất, Partner nhỏ nhất, giống banner quảng cáo thật */
+function SponsorLogo({ sponsor, size }: { sponsor: ContestSponsorDto; size: 'lg' | 'md' | 'sm' }) {
+  const heightCls = size === 'lg' ? 'h-14' : size === 'md' ? 'h-9' : 'h-6';
+  const content = sponsor.logoUrl
+    ? <img src={sponsor.logoUrl} alt={sponsor.name} className={cn(heightCls, 'object-contain max-w-full')} />
+    : <span className={cn('font-bold text-slate-300 truncate', size === 'lg' ? 'text-base' : 'text-[11px]')}>{sponsor.name}</span>;
+
+  return sponsor.websiteUrl ? (
+    <a href={sponsor.websiteUrl} target="_blank" rel="noopener noreferrer" title={sponsor.name}
+      className="flex items-center justify-center opacity-90 hover:opacity-100 transition-opacity min-h-[32px]">
+      {content}
+    </a>
+  ) : (
+    <div title={sponsor.name} className="flex items-center justify-center min-h-[32px]">{content}</div>
+  );
+}
+
+/** Chia chỗ hiển thị theo cấp tài trợ: Platinum 1/hàng (banner lớn), Gold vài logo cỡ vừa, còn lại lưới nhỏ gọn */
+function SponsorSection({ sponsors, t }: { sponsors: ContestSponsorDto[]; t: ReturnType<typeof useTranslation>['t'] }) {
+  if (sponsors.length === 0) return null;
+
+  const platinum = sponsors.filter(s => s.sponsorTier === SponsorTier.Platinum);
+  const gold = sponsors.filter(s => s.sponsorTier === SponsorTier.Gold);
+  const rest = sponsors.filter(s => s.sponsorTier !== SponsorTier.Platinum && s.sponsorTier !== SponsorTier.Gold);
+
+  return (
+    <div className="px-3 pt-3 pb-1 border-t border-slate-800/60 mt-1">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-600 pb-2">{t('contests.sponsorsTitle')}</p>
+      {platinum.length > 0 && (
+        <div className="flex flex-col gap-2 mb-3">
+          {platinum.map(s => <SponsorLogo key={s.id} sponsor={s} size="lg" />)}
+        </div>
+      )}
+      {gold.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
+          {gold.map(s => <SponsorLogo key={s.id} sponsor={s} size="md" />)}
+        </div>
+      )}
+      {rest.length > 0 && (
+        <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+          {rest.map(s => <SponsorLogo key={s.id} sponsor={s} size="sm" />)}
+        </div>
       )}
     </div>
   );
@@ -114,6 +192,9 @@ function ContestCard({ contest, t, isAuthenticated, onEnter, onLogin }: {
           <LeaderboardRow key={entry.entryId} entry={entry} index={i} t={t} />
         ))}
       </div>
+
+      <PrizeTiersRow tiers={contest.prizeTiers} t={t} />
+      <SponsorSection sponsors={contest.sponsors.filter(s => s.logoUrl || s.name)} t={t} />
     </div>
   );
 }
@@ -141,6 +222,8 @@ export default function ContestsPage() {
         <h1 className="text-xl sm:text-2xl font-black text-white">{t('contests.title')}</h1>
         <p className="text-sm text-slate-500 mt-1">{t('contests.subtitle')}</p>
       </div>
+
+      <ContestGuideSection />
 
       {loading && (
         <div className="flex items-center justify-center py-20 text-slate-600">

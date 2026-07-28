@@ -31,7 +31,7 @@ public class AquariumSnapshotRepository(AquaHomeDbContext db) : IAquariumSnapsho
     public async Task<(IReadOnlyList<AquariumSnapshot> Items, int TotalCount)> GetGalleryAsync(
         int? waterType, int? style, string? contest, string sort, int page, int pageSize, CancellationToken ct = default)
     {
-        // Không filter vào JSONB — mọi filter đều dùng column riêng (WaterType, Style, ContestEntryId, ContestAward, LikeCount)
+        // Không filter vào JSONB — mọi filter đều dùng column riêng (WaterType, Style, ContestEntryId, AwardTierLevel, LikeCount)
         var query = db.AquariumSnapshots.Where(s => s.IsActive);
 
         if (waterType.HasValue) query = query.Where(s => s.WaterType == waterType.Value);
@@ -40,7 +40,7 @@ public class AquariumSnapshotRepository(AquaHomeDbContext db) : IAquariumSnapsho
         query = contest switch
         {
             "any" => query.Where(s => s.ContestEntryId != null),
-            "winners" => query.Where(s => s.ContestAward == 3), // ContestAward.Winner (AquaHome.Domain.Enums — EFCore không reference Domain)
+            "winners" => query.Where(s => s.AwardTierLevel != null), // đã được gán 1 hạng giải (bất kỳ) lúc finalize
             _ => query,
         };
 

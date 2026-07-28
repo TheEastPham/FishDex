@@ -9,7 +9,41 @@ public record ContestDto(
     string? YouTubePlaylistId,
     DateTime StartAt,
     DateTime EndAt,
-    ContestStatus Status);
+    ContestStatus Status,
+    IReadOnlyList<ContestPrizeTierDto> PrizeTiers,
+    IReadOnlyList<ContestSponsorDto> Sponsors);
+
+// ── Prize tiers ────────────────────────────────────────────
+public record ContestPrizeTierDto(
+    Guid Id,
+    string Name,
+    PrizeTierLevel TierLevel,
+    int SlotCount,
+    int DisplayOrder,
+    string? Description,
+    string? ImageUrl);
+
+public record CreatePrizeTierRequest(string Name, PrizeTierLevel TierLevel, int SlotCount, string? Description);
+public record UpdatePrizeTierRequest(string? Name, PrizeTierLevel? TierLevel, int? SlotCount, int? DisplayOrder, string? Description);
+public record PrizeTierImageUploadResultDto(string UploadUrl, string ObjectKey);
+
+// ── Sponsors ───────────────────────────────────────────────
+public record ContestSponsorDto(
+    Guid Id,
+    string Name,
+    string? WebsiteUrl, // website hoặc Facebook Page — link chung, không phân biệt loại
+    string? Address,
+    string? LogoUrl,
+    SponsorTier SponsorTier,
+    int DisplayOrder);
+
+public record CreateSponsorRequest(string Name, string? WebsiteUrl, string? Address, SponsorTier SponsorTier);
+public record UpdateSponsorRequest(string? Name, string? WebsiteUrl, string? Address, SponsorTier? SponsorTier, int? DisplayOrder, bool? IsActive);
+public record SponsorLogoUploadResultDto(string UploadUrl, string ObjectKey);
+
+// ── Finalize ───────────────────────────────────────────────
+public record EntryAwardAssignment(Guid EntryId, Guid? PrizeTierId);
+public record FinalizeContestRequest(IReadOnlyList<EntryAwardAssignment> Assignments);
 
 public record CreateContestRequest(
     string Title,
@@ -39,7 +73,8 @@ public record ContestEntryDto(
     Guid AquariumSnapshotId,
     string? YouTubeVideoId,
     long YouTubeViewCount,
-    int? Rank,
+    Guid? PrizeTierId,
+    string? PrizeTierName,
     ContestEntryStatus Status,
     DateTime SubmittedAt);
 
@@ -50,4 +85,6 @@ public record LeaderboardEntryDto(
     Guid AquariumSnapshotId,
     string? YouTubeVideoId,
     long YouTubeViewCount,
-    int? Rank);
+    Guid? PrizeTierId,
+    string? PrizeTierName,
+    PrizeTierLevel? PrizeTierLevel);

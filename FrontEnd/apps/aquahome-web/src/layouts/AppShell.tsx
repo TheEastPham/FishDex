@@ -107,6 +107,7 @@ export default function AppShell() {
         { to: '/favorites', icon: Heart,    label: t('nav.favorites'), requireAuth: true },
         { to: '/history',   icon: History,  label: t('nav.history'),   requireAuth: true },
         { to: '/my-fish',   icon: BookOpen, label: t('nav.myFish'),    requireAuth: true },
+        { to: '/submit-species', icon: Fish, label: t('nav.submitSpecies'), requireAuth: true },
       ],
     },
     {
@@ -117,6 +118,7 @@ export default function AppShell() {
         { to: '/public/tanks', icon: Waves,  label: t('nav.publicTanks') },
         { to: '/contests',     icon: Trophy, label: t('nav.contests') },
         { to: '/my-published-tanks', icon: Globe, label: t('nav.myPublishedTanks'), requireAuth: true },
+        { to: '/my-contributions', icon: BookOpen, label: t('nav.myContributions'), requireAuth: true },
       ],
     },
     {
@@ -137,6 +139,7 @@ export default function AppShell() {
       subItems: [
         { to: '/admin/articles', icon: FileText,  label: t('nav.articlesManager') },
         { to: '/admin/media',    icon: ImageIcon, label: t('nav.mediaManager') },
+        { to: '/admin/community', icon: Users,    label: t('nav.communityModeration') },
         { to: '/admin/contests', icon: Trophy,    label: t('nav.contestsManager'), requireRoles: ['SystemAdmin'] },
       ],
     },

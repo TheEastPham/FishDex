@@ -24,6 +24,9 @@ import PublicTankDetailPage from '@/features/public-tanks/PublicTankDetailPage';
 import ContestsPage from '@/features/contests/ContestsPage';
 import AdminContestsPage from '@/features/admin-contests/AdminContestsPage';
 import MyPublishedTanksPage from '@/features/my-published-tanks/MyPublishedTanksPage';
+import MyContributionsPage from '@/features/community/MyContributionsPage';
+import SubmitSpeciesPage from '@/features/community/SubmitSpeciesPage';
+import AdminCommunityPage from '@/features/admin-community/AdminCommunityPage';
 
 // Redirect "/" based on auth state: dashboard if logged in, fish search if not
 function RootRedirect() {
@@ -58,6 +61,8 @@ export const router = createBrowserRouter([
           { path: '/dashboard',    element: <DashboardPage /> },
           { path: '/tanks',        element: <TanksPage /> },
           { path: '/my-published-tanks', element: <MyPublishedTanksPage /> },
+          { path: '/my-contributions', element: <MyContributionsPage /> },
+          { path: '/submit-species', element: <SubmitSpeciesPage /> },
           { path: '/parameters',   element: <PlaceholderPage /> },
           { path: '/tasks',        element: <TasksPage /> },
           { path: '/favorites',    element: <FavoritesPage /> },
@@ -75,6 +80,7 @@ export const router = createBrowserRouter([
         children: [
           { path: '/admin/articles', element: <PlaceholderPage /> },
           { path: '/admin/media',    element: <PlaceholderPage /> },
+          { path: '/admin/community', element: <AdminCommunityPage /> },
         ],
       },
       {

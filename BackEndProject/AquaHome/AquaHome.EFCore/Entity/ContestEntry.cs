@@ -14,10 +14,11 @@ public class ContestEntry
     public string? YouTubeVideoId { get; set; }    // ID 11 ký tự, không phải full URL
     public long YouTubeViewCount { get; set; }
 
-    public int? Rank { get; set; } // null = chưa finalize; 1/2/3 = nhất/nhì/ba
+    public Guid? PrizeTierId { get; set; } // null = chưa finalize / không đoạt giải — set lúc admin finalize contest
     public int Status { get; set; } // ContestEntryStatus: Pending/Validating/UploadedDraft/Published/Rejected
     public DateTime SubmittedAt { get; set; }
 
     public Contest Contest { get; set; } = null!;
     public AquariumSnapshot AquariumSnapshot { get; set; } = null!;
+    public ContestPrizeTier? PrizeTier { get; set; }
 }

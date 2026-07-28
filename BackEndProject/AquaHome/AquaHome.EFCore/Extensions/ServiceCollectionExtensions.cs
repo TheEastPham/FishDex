@@ -18,6 +18,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAquariumSnapshotLikeRepository, AquariumSnapshotLikeRepository>();
         services.AddScoped<IContestRepository, ContestRepository>();
         services.AddScoped<IContestEntryRepository, ContestEntryRepository>();
+        services.AddScoped<IContestPrizeTierRepository, ContestPrizeTierRepository>();
+        services.AddScoped<IContestSponsorRepository, ContestSponsorRepository>();
         return services;
     }
 }

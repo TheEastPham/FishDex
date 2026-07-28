@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getPublicSnapshots, WaterType, AquariumStyle, useTranslation, cn } from '@fishlover/shared';
 import type { AquariumSnapshotDto, GetPublicSnapshotsParams } from '@fishlover/shared';
 import { Heart, Fish, Trophy, Loader2, Waves, ChevronLeft, ChevronRight } from 'lucide-react';
-import { displayNameFromSlug, waterTypeLabel, STYLE_LABELS, awardLabel } from './labels';
+import { displayNameFromSlug, waterTypeLabel, STYLE_LABELS, awardBadgeStyle } from './labels';
 
 const PAGE_SIZE = 12;
 
@@ -20,7 +20,8 @@ function SnapshotCard({ snapshot, onClick, t }: {
 }) {
   const wtLabel = waterTypeLabel(t, snapshot.waterType);
   const styleLabel = STYLE_LABELS[snapshot.style] ?? null;
-  const award = awardLabel(t, snapshot.contestAward);
+  const awardName = snapshot.awardTierName;
+  const awardStyle = awardBadgeStyle(snapshot.awardTierLevel);
   const gradient = WATER_GRADIENTS[snapshot.waterType] ?? 'from-slate-900 to-slate-800';
 
   return (
@@ -34,9 +35,9 @@ function SnapshotCard({ snapshot, onClick, t }: {
           ? <img src={snapshot.coverImageUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
           : <div className="w-full h-full flex items-center justify-center"><Waves className="w-10 h-10 text-white/20" /></div>
         }
-        {award && (
-          <span className="absolute top-2 left-2 flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/90 text-amber-950">
-            <Trophy className="w-3 h-3" /> {award}
+        {awardName && (
+          <span className={cn('absolute top-2 left-2 flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full', awardStyle)}>
+            <Trophy className="w-3 h-3" /> {awardName}
           </span>
         )}
       </div>

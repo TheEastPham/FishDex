@@ -54,7 +54,7 @@ public class SnapshotService(
 
         if (request.TargetSnapshotId.HasValue)
         {
-            // Ghi đè snapshot đang active — giữ nguyên Slug/Id/LikeCount/ContestAward, chỉ refresh nội dung
+            // Ghi đè snapshot đang active — giữ nguyên Slug/Id/LikeCount/AwardTier, chỉ refresh nội dung
             var target = await snapshotRepo.GetByIdAsync(request.TargetSnapshotId.Value, ct);
             if (target is null || target.AquariumId != aquariumId || target.UserId != currentUser.UserId || !target.IsActive)
             {
@@ -320,7 +320,7 @@ public class SnapshotService(
         var coverImageUrl = await ResolveCoverUrlAsync(s.CoverMediaId, ct);
         return new AquariumSnapshotDto(
             s.Id, s.Slug, (WaterType)s.WaterType, (AquariumStyle)s.Style, s.LikeCount, s.FishSpeciesCount,
-            s.ContestAward.HasValue ? (ContestAward)s.ContestAward.Value : null,
+            s.AwardTierName, s.AwardTierLevel.HasValue ? (PrizeTierLevel)s.AwardTierLevel.Value : null,
             coverImageUrl, s.YoutubeVideoUrl, s.CreatedAt, s.UpdatedAt, snapshotData, likedByMe);
     }
 }

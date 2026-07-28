@@ -12,4 +12,6 @@ public class Contest
     public Guid CreatedBy { get; set; }
 
     public ICollection<ContestEntry> Entries { get; set; } = [];
+    public ICollection<ContestPrizeTier> PrizeTiers { get; set; } = [];
+    public ICollection<ContestSponsor> Sponsors { get; set; } = [];
 }

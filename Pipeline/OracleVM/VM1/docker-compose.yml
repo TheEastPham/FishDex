@@ -87,6 +87,9 @@ services:
       - JwtSettings__Issuer=${JWT_ISSUER}
       - JwtSettings__Audience=${JWT_AUDIENCE}
       - Cors__AllowedOrigins__0=${FE_ORIGIN}
+      # Khoá service-to-service — AquaHome.Worker gọi /api/market/ingest. Cùng giá trị với
+      # UserManagement. Thiếu biến này thì endpoint ingest tự trả 503 chứ không mở toang.
+      - InternalSettings__ApiKey=${INTERNAL_API_KEY}
       - AutoMigrate__OnStartup=true
       - ASPNETCORE_HTTP_PORTS=8081
       - OpenTelemetry__ExportEndpoint=http://10.0.0.94:4317   # OTLP trace → Tempo (VM2)

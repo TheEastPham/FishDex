@@ -935,12 +935,6 @@ namespace FishDex.EFCore.Migrations
                     b.Property<Guid?>("AddedBy")
                         .HasColumnType("uuid");
 
-                    b.Property<int?>("CareLevel")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("FirstSeenAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<DateTime>("LastConfirmedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -957,12 +951,6 @@ namespace FishDex.EFCore.Migrations
 
                     b.Property<int>("Origin")
                         .HasColumnType("integer");
-
-                    b.Property<string>("RejectionReason")
-                        .HasColumnType("text");
-
-                    b.Property<Guid?>("ReviewedBy")
-                        .HasColumnType("uuid");
 
                     b.Property<int>("Status")
                         .ValueGeneratedOnAdd()

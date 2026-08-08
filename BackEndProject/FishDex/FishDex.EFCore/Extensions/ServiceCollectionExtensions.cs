@@ -80,6 +80,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ISpeciesCache,                  DbSpeciesCache>();
         services.AddScoped<ICommunitySpeciesRepository,    CommunitySpeciesRepository>();
         services.AddScoped<ICommunityCommonNameRepository, CommunityCommonNameRepository>();
+        services.AddScoped<ITradedSpeciesRepository,       TradedSpeciesRepository>();
+        services.AddScoped<IFishBaseSpeciesIndexRepository, FishBaseSpeciesIndexRepository>();
         return services;
     }
 }

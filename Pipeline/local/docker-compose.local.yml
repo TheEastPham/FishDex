@@ -140,6 +140,7 @@ services:
       AuthServer__Url:              ${AUTH_SERVER_URL}
       AuthServer__Authority:        ${AUTH_SERVER_AUTHORITY}
       AuthServer__SwaggerUrl:       ${AUTH_SERVER_SWAGGER_URL}
+      InternalSettings__ApiKey:     ${INTERNAL_API_KEY}
       Storage__ServiceUrl:          ${FISHDEX_STORAGE_SERVICE_URL}
       Storage__AccessKey:           ${FISHDEX_STORAGE_ACCESS_KEY}
       Storage__SecretKey:           ${FISHDEX_STORAGE_SECRET_KEY}

@@ -32,13 +32,6 @@ public class TradedSpecies
     public string? LegalNote { get; set; }
     public string? LegalSourceUrl { get; set; }
 
-    /// <summary>
-    /// Độ dễ nuôi Ở QUỐC GIA NÀY, không phải của loài. Nước máy Việt Nam độ cứng khác Đức,
-    /// khí hậu Việt Nam gần như không cần sưởi — nên "dễ nuôi" phụ thuộc địa phương.
-    /// Để trống ở v1, chờ người curate.
-    /// </summary>
-    public SnapshotCareLevel? CareLevel { get; set; }
-
     // ── Nguồn & kiểm duyệt ────────────────────────────────────────
     public MarketOrigin Origin { get; set; } = MarketOrigin.TankDerived;
 
@@ -48,14 +41,14 @@ public class TradedSpecies
     /// </summary>
     public MarketStatus Status { get; set; } = MarketStatus.Approved;
 
-    /// <summary>Null cho dòng sinh từ bể cá. Chỉ có giá trị khi admin tự thêm.</summary>
+    /// <summary>
+    /// Ai thêm dòng này. Null cho dòng sinh từ bể cá — quy tắc một chiều, không truy ngược.
+    /// Chỉ có giá trị khi admin tự thêm, và đó là dấu vết trách nhiệm duy nhất của bảng
+    /// (đã bỏ <c>ReviewedBy</c> vì trùng vai và không ai đọc).
+    /// </summary>
     public Guid? AddedBy { get; set; }
 
-    public Guid? ReviewedBy { get; set; }
-    public string? RejectionReason { get; set; }
-
     // ── Metadata ──────────────────────────────────────────────────
-    public DateTime FirstSeenAt { get; set; }
     /// <summary>Cập nhật mỗi lần nguồn xác nhận lại — dùng để phát hiện dữ liệu mốc.</summary>
     public DateTime LastConfirmedAt { get; set; }
 }

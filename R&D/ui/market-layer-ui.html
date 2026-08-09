@@ -302,7 +302,7 @@
     <span><b>Service</b> FishDex</span>
     <span><b>Route</b> /market/:cc</span>
     <span><b>Baseline</b> iPhone 12 · 390px</span>
-    <span><b>Bộ lọc</b> Length · trạng thái tên · mức phổ biến</span>
+    <span><b>Bộ lọc</b> Length · trạng thái tên bản ngữ</span>
   </div>
 
   <section>
@@ -412,7 +412,7 @@
 
   <section>
     <h2>Bảng bộ lọc</h2>
-    <p class="sub">Trên mobile mở dạng bottom sheet. Chỉ ba tiêu chí, và cả ba đều dựa trên dữ liệu có thật — đã loại bỏ mọi tiêu chí dựa trên cột rỗng.</p>
+    <p class="sub">Trên mobile mở dạng bottom sheet. Chỉ hai tiêu chí, và cả hai đều dựa trên dữ liệu có thật — đã loại bỏ mọi tiêu chí dựa trên cột rỗng.</p>
     <div class="split">
       <div class="device">
         <div class="sheet">
@@ -440,15 +440,6 @@
             </div>
           </div>
 
-          <div class="grp">
-            <p class="lab">Mức phổ biến</p>
-            <div class="opts">
-              <span class="opt">Phổ biến</span>
-              <span class="opt">Theo mùa</span>
-              <span class="opt">Hiếm</span>
-            </div>
-          </div>
-
           <div class="sheet-ft">
             <span class="clr">Xoá lọc</span>
             <span class="apply">Xem 58 loài</span>
@@ -466,8 +457,8 @@
           <p><code>EXISTS</code> trên <code>CommonName</code> theo ngôn ngữ của quốc gia đang chọn. Đây vừa là bộ lọc vừa là công cụ làm việc: chọn "chưa có" là ra đúng danh sách cần đặt tên, hữu hạn và có đích. Đếm theo <code>Language</code> chứ không theo <code>CountryCode</code>, vì tên do cộng đồng góp hiện lưu <code>CountryCode</code> rỗng.</p>
         </li>
         <li>
-          <span class="lbl">Mức phổ biến</span>
-          <p>Cột của chính bảng market nên không phụ thuộc chất lượng dữ liệu FishBase.</p>
+          <span class="lbl">Vì sao không có mức phổ biến</span>
+          <p>Từng định làm bộ lọc thứ ba, nhưng nguồn dữ liệu chính là bể cá của người dùng — mà dòng sinh theo đường đó không mang <code>TradeStatus</code>. Chỉ admin curate mới có, nên ngày đầu bộ lọc này gần như rỗng. Giữ cột trong DB, bật lại khi đã điền đủ.</p>
         </li>
         <li>
           <span class="lbl">Đã loại bỏ</span>
@@ -494,7 +485,6 @@
             <div class="sel"><span>Việt Nam</span><span class="caret" aria-hidden="true">▼</span></div>
             <div class="sel"><span>Kích thước</span><span class="caret" aria-hidden="true">▼</span></div>
             <div class="sel"><span>Tên tiếng Việt</span><span class="caret" aria-hidden="true">▼</span></div>
-            <div class="sel"><span>Mức phổ biến</span><span class="caret" aria-hidden="true">▼</span></div>
           </div>
 
           <div class="dgrid">

@@ -166,6 +166,10 @@ public class ContestService(
 
         if (videoId is null)
         {
+            // Dọn staging luôn: entry này coi như bỏ, giữ lại VideoR2Key sẽ khiến
+            // SumStagingVideoBytesAsync (đếm WHERE VideoR2Key != null) cộng dồn rác vào quota 9GB vĩnh viễn.
+            await storage.DeleteAsync(entry.VideoR2Key, ct);
+            entry.VideoR2Key = null;
             entry.Status = (int)ContestEntryStatus.Rejected;
             await entryRepo.SaveChangesAsync(ct);
             return false;
@@ -186,7 +190,17 @@ public class ContestService(
         if (entry.Status != (int)ContestEntryStatus.UploadedDraft || entry.YouTubeVideoId is null) return false;
 
         var contest = await contestRepo.GetByIdAsync(contestId, ct);
-        await youTube.SetPublicAsync(entry.YouTubeVideoId, contest?.YouTubePlaylistId, ct);
+        try
+        {
+            await youTube.SetPublicAsync(entry.YouTubeVideoId, contest?.YouTubePlaylistId, ct);
+        }
+        catch (Exception ex)
+        {
+            // Không đổi Status: video vẫn Unlisted, admin sửa playlist ID rồi approve lại được.
+            logger.LogError(ex, "Approve entry {EntryId} thất bại khi set public/add playlist", entryId);
+            throw new ContestValidationException(
+                "Không thể công khai video lên YouTube. Kiểm tra lại Playlist ID của cuộc thi rồi thử lại.");
+        }
 
         entry.Status = (int)ContestEntryStatus.Published;
         await entryRepo.SaveChangesAsync(ct);

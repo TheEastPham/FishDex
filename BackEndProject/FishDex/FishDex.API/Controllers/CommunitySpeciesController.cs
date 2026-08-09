@@ -14,6 +14,20 @@ namespace FishDex.API.Controllers;
 [Authorize]
 public class CommunitySpeciesController(ICommunitySpeciesService service) : ControllerBase
 {
+    /// <summary>
+    /// Tra tên gần giống trước khi submit — FE gọi khi user gõ xong tên loài, rồi hiện
+    /// "có phải bạn định nói…". Không chặn submit, chỉ tư vấn.
+    /// </summary>
+    [HttpGet("similar")]
+    public async Task<ActionResult<IReadOnlyList<SimilarSpeciesDto>>> FindSimilar(
+        [FromQuery] string name, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return Ok(Array.Empty<SimilarSpeciesDto>());
+
+        return Ok(await service.FindSimilarAsync(name, ct));
+    }
+
     /// <summary>User submit 1 loài lai tạo mới. Trả về bản ghi vừa tạo (IsVerified=false, chờ duyệt).</summary>
     [HttpPost]
     public async Task<ActionResult<CommunitySpeciesDto>> Submit(

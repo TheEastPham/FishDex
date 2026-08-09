@@ -5,7 +5,7 @@ import {
   ContestStatus, useTranslation, cn,
 } from '@fishlover/shared';
 import type { ContestDto, ContestEntryDto, CreateContestRequest } from '@fishlover/shared';
-import { Trophy, Plus, Pencil, Youtube, Check, X, Loader2, ClipboardCheck, Settings2, ChevronUp } from 'lucide-react';
+import { Trophy, Plus, Pencil, Youtube, Check, X, Loader2, ClipboardCheck, Settings2, ChevronUp, ExternalLink } from 'lucide-react';
 import ContestManagePanel from './ContestManagePanel';
 
 function formatDate(iso: string, locale: string) {
@@ -163,15 +163,27 @@ function EntryReviewRow({ entry, onDone, t }: {
 }) {
   const [busy, setBusy] = useState<'approve' | 'reject' | null>(null);
 
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
   const act = async (action: 'approve' | 'reject') => {
-    if (action === 'reject' && !window.confirm(t('adminContests.rejectConfirm'))) return;
+    let reason = '';
+    if (action === 'reject') {
+      // Lý do là bắt buộc — người dự thi sẽ đọc được ở trang "bài dự thi của tôi"
+      const input = window.prompt(t('adminContests.rejectPrompt'));
+      if (!input?.trim()) return;
+      reason = input.trim();
+    }
+
     setBusy(action);
+    setErrorMsg(null);
     try {
       if (action === 'approve') await approveContestEntry(entry.contestId, entry.id);
-      else await rejectContestEntry(entry.contestId, entry.id);
+      else await rejectContestEntry(entry.contestId, entry.id, reason);
       onDone();
     } catch (err) {
-      console.error(err);
+      // 422 = YouTube/playlist lỗi, BE trả message cụ thể (vd sai Playlist ID) — hiện đúng lý do
+      const res = (err as { response?: { status?: number; data?: { message?: string } } })?.response;
+      setErrorMsg(res?.status === 422 ? (res.data?.message ?? t('adminContests.actionFailed')) : t('adminContests.actionFailed'));
       setBusy(null);
     }
   };
@@ -179,19 +191,41 @@ function EntryReviewRow({ entry, onDone, t }: {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl border border-slate-800/60 bg-[#1E293B] p-4">
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-white">
-          {t('adminContests.entrySubmittedAt')}: {formatDate(entry.submittedAt, t('aquarium.dateLocale'))}
+        {/* Trước đây chỉ có ngày nộp — admin không biết đang duyệt bể nào, của ai */}
+        <p className="text-sm font-semibold text-white truncate">
+          {entry.title || entry.aquariumName || t('adminContests.untitledEntry')}
         </p>
-        {entry.youTubeVideoId && (
-          <a
-            href={`https://www.youtube.com/watch?v=${entry.youTubeVideoId}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs text-red-400 hover:underline mt-1"
-          >
-            <Youtube className="w-3.5 h-3.5" /> {t('adminContests.watchUnlisted')}
-          </a>
+        <p className="text-xs text-slate-500 mt-0.5 truncate">
+          {[entry.aquariumName, entry.ownerNickname].filter(Boolean).join(' · ')}
+          {(entry.aquariumName || entry.ownerNickname) && ' · '}
+          {formatDate(entry.submittedAt, t('aquarium.dateLocale'))}
+        </p>
+        {entry.description && (
+          <p className="text-xs text-slate-600 mt-1 line-clamp-2">{entry.description}</p>
         )}
+        <div className="flex flex-wrap items-center gap-3 mt-1">
+          {entry.youTubeVideoId && (
+            <a
+              href={`https://www.youtube.com/watch?v=${entry.youTubeVideoId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs text-red-400 hover:underline"
+            >
+              <Youtube className="w-3.5 h-3.5" /> {t('adminContests.watchUnlisted')}
+            </a>
+          )}
+          {entry.snapshotSlug && (
+            <a
+              href={`/public/tanks/${entry.snapshotSlug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs text-sky-400 hover:underline"
+            >
+              <ExternalLink className="w-3.5 h-3.5" /> {t('adminContests.viewTank')}
+            </a>
+          )}
+        </div>
+        {errorMsg && <p className="text-xs text-red-400 mt-2">{errorMsg}</p>}
       </div>
       <div className="flex gap-2 shrink-0">
         <button

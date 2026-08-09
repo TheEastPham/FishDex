@@ -68,12 +68,27 @@ export default function MarketSpeciesCard({ species, index = 0, aquariums = [], 
         )}
 
         <FavoriteButton specCode={species.specCode} className="absolute top-2 right-2" />
+
+        {/* Kích thước nằm đè lên ảnh chứ không chiếm một dòng riêng: nó là thuộc tính hình dáng
+            của con cá nên đọc trên ảnh là tự nhiên, và thẻ tiết kiệm được nguyên một dòng —
+            đáng kể ở 390px. Đặt góc dưới trái để cân với nút yêu thích ở góc trên phải. */}
+        {species.lengthCm !== null && (
+          <span
+            title={t('market.sizeLabel')}
+            className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-md bg-black/60 backdrop-blur-sm px-2 py-1 text-[11px] font-medium text-slate-100"
+          >
+            <Ruler className="w-3 h-3" />
+            {formatLength(species.lengthCm)}
+          </span>
+        )}
       </div>
 
       <div className="flex flex-col flex-1 px-4 pt-3 pb-4">
-        {/* Hàng nhãn — thay cho hàng "họ + share" của thẻ tra cứu */}
-        <div className="flex items-center justify-between gap-2 text-slate-300 mb-2.5 min-h-[24px]">
-          <div className="flex items-center gap-1.5 flex-wrap">
+        {/* Hàng nhãn — CHỈ dựng khi thật sự có nhãn. Bỏ min-height cố định vì dòng sinh từ bể
+            không mang TradeStatus và phần lớn loài hợp pháp, nên giữ chỗ trống là chừa một dòng
+            rỗng trên gần như mọi thẻ. Có seed AdminSeed thì badge mức phổ biến sẽ tự hiện lại. */}
+        {(species.tradeStatus !== null || isRisky) && (
+          <div className="flex items-center gap-1.5 flex-wrap text-slate-300 mb-2.5">
             {species.tradeStatus !== null && <TradeBadge status={species.tradeStatus} />}
             {isRisky && (
               <span
@@ -85,13 +100,7 @@ export default function MarketSpeciesCard({ species, index = 0, aquariums = [], 
               </span>
             )}
           </div>
-          {species.lengthCm !== null && (
-            <span className="inline-flex items-center gap-1 text-xs text-slate-400 shrink-0">
-              <Ruler className="w-3.5 h-3.5" />
-              {formatLength(species.lengthCm)}
-            </span>
-          )}
-        </div>
+        )}
 
         <div className="w-full h-px bg-gradient-to-r from-[#f9e5b9]/60 via-[#f9e5b9]/20 to-transparent mb-3" />
 

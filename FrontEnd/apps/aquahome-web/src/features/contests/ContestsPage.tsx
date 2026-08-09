@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getActiveContests, getContestLeaderboard, SponsorTier, useAuthStore, useTranslation, cn } from '@fishlover/shared';
-import type { ContestDto, LeaderboardEntryDto, ContestPrizeTierDto, ContestSponsorDto } from '@fishlover/shared';
+import {
+  getActiveContests, getContestLeaderboard, getMyContestEntries,
+  SponsorTier, ContestEntryStatus, useAuthStore, useTranslation, cn,
+} from '@fishlover/shared';
+import type { ContestDto, LeaderboardEntryDto, ContestEntryDto, ContestPrizeTierDto, ContestSponsorDto } from '@fishlover/shared';
 import { Trophy, Youtube, Eye, Loader2, Upload, Medal, CalendarRange } from 'lucide-react';
 import ContestEntryFormModal from './components/ContestEntryFormModal';
 import ContestGuideSection from './components/ContestGuideSection';
@@ -129,14 +132,71 @@ function SponsorSection({ sponsors, t }: { sponsors: ContestSponsorDto[]; t: Ret
   );
 }
 
-function ContestCard({ contest, t, isAuthenticated, onEnter, onLogin }: {
+/** Badge trạng thái bài dự thi — cho người nộp biết bài đang ở bước nào. */
+function EntryStatusBadge({ status, t }: { status: ContestEntryStatus; t: ReturnType<typeof useTranslation>['t'] }) {
+  const [label, cls] = {
+    [ContestEntryStatus.Pending]:       [t('contests.stPending'),   'bg-slate-500/15 text-slate-400 border-slate-500/30'],
+    [ContestEntryStatus.Validating]:    [t('contests.stValidating'),'bg-sky-500/15 text-sky-400 border-sky-500/30'],
+    [ContestEntryStatus.UploadedDraft]: [t('contests.stReview'),    'bg-amber-500/15 text-amber-300 border-amber-500/30'],
+    [ContestEntryStatus.Published]:     [t('contests.stPublished'), 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'],
+    [ContestEntryStatus.Rejected]:      [t('contests.stRejected'),  'bg-red-500/10 text-red-400 border-red-500/30'],
+  }[status] ?? [t('contests.stPending'), 'bg-slate-500/15 text-slate-400 border-slate-500/30'];
+
+  return <span className={cn('shrink-0 px-2 py-0.5 rounded-full border text-[10px] font-bold', cls)}>{label}</span>;
+}
+
+/** Bài dự thi của chính user — trước đây nộp xong không có chỗ nào theo dõi. */
+function MyEntriesSection({ entries, t }: { entries: ContestEntryDto[]; t: ReturnType<typeof useTranslation>['t'] }) {
+  if (entries.length === 0) return null;
+
+  return (
+    <div className="px-3 pb-3">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-600 px-3 pb-2">
+        {t('contests.myEntries')} ({entries.length})
+      </p>
+      <div className="space-y-2">
+        {entries.map(e => (
+          <div key={e.id} className="rounded-xl bg-[#0F172A] border border-slate-800 p-3">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold text-white truncate flex-1 min-w-0">
+                {e.title || e.aquariumName || t('contests.untitledEntry')}
+              </p>
+              <EntryStatusBadge status={e.status} t={t} />
+            </div>
+            {e.aquariumName && e.title && (
+              <p className="text-xs text-slate-600 mt-0.5 truncate">{e.aquariumName}</p>
+            )}
+            {e.status === ContestEntryStatus.Rejected && e.rejectionReason && (
+              <p className="text-xs text-red-400/90 mt-1.5 leading-relaxed">{e.rejectionReason}</p>
+            )}
+            {e.youTubeVideoId && e.status === ContestEntryStatus.Published && (
+              <a
+                href={`https://www.youtube.com/watch?v=${e.youTubeVideoId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs text-red-400 hover:underline mt-1.5"
+              >
+                <Youtube className="w-3.5 h-3.5" /> {t('contests.watchVideo')}
+              </a>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ContestCard({ contest, t, isAuthenticated, refreshKey, onEnter, onLogin }: {
   contest: ContestDto;
   t: ReturnType<typeof useTranslation>['t'];
   isAuthenticated: boolean;
+  /** Đổi giá trị này để ép load lại sau khi user vừa nộp bài. */
+  refreshKey: number;
   onEnter: () => void;
   onLogin: () => void;
 }) {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntryDto[]>([]);
+  const [myEntries, setMyEntries] = useState<ContestEntryDto[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -144,7 +204,14 @@ function ContestCard({ contest, t, isAuthenticated, onEnter, onLogin }: {
       .then(setLeaderboard)
       .catch(() => setLeaderboard([]))
       .finally(() => setLoading(false));
-  }, [contest.id]);
+  }, [contest.id, refreshKey]);
+
+  useEffect(() => {
+    if (!isAuthenticated) { setMyEntries([]); return; }
+    getMyContestEntries(contest.id)
+      .then(setMyEntries)
+      .catch(() => setMyEntries([])); // chưa nộp bài / lỗi mạng → chỉ ẩn khối, không phá cả card
+  }, [contest.id, isAuthenticated, refreshKey]);
 
   return (
     <div className="rounded-2xl border border-slate-800/60 bg-[#1E293B] overflow-hidden">
@@ -174,6 +241,8 @@ function ContestCard({ contest, t, isAuthenticated, onEnter, onLogin }: {
           </button>
         </div>
       </div>
+
+      <MyEntriesSection entries={myEntries} t={t} />
 
       {/* Leaderboard */}
       <div className="p-3">
@@ -208,6 +277,7 @@ export default function ContestsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [entryContest, setEntryContest] = useState<ContestDto | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     getActiveContests()
@@ -253,6 +323,7 @@ export default function ContestsPage() {
               contest={c}
               t={t}
               isAuthenticated={isAuthenticated}
+              refreshKey={refreshKey}
               onEnter={() => setEntryContest(c)}
               onLogin={() => navigate('/login')}
             />
@@ -264,7 +335,7 @@ export default function ContestsPage() {
         <ContestEntryFormModal
           contest={entryContest}
           onClose={() => setEntryContest(null)}
-          onSubmitted={() => {}}
+          onSubmitted={() => setRefreshKey(k => k + 1)}
         />
       )}
     </div>

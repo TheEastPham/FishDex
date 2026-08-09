@@ -15,10 +15,17 @@ public interface IContestService
     /// <summary>FE gọi sau khi PUT video xong lên R2. Auto-validate + upload YouTube Unlisted → Status=UploadedDraft.</summary>
     Task<bool> ConfirmUploadAsync(Guid contestId, Guid entryId, CancellationToken ct = default);
 
+    /// <summary>Admin duyệt: video → Public + vào playlist contest. Ném ContestValidationException (422) nếu YouTube lỗi (giữ nguyên Status để retry).</summary>
     Task<bool> ApproveEntryAsync(Guid contestId, Guid entryId, CancellationToken ct = default);
-    Task<bool> RejectEntryAsync(Guid contestId, Guid entryId, CancellationToken ct = default);
+
+    /// <summary>Admin từ chối kèm lý do — lý do hiển thị lại cho người dự thi ở trang "bài dự thi của tôi".</summary>
+    Task<bool> RejectEntryAsync(Guid contestId, Guid entryId, string reason, CancellationToken ct = default);
+
     Task<IReadOnlyList<LeaderboardEntryDto>> GetLeaderboardAsync(Guid contestId, CancellationToken ct = default);
     Task<IReadOnlyList<ContestEntryDto>> GetPendingReviewAsync(CancellationToken ct = default);
+
+    /// <summary>Bài dự thi của user hiện tại trong 1 contest (mọi trạng thái) — để user theo dõi sau khi nộp.</summary>
+    Task<IReadOnlyList<ContestEntryDto>> GetMyEntriesAsync(Guid contestId, CancellationToken ct = default);
 
     // ── Prize tiers ────────────────────────────────────────
     Task<ContestPrizeTierDto> CreatePrizeTierAsync(Guid contestId, CreatePrizeTierRequest request, CancellationToken ct = default);

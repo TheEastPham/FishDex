@@ -28,6 +28,22 @@ public class ContestEntryRepository(AquaHomeDbContext db) : IContestEntryReposit
             .Where(e => e.Contest.Status == 1 && e.YouTubeVideoId != null) // ContestStatus.Active
             .ToListAsync(ct);
 
+    public async Task<IReadOnlyList<ContestEntry>> GetByUserAndContestAsync(
+        Guid userId, Guid contestId, CancellationToken ct = default)
+        => await db.ContestEntries
+            .Where(e => e.UserId == userId && e.ContestId == contestId)
+            .OrderByDescending(e => e.SubmittedAt)
+            .ToListAsync(ct);
+
+    public Task<bool> HasActiveEntryForSnapshotAsync(
+        Guid userId, Guid contestId, Guid snapshotId, CancellationToken ct = default)
+        => db.ContestEntries.AnyAsync(
+            e => e.UserId == userId
+                 && e.ContestId == contestId
+                 && e.AquariumSnapshotId == snapshotId
+                 && e.Status != 4, // ContestEntryStatus.Rejected — bài trượt thì cho nộp lại
+            ct);
+
     // R2 storage guard — tổng staging = SUM(VideoSizeBytes) WHERE VideoR2Key IS NOT NULL
     public Task<long> SumStagingVideoBytesAsync(CancellationToken ct = default)
         => db.ContestEntries

@@ -1,6 +1,7 @@
 using AquaHome.Domain.DTOs;
 using AquaHome.Domain.Enums;
 using AquaHome.Domain.Exceptions;
+using AquaHome.Domain.Extensions;
 using AquaHome.Domain.Services.Interfaces;
 using AquaHome.Domain.Settings;
 using AquaHome.EFCore.Entity;
@@ -26,6 +27,8 @@ public class ContestService(
     // R2 free tier 10GB — hard block ở 90% (9GB) trước khi issue presigned PUT URL
     private const long HardBlockBytes = 9L * 1024 * 1024 * 1024;
     private const long MaxVideoUploadBytes = 500L * 1024 * 1024; // 500MB — đủ cho video 2-5 phút 1080p
+    private const int MaxTitleLength = 100;       // trùng giới hạn title của YouTube
+    private const int MaxDescriptionLength = 100; // chốt với user — mô tả ngắn gọn
     private const long MaxLogoUploadBytes = 2L * 1024 * 1024;    // 2MB — logo sponsor
 
     private static readonly HashSet<string> AllowedContentTypes = ["video/mp4", "video/quicktime", "video/webm"];
@@ -117,6 +120,20 @@ public class ContestService(
         if (snapshot is null || snapshot.UserId != currentUser.UserId)
             throw new ContestValidationException("Snapshot không hợp lệ hoặc không thuộc về bạn.");
 
+        var title = request.Title?.Trim();
+        if (title?.Length > MaxTitleLength)
+            throw new ContestValidationException($"Tên video tối đa {MaxTitleLength} ký tự.");
+
+        var description = request.Description?.Trim();
+        if (description?.Length > MaxDescriptionLength)
+            throw new ContestValidationException($"Mô tả tối đa {MaxDescriptionLength} ký tự.");
+
+        // Nộp trùng cùng 1 bể cho cùng contest = upload thêm 1 video YouTube trùng nội dung,
+        // tốn 1.600/10.000 quota units mỗi ngày. Bài đã bị từ chối thì vẫn cho nộp lại.
+        if (await entryRepo.HasActiveEntryForSnapshotAsync(
+                currentUser.UserId, contestId, request.AquariumSnapshotId, ct))
+            throw new ContestValidationException("Bạn đã dự thi bằng bể này rồi. Hãy chọn bể khác.");
+
         // Hard block 90% (9GB) — check trước khi issue presigned PUT URL
         var stagingTotal = await entryRepo.SumStagingVideoBytesAsync(ct);
         if (stagingTotal + request.FileSizeBytes > HardBlockBytes)
@@ -141,6 +158,8 @@ public class ContestService(
             VideoR2Key = objectKey,
             VideoSizeBytes = request.FileSizeBytes,
             VideoDurationSeconds = request.VideoDurationSeconds,
+            Title = string.IsNullOrWhiteSpace(title) ? null : title,
+            Description = string.IsNullOrWhiteSpace(description) ? null : description,
             Status = (int)ContestEntryStatus.Pending,
             SubmittedAt = DateTime.UtcNow,
         };
@@ -161,8 +180,17 @@ public class ContestService(
         await entryRepo.SaveChangesAsync(ct);
 
         var contest = await contestRepo.GetByIdAsync(contestId, ct);
-        var videoId = await youTube.UploadUnlistedAsync(
-            entry.VideoR2Key, contest?.Title ?? "FishLover Contest Entry", "Submitted via FishLover Public Aquarium Contest", ct);
+        var snapshot = await snapshotRepo.GetByIdAsync(entry.AquariumSnapshotId, ct);
+
+        // Ưu tiên tên người dự thi tự đặt → tên bể đã public → tên contest (bí quá mới dùng)
+        var title = entry.Title
+            ?? SnapshotDataReader.TryGetAquariumName(snapshot?.SnapshotData)
+            ?? contest?.Title
+            ?? "FishLover Contest Entry";
+
+        var description = entry.Description ?? $"Bài dự thi {contest?.Title} — The FishLover";
+
+        var videoId = await youTube.UploadUnlistedAsync(entry.VideoR2Key, title, description, ct);
 
         if (videoId is null)
         {
@@ -207,7 +235,7 @@ public class ContestService(
         return true;
     }
 
-    public async Task<bool> RejectEntryAsync(Guid contestId, Guid entryId, CancellationToken ct = default)
+    public async Task<bool> RejectEntryAsync(Guid contestId, Guid entryId, string reason, CancellationToken ct = default)
     {
         var entry = await entryRepo.GetByIdAsync(entryId, ct);
         if (entry is null || entry.ContestId != contestId) return false;
@@ -219,9 +247,24 @@ public class ContestService(
             await storage.DeleteAsync(entry.VideoR2Key, ct);
 
         entry.Status = (int)ContestEntryStatus.Rejected;
+        entry.RejectionReason = reason.Trim();
         entry.VideoR2Key = null;
         await entryRepo.SaveChangesAsync(ct);
         return true;
+    }
+
+    public async Task<IReadOnlyList<ContestEntryDto>> GetMyEntriesAsync(Guid contestId, CancellationToken ct = default)
+    {
+        var entries = await entryRepo.GetByUserAndContestAsync(currentUser.UserId, contestId, ct);
+        var tiers = (await prizeTierRepo.GetByContestAsync(contestId, ct)).ToDictionary(t => t.Id);
+
+        var result = new List<ContestEntryDto>(entries.Count);
+        foreach (var e in entries)
+        {
+            var tierName = e.PrizeTierId.HasValue && tiers.TryGetValue(e.PrizeTierId.Value, out var t) ? t.Name : null;
+            result.Add(await ToDtoWithSnapshotAsync(e, tierName, ct));
+        }
+        return result;
     }
 
     public async Task<IReadOnlyList<LeaderboardEntryDto>> GetLeaderboardAsync(Guid contestId, CancellationToken ct = default)
@@ -243,9 +286,15 @@ public class ContestService(
     }
 
     public async Task<IReadOnlyList<ContestEntryDto>> GetPendingReviewAsync(CancellationToken ct = default)
-        => (await entryRepo.GetByStatusAsync((int)ContestEntryStatus.UploadedDraft, ct))
-            .Select(e => ToDto(e, prizeTierName: null)) // pending review chưa từng có tier — finalize chỉ chạy sau khi Published
-            .ToList();
+    {
+        // pending review chưa từng có tier — finalize chỉ chạy sau khi Published
+        var entries = await entryRepo.GetByStatusAsync((int)ContestEntryStatus.UploadedDraft, ct);
+
+        var result = new List<ContestEntryDto>(entries.Count);
+        foreach (var e in entries)
+            result.Add(await ToDtoWithSnapshotAsync(e, prizeTierName: null, ct));
+        return result;
+    }
 
     // ── Prize tiers ────────────────────────────────────────────
     public async Task<ContestPrizeTierDto> CreatePrizeTierAsync(Guid contestId, CreatePrizeTierRequest request, CancellationToken ct = default)
@@ -470,7 +519,22 @@ public class ContestService(
         return new ContestSponsorDto(s.Id, s.Name, s.WebsiteUrl, s.Address, logoUrl, (SponsorTier)s.SponsorTier, s.DisplayOrder);
     }
 
-    private static ContestEntryDto ToDto(ContestEntry e, string? prizeTierName) => new(
+    private static ContestEntryDto ToDto(
+        ContestEntry e, string? prizeTierName,
+        string? aquariumName = null, string? ownerNickname = null, string? snapshotSlug = null) => new(
         e.Id, e.ContestId, e.AquariumSnapshotId, e.YouTubeVideoId, e.YouTubeViewCount,
-        e.PrizeTierId, prizeTierName, (ContestEntryStatus)e.Status, e.SubmittedAt);
+        e.PrizeTierId, prizeTierName, (ContestEntryStatus)e.Status, e.SubmittedAt,
+        e.Title, e.Description, e.RejectionReason,
+        aquariumName, ownerNickname, snapshotSlug);
+
+    /// <summary>
+    /// Kèm thông tin bể từ snapshot — admin duyệt và người dự thi cần biết bài này là bể nào, của ai,
+    /// thay vì chỉ thấy mỗi ngày nộp. Slug để FE link sang trang public của bể (đã có sẵn ảnh cover).
+    /// </summary>
+    private async Task<ContestEntryDto> ToDtoWithSnapshotAsync(ContestEntry e, string? prizeTierName, CancellationToken ct)
+    {
+        var snapshot = await snapshotRepo.GetByIdAsync(e.AquariumSnapshotId, ct);
+        var data = SnapshotDataReader.TryRead(snapshot?.SnapshotData);
+        return ToDto(e, prizeTierName, data?.AquariumName, data?.OwnerNickname, snapshot?.Slug);
+    }
 }

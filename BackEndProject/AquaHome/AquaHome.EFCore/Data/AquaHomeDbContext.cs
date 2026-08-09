@@ -136,7 +136,12 @@ public class AquaHomeDbContext(DbContextOptions<AquaHomeDbContext> options) : Db
             e.HasKey(x => x.Id);
             e.Property(x => x.VideoR2Key).HasMaxLength(500);
             e.Property(x => x.YouTubeVideoId).HasMaxLength(20);
+            e.Property(x => x.Title).HasMaxLength(100);        // giới hạn title của YouTube
+            e.Property(x => x.Description).HasMaxLength(100);  // chốt 100 ký tự cho người dự thi
+            e.Property(x => x.RejectionReason).HasMaxLength(500);
             e.HasIndex(x => x.Status);
+            // Trang "bài dự thi của tôi" + check nộp trùng đều lọc theo (UserId, ContestId)
+            e.HasIndex(x => new { x.UserId, x.ContestId });
             e.HasOne(x => x.Contest)
              .WithMany(c => c.Entries)
              .HasForeignKey(x => x.ContestId)

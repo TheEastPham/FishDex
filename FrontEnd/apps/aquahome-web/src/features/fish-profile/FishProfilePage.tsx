@@ -17,6 +17,8 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import SpeciesCard from '../fish-search/components/SpeciesCard';
 import AddLocalNameModal from '../community/AddLocalNameModal';
+import AddToCountryButton from '../market/components/AddToCountryButton';
+import SoldInBadge from '../market/components/SoldInBadge';
 
 // Fix leaflet default icon issue
 import iconUrl from 'leaflet/dist/images/marker-icon.png';
@@ -250,6 +252,8 @@ export default function FishProfilePage() {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex gap-2">
+            {/* Chỉ admin thấy — tự ẩn nếu không đủ quyền */}
+            {id !== null && <AddToCountryButton specCode={id} className="!min-h-[42px] rounded-full bg-black/30 backdrop-blur-md border-white/10" />}
             {canAddName && (
               <button onClick={() => setShowAddName(true)} className="p-2.5 bg-black/30 backdrop-blur-md text-white rounded-full hover:bg-black/60 transition-colors border border-white/10" title={t('contribute.addLocalName')}>
                 <Pencil className="w-5 h-5" />
@@ -290,6 +294,9 @@ export default function FishProfilePage() {
               {detail.speciesName}
             </h2>
           )}
+
+          {/* Chỉ báo sang lớp market — không đổi hành vi gì khác của trang tra cứu */}
+          {id !== null && <SoldInBadge specCode={id} />}
         </div>
       </div>
 

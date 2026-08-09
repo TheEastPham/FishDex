@@ -77,6 +77,19 @@ public class TradedSpeciesRepository(FishDexDbContext db) : ITradedSpeciesReposi
             .FirstOrDefaultAsync(ct);
     }
 
+    public async Task<IReadOnlyList<string>> GetCountriesSellingAsync(
+        int specCode, CancellationToken ct = default)
+    {
+        var selling = db.TradedSpecies.AsNoTracking();
+        selling = selling.Where(t => t.SpecCode == specCode);
+        selling = selling.Where(t => t.Status == MarketStatus.Approved);
+
+        return await selling
+            .Select(t => t.CountryCode)
+            .Distinct()
+            .ToListAsync(ct);
+    }
+
     public async Task AddAsync(TradedSpecies entity, CancellationToken ct = default)
     {
         await db.TradedSpecies.AddAsync(entity, ct);

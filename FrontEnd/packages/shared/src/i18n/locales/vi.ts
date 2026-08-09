@@ -96,6 +96,8 @@ const vi = {
     submitSpecies: 'Thêm loài',
     aquahomeGroup: 'AquaHome',
     fishdexGroup: 'FishDex',
+    market: 'Cá cảnh theo quốc gia',
+    marketAdmin: 'Quản lý danh sách cá bán',
     communityModeration: 'Duyệt đóng góp',
     myContributions: 'Đóng góp của tôi',
     utilitiesGroup: 'Tiện ích',
@@ -228,6 +230,8 @@ const vi = {
     addToFavorites: 'Thêm vào yêu thích',
     addToAquarium: '+ Thêm vào bể',
     addToAquariumDisabledTip: 'Cần AquaHome Service (Story 5.2)',
+    quantity: 'Số lượng',
+    noAquariums: 'Chưa có hồ cá nào',
     // Detail Page
     overview: 'Tổng quan',
     waterParameters: 'Thông số nước',
@@ -318,6 +322,84 @@ const vi = {
     distributionRecords: 'điểm',
     distributionCountries: 'quốc gia',
     showAll: 'Tất cả',
+  },
+  // Tên nước tra theo alpha-2. Helper countries.ts chỉ giữ mã và cờ, không hardcode tên.
+  countries: {
+    VN: 'Việt Nam',
+    US: 'Mỹ',
+    CN: 'Trung Quốc',
+    JP: 'Nhật Bản',
+    NL: 'Hà Lan',
+    DE: 'Đức',
+    GB: 'Anh',
+    IN: 'Ấn Độ',
+    MY: 'Malaysia',
+    SG: 'Singapore',
+    TH: 'Thái Lan',
+    ID: 'Indonesia',
+  },
+  // Tên ngôn ngữ bản ngữ của từng nước, tra theo alpha-2. Dùng để câu chữ trên UI không
+  // hardcode "tiếng Việt" — xem danh sách Thái Lan thì phải hỏi tên tiếng Thái.
+  languageNames: {
+    VN: 'tiếng Việt',
+    US: 'tiếng Anh',
+    CN: 'tiếng Trung',
+    JP: 'tiếng Nhật',
+    NL: 'tiếng Hà Lan',
+    DE: 'tiếng Đức',
+    GB: 'tiếng Anh',
+    IN: 'tiếng Hindi',
+    MY: 'tiếng Mã Lai',
+    SG: 'tiếng Anh',
+    TH: 'tiếng Thái',
+    ID: 'tiếng Indonesia',
+  },
+  market: {
+    // Tiêu đề mang tên nước để không mất ngữ cảnh khi quốc gia nằm trong dropdown
+    title: 'Cá cảnh ở {{country}}',
+    subtitle: 'Những loài đang được bán tại {{country}}',
+    countryLabel: 'Quốc gia',
+
+    // Ba ô thống kê. Ô "chờ đặt tên" được nhấn vì đó là lời mời đóng góp
+    statTraded: 'đang bán',
+    statNamed: 'có tên bản ngữ',
+    statAwaiting: 'chờ đặt tên',
+
+    filters: 'Bộ lọc',
+    filtersClear: 'Xoá lọc',
+    filtersApply: 'Xem {{count}} loài',
+    sizeLabel: 'Kích thước khi trưởng thành',
+    sizeUnder5: 'dưới 5 cm',
+    size5to10: '5–10 cm',
+    size10to20: '10–20 cm',
+    sizeOver20: 'trên 20 cm',
+    nameStatusLabel: 'Tên bản ngữ',
+    nameStatusAll: 'Tất cả',
+    nameStatusHas: 'Đã có',
+    nameStatusMissing: 'Chưa có',
+
+    // Thẻ loài — chỗ tên bản ngữ khi loài chưa có tên, kèm gợi ý hiện lúc rê chuột
+    noLocalName: 'Chưa có tên {{language}}',
+    addNameHint: 'Bạn có thể thêm tên {{language}} mà bạn biết không?',
+    tradeCommon: 'Phổ biến',
+    tradeOccasional: 'Thỉnh thoảng',
+    tradeSeasonal: 'Theo mùa',
+    tradeRare: 'Hiếm',
+    legalRestricted: 'Hạn chế',
+    legalBanned: 'Cấm nuôi',
+
+    empty: 'Chưa có loài nào trong danh sách của {{country}}.',
+    emptyFiltered: 'Không có loài nào khớp bộ lọc. Thử nới bộ lọc xem sao.',
+    error: 'Không tải được danh sách. Kiểm tra FishDex Service.',
+    countryNotEnabled: 'Chúng tôi chưa khảo sát thị trường {{country}}.',
+    countryNotEnabledHint: 'Danh sách sẽ mở khi có đủ người nuôi cá ở đây — bể của bạn cũng góp vào đó.',
+    comingSoon: 'sắp có',
+
+    // Nút chỉ hiện với admin
+    addToCountry: 'Thêm vào {{country}}',
+    addedToCountry: 'Đã thêm vào danh sách {{country}}',
+    removeFromCountry: 'Gỡ khỏi {{country}}',
+    soldIn: 'Có bán ở {{country}}',
   },
   iucn: {
     LC: 'Ít quan tâm (LC)',

@@ -3,8 +3,14 @@ using FishDex.EFCore.Entity.Market;
 namespace FishDex.Domain.DTOs.Market;
 
 // ── Quốc gia ──────────────────────────────────────────────────────
-/// <summary>Tên nước KHÔNG dịch ở đây — FE dịch qua i18n key theo <paramref name="Alpha2"/>.</summary>
-public record MarketCountryDto(string Alpha2, string NameEn, IReadOnlyList<string> Languages);
+/// <summary>
+/// Tên nước KHÔNG dịch ở đây — FE dịch qua i18n key theo <paramref name="Alpha2"/>.
+///
+/// <para>Trả về CẢ nước chưa bật, kèm <paramref name="IsEnabled"/>, để dropdown hiện đủ danh sách
+/// hệ thống hỗ trợ. Nước chưa bật thì FE không gọi endpoint dữ liệu mà hiện thẳng thông báo
+/// chưa khảo sát — cho người dùng thấy lộ trình thay vì tưởng chỉ có mỗi một nước.</para>
+/// </summary>
+public record MarketCountryDto(string Alpha2, string NameEn, IReadOnlyList<string> Languages, bool IsEnabled);
 
 // ── Bộ lọc ────────────────────────────────────────────────────────
 /// <summary>

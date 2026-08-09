@@ -22,8 +22,8 @@ public class MarketService(
     ILogger<MarketService> logger) : IMarketService
 {
     public IReadOnlyList<MarketCountryDto> GetCountries()
-        => MarketCountries.Enabled
-            .Select(c => new MarketCountryDto(c.Alpha2, c.NameEn, c.Languages))
+        => MarketCountries.All
+            .Select(c => new MarketCountryDto(c.Alpha2, c.NameEn, c.Languages, c.IsEnabled))
             .ToList();
 
     public async Task<PagedResult<MarketSpeciesDto>?> GetSpeciesAsync(
@@ -72,6 +72,18 @@ public class MarketService(
 
         var (total, withName) = await repo.GetStatsAsync(country.Code, country.Languages, ct);
         return new MarketStatsDto(total, withName, total - withName);
+    }
+
+    public async Task<IReadOnlyList<string>> GetSellingCountriesAsync(
+        int specCode, CancellationToken ct = default)
+    {
+        var codes = await repo.GetCountriesSellingAsync(specCode, ct);
+
+        return codes
+            .Select(MarketCountries.ByCode)
+            .Where(c => c is { IsEnabled: true })
+            .Select(c => c!.Alpha2)
+            .ToList();
     }
 
     public async Task<IReadOnlyList<SpeciesLookupDto>> LookupAsync(

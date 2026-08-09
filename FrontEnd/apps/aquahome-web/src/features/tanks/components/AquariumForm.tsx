@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { cn, useTranslation, WaterType, AquariumStyle } from '@fishlover/shared';
+import { cn, useTranslation, WaterType, AquariumStyle, MARKET_COUNTRIES, getStoredCountry, findCountry } from '@fishlover/shared';
 import type { AquariumDto, CreateAquariumRequest } from '@fishlover/shared';
 import { X, FlaskConical, Droplets, Save, Loader } from 'lucide-react';
 
@@ -21,6 +21,9 @@ export default function AquariumForm({ isOpen, onClose, onSave, editing }: Props
   const [width, setWidth] = useState('');
   const [height, setHeight] = useState('');
   const [description, setDescription] = useState('');
+  // Quốc gia đặt bể. Gắn vào BỂ chứ không vào user nên một người có thể có bể ở nhiều nước.
+  // Đây là nguồn dữ liệu cho lớp market: bể ở nước X có cá Z nghĩa là nước X bán cá Z.
+  const [countryCode, setCountryCode] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -32,9 +35,12 @@ export default function AquariumForm({ isOpen, onClose, onSave, editing }: Props
       setWidth(editing.widthCm?.toString() ?? '');
       setHeight(editing.heightCm?.toString() ?? '');
       setDescription(editing.description ?? '');
+      setCountryCode(editing.countryCode ?? '');
     } else {
       setName(''); setWaterType(''); setStyle('');
       setLength(''); setWidth(''); setHeight(''); setDescription('');
+      // Bể mới mặc định theo nước đang chọn ở trang market — đỡ một thao tác cho phần lớn người dùng
+      setCountryCode(findCountry(getStoredCountry())?.code ?? '');
     }
   }, [editing, isOpen]);
 
@@ -56,6 +62,7 @@ export default function AquariumForm({ isOpen, onClose, onSave, editing }: Props
         widthCm: w > 0 ? w : null,
         heightCm: h > 0 ? h : null,
         description: description.trim() || null,
+        countryCode: countryCode || null,
       });
       onClose();
     } finally {
@@ -122,6 +129,25 @@ export default function AquariumForm({ isOpen, onClose, onSave, editing }: Props
               required
               className="w-full bg-[#0F172A] border border-slate-700/60 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/30 transition-all"
             />
+          </div>
+
+          {/* Quốc gia đặt bể — nguồn dữ liệu cho lớp market bên FishDex */}
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
+              {t('market.countryLabel')}
+            </label>
+            <select
+              value={countryCode}
+              onChange={e => setCountryCode(e.target.value)}
+              className={cn(SELECT_CLASS, countryCode === '' ? 'text-slate-600' : 'text-white')}
+            >
+              <option value="">—</option>
+              {MARKET_COUNTRIES.map(c => (
+                <option key={c.alpha2} value={c.code} className="bg-[#0F172A]">
+                  {t(`countries.${c.alpha2}`)}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Water Type */}

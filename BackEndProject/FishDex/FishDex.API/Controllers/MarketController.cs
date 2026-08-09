@@ -53,6 +53,15 @@ public class MarketController(IMarketService service) : ControllerBase
     }
 
     /// <summary>
+    /// Các quốc gia đang bán một loài, trả về mã alpha-2. Trang chi tiết loài dùng để hiện
+    /// badge "có bán ở ‹nước›". Mảng rỗng nghĩa là chưa nước nào có loài này trong danh sách.
+    /// </summary>
+    [HttpGet("species/{specCode:int}/countries")]
+    public async Task<ActionResult<IReadOnlyList<string>>> GetSellingCountries(
+        int specCode, CancellationToken ct)
+        => Ok(await service.GetSellingCountriesAsync(specCode, ct));
+
+    /// <summary>
     /// Tra tên khoa học trên index toàn bộ FishBase để biết loài nằm ở nhánh nào:
     /// đã có trong FishDex, hay có trong FishBase nhưng chưa nạp. Không tìm thấy nghĩa là
     /// loài lai — FE chuyển sang luồng submit community species.

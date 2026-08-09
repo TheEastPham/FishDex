@@ -21,6 +21,13 @@ public interface IMarketService
     Task<MarketStatsDto?> GetStatsAsync(string alpha2, CancellationToken ct = default);
 
     /// <summary>
+    /// Các quốc gia đang bán một loài, trả về alpha-2. Cho badge trên trang chi tiết loài.
+    /// Chỉ trả nước đã bật market — nước tắt thì người dùng không xem được danh sách của nó,
+    /// nên hiện badge cũng vô nghĩa.
+    /// </summary>
+    Task<IReadOnlyList<string>> GetSellingCountriesAsync(int specCode, CancellationToken ct = default);
+
+    /// <summary>
     /// Tra tên khoa học trên index toàn bộ FishBase để phân luồng UC1/UC2.
     /// Không trả loài lai — loài không có trong FishBase thì đi luồng community species.
     /// </summary>

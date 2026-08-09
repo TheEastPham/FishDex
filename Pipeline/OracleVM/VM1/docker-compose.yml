@@ -151,6 +151,9 @@ services:
       - AutoMigrate__OnStartup=false
       - UserManagement__BaseUrl=http://usermanagement:8080
       - UserManagement__InternalApiKey=${INTERNAL_API_KEY}
+      # Market Layer — job 8 tiếng gom cá theo quốc gia đẩy sang FishDex.
+      # Thiếu biến này thì rơi về localhost:8081 và bị Connection refused trong container.
+      - FishDex__BaseUrl=http://fishdex:8081
       # Epic 11.3 — SyncContestViewCountsBackgroundService (mỗi 6h) gọi YouTube Data API
       - ExternalServices__YouTube__ClientId=${YOUTUBE_CLIENT_ID}
       - ExternalServices__YouTube__ClientSecret=${YOUTUBE_CLIENT_SECRET}

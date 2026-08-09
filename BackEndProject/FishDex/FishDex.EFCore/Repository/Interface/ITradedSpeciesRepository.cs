@@ -59,6 +59,12 @@ public interface ITradedSpeciesRepository
 
     Task<TradedSpecies?> GetAsync(string countryCode, int specCode, CancellationToken ct = default);
 
+    /// <summary>
+    /// Các quốc gia đang bán một loài — cho badge trên trang chi tiết loài.
+    /// Dùng index <c>(SpecCode)</c> vốn tạo ra chính cho việc này.
+    /// </summary>
+    Task<IReadOnlyList<string>> GetCountriesSellingAsync(int specCode, CancellationToken ct = default);
+
     Task AddAsync(TradedSpecies entity, CancellationToken ct = default);
 
     void Remove(TradedSpecies entity);

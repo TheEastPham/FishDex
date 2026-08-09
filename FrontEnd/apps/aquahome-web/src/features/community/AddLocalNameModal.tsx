@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { submitCommonName, updateCommonName, getMyCommonNames, useTranslation } from '@fishlover/shared';
+import { submitCommonName, updateCommonName, getMyCommonNames, useTranslation, getStoredCountry, findCountry } from '@fishlover/shared';
 import type { CommunityCommonNameDto } from '@fishlover/shared';
 import { Loader2, X, Languages, Pencil } from 'lucide-react';
 import ResultModal from '@/components/common/ResultModal';
@@ -9,6 +9,12 @@ interface Props {
   onClose: () => void;
   /** Ngôn ngữ mở sẵn (vd khi bấm Sửa từ 1 dòng cụ thể trong "Đóng góp của tôi"). */
   initialLanguage?: string;
+  /**
+   * Quốc gia (alpha-2) mà tên này thuộc về. Mặc định lấy nước đang chọn ở trang market.
+   * Dùng để prefill ngôn ngữ và gửi kèm `countryCode` — trước đây FE không gửi field này
+   * nên mọi tên cộng đồng đều không gắn quốc gia.
+   */
+  countryAlpha2?: string;
   /** Gọi lại sau khi submit/update thành công — dùng để refresh list ở trang cha. */
   onSaved?: () => void;
 }
@@ -19,10 +25,14 @@ const inputCls =
 
 const isPending = (n: CommunityCommonNameDto) => !n.isVerified && !n.rejectionReason;
 
-export default function AddLocalNameModal({ specCode, onClose, initialLanguage = 'Vietnamese', onSaved }: Props) {
+export default function AddLocalNameModal({ specCode, onClose, initialLanguage, countryAlpha2, onSaved }: Props) {
   const { t } = useTranslation();
+  const country = findCountry(countryAlpha2 ?? getStoredCountry());
+
   const [comName, setComName] = useState('');
-  const [language, setLanguage] = useState(initialLanguage);
+  // Ngôn ngữ mở sẵn: ưu tiên giá trị truyền vào (khi sửa một dòng cụ thể), rồi tới ngôn ngữ
+  // của quốc gia đang chọn. Không mặc định cứng 'Vietnamese' nữa vì đã có 12 nước.
+  const [language, setLanguage] = useState(initialLanguage ?? country?.defaultLanguage ?? 'Vietnamese');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -51,7 +61,7 @@ export default function AddLocalNameModal({ specCode, onClose, initialLanguage =
     setError(null);
     try {
       if (pendingForLang) await updateCommonName(pendingForLang.autoCtr, comName.trim());
-      else await submitCommonName(specCode, { comName: comName.trim(), language });
+      else await submitCommonName(specCode, { comName: comName.trim(), language, countryCode: country?.code });
       setDone(true);
       onSaved?.();
     } catch (e) {

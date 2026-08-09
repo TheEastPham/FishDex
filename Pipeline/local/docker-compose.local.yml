@@ -251,6 +251,10 @@ services:
       AutoMigrate__OnStartup:               "false"   # API đã migrate, worker không migrate (tránh race)
       UserManagement__BaseUrl:              http://usermanagement-api:8080
       UserManagement__InternalApiKey:       ${INTERNAL_API_KEY}
+      # Market Layer — SyncMarketSpeciesBackgroundService (mỗi 8h) gọi /api/market/ingest.
+      # Thiếu biến này thì HttpClient rơi về mặc định localhost:8081, mà trong container
+      # localhost là chính worker → Connection refused.
+      FishDex__BaseUrl:                     http://fishdex-api:8080
       # Epic 11.3 — SyncContestViewCountsBackgroundService (mỗi 6h)
       ExternalServices__YouTube__ClientId:     ${YOUTUBE_CLIENT_ID}
       ExternalServices__YouTube__ClientSecret: ${YOUTUBE_CLIENT_SECRET}

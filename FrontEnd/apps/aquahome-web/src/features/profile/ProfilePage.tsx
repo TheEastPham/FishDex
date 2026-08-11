@@ -19,7 +19,7 @@ const LANGUAGES = [
 export default function ProfilePage() {
   const { t } = useTranslation();
   const [profile, setProfile] = useState<UserProfileDto | null>(null);
-  const { permission, loading: pushLoading, isSupported, subscribe, unsubscribe } = usePushNotification();
+  const { permission, loading: pushLoading, isSupported, needsIOSInstall, subscribe, unsubscribe } = usePushNotification();
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -176,7 +176,9 @@ export default function ProfilePage() {
         <h2 className="font-semibold text-slate-800">{t('profile.pushNotifications')}</h2>
         <p className="text-sm text-slate-500">{t('profile.pushHint')}</p>
 
-        {!isSupported ? (
+        {needsIOSInstall ? (
+          <p className="text-sm text-slate-500">{t('profile.pushIOSInstallHint')}</p>
+        ) : !isSupported ? (
           <p className="text-sm text-slate-400">{t('profile.pushUnsupported')}</p>
         ) : permission === 'denied' ? (
           <p className="text-sm text-amber-600">{t('profile.pushDenied')}</p>

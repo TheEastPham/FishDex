@@ -90,13 +90,9 @@ public class YouTubeUploadService(
     {
         var youtube = BuildClient();
 
-        var video = new Video
-        {
-            Id = youTubeVideoId,
-            Status = new VideoStatus { PrivacyStatus = "public" },
-        };
-        await youtube.Videos.Update(video, "status").ExecuteAsync(ct);
-
+        // Add playlist TRƯỚC khi set public: nếu playlistId sai/không thuộc channel thì lỗi xảy ra
+        // lúc video vẫn còn Unlisted — admin bấm approve lại được. Nếu làm ngược lại, video đã public
+        // trên YouTube trong khi DB vẫn UploadedDraft → lệch trạng thái, approve lại sinh item trùng.
         if (!string.IsNullOrEmpty(playlistId))
         {
             var item = new PlaylistItem
@@ -109,6 +105,19 @@ public class YouTubeUploadService(
             };
             await youtube.PlaylistItems.Insert(item, "snippet").ExecuteAsync(ct);
         }
+        else
+        {
+            logger.LogWarning(
+                "Contest chưa cấu hình YouTubePlaylistId — video {VideoId} sẽ public nhưng không vào playlist nào",
+                youTubeVideoId);
+        }
+
+        var video = new Video
+        {
+            Id = youTubeVideoId,
+            Status = new VideoStatus { PrivacyStatus = "public" },
+        };
+        await youtube.Videos.Update(video, "status").ExecuteAsync(ct);
     }
 
     public async Task DeleteVideoAsync(string youTubeVideoId, CancellationToken ct = default)

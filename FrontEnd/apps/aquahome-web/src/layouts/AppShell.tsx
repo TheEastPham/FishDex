@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Search, MessageCircle, Camera, Fish, LogOut, ChevronRight,
   Droplets, TestTube, Calendar, Heart, History, BookOpen, ChevronDown,
   Shield, Home, Settings, FileText, ImageIcon, User, LogIn, Menu, X, Globe, Bell, MoreHorizontal,
-  Users, Waves, Trophy
+  Users, Waves, Trophy, Store
 } from 'lucide-react';
 import { cn, useLogout, useTranslation, setLanguage, useAuthStore } from '@fishlover/shared';
 
@@ -103,6 +103,10 @@ export default function AppShell() {
       label: t('nav.fishdexGroup'),
       product: 'FishDex',
       subItems: [
+        // Đặt TRÊN "Tra cứu" vì đây là cửa vào dễ hơn: vào là thấy nội dung,
+        // không cần biết tên loài để gõ.
+        { to: '/market',    icon: Store,    label: t('nav.market') },
+        { to: '/admin/market', icon: Store, label: t('nav.marketAdmin'), requireRoles: ['SystemAdmin', 'ContentAdmin'] },
         { to: '/fish',      icon: Search,   label: t('nav.fishSearch') },
         { to: '/favorites', icon: Heart,    label: t('nav.favorites'), requireAuth: true },
         { to: '/history',   icon: History,  label: t('nav.history'),   requireAuth: true },

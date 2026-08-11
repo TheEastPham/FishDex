@@ -34,6 +34,27 @@ public record SubmitCommunitySpeciesRequest(
     SnapshotCareLevel? CareLevel = null,
     int? MinTankLiters = null);
 
+/// <summary>
+/// Một loài có tên gần giống tên user đang gõ. <paramref name="Outcome"/> quyết định FE dẫn
+/// người dùng đi đâu: chọn thẳng loài đã có, yêu cầu nạp từ FishBase, hay báo trùng hàng đợi.
+/// </summary>
+public record SimilarSpeciesDto(
+    int SpecCode,
+    string SpeciesName,
+    SimilarSpeciesOutcome Outcome,
+    // Score: độ giống 0..1, để FE quyết mức độ nhấn mạnh cảnh báo.
+    double Score);
+
+public enum SimilarSpeciesOutcome
+{
+    /// <summary>Đã có trong FishDex — chọn thẳng, không cần submit gì.</summary>
+    AlreadyInFishDex = 0,
+    /// <summary>Có trong FishBase nhưng chưa nạp — đi luồng yêu cầu migration.</summary>
+    NeedsMigration = 1,
+    /// <summary>Đã có người khác submit và đang chờ duyệt.</summary>
+    AlreadySubmitted = 2,
+}
+
 public record RejectCommunitySpeciesRequest(string Reason);
 
 /// <summary>Admin duyệt — có thể xác nhận lại Kind (mặc định giữ SuggestedKind nếu không truyền).</summary>

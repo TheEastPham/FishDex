@@ -10,6 +10,8 @@ import RoleGuard from '@/components/RoleGuard';
 import AppShell from '@/layouts/AppShell';
 
 import FishSearchPage from '@/features/fish-search/FishSearchPage';
+import MarketPage from '@/features/market/MarketPage';
+import AdminMarketPage from '@/features/market/AdminMarketPage';
 import FishProfilePage from '@/features/fish-profile/FishProfilePage';
 import PlaceholderPage from '@/features/common/PlaceholderPage';
 import DashboardPage from '@/features/dashboard/DashboardPage';
@@ -28,10 +30,13 @@ import MyContributionsPage from '@/features/community/MyContributionsPage';
 import SubmitSpeciesPage from '@/features/community/SubmitSpeciesPage';
 import AdminCommunityPage from '@/features/admin-community/AdminCommunityPage';
 
-// Redirect "/" based on auth state: dashboard if logged in, fish search if not
+// Redirect "/" theo trạng thái đăng nhập.
+// Khách chưa đăng nhập vào /market chứ không phải /fish: trang tra cứu không có gì để xem cho
+// tới khi gõ tên loài, mà người mới nuôi cá thì chưa biết tên nào để gõ. /market vào là thấy
+// nội dung ngay — ấn tượng đầu tốt hơn hẳn một ô tìm kiếm rỗng.
 function RootRedirect() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  return <Navigate to={isAuthenticated ? '/dashboard' : '/fish'} replace />;
+  return <Navigate to={isAuthenticated ? '/dashboard' : '/market'} replace />;
 }
 
 export const router = createBrowserRouter([
@@ -46,6 +51,8 @@ export const router = createBrowserRouter([
       { index: true, element: <RootRedirect /> },
 
       // ── Public routes ──────────────────────────────────────
+      { path: '/market',              element: <MarketPage /> },
+      { path: '/market/:cc',          element: <MarketPage /> },
       { path: '/fish',                element: <FishSearchPage /> },
       { path: '/fish/:specCode',      element: <FishProfilePage /> },
       { path: '/articles/release',    element: <ReleasePage /> },
@@ -81,6 +88,7 @@ export const router = createBrowserRouter([
           { path: '/admin/articles', element: <PlaceholderPage /> },
           { path: '/admin/media',    element: <PlaceholderPage /> },
           { path: '/admin/community', element: <AdminCommunityPage /> },
+          { path: '/admin/market',    element: <AdminMarketPage /> },
         ],
       },
       {

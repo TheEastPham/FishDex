@@ -85,6 +85,12 @@ export async function confirmEntryUpload(contestId: string, entryId: string): Pr
   await apiClient.post(`/aquahome/v1/contests/${contestId}/entries/${entryId}/confirm-upload`);
 }
 
+/** Bài dự thi của chính user trong contest này (mọi trạng thái) — để theo dõi sau khi nộp. */
+export async function getMyContestEntries(contestId: string): Promise<ContestEntryDto[]> {
+  const { data } = await apiClient.get<ContestEntryDto[]>(`/aquahome/v1/contests/${contestId}/entries/mine`);
+  return data;
+}
+
 // ── Contest admin (SystemAdmin) ───────────────────────────
 
 export async function getAllContests(): Promise<ContestDto[]> {
@@ -111,8 +117,8 @@ export async function approveContestEntry(contestId: string, entryId: string): P
   await apiClient.patch(`/aquahome/v1/contests/${contestId}/entries/${entryId}/approve`);
 }
 
-export async function rejectContestEntry(contestId: string, entryId: string): Promise<void> {
-  await apiClient.patch(`/aquahome/v1/contests/${contestId}/entries/${entryId}/reject`);
+export async function rejectContestEntry(contestId: string, entryId: string, reason: string): Promise<void> {
+  await apiClient.patch(`/aquahome/v1/contests/${contestId}/entries/${entryId}/reject`, { reason });
 }
 
 /** Chốt giải — gán hạng cho từng entry đã Published, đóng contest (Status=Ended). SystemAdmin only. */

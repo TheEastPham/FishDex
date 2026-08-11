@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using AquaHome.Domain.DTOs;
 using AquaHome.Domain.Enums;
+using AquaHome.Domain.Extensions;
 using AquaHome.Domain.Services.Interfaces;
 using AquaHome.Domain.Settings;
 using AquaHome.EFCore.Entity;
@@ -138,16 +139,7 @@ public class SnapshotService(
     }
 
     private static string? TryGetAquariumName(string snapshotJson)
-    {
-        try
-        {
-            return JsonSerializer.Deserialize<SnapshotDataDto>(snapshotJson, JsonOptions)?.AquariumName;
-        }
-        catch
-        {
-            return null;
-        }
-    }
+        => SnapshotDataReader.TryGetAquariumName(snapshotJson);
 
     public async Task<PagedResult<AquariumSnapshotDto>> GetGalleryAsync(
         int? waterType, int? style, string? contest, string sort, int page, int pageSize, CancellationToken ct = default)

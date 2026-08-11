@@ -226,6 +226,10 @@ export interface SubmitEntryRequest {
   contentType: string;
   fileSizeBytes: number;
   videoDurationSeconds: number;
+  /** Tên video trên YouTube — bỏ trống thì BE lấy tên bể đã public. Tối đa 100 ký tự. */
+  title?: string | null;
+  /** Mô tả người dự thi tự viết, tối đa 100 ký tự. */
+  description?: string | null;
 }
 
 export interface SubmitEntryResultDto {
@@ -244,6 +248,14 @@ export interface ContestEntryDto {
   prizeTierName: string | null;
   status: ContestEntryStatus;
   submittedAt: string;
+  title: string | null;
+  description: string | null;
+  /** Lý do admin từ chối — hiện lại cho người dự thi biết vì sao trượt. */
+  rejectionReason: string | null;
+  /** Denorm từ snapshot: admin duyệt / user theo dõi biết đây là bể nào, của ai. */
+  aquariumName: string | null;
+  ownerNickname: string | null;
+  snapshotSlug: string | null;
 }
 
 export interface LeaderboardEntryDto {

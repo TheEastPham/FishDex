@@ -14,6 +14,17 @@ public record UpdateCommunitySpeciesResult(UpdateCommunitySpeciesOutcome Outcome
 
 public interface ICommunitySpeciesService
 {
+    /// <summary>
+    /// Tra tên gần giống TRƯỚC khi submit, để bắt nhóm sai phổ biến nhất: loài đã biết được
+    /// gửi lại dưới tên thương mại địa phương hoặc tên gõ sai.
+    ///
+    /// <para>Cố ý tách khỏi <see cref="SubmitAsync"/> chứ không chặn giữa luồng: submit hiện
+    /// trả thẳng DTO, chặn ở đó sẽ phải đổi kiểu trả về và sửa controller của một luồng đang
+    /// chạy tốt. FE gọi cái này khi user gõ tên rồi hiện "có phải bạn định nói…".</para>
+    /// </summary>
+    Task<IReadOnlyList<SimilarSpeciesDto>> FindSimilarAsync(
+        string speciesName, CancellationToken ct = default);
+
     /// <summary>User submit loài mới → tạo SpeciesSnapshot Community, IsVerified=false, chờ duyệt.</summary>
     Task<CommunitySpeciesDto> SubmitAsync(SubmitCommunitySpeciesRequest request, CancellationToken ct = default);
 

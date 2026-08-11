@@ -28,6 +28,10 @@ namespace AquaHome.EFCore.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("CountryCode")
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -59,6 +63,8 @@ namespace AquaHome.EFCore.Migrations
                         .HasColumnType("double precision");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CountryCode");
 
                     b.ToTable("Aquariums");
                 });
@@ -298,14 +304,26 @@ namespace AquaHome.EFCore.Migrations
                     b.Property<Guid>("ContestId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Description")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<Guid?>("PrizeTierId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("SubmittedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
@@ -336,6 +354,8 @@ namespace AquaHome.EFCore.Migrations
                     b.HasIndex("PrizeTierId");
 
                     b.HasIndex("Status");
+
+                    b.HasIndex("UserId", "ContestId");
 
                     b.ToTable("ContestEntries");
                 });

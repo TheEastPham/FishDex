@@ -39,6 +39,12 @@ public class ContestsController(IContestService contestService) : ControllerBase
         return ok ? NoContent() : BadRequest();
     }
 
+    /// <summary>Bài dự thi của chính user trong contest này (mọi trạng thái) — để theo dõi sau khi nộp.</summary>
+    [Authorize]
+    [HttpGet("{id:guid}/entries/mine")]
+    public async Task<IActionResult> GetMyEntries(Guid id, CancellationToken ct)
+        => Ok(await contestService.GetMyEntriesAsync(id, ct));
+
     /// <summary>Admin review: danh sách entries Status=UploadedDraft, chờ approve/reject.</summary>
     [Authorize(Policy = "RequireSystemAdmin")]
     [HttpGet("entries/pending-review")]
@@ -55,9 +61,12 @@ public class ContestsController(IContestService contestService) : ControllerBase
 
     [Authorize(Policy = "RequireSystemAdmin")]
     [HttpPatch("{id:guid}/entries/{entryId:guid}/reject")]
-    public async Task<IActionResult> RejectEntry(Guid id, Guid entryId, CancellationToken ct)
+    public async Task<IActionResult> RejectEntry(Guid id, Guid entryId, [FromBody] RejectEntryRequest request, CancellationToken ct)
     {
-        var ok = await contestService.RejectEntryAsync(id, entryId, ct);
+        if (string.IsNullOrWhiteSpace(request.Reason))
+            return BadRequest("Lý do từ chối là bắt buộc.");
+
+        var ok = await contestService.RejectEntryAsync(id, entryId, request.Reason, ct);
         return ok ? NoContent() : NotFound();
     }
 }

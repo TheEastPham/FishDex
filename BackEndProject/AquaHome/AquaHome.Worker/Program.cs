@@ -23,6 +23,7 @@ builder.Services.AddFishLoverWorkerTracing(builder.Configuration, TaskReminderBa
 
 builder.Services.AddHostedService<TaskReminderBackgroundService>();
 builder.Services.AddHostedService<SyncContestViewCountsBackgroundService>();
+builder.Services.AddHostedService<SyncMarketSpeciesBackgroundService>();
 
 var host = builder.Build();
 

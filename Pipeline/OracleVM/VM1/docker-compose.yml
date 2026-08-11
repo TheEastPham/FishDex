@@ -87,6 +87,9 @@ services:
       - JwtSettings__Issuer=${JWT_ISSUER}
       - JwtSettings__Audience=${JWT_AUDIENCE}
       - Cors__AllowedOrigins__0=${FE_ORIGIN}
+      # Khoá service-to-service — AquaHome.Worker gọi /api/market/ingest. Cùng giá trị với
+      # UserManagement. Thiếu biến này thì endpoint ingest tự trả 503 chứ không mở toang.
+      - InternalSettings__ApiKey=${INTERNAL_API_KEY}
       - AutoMigrate__OnStartup=true
       - ASPNETCORE_HTTP_PORTS=8081
       - OpenTelemetry__ExportEndpoint=http://10.0.0.94:4317   # OTLP trace → Tempo (VM2)
@@ -148,6 +151,9 @@ services:
       - AutoMigrate__OnStartup=false
       - UserManagement__BaseUrl=http://usermanagement:8080
       - UserManagement__InternalApiKey=${INTERNAL_API_KEY}
+      # Market Layer — job 8 tiếng gom cá theo quốc gia đẩy sang FishDex.
+      # Thiếu biến này thì rơi về localhost:8081 và bị Connection refused trong container.
+      - FishDex__BaseUrl=http://fishdex:8081
       # Epic 11.3 — SyncContestViewCountsBackgroundService (mỗi 6h) gọi YouTube Data API
       - ExternalServices__YouTube__ClientId=${YOUTUBE_CLIENT_ID}
       - ExternalServices__YouTube__ClientSecret=${YOUTUBE_CLIENT_SECRET}

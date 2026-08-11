@@ -12,6 +12,9 @@ const MIN_DURATION_S = 120;
 const MAX_DURATION_S = 300;
 const MAX_SIZE_BYTES = 500 * 1024 * 1024;
 const ALLOWED_TYPES = ['video/mp4', 'video/quicktime', 'video/webm'];
+// Khớp giới hạn validate ở BE (ContestService)
+const MAX_TITLE_LEN = 100;
+const MAX_DESC_LEN = 100;
 
 interface VideoMeta {
   durationSeconds: number;
@@ -60,6 +63,11 @@ export default function ContestEntryFormModal({ contest, onClose, onSubmitted }:
   const [videoMeta, setVideoMeta] = useState<VideoMeta | null>(null);
   const [videoError, setVideoError] = useState<string | null>(null);
   const [copyrightChecked, setCopyrightChecked] = useState(false);
+
+  // Tên video mặc định = tên bể đang chọn; chỉ ngừng tự điền khi user đã tự gõ.
+  const [title, setTitle] = useState('');
+  const [titleTouched, setTitleTouched] = useState(false);
+  const [description, setDescription] = useState('');
 
   const [step, setStep] = useState<Step>('form');
   const [progress, setProgress] = useState(0);
@@ -114,6 +122,12 @@ export default function ContestEntryFormModal({ contest, onClose, onSubmitted }:
     }
   };
 
+  const handleSnapshotChange = (snapshotId: string) => {
+    setSelectedSnapshotId(snapshotId);
+    if (titleTouched) return; // user đã tự đặt tên thì không ghi đè
+    setTitle(snapshots.find(s => s.id === snapshotId)?.aquariumName ?? '');
+  };
+
   const canSubmit = !!file && !!videoMeta && !!selectedSnapshotId && copyrightChecked && !videoError;
 
   const handleSubmit = async () => {
@@ -129,6 +143,8 @@ export default function ContestEntryFormModal({ contest, onClose, onSubmitted }:
         contentType: file.type,
         fileSizeBytes: file.size,
         videoDurationSeconds: Math.round(videoMeta.durationSeconds),
+        title: title.trim() || null,
+        description: description.trim() || null,
       });
 
       await uploadToR2(uploadUrl, file, file.type, setProgress);
@@ -137,10 +153,11 @@ export default function ContestEntryFormModal({ contest, onClose, onSubmitted }:
       setStep('done');
       onSubmitted();
     } catch (err: unknown) {
-      const status = (err as { response?: { status?: number } })?.response?.status;
+      const res = (err as { response?: { status?: number; data?: { message?: string } } })?.response;
       setSubmitError(
-        status === 503 ? t('contests.errOverloaded')
-        : status === 422 ? t('contests.errValidation')
+        res?.status === 503 ? t('contests.errOverloaded')
+        // 422 luôn kèm message cụ thể từ BE (vd "đã dự thi bằng bể này rồi") — hiện thẳng cho user
+        : res?.status === 422 ? (res.data?.message ?? t('contests.errValidation'))
         : t('contests.errSubmit'),
       );
       setStep('form');
@@ -227,7 +244,7 @@ export default function ContestEntryFormModal({ contest, onClose, onSubmitted }:
                   ) : (
                     <select
                       value={selectedSnapshotId}
-                      onChange={e => setSelectedSnapshotId(e.target.value)}
+                      onChange={e => handleSnapshotChange(e.target.value)}
                       className="w-full bg-[#0F172A] border border-slate-700 rounded-xl px-3 py-3 text-base text-white min-h-[44px]"
                     >
                       <option value="">{t('contests.snapshotPlaceholder')}</option>
@@ -236,6 +253,35 @@ export default function ContestEntryFormModal({ contest, onClose, onSubmitted }:
                       ))}
                     </select>
                   )}
+                </div>
+
+                {/* Tên video — mặc định lấy tên bể, cho user sửa */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                    {t('contests.videoTitleLabel')}
+                  </label>
+                  <input
+                    value={title}
+                    onChange={e => { setTitle(e.target.value.slice(0, MAX_TITLE_LEN)); setTitleTouched(true); }}
+                    placeholder={t('contests.videoTitlePlaceholder')}
+                    className="w-full bg-[#0F172A] border border-slate-700 rounded-xl px-3 py-3 text-base text-white placeholder:text-slate-600 min-h-[44px]"
+                  />
+                  <p className="text-xs text-slate-600 mt-1.5">{title.length}/{MAX_TITLE_LEN}</p>
+                </div>
+
+                {/* Mô tả — tối đa 100 ký tự */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                    {t('contests.videoDescLabel')}
+                  </label>
+                  <textarea
+                    value={description}
+                    onChange={e => setDescription(e.target.value.slice(0, MAX_DESC_LEN))}
+                    rows={2}
+                    placeholder={t('contests.videoDescPlaceholder')}
+                    className="w-full bg-[#0F172A] border border-slate-700 rounded-xl px-3 py-3 text-base text-white placeholder:text-slate-600 resize-none"
+                  />
+                  <p className="text-xs text-slate-600 mt-1.5">{description.length}/{MAX_DESC_LEN}</p>
                 </div>
 
                 {/* Video picker */}

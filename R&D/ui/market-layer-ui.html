@@ -1,0 +1,533 @@
+<!--
+  Bản dựng giao diện Market Layer (FishDex) — mở trực tiếp bằng trình duyệt.
+  Tự đổi sáng/tối theo hệ thống. Bảng màu khoá theo WikiPage/CLAUDE.md.
+
+  Ảnh PNG KHÔNG được commit (xem .gitignore) vì sinh lại được. Cách render:
+
+    chrome --headless=new --disable-gpu --hide-scrollbars --force-device-scale-factor=2 \
+      --window-size=1120,2900 --screenshot=market-layer-ui-desktop.png market-layer-ui.html
+
+    chrome --headless=new --disable-gpu --hide-scrollbars --force-device-scale-factor=2 \
+      --window-size=600,1500 --screenshot=market-layer-ui-narrow.png market-layer-ui.html
+
+  Bản đang dùng để thảo luận được nạp thẳng vào trang Epic trên Notion.
+-->
+<title>Market Layer — UI dự kiến</title>
+
+<style>
+  :root {
+    --app-bg: #0F172A;
+    --app-surface: #1E293B;
+    --app-surface-2: #263348;
+    --app-surface-3: #172033;
+    --app-primary: #0EA5E9;
+    --app-nature: #10B981;
+    --app-amber: #F59E0B;
+    --app-red: #EF4444;
+    --app-text: #E2E8F0;
+    --app-text-dim: #94A3B8;
+    --app-text-faint: #64748B;
+    --app-line: rgba(148, 163, 184, 0.18);
+
+    --ground: #F4F7FB;
+    --panel: #FFFFFF;
+    --ink: #0F172A;
+    --ink-soft: #47566B;
+    --ink-faint: #7A8899;
+    --rule: rgba(15, 23, 42, 0.10);
+    --accent: #0369A1;
+
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0B111F;
+      --panel: #131C2E;
+      --ink: #DDE5F0;
+      --ink-soft: #9AA9BD;
+      --ink-faint: #6B7A8F;
+      --rule: rgba(148, 163, 184, 0.16);
+      --accent: #38BDF8;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0B111F;
+    --panel: #131C2E;
+    --ink: #DDE5F0;
+    --ink-soft: #9AA9BD;
+    --ink-faint: #6B7A8F;
+    --rule: rgba(148, 163, 184, 0.16);
+    --accent: #38BDF8;
+  }
+  :root[data-theme="light"] {
+    --ground: #F4F7FB;
+    --panel: #FFFFFF;
+    --ink: #0F172A;
+    --ink-soft: #47566B;
+    --ink-faint: #7A8899;
+    --rule: rgba(15, 23, 42, 0.10);
+    --accent: #0369A1;
+  }
+
+  .page {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.65;
+    padding: 3rem 1.5rem 4rem;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 0.75rem;
+  }
+  h1 {
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    line-height: 1.15;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+    margin: 0 0 0.75rem;
+  }
+  .lede {
+    font-size: 1.0625rem;
+    color: var(--ink-soft);
+    max-width: 62ch;
+    margin: 0;
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    margin: 2rem 0 0;
+    padding: 1rem 0 0;
+    border-top: 1px solid var(--rule);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--ink-faint);
+  }
+  .meta b { color: var(--ink); font-weight: 500; }
+
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.35rem;
+  }
+  .sub { color: var(--ink-soft); font-size: 0.9375rem; margin: 0 0 1.5rem; max-width: 60ch; }
+
+  section { margin-top: 3.5rem; }
+
+  .split {
+    display: grid;
+    grid-template-columns: 390px minmax(0, 1fr);
+    gap: 2.5rem;
+    align-items: start;
+  }
+  .split.wide { grid-template-columns: minmax(0, 1fr); }
+  @media (max-width: 900px) {
+    .split { grid-template-columns: minmax(0, 1fr); gap: 1.75rem; }
+  }
+  @media (max-width: 470px) {
+    .page { padding: 2rem 1rem 3rem; }
+    .device { width: 100%; }
+  }
+
+  .notes { display: flex; flex-direction: column; gap: 1.125rem; margin: 0; padding: 0; list-style: none; }
+  .notes li { padding-left: 0.875rem; border-left: 2px solid var(--rule); }
+  .notes .lbl {
+    display: block;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.2rem;
+  }
+  .notes p { margin: 0; font-size: 0.9375rem; color: var(--ink-soft); }
+  .notes code {
+    font-family: var(--mono);
+    font-size: 0.85em;
+    background: rgba(14, 165, 233, 0.10);
+    color: var(--accent);
+    padding: 0.1em 0.35em;
+    border-radius: 3px;
+  }
+
+  /* ── app mock ─────────────────────────────────── */
+  .device {
+    width: 390px;
+    max-width: 100%;
+    background: var(--app-bg);
+    border: 1px solid var(--app-line);
+    border-radius: 20px;
+    overflow: hidden;
+    color: var(--app-text);
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  .device.desk { width: 100%; border-radius: 14px; }
+
+  .topbar {
+    display: flex; align-items: center; gap: 10px;
+    height: 56px; padding: 0 14px;
+    background: #0A0F1A;
+    border-bottom: 1px solid var(--app-line);
+  }
+  .burger { width: 18px; height: 2px; background: var(--app-text-dim); box-shadow: 0 5px 0 var(--app-text-dim), 0 -5px 0 var(--app-text-dim); }
+  .logo { width: 26px; height: 26px; border-radius: 7px; background: var(--app-primary); display: grid; place-items: center; font-size: 13px; }
+  .brand { font-weight: 600; font-size: 14px; color: #fff; letter-spacing: -0.01em; }
+
+  .screen { padding: 16px 14px 18px; }
+  .h-country { font-size: 19px; font-weight: 600; color: #fff; margin: 0 0 3px; letter-spacing: -0.01em; }
+  .h-note { font-size: 12.5px; color: var(--app-text-dim); margin: 0 0 16px; }
+
+  .controls { display: flex; gap: 8px; margin-bottom: 16px; }
+  .sel {
+    flex: 1; min-width: 0;
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--app-surface-3);
+    border: 1px solid var(--app-line);
+    border-radius: 11px;
+    padding: 0 12px;
+    height: 44px;
+    font-size: 15px; color: #fff;
+  }
+  .sel .caret { color: var(--app-text-faint); font-size: 11px; }
+  .btn-filter {
+    flex: 0 0 auto;
+    display: flex; align-items: center; gap: 7px;
+    height: 44px; padding: 0 14px;
+    background: rgba(14, 165, 233, 0.14);
+    border: 1px solid rgba(14, 165, 233, 0.35);
+    border-radius: 11px;
+    color: #7DD3FC; font-size: 14px; font-weight: 500;
+  }
+
+  .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 18px; }
+  .stat { background: var(--app-surface); border-radius: 11px; padding: 11px 12px; }
+  .stat.lead { background: rgba(245, 158, 11, 0.13); border: 1px solid rgba(245, 158, 11, 0.3); }
+  .stat .k { font-size: 11.5px; color: var(--app-text-dim); margin: 0; }
+  .stat .v { font-size: 22px; font-weight: 600; color: #fff; margin: 2px 0 0; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+  .stat.lead .k { color: #FCD34D; }
+  .stat.lead .v { color: #FBBF24; }
+
+  .rows { display: flex; flex-direction: column; gap: 10px; }
+  .row {
+    display: flex; gap: 12px; align-items: center;
+    background: var(--app-surface);
+    border: 1px solid var(--app-line);
+    border-radius: 13px;
+    padding: 11px;
+  }
+  .row.warn { border-color: rgba(239, 68, 68, 0.4); }
+  .thumb {
+    width: 62px; height: 62px; flex: 0 0 auto;
+    border-radius: 9px;
+    background: var(--app-surface-3);
+    display: grid; place-items: center;
+    color: var(--app-text-faint); font-size: 20px;
+  }
+  .row .body { min-width: 0; flex: 1; }
+  .nm { font-size: 15px; font-weight: 600; color: #fff; margin: 0; letter-spacing: -0.01em; }
+  .sci { font-size: 12px; font-style: italic; color: var(--app-text-faint); margin: 1px 0 7px; }
+  .sci.lead { font-size: 14.5px; color: var(--app-text-dim); font-weight: 500; margin-bottom: 6px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .chip { font-size: 11.5px; padding: 3px 8px; border-radius: 6px; background: var(--app-surface-2); color: var(--app-text-dim); }
+  .chip.good { background: rgba(16, 185, 129, 0.16); color: #34D399; }
+  .chip.bad { background: rgba(239, 68, 68, 0.16); color: #F87171; }
+  .cta {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12.5px; font-weight: 500;
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    color: #FBBF24;
+    padding: 6px 10px; border-radius: 8px;
+    margin-bottom: 7px;
+  }
+  .chev { color: var(--app-text-faint); font-size: 15px; flex: 0 0 auto; }
+  .more { text-align: center; font-size: 11.5px; color: var(--app-text-faint); margin: 4px 0; }
+
+  .pager { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 16px; }
+  .pbtn { height: 44px; display: grid; place-items: center; padding: 0 16px; border: 1px solid var(--app-line); border-radius: 11px; font-size: 14px; color: var(--app-text-dim); }
+  .pbtn.off { opacity: 0.4; }
+  .pnum { font-size: 13px; color: var(--app-text-dim); font-variant-numeric: tabular-nums; }
+  .pnum b { background: rgba(14, 165, 233, 0.16); color: #7DD3FC; padding: 3px 9px; border-radius: 6px; font-weight: 600; }
+
+  .sheet { padding: 16px 14px 18px; }
+  .sheet-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+  .sheet-hd .t { font-size: 17px; font-weight: 600; color: #fff; margin: 0; }
+  .sheet-hd .x { color: var(--app-text-faint); font-size: 17px; }
+  .grp { margin-bottom: 18px; }
+  .grp .lab { font-size: 12.5px; color: var(--app-text-dim); margin: 0 0 8px; }
+  .opts { display: flex; flex-wrap: wrap; gap: 6px; }
+  .opt { font-size: 13px; padding: 9px 12px; border-radius: 9px; background: var(--app-surface); color: var(--app-text-dim); border: 1px solid transparent; }
+  .opt.on { background: rgba(14, 165, 233, 0.14); border-color: rgba(14, 165, 233, 0.4); color: #7DD3FC; font-weight: 500; }
+  .sheet-ft { display: flex; gap: 10px; }
+  .sheet-ft > * { flex: 1; height: 46px; display: grid; place-items: center; border-radius: 11px; font-size: 14px; font-weight: 500; }
+  .clr { border: 1px solid var(--app-line); color: var(--app-text-dim); }
+  .apply { background: var(--app-primary); color: #04283C; }
+
+  .dgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 760px) { .dgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .card { background: var(--app-surface); border: 1px solid var(--app-line); border-radius: 13px; padding: 11px; }
+  .card .ph { height: 96px; border-radius: 9px; background: var(--app-surface-3); display: grid; place-items: center; color: var(--app-text-faint); font-size: 22px; margin-bottom: 10px; }
+  .dcontrols { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .dcontrols .sel { flex: 0 0 auto; width: 168px; }
+
+  .rules { margin-top: 3.5rem; padding-top: 1.75rem; border-top: 1px solid var(--rule); }
+  .rules ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.875rem; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .rules li { font-size: 0.9375rem; color: var(--ink-soft); padding-left: 1.125rem; position: relative; }
+  .rules li::before { content: ""; position: absolute; left: 0; top: 0.6em; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  .rules b { color: var(--ink); font-weight: 600; }
+</style>
+
+<div class="page">
+<div class="wrap">
+
+  <p class="eyebrow">FishDex · Market Layer</p>
+  <h1>Cá cảnh theo quốc gia — UI dự kiến</h1>
+  <p class="lede">Lớp trung gian giữa từ điển khoa học 35.000 loài của FishBase và người đứng trước tiệm cá. Trang này là bản dựng giao diện để chốt trước khi viết code, không phải bản triển khai.</p>
+
+  <div class="meta">
+    <span><b>Service</b> FishDex</span>
+    <span><b>Route</b> /market/:cc</span>
+    <span><b>Baseline</b> iPhone 12 · 390px</span>
+    <span><b>Bộ lọc</b> Length · trạng thái tên bản ngữ</span>
+  </div>
+
+  <section>
+    <h2>Trang chính</h2>
+    <p class="sub">Vào là thấy nội dung ngay, không cần gõ gì. Đây là điểm khác biệt cốt lõi so với trang tra cứu hiện tại — trang đó trống cho tới khi người dùng nhập tên loài.</p>
+    <div class="split">
+      <div class="device">
+        <div class="topbar">
+          <div class="burger" aria-hidden="true"></div>
+          <div class="logo" aria-hidden="true">🐟</div>
+          <span class="brand">The FishLover</span>
+        </div>
+        <div class="screen">
+          <p class="h-country">Cá cảnh ở Việt Nam</p>
+          <p class="h-note">Những loài đang được bán tại Việt Nam</p>
+
+          <div class="controls">
+            <div class="sel"><span>Việt Nam</span><span class="caret" aria-hidden="true">▼</span></div>
+            <div class="btn-filter"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18l-7 8.2V20l-4-2.2v-4.6z"/></svg>Lọc · 2</div>
+          </div>
+
+          <div class="stats">
+            <div class="stat"><p class="k">đang bán</p><p class="v">247</p></div>
+            <div class="stat"><p class="k">có tên Việt</p><p class="v">10</p></div>
+            <div class="stat lead"><p class="k">chờ đặt tên</p><p class="v">237</p></div>
+          </div>
+
+          <div class="rows">
+            <div class="row">
+              <div class="thumb" aria-hidden="true">🐟</div>
+              <div class="body">
+                <p class="nm">Cá bảy màu</p>
+                <p class="sci">Poecilia reticulata</p>
+                <div class="chips">
+                  <span class="chip good">Phổ biến</span>
+                  <span class="chip">dưới 5 cm</span>
+                </div>
+              </div>
+              <span class="chev" aria-hidden="true">›</span>
+            </div>
+
+            <div class="row">
+              <div class="thumb" aria-hidden="true">🐟</div>
+              <div class="body">
+                <p class="sci lead">Trigonostigma hengeli</p>
+                <span class="cta"><span aria-hidden="true">＋</span>Bạn biết tên tiếng Việt?</span>
+                <div class="chips"><span class="chip">dưới 5 cm</span></div>
+              </div>
+            </div>
+
+            <div class="row warn">
+              <div class="thumb" aria-hidden="true">🐟</div>
+              <div class="body">
+                <p class="nm">Cá hổ Xiêm</p>
+                <p class="sci">Datnioides pulcher</p>
+                <div class="chips">
+                  <span class="chip bad">Nguy cấp</span>
+                  <span class="chip">trên 20 cm</span>
+                </div>
+              </div>
+              <span class="chev" aria-hidden="true">›</span>
+            </div>
+
+            <p class="more">… 21 dòng nữa</p>
+          </div>
+
+          <div class="pager">
+            <span class="pbtn off">Trước</span>
+            <span class="pnum">Trang <b>1</b> / 11</span>
+            <span class="pbtn">Sau</span>
+          </div>
+        </div>
+      </div>
+
+      <ul class="notes">
+        <li>
+          <span class="lbl">Quốc gia</span>
+          <p>Dropdown, không phải hàng chip — tránh scroll ngang, mở native picker trên iOS, và không vỡ khi lên 10 nước. Tên nước vẫn nằm trong tiêu đề trang để không mất ngữ cảnh, đồng thời vào URL <code>/market/vn</code> và lưu localStorage.</p>
+        </li>
+        <li>
+          <span class="lbl">Ba con số</span>
+          <p>Trọng tâm đặt vào ô "chờ đặt tên" vì đó là con số lớn nhất — tiếng Việt trong FishBase gần như trống. Cùng một sự thật nhưng đọc thành lời mời thay vì lời thú nhận.</p>
+        </li>
+        <li>
+          <span class="lbl">Thẻ có tên</span>
+          <p>Tên tiếng Việt là dòng chính, tên khoa học xuống hàng phụ — đảo ngược so với trang tra cứu, vì đây là tên người ta dùng khi đi mua cá.</p>
+        </li>
+        <li>
+          <span class="lbl">Thẻ thiếu tên</span>
+          <p>Lời mời đóng góp chiếm đúng vị trí mà tên tiếng Việt sẽ nằm. Khi có người đặt tên, chỗ đó thành tên thật, layout không nhảy.</p>
+        </li>
+        <li>
+          <span class="lbl">Cảnh báo</span>
+          <p>Badge lấy từ <code>Vulnerability</code> và <code>Dangerous</code> — hai cột phủ 100% từ FishBase nên chạy được ngay ngày đầu. <code>LegalStatus</code> vẫn có trong bảng nhưng cần người điền nên chưa hiển thị.</p>
+        </li>
+        <li>
+          <span class="lbl">Phân trang</span>
+          <p>24 dòng mỗi trang, phân trang phía server. Không tải hết 247 dòng một lượt vì presigned URL của ảnh có hạn dùng — cache cả danh sách thì để tab lâu là ảnh chết.</p>
+        </li>
+        <li>
+          <span class="lbl">Không có ô tìm kiếm</span>
+          <p>Trang tra cứu khoa học giữ độc quyền vai trò tìm kiếm. Với khoảng 250 loài thì lọc và lướt là đủ.</p>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>Bảng bộ lọc</h2>
+    <p class="sub">Trên mobile mở dạng bottom sheet. Chỉ hai tiêu chí, và cả hai đều dựa trên dữ liệu có thật — đã loại bỏ mọi tiêu chí dựa trên cột rỗng.</p>
+    <div class="split">
+      <div class="device">
+        <div class="sheet">
+          <div class="sheet-hd">
+            <p class="t">Bộ lọc</p>
+            <span class="x" aria-hidden="true">✕</span>
+          </div>
+
+          <div class="grp">
+            <p class="lab">Kích thước khi trưởng thành</p>
+            <div class="opts">
+              <span class="opt on">dưới 5 cm</span>
+              <span class="opt">5–10 cm</span>
+              <span class="opt">10–20 cm</span>
+              <span class="opt">trên 20 cm</span>
+            </div>
+          </div>
+
+          <div class="grp">
+            <p class="lab">Tên tiếng Việt</p>
+            <div class="opts">
+              <span class="opt">Tất cả</span>
+              <span class="opt">Đã có</span>
+              <span class="opt on">Chưa có</span>
+            </div>
+          </div>
+
+          <div class="sheet-ft">
+            <span class="clr">Xoá lọc</span>
+            <span class="apply">Xem 58 loài</span>
+          </div>
+        </div>
+      </div>
+
+      <ul class="notes">
+        <li>
+          <span class="lbl">Kích thước</span>
+          <p>Từ <code>Species.Length</code> — cột duy nhất trong nhóm sinh học đạt độ phủ 100%. Chia nhóm theo cách người nuôi nghĩ, không theo số liệu thô.</p>
+        </li>
+        <li>
+          <span class="lbl">Trạng thái tên</span>
+          <p><code>EXISTS</code> trên <code>CommonName</code> theo ngôn ngữ của quốc gia đang chọn. Đây vừa là bộ lọc vừa là công cụ làm việc: chọn "chưa có" là ra đúng danh sách cần đặt tên, hữu hạn và có đích. Đếm theo <code>Language</code> chứ không theo <code>CountryCode</code>, vì tên do cộng đồng góp hiện lưu <code>CountryCode</code> rỗng.</p>
+        </li>
+        <li>
+          <span class="lbl">Vì sao không có mức phổ biến</span>
+          <p>Từng định làm bộ lọc thứ ba, nhưng nguồn dữ liệu chính là bể cá của người dùng — mà dòng sinh theo đường đó không mang <code>TradeStatus</code>. Chỉ admin curate mới có, nên ngày đầu bộ lọc này gần như rỗng. Giữ cột trong DB, bật lại khi đã điền đủ.</p>
+        </li>
+        <li>
+          <span class="lbl">Đã loại bỏ</span>
+          <p>Độ dễ nuôi và hồ tối thiểu bị loại vì <code>CareLevel</code> và <code>MinTankLiters</code> luôn rỗng với loài FishBase. Tập tính đàn hay đơn độc cũng loại vì ba cột đó rỗng hoàn toàn và bảng ecology chỉ phủ 41%. Nhiệt độ và pH loại vì nguồn duy nhất có 6 dòng cho toàn bộ FishBase.</p>
+        </li>
+        <li>
+          <span class="lbl">Đếm trước khi áp dụng</span>
+          <p>Nút hiện số kết quả thay vì chữ "Áp dụng", để không ai áp dụng xong mới phát hiện danh sách rỗng.</p>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>Desktop</h2>
+    <p class="sub">Cùng một component, chỉ khác ba chỗ: số cột lưới, hướng thẻ đổi từ ngang sang dọc, và bộ lọc bày thành hàng thay vì gộp vào sheet.</p>
+    <div class="split wide">
+      <div class="device desk">
+        <div class="screen">
+          <p class="h-country">Cá cảnh ở Việt Nam</p>
+          <p class="h-note">Những loài đang được bán tại Việt Nam</p>
+
+          <div class="dcontrols">
+            <div class="sel"><span>Việt Nam</span><span class="caret" aria-hidden="true">▼</span></div>
+            <div class="sel"><span>Kích thước</span><span class="caret" aria-hidden="true">▼</span></div>
+            <div class="sel"><span>Tên tiếng Việt</span><span class="caret" aria-hidden="true">▼</span></div>
+          </div>
+
+          <div class="dgrid">
+            <div class="card">
+              <div class="ph" aria-hidden="true">🐟</div>
+              <p class="nm">Cá bảy màu</p>
+              <p class="sci">Poecilia reticulata</p>
+              <div class="chips"><span class="chip good">Phổ biến</span><span class="chip">dưới 5 cm</span></div>
+            </div>
+            <div class="card">
+              <div class="ph" aria-hidden="true">🐟</div>
+              <p class="sci lead">Trigonostigma hengeli</p>
+              <span class="cta"><span aria-hidden="true">＋</span>Đặt tên tiếng Việt</span>
+            </div>
+            <div class="card">
+              <div class="ph" aria-hidden="true">🐟</div>
+              <p class="nm">Cá neon</p>
+              <p class="sci">Paracheirodon innesi</p>
+              <div class="chips"><span class="chip good">Phổ biến</span><span class="chip">dưới 5 cm</span></div>
+            </div>
+            <div class="card">
+              <div class="ph" aria-hidden="true">🐟</div>
+              <p class="nm">Cá hổ Xiêm</p>
+              <p class="sci">Datnioides pulcher</p>
+              <div class="chips"><span class="chip bad">Nguy cấp</span><span class="chip">trên 20 cm</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="rules">
+    <p class="eyebrow">Nguyên tắc đã chốt</p>
+    <ul>
+      <li><b>Đặt ở FishDex.</b> Chiều phụ thuộc hiện tại chỉ có AquaHome gọi sang FishDex; đặt ở nơi khác sẽ buộc FishDex gọi ngược lại. Hai bộ lọc còn dùng được đều cần join trong cùng database.</li>
+      <li><b>Tách khỏi trang tra cứu.</b> Trang khoa học giữ nguyên hành vi, chỉ được thêm một badge chỉ báo. Không thêm bộ lọc mới vào tìm kiếm ở phiên bản đầu.</li>
+      <li><b>Quốc gia hardcode, không đưa vào bảng.</b> Chỉ nhắm 4–10 nước, nên helper trong code là đủ. Mã sinh ra từ bảng tham chiếu của FishBase để khớp chính xác với dữ liệu đang có.</li>
+      <li><b>Mã số lưu trong database, mã chữ dùng ở API.</b> Dữ liệu sẵn có dùng mã quốc gia dạng số và không thể chuyển đổi được, nên đổi qua lại tại biên.</li>
+      <li><b>Không suy diễn dữ liệu thiếu.</b> Không tính hồ tối thiểu từ chiều dài cá, không suy trạng thái xâm hại từ bảng không có cột quốc gia.</li>
+      <li><b>Lớp cho tiệm cá gác lại.</b> Danh sách phải tự đứng được bằng khảo sát thủ công trước, không phụ thuộc việc tiệm cá tham gia.</li>
+    </ul>
+  </div>
+
+</div>
+</div>

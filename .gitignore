@@ -40,3 +40,7 @@ obj/
 # Docker artifacts
 .docker/
 docker-compose.override.yml
+
+# Ảnh render từ bản dựng UI trong R&D/ui — sinh lại được từ file .html cùng thư mục,
+# nên không commit để tránh 1MB+ nhị phân mới mỗi lần sửa mockup.
+R&D/ui/*.png

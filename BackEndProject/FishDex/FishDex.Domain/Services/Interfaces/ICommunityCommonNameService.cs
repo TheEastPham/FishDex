@@ -5,10 +5,11 @@ namespace FishDex.Domain.Services.Interfaces;
 public enum SubmitCommonNameOutcome
 {
     Created,
-    SpeciesNotFound,   // không có loài FishBase với SpecCode này
-    InvalidSpecies,    // SpecCode ≥ 500000 (community/hybrid — tên sửa trên snapshot, không qua đây)
+    SpeciesNotFound,   // không có loài nào với SpecCode này (cả FishBase lẫn community đã verified)
+    InvalidSpecies,    // hiện không còn dùng — loài lai đã được phép đặt tên, giữ lại để không lệch giá trị enum
     Duplicate,         // đã có tên trùng (SpecCode + Language + ComName)
     PendingExists,     // user này đã có 1 tên khác đang chờ duyệt cho cùng loài + ngôn ngữ
+    UnsupportedLanguage, // ngôn ngữ không nằm trong whitelist của các nước có market
 }
 
 public record SubmitCommonNameResult(SubmitCommonNameOutcome Outcome, CommunityCommonNameDto? Dto = null);

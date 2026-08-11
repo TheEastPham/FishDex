@@ -17,6 +17,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IEcosystemService, EcosystemService>();
         services.AddScoped<IOccurrenceService, OccurrenceService>();
         services.AddScoped<IMediaService, MediaService>();
+        services.AddScoped<IMarketService, MarketService>();
         services.AddSingleton<IStorageService, S3StorageService>();
         return services;
     }

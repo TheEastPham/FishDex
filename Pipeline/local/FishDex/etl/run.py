@@ -19,6 +19,7 @@ Step order (FK dependency):
     9.  occurrence    → "Occurrences"
     10. comnames      → "CommonNames"
     11. images        → "SystemImages" (optional)
+    12. species_index → "FishBaseSpeciesIndex" (load TOÀN BỘ FishBase, không filter)
 """
 from __future__ import annotations
 import argparse
@@ -26,7 +27,7 @@ import time
 from .filter import compute_spec_codes
 from .loaders import (
     families, genera, species, stocks, ecology, morph,
-    ecosystem, occurrence, common_names, images,
+    ecosystem, occurrence, common_names, images, species_index,
 )
 
 
@@ -42,6 +43,8 @@ STEPS = [
     ("occurrence",   "Occurrences",     lambda codes: occurrence.load(codes)),
     ("comnames",     "CommonNames",     lambda codes: common_names.load(codes)),
     ("images",       "SystemImages",    lambda codes: images.load(codes)),
+    # Chạy CUỐI: cần bảng "Species" đã nạp xong để tính đúng cột IsLoaded.
+    ("species_index","FishBaseSpeciesIndex", lambda codes: species_index.load()),
 ]
 
 
@@ -58,7 +61,7 @@ def _parse_steps(only: str | None, frm: int | None, steps: str | None) -> list[i
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--only", type=int, help="Chỉ chạy 1 step (1-11)")
+    ap.add_argument("--only", type=int, help="Chỉ chạy 1 step (1-12)")
     ap.add_argument("--from", dest="frm", type=int, help="Chạy từ step N trở đi")
     ap.add_argument("--steps", type=str, help="Chạy các step nhất định, vd: 1,2,3")
     ap.add_argument("--dry-run", action="store_true", help="Chỉ tính spec_codes")

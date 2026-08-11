@@ -65,7 +65,13 @@ public record SubmitEntryRequest(
     string FileName,
     string ContentType,
     long FileSizeBytes,
-    int VideoDurationSeconds);
+    int VideoDurationSeconds,
+    // Tên video trên YouTube — để trống thì lấy tên bể đã public, cuối cùng mới fallback tên contest.
+    string? Title = null,
+    // Mô tả do người dự thi tự viết, tối đa 100 ký tự.
+    string? Description = null);
+
+public record RejectEntryRequest(string Reason);
 
 public record ContestEntryDto(
     Guid Id,
@@ -76,7 +82,14 @@ public record ContestEntryDto(
     Guid? PrizeTierId,
     string? PrizeTierName,
     ContestEntryStatus Status,
-    DateTime SubmittedAt);
+    DateTime SubmittedAt,
+    string? Title,
+    string? Description,
+    string? RejectionReason,
+    // Denorm từ snapshot để admin duyệt / user theo dõi nhìn được nội dung thật, không phải chỉ ngày nộp
+    string? AquariumName,
+    string? OwnerNickname,
+    string? SnapshotSlug);
 
 public record SubmitEntryResultDto(Guid EntryId, string UploadUrl, string ObjectKey);
 

@@ -49,6 +49,10 @@ public static class AquaHomeServiceExtensions
         services.AddHttpClient("FishDex", client =>
         {
             client.BaseAddress = new Uri(fishDexBaseUrl);
+            // Dùng chung secret với luồng gọi UserManagement — một khoá duy nhất cho mọi
+            // lời gọi service-to-service, nạp từ INTERNAL_API_KEY. Thiếu header này thì
+            // /api/market/ingest của FishDex trả 401.
+            client.DefaultRequestHeaders.Add("X-Internal-Api-Key", internalApiKey);
             client.Timeout = TimeSpan.FromSeconds(10);
         });
 

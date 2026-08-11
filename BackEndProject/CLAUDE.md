@@ -57,8 +57,11 @@ dotnet ef migrations add <MigrationName> --project AquaHome/AquaHome.EFCore --st
 dotnet ef database update --project AquaHome/AquaHome.EFCore --startup-project AquaHome/AquaHome.API
 
 # FishDex (PostgreSQL — port 5433)
-dotnet ef migrations add <MigrationName> --project FishDex/FishDex.EFCore
-dotnet ef database update --project FishDex/FishDex.EFCore
+# LƯU Ý: bắt buộc có --startup-project, nếu thiếu sẽ lỗi
+# "Unable to resolve service for type 'DbContextOptions<FishDexDbContext>'"
+# vì FishDex.EFCore không có design-time factory riêng.
+dotnet ef migrations add <MigrationName> --project FishDex/FishDex.EFCore --startup-project FishDex/FishDex.API
+dotnet ef database update --project FishDex/FishDex.EFCore --startup-project FishDex/FishDex.API
 ```
 
 **Local dev — start infrastructure via Docker:**

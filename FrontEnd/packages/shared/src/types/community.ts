@@ -91,4 +91,10 @@ export interface CommunityCommonNameDto {
 export interface SubmitCommonNameRequest {
   comName: string;
   language?: string;
+  /**
+   * C_Code của FishBase (vd "704" = Việt Nam), khớp `CommonName.CountryCode`.
+   * BE nhận field này từ lâu nhưng FE trước đây chưa bao giờ gửi, nên mọi tên cộng đồng cũ
+   * đều không gắn quốc gia. Gửi từ nay để tên mới có ngữ cảnh nước.
+   */
+  countryCode?: string;
 }

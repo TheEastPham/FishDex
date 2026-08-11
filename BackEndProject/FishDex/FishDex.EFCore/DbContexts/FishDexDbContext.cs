@@ -1,6 +1,7 @@
 ﻿using FishDex.EFCore.Entity.Cache;
 using FishDex.EFCore.Entity.Ecologies;
 using FishDex.EFCore.Entity.Ecosystem;
+using FishDex.EFCore.Entity.Market;
 using FishDex.EFCore.Entity.Media;
 using FishDex.EFCore.Entity.MorphData;
 using FishDex.EFCore.Entity.Occurrence;
@@ -57,6 +58,10 @@ public class FishDexDbContext : DbContext
 
     // Cache
     public DbSet<SpeciesSnapshot> SpeciesSnapshots { get; set; }
+
+    // Market
+    public DbSet<TradedSpecies>         TradedSpecies         { get; set; }
+    public DbSet<FishBaseSpeciesIndex>  FishBaseSpeciesIndex  { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -284,6 +289,35 @@ public class FishDexDbContext : DbContext
             entity.HasIndex(e => e.DataSource);
             entity.HasIndex(e => e.PopulatedAt);
             entity.Property(e => e.SpeciesName).IsRequired();
+        });
+
+        // ── TradedSpecies ─────────────────────────────────────────
+        // Không đặt FK sang Species hay SpeciesSnapshot — xem comment trên entity.
+        modelBuilder.Entity<TradedSpecies>(entity =>
+        {
+            entity.HasKey(e => new { e.CountryCode, e.SpecCode });
+            entity.Property(e => e.CountryCode).HasMaxLength(8).IsRequired();
+
+            // Trang danh sách: lọc theo nước + trạng thái, sắp theo mức phổ biến.
+            entity.HasIndex(e => new { e.CountryCode, e.Status, e.TradeStatus });
+            // Badge "có bán ở ‹nước›" trên trang loài: tra ngược theo loài.
+            entity.HasIndex(e => e.SpecCode);
+
+            // Bỏ tiền kiểm — dòng sinh từ bể cá vào là Approved luôn.
+            entity.Property(e => e.Status).HasDefaultValue(MarketStatus.Approved);
+            entity.Property(e => e.LegalStatus).HasDefaultValue(LegalStatus.Legal);
+        });
+
+        // ── FishBaseSpeciesIndex ──────────────────────────────────
+        modelBuilder.Entity<FishBaseSpeciesIndex>(entity =>
+        {
+            entity.HasKey(e => e.SpecCode);
+            entity.Property(e => e.SpeciesName).IsRequired();
+
+            // Tra theo tên khoa học là đường vào chính khi người dùng gõ tên.
+            entity.HasIndex(e => e.SpeciesName);
+            // Phân luồng UC1 vs UC2: lọc theo đã nạp hay chưa.
+            entity.HasIndex(e => e.IsLoaded);
         });
 
         // ── StockDataAvailability: bool? thay vì string ──────────

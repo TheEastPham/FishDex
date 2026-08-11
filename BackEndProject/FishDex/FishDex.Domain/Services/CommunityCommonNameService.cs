@@ -1,4 +1,5 @@
 using FishDex.Domain.DTOs.Species;
+using FishDex.Domain.Helpers;
 using FishDex.Domain.Services.Interfaces;
 using FishDex.EFCore.Cache;
 using FishDex.EFCore.Entity.Species;
@@ -24,13 +25,15 @@ public class CommunityCommonNameService(
 
     public async Task<SubmitCommonNameResult> SubmitAsync(int specCode, SubmitCommonNameRequest request, CancellationToken ct = default)
     {
-        if (specCode >= CommunityMinSpecCode)
-            return new SubmitCommonNameResult(SubmitCommonNameOutcome.InvalidSpecies);
-
+        // Loài lai (SpecCode ≥ 500.000) ĐƯỢC PHÉP đặt tên — chúng nằm trong danh sách market và
+        // thẻ của chúng hiện nút "đặt tên tiếng Việt". Repo tự tra đúng bảng theo hai nhánh.
         if (!await repo.SpeciesExistsAsync(specCode, ct))
             return new SubmitCommonNameResult(SubmitCommonNameOutcome.SpeciesNotFound);
 
         var language = NormalizeLanguage(request.Language);
+        if (!IsSupportedLanguage(language))
+            return new SubmitCommonNameResult(SubmitCommonNameOutcome.UnsupportedLanguage);
+
         var comName = request.ComName.Trim();
 
         if (await repo.ExistsAsync(specCode, comName, language, ct: ct))
@@ -154,11 +157,41 @@ public class CommunityCommonNameService(
     private static CommunityCommonNameDto ToDto(CommonName c) => new(
         c.AutoCtr, c.SpecCode, c.ComName, c.Language, c.CountryCode, c.IsVerified, c.RejectionReason, c.ContributedBy);
 
+    /// <summary>
+    /// Whitelist ngôn ngữ = hợp của các ngôn ngữ thuộc 12 nước có market, lấy đúng cách FishBase
+    /// viết tên (vd "Bahasa Indonesia" chứ không phải "Indonesian").
+    ///
+    /// <para>Trước đây nhánh mặc định trả về nguyên chuỗi người dùng gõ, nên mở rộng ra nhiều
+    /// quốc gia sẽ sinh ra "Thai" lẫn "thai" lẫn "Tiếng Thái" trong cùng một cột — và bộ đếm
+    /// tên bản ngữ sẽ đếm hụt mà không ai biết.</para>
+    /// </summary>
+    private static readonly HashSet<string> SupportedLanguages =
+        MarketCountries.All
+            .SelectMany(c => c.Languages)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+    private static bool IsSupportedLanguage(string language)
+        => SupportedLanguages.Contains(language);
+
+    /// <summary>
+    /// Đưa alias người dùng gõ về đúng tên ngôn ngữ của FishBase. Giá trị không nhận diện được
+    /// vẫn trả về nguyên trạng để <see cref="IsSupportedLanguage"/> từ chối tường minh,
+    /// thay vì âm thầm ghi rác vào DB.
+    /// </summary>
     private static string NormalizeLanguage(string? lang) => lang?.Trim().ToLowerInvariant() switch
     {
-        "vn" or "vi" or "vietnamese" => "Vietnamese",
-        "en" or "eng" or "english"   => "English",
-        null or ""                   => "Vietnamese",
-        _                            => lang!.Trim(),
+        "vn" or "vi" or "vietnamese"          => "Vietnamese",
+        "en" or "eng" or "english"            => "English",
+        "th" or "thai"                        => "Thai",
+        "id" or "indonesian" or "bahasa"      => "Bahasa Indonesia",
+        "ms" or "malay"                       => "Malay",
+        "zh" or "cn" or "chinese" or "mandarin" => "Mandarin Chinese",
+        "ja" or "jp" or "japanese"            => "Japanese",
+        "de" or "german"                      => "German",
+        "nl" or "dutch"                       => "Dutch",
+        "hi" or "hindi"                       => "Hindi",
+        "ta" or "tamil"                       => "Tamil",
+        null or ""                            => "Vietnamese",
+        _                                     => lang!.Trim(),
     };
 }

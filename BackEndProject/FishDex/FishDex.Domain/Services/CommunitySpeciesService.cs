@@ -23,6 +23,32 @@ public class CommunitySpeciesService(
     private const long MaxImageUploadBytes = 5 * 1024 * 1024;
     private static readonly HashSet<string> AllowedImageContentTypes = ["image/jpeg", "image/png", "image/webp"];
 
+    /// <summary>
+    /// Ngưỡng 0.4 chọn theo phép thử thực tế: "Betta splendens" so với "Beta splenden"
+    /// (thiếu chữ, sai chính tả) cho 0.667, tức lỗi gõ thường gặp vẫn lọt lưới ở mức này,
+    /// trong khi hai loài khác hẳn tên thì rơi xuống dưới ngưỡng.
+    /// </summary>
+    private const double SimilarityThreshold = 0.4;
+
+    public async Task<IReadOnlyList<SimilarSpeciesDto>> FindSimilarAsync(
+        string speciesName, CancellationToken ct = default)
+    {
+        var matches = await repo.FindSimilarNamesAsync(speciesName, SimilarityThreshold, limit: 5, ct);
+
+        return matches
+            .Select(m => new SimilarSpeciesDto(
+                m.SpecCode,
+                m.SpeciesName,
+                m.Source switch
+                {
+                    SimilarNameSource.FishDex   => SimilarSpeciesOutcome.AlreadyInFishDex,
+                    SimilarNameSource.FishBase  => SimilarSpeciesOutcome.NeedsMigration,
+                    _                           => SimilarSpeciesOutcome.AlreadySubmitted,
+                },
+                Math.Round(m.Score, 3)))
+            .ToList();
+    }
+
     public async Task<CommunitySpeciesDto> SubmitAsync(SubmitCommunitySpeciesRequest request, CancellationToken ct = default)
     {
         // Cấp SpecCode + insert, retry nếu 2 submit đồng thời trùng code (unique PK conflict).

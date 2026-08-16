@@ -260,7 +260,7 @@ public class SpeciesService(
             Ecology = feeding != null || habitat != null || associations != null ? new SpeciesDetailEcologyDto
             {
                 FeedingType  = feeding?.FeedingType,
-                DietTroph    = feeding?.DietTroph,
+                DietTroph    = PickTrophicLevel(feeding),
                 HabitatZones = ExtractHabitatZones(habitat),
                 // Đọc từ Associations (nguồn đúng trong FishBase) — không phải Ecology entity
                 Schooling    = associations?.Schooling,
@@ -298,6 +298,17 @@ public class SpeciesService(
             } : null
         };
     }
+
+    /// <summary>
+    /// FishBase để trống DietTroph nhiều hơn hẳn FoodTroph (126 vs 1.162 dòng trên bộ hiện
+    /// tại) và bản thân nó cũng lấy FoodTroph khi thiếu DietTroph. Ngoài ra bản ETL cũ ghi 0
+    /// thay vì NULL cho các dòng không có số liệu, nên phải coi 0 là "không có" — dữ liệu 0
+    /// đó vẫn còn trong DB tới khi ETL chạy lại.
+    /// </summary>
+    private static decimal? PickTrophicLevel(FeedingAndDietDto? feeding) =>
+        Meaningful(feeding?.DietTroph) ?? Meaningful(feeding?.FoodTroph);
+
+    private static decimal? Meaningful(decimal? value) => value is > 0 ? value : null;
 
     private static IReadOnlyList<string> ExtractHabitatZones(HabitatZoneDto? hz)
     {

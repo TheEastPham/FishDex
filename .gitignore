@@ -44,3 +44,8 @@ docker-compose.override.yml
 # Ảnh render từ bản dựng UI trong R&D/ui — sinh lại được từ file .html cùng thư mục,
 # nên không commit để tránh 1MB+ nhị phân mới mỗi lần sửa mockup.
 R&D/ui/*.png
+
+# build_delta.py mặc định ghi ra ngoài repo (Data/exports_.../FixIsssueETL_NULL_DATA).
+# Dòng này chỉ là lưới chắn cho ai chạy với --out trỏ ngược vào đây: ~7MB mỗi lượt,
+# sinh lại được từ parquet, mà parquetData/ vốn đã không commit.
+Pipeline/local/FishDex/delta/

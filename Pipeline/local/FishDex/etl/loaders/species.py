@@ -8,6 +8,7 @@ import uuid
 import polars as pl
 from ..config import PARQUET_DIR, PARQUET_FILES
 from ..db import connect, to_str, to_float, to_int, execute_upsert
+from ..sources import age_by_spec, first_positive, weight_by_spec
 
 SQL = """
     INSERT INTO "Species" (
@@ -83,8 +84,14 @@ def load(spec_codes: set[int]):
         df = pl.read_parquet(path)
         df = df.filter(pl.col("SpecCode").is_in(list(spec_codes)))
 
+        # species.parquet để trống gần hết hai cột này (Weight 5,8% · LongevityWild
+        # 1,6%). FishBase để số thật ở popchar/popgrowth/estimate — xem etl/sources.py.
+        weight_alt = weight_by_spec(spec_codes)
+        age_alt = age_by_spec(spec_codes)
+
         rows = []
         for r in df.iter_rows(named=True):
+            spec_code = to_int(r.get("SpecCode"))
             fam_code = to_int(r.get("FamCode")) or 0
             fam_id = fam_lookup.get(fam_code, str(uuid.uuid4()))  # fallback nếu chưa có
             genus = to_str(r.get("Genus")) or ""
@@ -107,7 +114,11 @@ def load(spec_codes: set[int]):
                 to_str(r.get("Remark")),
                 to_str(r.get("TaxIssue")),
                 to_float(r.get("Length")),
-                to_float(r.get("Weight")),
+                first_positive(
+                    to_float(r.get("Weight")),
+                    to_float(r.get("WeightFemale")),
+                    weight_alt.get(spec_code),
+                ),
                 to_str(r.get("Comments")),
                 to_str(r.get("Dangerous")),
                 to_int(r.get("Vulnerability")),
@@ -117,7 +128,10 @@ def load(spec_codes: set[int]):
                 to_str(r.get("DemersPelag")),
                 to_str(r.get("MaxLengthRef")),
                 to_float(r.get("LengthFemale")),
-                to_float(r.get("LongevityWild")),
+                first_positive(
+                    to_float(r.get("LongevityWild")),
+                    age_alt.get(spec_code),
+                ),
                 to_float(r.get("LongevityCapt") or r.get("LongevityCaptive")),
                 to_str(r.get("PicPreferredNameM")),
                 to_str(r.get("PicPreferredNameF")),

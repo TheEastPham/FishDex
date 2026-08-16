@@ -19,10 +19,22 @@ public class EcologyService(
         .SetSize(1)
         .SetSlidingExpiration(TimeSpan.FromHours(4))
         .SetAbsoluteExpiration(TimeSpan.FromHours(24));
+
+    /// <summary>
+    /// Một loài thường có nhiều dòng Ecology (mỗi Stock một dòng), và DB còn sót các dòng
+    /// rác từ bản ETL cũ — bản đó không truyền EcologyId nên để serial tự sinh. Sub-table
+    /// (FeedingAndDiet/Associations/HabitatZone/...) khoá theo autoctr, nên những dòng rác
+    /// đó không có sub-row nào. ETL hiện tại luôn ghi EcologyId = autoctr — đó là dấu hiệu
+    /// nhận ra dòng thật. Thiếu thứ tự thì FirstOrDefault() chọn ngẫu nhiên, vớ phải dòng
+    /// rác là cả khối Sinh thái học của loài biến mất dù dữ liệu vẫn nằm trong DB.
+    /// </summary>
     public async Task<EcologyDto?> GetBySpecCodeAsync(int specCode, CancellationToken ct = default)
     {
         var results = await ecologyRepo.FindAsync(e => e.SpecCode == specCode);
-        return results.FirstOrDefault()?.ToDto();
+        return results
+            .OrderByDescending(e => e.EcologyId == e.autoctr)
+            .ThenBy(e => e.EcologyId)
+            .FirstOrDefault()?.ToDto();
     }
 
     public async Task<FeedingAndDietDto?> GetFeedingAsync(int ecologyId, CancellationToken ct = default)

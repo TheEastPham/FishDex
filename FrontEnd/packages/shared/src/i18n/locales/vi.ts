@@ -1,5 +1,6 @@
 const vi = {
   common: {
+    back: 'Quay lại',
     close: 'Đóng',
   },
   contribute: {
@@ -225,6 +226,8 @@ const vi = {
     detail: 'Chi tiết',
     viewProfile: 'Xem hồ sơ',
     loginToViewDetail: 'Đăng nhập để xem chi tiết loài',
+    loginToViewDetailBody: 'Hồ sơ loài chỉ mở cho thành viên. Đăng nhập để xem đầy đủ.',
+    notFound: 'Không tìm thấy loài này — có thể mã loài sai hoặc loài đã bị gỡ.',
     viewProfileDetails: 'Xem chi tiết hồ sơ',
     viewFamily: 'Xem tất cả loài thuộc họ {{family}}',
     unknownFamily: 'Chưa rõ họ',

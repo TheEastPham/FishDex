@@ -1,5 +1,6 @@
 const en = {
   common: {
+    back: 'Back',
     close: 'Close',
   },
   contribute: {
@@ -225,6 +226,8 @@ const en = {
     detail: 'Detail',
     viewProfile: 'View Profile',
     loginToViewDetail: 'Sign in to view species detail',
+    loginToViewDetailBody: 'Species profiles are for members. Sign in to see the full record.',
+    notFound: 'Species not found — the code may be wrong, or the species was removed.',
     viewProfileDetails: 'View Profile Details',
     viewFamily: 'View all in {{family}} family',
     unknownFamily: 'Unknown',

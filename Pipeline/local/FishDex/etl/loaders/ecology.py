@@ -14,6 +14,7 @@ from __future__ import annotations
 import polars as pl
 from ..config import PARQUET_DIR, PARQUET_FILES
 from ..db import connect, to_str, to_float, to_int, to_bool, execute_upsert
+from ..sources import first_positive, troph_by_spec
 
 # ── Ecology ───────────────────────────────────────────────────────────────────
 SQL_ECOLOGY = """
@@ -120,6 +121,10 @@ def load(spec_codes: set[int]):
     df = pl.read_parquet(path)
     df = df.filter(pl.col("SpecCode").is_in(list(spec_codes)))
 
+    # ecology.parquet chỉ có DietTroph cho 126 loài. estimate.Troph có đủ 4.192 —
+    # đó cũng chính là con số "Trophic level" FishBase hiển thị. Xem etl/sources.py.
+    troph_alt = troph_by_spec(spec_codes)
+
     ecology_rows, habitat_rows, feeding_rows = [], [], []
     assoc_rows, substrate_rows, special_rows, circadian_rows = [], [], [], []
 
@@ -163,10 +168,22 @@ def load(spec_codes: set[int]):
             auto, auto,
             to_bool(r.get("Herbivory2")), to_str(r.get("HerbivoryRef")),
             to_str(r.get("FeedingType")), to_str(r.get("FeedingTypeRef")),
-            to_float(r.get("DietTroph")) or 0, to_float(r.get("DietSeTroph")) or 0,
-            to_float(r.get("DietTLu")) or 0, to_float(r.get("DietseTLu")) or 0,
+            # KHÔNG dùng `or 0` — FishBase để trống rất nhiều ở nhóm Diet*, ghi 0
+            # xuống thì DB không phân biệt được "bậc dinh dưỡng bằng 0" với "không
+            # có số liệu", và FE hiện ra "0.0". Cột đều nullable, để NULL là đúng.
+            #
+            # DietTroph mang nghĩa rộng hơn tên gọi: BE đọc cột này cho ô "Bậc dinh
+            # dưỡng", nên xếp theo độ cụ thể giảm dần — số từ thành phần thức ăn
+            # trước, rồi tới số tổng hợp của FishBase. Số gốc vẫn giữ nguyên ở FoodTroph.
+            first_positive(
+                to_float(r.get("DietTroph")),
+                to_float(r.get("FoodTroph")),
+                troph_alt.get(to_int(spec)),
+            ),
+            to_float(r.get("DietSeTroph")),
+            to_float(r.get("DietTLu")), to_float(r.get("DietseTLu")),
             to_str(r.get("DietRemark")), to_str(r.get("DietRef")),
-            to_float(r.get("FoodTroph")) or 0, to_float(r.get("FoodSeTroph")) or 0,
+            to_float(r.get("FoodTroph")), to_float(r.get("FoodSeTroph")),
             to_str(r.get("FoodRemark")), to_str(r.get("FoodRef")),
             to_str(r.get("AddRems")),
         ))

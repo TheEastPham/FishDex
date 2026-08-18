@@ -24,6 +24,8 @@ Step order (FK dependency):
 from __future__ import annotations
 import argparse
 import time
+from . import audit
+from .db import connect
 from .filter import compute_spec_codes
 from .loaders import (
     families, genera, species, stocks, ecology, morph,
@@ -99,6 +101,13 @@ def main():
     print(f"\n{'=' * 70}")
     print(f"Done in {time.time() - total_start:.1f}s")
     print(f"{'=' * 70}")
+
+    # Hậu kiểm: loader chỉ đếm số dòng gửi đi, không biết dữ liệu có nghĩa không.
+    conn = connect()
+    try:
+        audit.check(conn)
+    finally:
+        conn.close()
     print("\n💡 Sau khi ETL xong, reset sequences (nếu có INSERT với explicit PK):")
     print("   psql -h localhost -p 5433 -U fishdex -d fishdex -f post_etl.sql")
 

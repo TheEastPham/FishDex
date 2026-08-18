@@ -10,7 +10,7 @@ import {
   ArrowLeft, Share2, Heart, Fish, Ruler, Droplets, Map as MapIcon,
   Image as ImageIcon, Scale, AlertTriangle, Shield,
   Thermometer, TestTube, BookOpen, FileText, Activity, Clock,
-  ChevronLeft, ChevronRight, Layers, Pencil
+  ChevronLeft, ChevronRight, Layers, Pencil, Lock
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -201,8 +201,55 @@ export default function FishProfilePage() {
     );
   }
 
+  // /fish/:specCode là route PUBLIC, nhưng BE chưa có endpoint public cho detail nên
+  // khách chưa đăng nhập luôn nhận 401 → detail = null. Trước đây chỗ này cho ra
+  // "Species not found", tức báo sai nguyên nhân: người dùng tưởng loài không tồn tại
+  // chứ không biết là phải đăng nhập.
+  //
+  // Chặn ở thẻ trên trang market/tra cứu là chưa đủ — còn URL trực tiếp, link chia sẻ,
+  // nút back, và PublicTankDetailPage (cũng public) cũng điều hướng sang đây. Chặn ở
+  // trang là chặn được mọi đường vào.
+  if (!detail && !isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[#141518] flex items-center justify-center px-6">
+        <div className="max-w-sm w-full rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6 text-center">
+          <Lock className="w-10 h-10 text-amber-400 mx-auto mb-4" />
+          <p className="text-amber-200 font-semibold mb-2">{t('fish.loginToViewDetail')}</p>
+          <p className="text-sm text-amber-300/80 mb-5">{t('fish.loginToViewDetailBody')}</p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => navigate('/login')}
+              className="flex-1 py-2 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-100 font-semibold transition-colors"
+            >
+              {t('login.button')}
+            </button>
+            <button
+              onClick={() => navigate(-1)}
+              className="px-4 py-2 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 transition-colors"
+            >
+              {t('common.back')}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!detail) {
-    return <div className="p-8 text-center text-red-500">Species not found.</div>;
+    return (
+      <div className="min-h-screen bg-[#141518] flex items-center justify-center px-6">
+        <div className="max-w-sm text-center">
+          <Fish className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+          <p className="text-slate-400">{t('fish.notFound')}</p>
+          <button
+            onClick={() => navigate(-1)}
+            className="mt-4 text-sm text-slate-300 underline underline-offset-2 hover:text-white"
+          >
+            {t('common.back')}
+          </button>
+        </div>
+      </div>
+    );
   }
 
   /* ── Derived data ─────────────────────────────────────────── */

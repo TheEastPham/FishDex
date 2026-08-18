@@ -40,7 +40,11 @@ def load():
             rows.append((
                 r.get("GenCode"),
                 fam_id,
-                to_str(r.get("Genus") or r.get("GenusName")) or "",
+                # Cột trong genera.parquet tên là "GenName" — hai tên cũ ở đây
+                # (`Genus`, `GenusName`) KHÔNG tồn tại nên luôn trả None và rơi
+                # xuống "", khiến toàn bộ 11.040 chi rỗng tên từ lần chạy đầu.
+                # Giữ lại hai tên cũ làm fallback phòng khi bản parquet khác đặt khác.
+                to_str(r.get("GenName") or r.get("Genus") or r.get("GenusName")) or "",
             ))
 
         if skipped_fam:

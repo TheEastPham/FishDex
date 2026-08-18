@@ -34,6 +34,12 @@ PARQUET_FILES = {
     "occurrence":  "occurrence.parquet",
     "comnames":    "comnames.parquet",
     "images":      "picturesmain.parquet",
+    # Nguồn phụ — species.parquet để trống gần hết mấy chỉ số dưới đây, FishBase
+    # để số thật ở các bảng chuyên biệt. Không sinh bảng mới, chỉ dùng để điền
+    # vào các cột đã có (Species.Weight/LongevityWild, FeedingAndDiets.DietTroph).
+    "popchar":     "popchar.parquet",    # Wmax (cân nặng lớn nhất), tmax (tuổi lớn nhất)
+    "popgrowth":   "popgrowth.parquet",  # tmax
+    "estimate":    "estimate.parquet",   # Troph (phủ 100% loài), AgeMax
 }
 
 # ── Aquarium filter ──────────────────────────────────────────────────────────

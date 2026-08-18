@@ -33,7 +33,9 @@ def load(spec_codes: set[int]):
         rows.append((
             to_int(r.get("SpecCode")),
             to_str(r.get("C_Code") or r.get("CountryCode")),
-            to_str(r.get("Locality")),
+            # occurrence.parquet dat ten la Locality1, khong phai Locality —
+            # truoc day cot nay rong 100% (0/57.457 dong).
+            to_str(r.get("Locality1") or r.get("Locality")),
             to_str(r.get("Gazetteer")),
             lat, lon,
             to_str(r.get("Province")),

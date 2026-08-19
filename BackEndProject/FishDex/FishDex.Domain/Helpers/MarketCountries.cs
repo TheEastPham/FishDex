@@ -38,15 +38,15 @@ public static class MarketCountries
     private static readonly MarketCountry[] _all =
     [
         new("704", "VN", "Viet Nam",   ["Vietnamese"],                                          IsEnabled: true,  DisplayOrder: 1),
-        new("840", "US", "USA",        ["English"],                                             IsEnabled: false, DisplayOrder: 2),
+        new("840", "US", "USA",        ["English"],                                             IsEnabled: true, DisplayOrder: 2),
         new("156", "CN", "China",      ["Mandarin Chinese"],                                    IsEnabled: false, DisplayOrder: 3),
         new("392", "JP", "Japan",      ["Japanese"],                                            IsEnabled: false, DisplayOrder: 4),
         new("528", "NL", "Netherlands",["Dutch"],                                               IsEnabled: false, DisplayOrder: 5),
         new("276", "DE", "Germany",    ["German"],                                              IsEnabled: false, DisplayOrder: 6),
-        new("826", "GB", "UK",         ["English"],                                             IsEnabled: false, DisplayOrder: 7),
+        new("826", "GB", "UK",         ["English"],                                             IsEnabled: true, DisplayOrder: 7),
         new("356", "IN", "India",      ["Hindi", "English"],                                    IsEnabled: false, DisplayOrder: 8),
         new("458", "MY", "Malaysia",   ["Malay", "English"],                                    IsEnabled: false, DisplayOrder: 9),
-        new("702", "SG", "Singapore",  ["English", "Malay", "Mandarin Chinese", "Tamil"],       IsEnabled: false, DisplayOrder: 10),
+        new("702", "SG", "Singapore",  ["English", "Malay", "Mandarin Chinese", "Tamil"],       IsEnabled: true, DisplayOrder: 10),
         new("764", "TH", "Thailand",   ["Thai"],                                                IsEnabled: false, DisplayOrder: 11),
         new("360", "ID", "Indonesia",  ["Bahasa Indonesia", "Malay"],                            IsEnabled: false, DisplayOrder: 12),
     ];

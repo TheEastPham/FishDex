@@ -392,7 +392,7 @@ const en = {
     error: 'Could not load the list. Check the FishDex service.',
     countryNotEnabled: 'We have not surveyed the {{country}} market yet.',
     countryNotEnabledHint: 'The list opens once enough aquarists are here — your tank counts toward it.',
-    comingSoon: 'coming soon',
+    comingSoon: 'Coming soon',
 
     addToCountry: 'Add to {{country}}',
     addedToCountry: 'Added to the {{country}} list',

@@ -32,6 +32,21 @@ HERE = Path(__file__).resolve().parent
 NGAY = "2026-08-15"
 CC_VN = "704"
 
+# Dòng lai: TẮT. Bật lại thì `snapshots_seed.csv` cũng phải nạp cùng lúc — mã ≥ 500000
+# không có row trong `Species`, tên chỉ đến từ `SpeciesSnapshots`.
+NAP_DONG_LAI = False
+
+# Nhãn tiệm ghi tên ĐỒNG NGHĨA CŨ, FishDex lưu tên hiện hành. Không có bảng này thì
+# `JOIN ON SpeciesName` trượt và 5 loài bị loại KHÔNG BÁO — đã xảy ra một lần.
+# Giữ nguyên chữ trong CSV để còn đối chiếu được với nhãn tiệm.
+DONG_NGHIA = {
+    "Brochis splendens":       "Corydoras splendens",
+    "Brochis multiradiatus":   "Corydoras multiradiatus",
+    "Corydoras barbatus":      "Scleromystax barbatus",
+    "Crossocheilus siamensis": "Crossocheilus oblongus",
+    "Hemigrammus bleheri":     "Petitella bleheri",
+}
+
 # Enum, đã đối chiếu BackEndProject/.../Entity/Market/TradedSpecies.cs
 ORIGIN_ADMIN_SEED = 0
 STATUS_APPROVED = 1
@@ -138,8 +153,11 @@ def main() -> int:
 
     # ── File 2: TradedSpecies ───────────────────────────────────────────────
     loai = [r for r in market if r["loai"] == "loai" and r["tenKhoaHoc"].strip()]
+    for r in loai:                          # quy về tên hiện hành trước khi tra DB
+        n = r["tenKhoaHoc"].strip()
+        r["tenHienHanh"] = DONG_NGHIA.get(n, n)
     ten2code = {}
-    names = sorted({r["tenKhoaHoc"].strip() for r in loai})
+    names = sorted({r["tenHienHanh"] for r in loai})
     vals = ",".join("('" + n.replace("'", "''") + "')" for n in names)
     for l in psql(f'''WITH x(n) AS (VALUES {vals})
         SELECT x.n||'|'||s."SpecCode" FROM x JOIN "Species" s ON s."SpeciesName"=x.n;'''):
@@ -150,9 +168,9 @@ def main() -> int:
     traded, khong_khop = [], []
     seen = set()
     for r in loai:
-        sc = ten2code.get(r["tenKhoaHoc"].strip())
+        sc = ten2code.get(r["tenHienHanh"])
         if not sc:
-            khong_khop.append(r["tenKhoaHoc"].strip()); continue
+            khong_khop.append(r["tenHienHanh"]); continue
         if sc in seen:                      # 2 tên bán cùng một loài, vd chuột Venezuela/Albino
             continue
         seen.add(sc)
@@ -162,8 +180,14 @@ def main() -> int:
     # Dòng lai bán ở VN — nối qua bảng tra TƯỜNG MINH, không suy từ cột `nguon`.
     # `cultivars.csv` ghi nguồn TÀI LIỆU (wikipedia-koi...), còn bằng chứng thị
     # trường nằm ở `market-vn.csv`. Hai trục khác nhau nên phải có bảng nối riêng.
+    #
+    # ⛔ TẠM DỪNG (19/08/2026). Toàn bộ dòng lai đang dừng — độ phủ registry thấp và
+    # không có ảnh dùng được, xem README của thư mục seed. Nhánh này TRƯỚC ĐÂY chạy vô
+    # điều kiện nên vẫn nhét 3 mã ≥ 500000 vào `traded_species_seed.csv` dù dòng lai đã
+    # được chốt dừng; mà `SpeciesSnapshots` không nạp thì thẻ hiện chữ `SpecCode 500025`
+    # (MarketService.cs:233). Bật lại cùng lúc với `snapshots_seed.csv`, không bật lẻ.
     lai_vn = 0
-    for m in doc(HERE / "vn-cultivar-map.csv"):
+    for m in (doc(HERE / "vn-cultivar-map.csv") if NAP_DONG_LAI else []):
         khoa = m["khoa"].strip()
         if not khoa:                        # cố ý để trống — không có trong registry
             continue
@@ -181,7 +205,36 @@ def main() -> int:
     with (out / "traded_species_seed.csv").open("w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=F2); w.writeheader(); w.writerows(traded)
 
+    # ── File 3: CommonNames tiếng Việt ──────────────────────────────────────
+    # `tenBan` là nhãn tiệm cá cảnh VN in trên sản phẩm — đó CHÍNH LÀ tên bản ngữ.
+    # Trước đây chỉ dùng nó để tra SpecCode rồi bỏ, nên trang market hiện
+    # "Chưa có tên tiếng Việt" cho 120/123 loài dù dữ liệu đã nằm trong tay.
+    # FishBase chỉ có 4 tên tiếng Việt trong nhóm này và đều sai dấu ("Cá bay màu"),
+    # nhưng tất cả đều IsPreferred=false nên tên seed (IsPreferred=true, Rank=1) thắng.
+    F3 = ["SpecCode", "ComName", "Language", "CountryCode", "NameType",
+          "IsPreferred", "Rank", "IsVerified", "Remarks"]
+    ten_viet, hang = [], {}
+    for r in loai:
+        sc, ten = ten2code.get(r["tenHienHanh"]), r["tenBan"].strip()
+        if not sc or not ten:
+            continue
+        if any(t["SpecCode"] == sc and t["ComName"] == ten for t in ten_viet):
+            continue
+        # Một loài có thể mang 2 nhãn tiệm (chuột Venezuela / Albino) — cả hai đều là
+        # tên bản ngữ thật, giữ cả, nhãn đầu làm preferred.
+        hang[sc] = hang.get(sc, 0) + 1
+        ten_viet.append(dict(SpecCode=sc, ComName=ten, Language="Vietnamese",
+                             CountryCode=CC_VN, NameType="Vernacular",
+                             IsPreferred=str(hang[sc] == 1).lower(), Rank=hang[sc],
+                             IsVerified="true",
+                             Remarks=f"seed nhan tiem ca canh VN {NGAY}; nguon {r['nguon']}"))
+    ten_viet.sort(key=lambda x: (int(x["SpecCode"]), x["Rank"]))
+    with (out / "common_names_seed_vn.csv").open("w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=F3); w.writeheader(); w.writerows(ten_viet)
+
     print(f"  snapshots_seed.csv      : {len(snap):>4} dong lai")
+    print(f"  common_names_seed_vn.csv: {len(ten_viet):>4} ten tieng Viet"
+          f"  ({len({x['SpecCode'] for x in ten_viet})} loai)")
     print(f"  traded_species_seed.csv : {len(traded):>4} loai ban o VN"
           f"  ({len(traded)-lai_vn} FishBase + {lai_vn} dong lai)")
     if khong_khop:

@@ -18,10 +18,19 @@ interface Props {
  * <b>Không hiện emoji cờ.</b> Windows không có glyph cho regional indicator symbols nên
  * cờ render ra thành đúng hai chữ cái ("VN Việt Nam") — trông như thừa mã viết tắt.
  *
- * Hiện CẢ nước chưa bật, có ghi chú riêng, để người dùng thấy hệ thống hỗ trợ những đâu.
+ * Hiện CẢ nước chưa bật, để người dùng thấy hệ thống hướng tới những đâu — nhưng gom vào
+ * `optgroup` và `disabled` thay vì dán " — sắp có" sau từng tên. Cụm từ đó lặp 11 lần đọc rất
+ * rối, mà bản chất nó là thuộc tính của cả NHÓM chứ không phải của từng nước.
+ *
+ * `disabled` để không chọn được: trang của nước chưa bật chỉ ra panel "chưa tới lượt", chọn vào
+ * là ngõ cụt. Vẫn vào được bằng URL trực tiếp, và MarketPage đã chặn sẵn ở tầng trang.
  */
 export default function CountrySelect({ countries, value, onChange, className }: Props) {
   const { t } = useTranslation();
+
+  // Giữ nguyên thứ tự BE trả về (DisplayOrder — Việt Nam trước, rồi theo quy mô thị trường).
+  const enabled = countries.filter((c) => c.isEnabled);
+  const upcoming = countries.filter((c) => !c.isEnabled);
 
   return (
     <select
@@ -34,11 +43,19 @@ export default function CountrySelect({ countries, value, onChange, className }:
         (className ?? '')
       }
     >
-      {countries.map((c) => (
-        <option key={c.alpha2} value={c.alpha2}>
-          {t(`countries.${c.alpha2}`)}{c.isEnabled ? '' : ` — ${t('market.comingSoon')}`}
-        </option>
+      {enabled.map((c) => (
+        <option key={c.alpha2} value={c.alpha2}>{t(`countries.${c.alpha2}`)}</option>
       ))}
+
+      {upcoming.length > 0 && (
+        <optgroup label={t('market.comingSoon')}>
+          {upcoming.map((c) => (
+            <option key={c.alpha2} value={c.alpha2} disabled>
+              {t(`countries.${c.alpha2}`)}
+            </option>
+          ))}
+        </optgroup>
+      )}
     </select>
   );
 }

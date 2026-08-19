@@ -398,7 +398,7 @@ const vi = {
     error: 'Không tải được danh sách. Kiểm tra FishDex Service.',
     countryNotEnabled: 'Chúng tôi chưa khảo sát thị trường {{country}}.',
     countryNotEnabledHint: 'Danh sách sẽ mở khi có đủ người nuôi cá ở đây — bể của bạn cũng góp vào đó.',
-    comingSoon: 'sắp có',
+    comingSoon: 'Sắp có',
 
     // Nút chỉ hiện với admin
     addToCountry: 'Thêm vào {{country}}',

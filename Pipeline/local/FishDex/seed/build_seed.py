@@ -69,6 +69,48 @@ def psql(sql: str) -> list[str]:
     return [l for l in r.stdout.splitlines() if l.strip()]
 
 
+# ── Chuẩn hoá chữ hoa tên tiếng Việt ────────────────────────────────────────
+# Nhãn tiệm viết Title Case ("Cá Hồng Cam Vây Dài"), FishBase viết sentence case
+# ("Cá bống cát"). Đặt cạnh nhau trên cùng trang thì lệch rõ. Quy ước tiếng Việt là
+# sentence case, nên hạ chữ — NHƯNG chỉ hạ những từ CHẮC CHẮN là từ tiếng Việt.
+#
+# Từ không nằm trong VIET giữ nguyên chữ hoa: epithet Latin (Sterbai, Adolfoi), địa danh
+# (Venezuela, Madagascar), từ tiếng Anh (Tetra, Pleco, Panda). Hạ mù quáng sẽ ra
+# "Cá chuột venezuela" — sai tên riêng.
+#
+# KHÔNG bỏ tiền tố "Cá". Từ đứng sau nó luôn là tên NHÓM cá, không phải tên con vật:
+# bỏ đi thì "Cá Chuột Panda" thành "Chuột Panda", "Cá Bác Sĩ" thành "Bác Sĩ".
+VIET = {
+    "cá", "bảy", "màu", "kiếm", "mún", "sọc", "ngựa", "mã", "giáp", "sặc", "xanh",
+    "cánh", "buồm", "hồng", "cam", "vây", "dài", "thần", "tiên", "phượng", "hoàng",
+    "kim", "tơ", "ong", "diếc", "anh", "đào", "cầu", "vồng", "chuột", "neon", "vua",
+    "mèo", "đốm", "vàng", "thuỷ", "thủy", "tinh", "táo", "đỏ", "đen", "chim", "cụt",
+    "lưỡi", "rìu", "cáo", "bay", "hắc", "xá", "tam", "giác", "tím", "muối", "tiêu",
+    "dĩa", "bút", "chì", "ngọc", "trai", "sao", "chạch", "bống", "mút", "rong", "sóc",
+    "đầu", "nóc", "số", "hỏa", "liên", "đăng", "my", "mắt", "tre", "chấm", "bi",
+    "cắt", "kéo", "bác", "sĩ", "vẩy", "rồng",
+    # Từ mượn đã Việt hoá, viết thường như từ thuần
+    "molly", "killi", "neon",
+}
+# Tên riêng bị viết thường trong nhãn tiệm — phải nâng lại
+RIENG = {"thái": "Thái", "ấn": "Ấn", "độ": "Độ", "việt": "Việt"}
+# Nhãn tiệm viết hai kiểu cho cùng một từ (10130 `thuỷ` vs 10920 `thủy`)
+CHINH_TA = {"thuỷ": "thủy"}
+
+
+def chuan_hoa_ten(ten: str) -> str:
+    ra = []
+    for i, tu in enumerate(ten.split()):
+        thap = CHINH_TA.get(tu.lower(), tu.lower())
+        if thap in RIENG:
+            ra.append(RIENG[thap])
+        elif thap in VIET:
+            ra.append(thap.capitalize() if i == 0 else thap)
+        else:
+            ra.append(tu)                       # epithet Latin / tiếng Anh / địa danh
+    return " ".join(ra)
+
+
 def doc(path: Path, **kw) -> list[dict]:
     with path.open(encoding="utf-8-sig", newline="") as f:
         return list(csv.DictReader(f))
@@ -215,9 +257,11 @@ def main() -> int:
           "IsPreferred", "Rank", "IsVerified", "Remarks"]
     ten_viet, hang = [], {}
     for r in loai:
-        sc, ten = ten2code.get(r["tenHienHanh"]), r["tenBan"].strip()
+        sc, ten = ten2code.get(r["tenHienHanh"]), chuan_hoa_ten(r["tenBan"].strip())
         if not sc or not ten:
             continue
+        # Sau chuẩn hoá, các nhãn chỉ khác chữ hoa sẽ trùng nhau và bị gộp ở đây —
+        # vd 12365 có cả "Cá sóc đầu đỏ" và "Cá Sóc Đầu Đỏ".
         if any(t["SpecCode"] == sc and t["ComName"] == ten for t in ten_viet):
             continue
         # Một loài có thể mang 2 nhãn tiệm (chuột Venezuela / Albino) — cả hai đều là

@@ -358,7 +358,7 @@ const en = {
   },
   market: {
     title: 'Aquarium fish in {{country}}',
-    subtitle: 'Species currently sold in {{country}}',
+    subtitle: 'Fish sold in {{country}} — open a species profile to see where the evidence comes from',
     countryLabel: 'Country',
 
     statTraded: 'sold here',

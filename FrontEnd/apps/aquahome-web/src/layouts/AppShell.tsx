@@ -6,7 +6,7 @@ import {
   Shield, Home, Settings, FileText, ImageIcon, User, LogIn, Menu, X, Globe, Bell, MoreHorizontal,
   Users, Waves, Trophy, Store
 } from 'lucide-react';
-import { cn, useLogout, useTranslation, setLanguage, useAuthStore } from '@fishlover/shared';
+import { cn, useLogout, useTranslation, setLanguage, useAuthStore, type AppLanguage } from '@fishlover/shared';
 
 interface SubMenuItem {
   to: string;
@@ -47,10 +47,13 @@ export default function AppShell() {
   const langMenuRef = useRef<HTMLDivElement>(null);
 
   const { i18n } = useTranslation();
-  const currentLang = i18n.language as 'en' | 'vi';
-  const LANGUAGES: { code: 'en' | 'vi'; label: string }[] = [
+  const currentLang = i18n.language as AppLanguage;
+  // Nhãn viết bằng chính ngôn ngữ đó — người Đức tìm "Deutsch", không tìm "German".
+  const LANGUAGES: { code: AppLanguage; label: string }[] = [
     { code: 'en', label: 'English' },
     { code: 'vi', label: 'Tiếng Việt' },
+    { code: 'de', label: 'Deutsch' },
+    { code: 'zh', label: '中文' },
   ];
 
   const [selectedAvatar] = useState(() => localStorage.getItem('user_avatar') || '');

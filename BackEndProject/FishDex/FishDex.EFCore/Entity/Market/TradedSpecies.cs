@@ -88,4 +88,16 @@ public enum MarketOrigin
     TankDerived = 1,
     /// <summary>Admin thêm tay từ màn danh sách hoặc chi tiết loài.</summary>
     AdminAdded = 2,
+
+    /// <summary>
+    /// SUY DIỄN, không có bằng chứng tiệm bán. Dùng cho seed dựng từ dấu hiệu gián tiếp —
+    /// điển hình là "có tên bản ngữ trong <c>CommonNames</c>" cộng cờ <c>Aquarium</c> của FishBase.
+    ///
+    /// <para>Vì sao phải có giá trị riêng: đã đo được rằng "có tên gắn mã nước" gần như không
+    /// tương quan với thứ thật sự bán ở nước đó — Anh có 207 loài gắn mã UK và 127 loài tiệm Anh
+    /// bán thật, giao nhau chỉ 9 loài; Singapore là nước xuất khẩu cá cảnh lớn nhất thế giới mà
+    /// chỉ 18 loài gắn mã SG. Trộn loại dữ liệu này vào <see cref="AdminSeed"/> thì vĩnh viễn
+    /// không tách lại được khỏi dòng có bằng chứng thật.</para>
+    /// </summary>
+    Inferred = 3,
 }

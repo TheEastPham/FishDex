@@ -62,4 +62,5 @@ export { cn, getCountryCode }                       from './lib/utils';
 
 // ── i18n ──────────────────────────────────────────────────
 export { i18n, setLanguage, useTranslation }       from './i18n';
+export type { AppLanguage }                        from './i18n';
 export { LanguageSwitcher }                        from './components/LanguageSwitcher';

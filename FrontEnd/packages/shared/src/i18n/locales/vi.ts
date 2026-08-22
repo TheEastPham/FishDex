@@ -362,7 +362,10 @@ const vi = {
   market: {
     // Tiêu đề mang tên nước để không mất ngữ cảnh khi quốc gia nằm trong dropdown
     title: 'Cá cảnh ở {{country}}',
-    subtitle: 'Những loài đang được bán tại {{country}}',
+    // Nói thẳng "cá" thay vì "loài", và chỉ đường sang hồ sơ loài — mức bằng chứng của
+    // mỗi dòng không giống nhau (nhãn tiệm thật vs suy từ tên bản ngữ) nên không thể
+    // khẳng định chung ở đây.
+    subtitle: 'Những loài cá đang bán ở {{country}} — muốn xem nguồn gốc hãy vào hồ sơ từng loài',
     countryLabel: 'Quốc gia',
 
     // Ba ô thống kê. Ô "chờ đặt tên" được nhấn vì đó là lời mời đóng góp

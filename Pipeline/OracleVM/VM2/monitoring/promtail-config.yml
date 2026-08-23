@@ -13,6 +13,12 @@ scrape_configs:
     docker_sd_configs:
       - host: unix:///var/run/docker.sock
         refresh_interval: 5s
+    # Bỏ entry cũ hơn 7 ngày — Loki chặn (reject_old_samples_max_age=168h) và trả 400.
+    # Cần thiết vì positions nằm trong /tmp của container: mỗi lần recreate là đọc lại từ đầu.
+    pipeline_stages:
+      - drop:
+          older_than: 168h
+          drop_counter_reason: older_than_loki_limit
     relabel_configs:
       - source_labels: [__meta_docker_container_name]
         regex: '/(.*)'
@@ -25,3 +31,7 @@ scrape_configs:
         target_label: env
       - source_labels: [__meta_docker_container_image]
         target_label: image
+      # host: hằng số phân biệt nguồn log VM1 với VM2 → query {host="vm1"}
+      # LƯU Ý: chưa deploy — deploy chung với task 4 (pipeline_stages) để chỉ recreate promtail 1 lần
+      - target_label: host
+        replacement: vm1

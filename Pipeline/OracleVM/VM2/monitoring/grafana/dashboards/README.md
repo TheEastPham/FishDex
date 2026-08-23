@@ -14,10 +14,17 @@ Mọi file `*.json` trong thư mục này được Grafana tự load vào folder
    (Tránh để uid ngẫu nhiên do import tay — recreate container sẽ lệch.)
 4. Commit file lên git. Recreate Grafana → dashboard tự xuất hiện.
 
+## Đã bỏ
+
+`logs.json` (import ID 14055) đã xoá: dashboard đó viết cho Kubernetes — dùng label `app`,
+metric `kube_pod_*` và recording rule `log_messages_total` của loki-mixin, không cái nào tồn tại
+trong setup Docker này. Thay bằng `loki-stack.json` viết tay theo label thật (`service`, `container`, `host`).
+
 ## Dashboard dự kiến của Epic 10
 
 | File | Nguồn | Task |
 |------|-------|------|
 | `containers.json` | Import ID 14282 (cAdvisor) | 10.3 |
-| `logs.json`       | Import ID 14055 (Loki Logs) | 10.2 |
+| `loki-stack.json`  | Tự viết (task 2 monitoring follow-up) | 10.2 |
+| `app-logs.json`    | Tự viết — soi log 4 service BE hằng ngày | task 3 |
 | `vm1-host.json`   | Import ID 1860 (Node Exporter Full) | 10.5 |

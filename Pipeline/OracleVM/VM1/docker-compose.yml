@@ -204,6 +204,9 @@ services:
     image: grafana/promtail:latest
     container_name: promtail
     restart: unless-stopped
+    ports:
+      # Bind private IP: Prometheus VM2 scrape /metrics của promtail (task 1), KHÔNG hở public
+      - "10.0.0.64:9080:9080"
     volumes:
       - ./promtail-config.yml:/etc/promtail/config.yml:ro
       - /var/run/docker.sock:/var/run/docker.sock

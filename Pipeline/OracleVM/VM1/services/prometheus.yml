@@ -19,6 +19,34 @@ scrape_configs:
         labels:
           instance: 'vm1-prod'
 
+  # ── App metrics (RED) — 4 service .NET trên VM1 ───────────────────────────
+  # Metrics do OpenTelemetry sinh (AddFishLoverTelemetry → WithMetrics + AddPrometheusExporter).
+  # ASP.NET Core 8+ tự phát http.server.request.duration nên có sẵn rate/error/latency theo route.
+  # Worker KHÔNG có ở đây: nó là Generic Host, không chạy Kestrel nên không có endpoint /metrics.
+  - job_name: 'app-gateway'
+    static_configs:
+      - targets: ['10.0.0.64:5000']
+        labels:
+          instance: 'vm1-prod'
+
+  - job_name: 'app-usermanagement'
+    static_configs:
+      - targets: ['10.0.0.64:8080']
+        labels:
+          instance: 'vm1-prod'
+
+  - job_name: 'app-fishdex'
+    static_configs:
+      - targets: ['10.0.0.64:8081']
+        labels:
+          instance: 'vm1-prod'
+
+  - job_name: 'app-aquahome'
+    static_configs:
+      - targets: ['10.0.0.64:8082']
+        labels:
+          instance: 'vm1-prod'
+
   # ── Monitoring stack tự soi mình (task 1) ─────────────────────────────────
   # Cần cho dashboard "Loki stack monitoring": loki_distributor_*, promtail_dropped_entries_total...
   - job_name: 'loki'

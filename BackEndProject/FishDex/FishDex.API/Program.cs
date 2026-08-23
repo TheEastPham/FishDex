@@ -221,6 +221,9 @@ try
 
     app.MapControllers();
     app.MapHealthChecks("/health");
+    // Prometheus VM2 scrape qua private IP 10.0.0.64:8081/metrics.
+    // Metrics đã được cấu hình sẵn trong AddFishLoverTelemetry, chỉ thiếu endpoint này.
+    app.MapPrometheusScrapingEndpoint();
 
     app.Run();
 }

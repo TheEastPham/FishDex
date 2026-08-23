@@ -47,6 +47,12 @@ if (app.Environment.IsDevelopment())
 app.UseRouting();
 app.UseCors();
 
+// /metrics phải map TRƯỚC Ocelot. UseOcelot là middleware terminal: nếu để sau, nó sẽ coi
+// /metrics là một request cần route xuống downstream và trả UnableToFindDownstreamRouteError.
+// Endpoint này KHÔNG được ra internet — nginx chặn /metrics, Prometheus VM2 scrape trực tiếp
+// qua private IP 10.0.0.64:5000.
+app.UseEndpoints(endpoints => endpoints.MapPrometheusScrapingEndpoint());
+
 // Use Ocelot middleware
 await app.UseOcelot();
 

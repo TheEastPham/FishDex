@@ -1,7 +1,12 @@
+# LƯU Ý layout: file này deploy lên **VM2** (~/monitoring/prometheus.yml), không phải VM1.
+# Prometheus chạy trong network `monitoring` của VM2 → target cùng VM gọi bằng tên service,
+# target trên VM1 gọi bằng private IP 10.0.0.64.
+
 global:
   scrape_interval: 15s
 
 scrape_configs:
+  # ── Hạ tầng VM1 ───────────────────────────────────────────────────────────
   - job_name: 'node-exporter'
     static_configs:
       - targets: ['10.0.0.64:9100']
@@ -13,3 +18,43 @@ scrape_configs:
       - targets: ['10.0.0.64:9200']
         labels:
           instance: 'vm1-prod'
+
+  # ── Monitoring stack tự soi mình (task 1) ─────────────────────────────────
+  # Cần cho dashboard "Loki stack monitoring": loki_distributor_*, promtail_dropped_entries_total...
+  - job_name: 'loki'
+    static_configs:
+      - targets: ['loki:3100']
+        labels:
+          instance: 'vm2-monitor'
+
+  # Promtail chạy trên VM1 → scrape qua private IP (port 9080 publish trong compose VM1)
+  - job_name: 'promtail'
+    static_configs:
+      - targets: ['10.0.0.64:9080']
+        labels:
+          instance: 'vm1-prod'
+
+  # Promtail của VM2 (task 2) — cùng network monitoring nên gọi bằng tên service
+  - job_name: 'promtail-vm2'
+    static_configs:
+      - targets: ['promtail-vm2:9080']
+        labels:
+          instance: 'vm2-monitor'
+
+  - job_name: 'tempo'
+    static_configs:
+      - targets: ['tempo:3200']
+        labels:
+          instance: 'vm2-monitor'
+
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
+        labels:
+          instance: 'vm2-monitor'
+
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          instance: 'vm2-monitor'

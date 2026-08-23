@@ -1,23 +1,34 @@
+# Promtail cho VM1 (chạy trên VM1, file nằm ở VM2/monitoring/ do layout repo lệch).
+# Đẩy log 4 service .NET + hạ tầng sang Loki trên VM2 qua private IP.
+#
+# Tách 2 job (task 4): multiline CHỈ áp cho container .NET. Nếu áp cho cả nginx/postgres,
+# mỗi dòng access log không khớp firstline sẽ bị nối vào dòng trước → phá log.
+
 server:
   http_listen_port: 9080
   grpc_listen_port: 0
 
 positions:
-  filename: /tmp/positions.yaml
+  # Trên named volume (task 4) — trước đây ở /tmp trong container nên mỗi lần recreate
+  # là promtail đọc lại log từ đầu và Loki trả 400 "timestamp too old" hàng nghìn dòng.
+  filename: /promtail/positions.yaml
 
 clients:
   - url: http://10.0.0.94:3100/loki/api/v1/push
 
 scrape_configs:
-  - job_name: docker
+  # ── Job 1: service .NET — có multiline gom stack trace ──────────────────────
+  - job_name: docker-dotnet
     docker_sd_configs:
       - host: unix:///var/run/docker.sock
         refresh_interval: 5s
     relabel_configs:
+      - source_labels: [__meta_docker_container_label_com_docker_compose_service]
+        regex: '(gateway|usermanagement|fishdex|aquahome|aquahome-worker)'
+        action: keep
       - source_labels: [__meta_docker_container_name]
         regex: '/(.*)'
         target_label: container
-      # service: lấy tự động từ label compose (gateway/usermanagement/fishdex/aquahome/postgres...)
       - source_labels: [__meta_docker_container_label_com_docker_compose_service]
         target_label: service
       # env: lấy từ docker label `env=prod` khai trong docker-compose VM1
@@ -25,3 +36,48 @@ scrape_configs:
         target_label: env
       - source_labels: [__meta_docker_container_image]
         target_label: image
+      # host: hằng số phân biệt nguồn log VM1 với VM2 → query {host="vm1"}
+      - target_label: host
+        replacement: vm1
+    pipeline_stages:
+      # Bỏ entry cũ hơn 7 ngày — Loki chặn (reject_old_samples_max_age=168h) và trả 400.
+      - drop:
+          older_than: 168h
+          drop_counter_reason: older_than_loki_limit
+      # Dòng nào KHÔNG khớp firstline sẽ được nối vào entry trước. 3 nhánh regex tương ứng
+      # 3 định dạng thật đang chảy ra từ các container này (đã kiểm chứng bằng LogQL trên prod):
+      #   1. `03:40:25 [ERR] <traceid> msg`  — Serilog theo outputTemplate trong appsettings
+      #   2. `[04:05:38 INF] msg`            — Serilog template mặc định
+      #   3. `info: Ocelot.Middleware[0]`    — logger mặc định của ASP.NET Core (dòng sau thụt lề)
+      # Nhờ vậy stack trace .NET và dòng thụt lề của Ocelot dính liền vào entry mang level.
+      - multiline:
+          firstline: '^((\d{4}-\d{2}-\d{2} )?\d{2}:\d{2}:\d{2} \[(VRB|DBG|INF|WRN|ERR|FTL)\]|\[\d{2}:\d{2}:\d{2} (VRB|DBG|INF|WRN|ERR|FTL)\]|(trce|dbug|info|warn|fail|crit):)'
+          # Dòng cuối của một block bị giữ tối đa 3s để chờ xem có dòng nối tiếp không
+          # → log realtime trễ tới 3s. Đổi nhỏ hơn thì stack trace dài dễ bị cắt rời.
+          max_wait_time: 3s
+          max_lines: 500
+
+  # ── Job 2: hạ tầng (postgres, redis, nginx, promtail, exporter) — KHÔNG multiline ──
+  - job_name: docker-infra
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+    relabel_configs:
+      - source_labels: [__meta_docker_container_label_com_docker_compose_service]
+        regex: '(gateway|usermanagement|fishdex|aquahome|aquahome-worker)'
+        action: drop
+      - source_labels: [__meta_docker_container_name]
+        regex: '/(.*)'
+        target_label: container
+      - source_labels: [__meta_docker_container_label_com_docker_compose_service]
+        target_label: service
+      - source_labels: [__meta_docker_container_label_env]
+        target_label: env
+      - source_labels: [__meta_docker_container_image]
+        target_label: image
+      - target_label: host
+        replacement: vm1
+    pipeline_stages:
+      - drop:
+          older_than: 168h
+          drop_counter_reason: older_than_loki_limit

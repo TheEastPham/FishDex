@@ -29,6 +29,7 @@ import MyPublishedTanksPage from '@/features/my-published-tanks/MyPublishedTanks
 import MyContributionsPage from '@/features/community/MyContributionsPage';
 import SubmitSpeciesPage from '@/features/community/SubmitSpeciesPage';
 import AdminCommunityPage from '@/features/admin-community/AdminCommunityPage';
+import LegalPage from '@/features/legal/LegalPage';
 
 // Redirect "/" theo trạng thái đăng nhập.
 // Khách chưa đăng nhập vào /market chứ không phải /fish: trang tra cứu không có gì để xem cho
@@ -45,6 +46,10 @@ export const router = createBrowserRouter([
   { path: '/forgot-password', element: <ForgotPasswordPage /> },
   { path: '/reset-password',  element: <ResetPasswordPage /> },
   { path: '/callback',        element: <CallbackPage /> },
+  // Ngoài AppShell và ngoài AuthGuard — Google phải đọc được hai URL này để duyệt
+  // OAuth consent screen, nên chúng mở cho cả khách chưa đăng nhập.
+  { path: '/privacy',         element: <LegalPage doc="privacy" /> },
+  { path: '/terms',           element: <LegalPage doc="terms" /> },
   {
     element: <AppShell />,
     children: [

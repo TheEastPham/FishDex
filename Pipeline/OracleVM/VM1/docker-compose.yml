@@ -209,6 +209,8 @@ services:
       - "10.0.0.64:9080:9080"
     volumes:
       - ./promtail-config.yml:/etc/promtail/config.yml:ro
+      # positions trên volume (task 4) → recreate container không đọc lại log cũ
+      - promtail_positions:/promtail
       - /var/run/docker.sock:/var/run/docker.sock
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
     command: -config.file=/etc/promtail/config.yml
@@ -267,6 +269,7 @@ services:
       - fishlover_prod
 
 volumes:
+  promtail_positions:
   postgres_data:
   redis_data:
   openiddict_keys:

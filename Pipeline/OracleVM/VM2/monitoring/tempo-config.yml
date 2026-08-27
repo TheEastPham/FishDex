@@ -15,3 +15,8 @@ storage:
     backend: local
     local:
       path: /tmp/tempo/blocks
+
+# LƯU Ý retention: Tempo giữ block mặc định 14 ngày (~78MB với lưu lượng hiện tại).
+# ĐỪNG thêm block `compactor:` vào file này — version Tempo đang chạy không nhận key đó
+# và sẽ crash-loop với lỗi `field compactor not found in type app.Config` (đã xảy ra 23/08/2026).
+# Muốn khai tường minh thì phải kiểm tra schema đúng của version đang dùng trước.

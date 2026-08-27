@@ -7,17 +7,26 @@ global:
 
 scrape_configs:
   # ── Hạ tầng VM1 ───────────────────────────────────────────────────────────
+  # VM2 nằm CÙNG job với VM1 (chỉ khác label instance) để 2 dashboard import sẵn
+  # (Node Exporter Full 1860, Cadvisor 14282) tự có thêm lựa chọn trong dropdown
+  # instance — không phải sửa dashboard. VM2 gọi bằng tên service vì cùng network.
   - job_name: 'node-exporter'
     static_configs:
       - targets: ['10.0.0.64:9100']
         labels:
           instance: 'vm1-prod'
+      - targets: ['node-exporter-vm2:9100']
+        labels:
+          instance: 'vm2-monitor'
 
   - job_name: 'cadvisor'
     static_configs:
       - targets: ['10.0.0.64:9200']
         labels:
           instance: 'vm1-prod'
+      - targets: ['cadvisor-vm2:8080']
+        labels:
+          instance: 'vm2-monitor'
 
   # ── App metrics (RED) — 4 service .NET trên VM1 ───────────────────────────
   # Metrics do OpenTelemetry sinh (AddFishLoverTelemetry → WithMetrics + AddPrometheusExporter).

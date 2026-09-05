@@ -18,18 +18,43 @@ Cloudflare Pages tích hợp thẳng với GitHub — tự build + deploy khi pu
 | Build command | `cd ../.. && npm install && cd apps/aquahome-web && npm run build` |
 | Build output directory | `dist` |
 
-4. **Environment variables** (thêm trong Cloudflare Pages dashboard):
+> `cd ../..` là để lên `FrontEnd/` — chỗ đặt npm workspace root. Phải install từ đó
+> thì `@fishlover/shared` mới link được, install trong `apps/aquahome-web` sẽ thiếu package.
 
-```
-VITE_AUTH_ISSUER          = https://api.yourdomain.com
-VITE_AUTH_CLIENT_ID       = aquahome-web
-VITE_AUTH_REDIRECT_URI    = https://app.yourdomain.com/callback
-VITE_AUTH_POST_LOGOUT_URI = https://app.yourdomain.com
-VITE_AQUAHOME_API_URL     = https://api.yourdomain.com
-VITE_FISHDEX_API_URL      = https://api.yourdomain.com
-```
+4. **Environment variables** (Settings → Variables and secrets → Add):
+
+| Name | Value PROD | Bắt buộc |
+|------|-----------|----------|
+| `VITE_GATEWAY_URL` | `https://api.fishlover.org` | ✅ |
+| `VITE_AUTH_CLIENT_ID` | `aquahome-fe` | ✅ |
+| `VITE_AUTH_REDIRECT_URI` | `https://fishlover.org/callback` | ✅ |
+| `VITE_AUTH_POST_LOGOUT_URI` | `https://fishlover.org/` | ✅ |
+| `VITE_CARTO_API_KEY` | key lấy tại https://carto.com/basemaps/apikey | ⬜ |
+
+Để type là **Variable**, không phải Secret — Vite inline hết vào bundle JS nên không có
+biến nào trong đây thật sự bí mật; đánh dấu Secret chỉ làm mất khả năng đọc lại giá trị
+khi cần debug. Đừng đặt secret thật (DB password, private key...) ở đây.
+
+Bộ tên biến này phải khớp `FrontEnd/apps/aquahome-web/.env.example` — đổi bên nào thì
+sửa cả hai, sai tên thì build vẫn xanh nhưng app chạy sai config.
+
+`VITE_CARTO_API_KEY` không bắt buộc: thiếu key thì map tự fallback sang OSM tiles
+(nền sáng được invert bằng CSS), vẫn chạy nhưng không đúng tông dark. Xem
+`packages/shared/src/lib/tileConfig.ts`.
 
 5. **Save & Deploy** → Cloudflare tự build lần đầu
+
+---
+
+## Lưu ý: biến chỉ đọc lúc BUILD
+
+Vite inline `VITE_*` thẳng vào bundle, không đọc lúc runtime. Kéo theo 2 hệ quả:
+
+- Thêm/sửa biến xong **phải trigger deploy mới** (Retry deployment hoặc push commit).
+  Deployment cũ giữ nguyên giá trị cũ.
+- File `.env` scp lên Oracle VM (`Pipeline/OracleVM/shared/.env`) **không liên quan gì
+  tới FE** — đó là biến cho docker-compose của BE. FE build trên hạ tầng Cloudflare,
+  không build trên VM.
 
 ---
 
@@ -46,5 +71,5 @@ Cloudflare Pages tự detect push → build → deploy. Không tốn Azure DevOp
 
 ## Custom domain
 
-Cloudflare Pages dashboard → **Custom domains** → thêm `app.yourdomain.com`
+Cloudflare Pages dashboard → **Custom domains** → thêm `fishlover.org`
 SSL tự động, CDN toàn cầu, deploy ~30 giây.

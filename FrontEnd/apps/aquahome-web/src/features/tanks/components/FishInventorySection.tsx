@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import {
   getSpeciesSummaries, getSpeciesDistributionsBatch,
   getCached, setCached, CacheKeys, SPECIES_DATA_TTL, useTranslation,
+  MAP_TILE_LAYER,
 } from '@fishlover/shared';
 import type { AquariumFishDto, SpeciesSummary, SpeciesDistributionDto } from '@fishlover/shared';
 import { Fish, Globe, ExternalLink, Loader2, MapPin } from 'lucide-react';
@@ -205,10 +206,7 @@ export default function FishInventorySection({ aquariumId: _aquariumId, fishList
             style={{ height: '100%', width: '100%' }}
             zoomControl={false}
           >
-            <TileLayer
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-              attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-            />
+            <TileLayer {...MAP_TILE_LAYER} />
             <MapController points={mapPoints} />
             {mapPoints.map((p, i) => (
               <CircleMarker

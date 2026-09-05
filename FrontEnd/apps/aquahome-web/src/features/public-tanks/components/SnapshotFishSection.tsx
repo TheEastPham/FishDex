@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useMap, MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useTranslation } from '@fishlover/shared';
+import { useTranslation, MAP_TILE_LAYER } from '@fishlover/shared';
 import type { SnapshotFishDto } from '@fishlover/shared';
 import { Fish, Globe, ExternalLink, MapPin } from 'lucide-react';
 
@@ -109,10 +109,7 @@ export default function SnapshotFishSection({ fish, onNavigateFish }: Props) {
             style={{ height: '100%', width: '100%' }}
             zoomControl={false}
           >
-            <TileLayer
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-              attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-            />
+            <TileLayer {...MAP_TILE_LAYER} />
             <MapController points={mapPoints} />
             {mapPoints.map((p, i) => (
               <CircleMarker

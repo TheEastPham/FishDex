@@ -57,6 +57,10 @@ export { useMyAquariums }                          from './hooks/useMyAquariums'
 export { useSpeciesSummaries }                     from './hooks/useSpeciesSummaries';
 export { usePushNotification }                     from './hooks/usePushNotification';
 
+// ── Map ───────────────────────────────────────────────────
+export type { TileLayerConfig }                    from './lib/tileConfig';
+export { MAP_TILE_LAYER }                          from './lib/tileConfig';
+
 // ── Utils ─────────────────────────────────────────────────
 export { cn, getCountryCode }                       from './lib/utils';
 

@@ -4,6 +4,7 @@ import {
   useTranslation, cn, useAuthStore,
   checkFavorite, addFavorite, removeFavorite, recordView,
   useFishProfile, getCached, setCached, invalidateCache, CacheKeys, FAVORITE_CHECK_TTL,
+  MAP_TILE_LAYER,
 } from '@fishlover/shared';
 import type { CountryDistributionDto, OccurrencePointDto } from '@fishlover/shared';
 import {
@@ -594,10 +595,7 @@ export default function FishProfilePage() {
               {/* Map — no remount on filter change */}
               <div className="flex-1 h-[280px] md:h-[400px] rounded-xl overflow-hidden border border-slate-800/50 relative z-0">
                 <MapContainer center={[0, 0]} zoom={2} scrollWheelZoom={true} className="h-full w-full z-0" style={{ background: '#141518' }}>
-                  <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                    url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                  />
+                  <TileLayer {...MAP_TILE_LAYER} />
                   <MapController points={filteredPoints} />
                   {filteredPoints.map((p, i) => (
                     <Marker key={i} position={[p.lat, p.lon]}>

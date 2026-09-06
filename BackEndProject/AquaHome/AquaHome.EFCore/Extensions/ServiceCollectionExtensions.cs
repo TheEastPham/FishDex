@@ -20,6 +20,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IContestEntryRepository, ContestEntryRepository>();
         services.AddScoped<IContestPrizeTierRepository, ContestPrizeTierRepository>();
         services.AddScoped<IContestSponsorRepository, ContestSponsorRepository>();
+        services.AddScoped<IArticleRepository, ArticleRepository>();
         return services;
     }
 }

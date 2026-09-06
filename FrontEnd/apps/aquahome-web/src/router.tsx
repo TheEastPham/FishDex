@@ -20,6 +20,8 @@ import FavoritesPage from '@/features/favorites/FavoritesPage';
 import ProfilePage from '@/features/profile/ProfilePage';
 import HistoryPage from '@/features/history/HistoryPage';
 import ReleasePage from '@/features/articles/ReleasePage';
+import ArticlesListPage from '@/features/articles/ArticlesListPage';
+import ArticleDetailPage from '@/features/articles/ArticleDetailPage';
 import TasksPage from '@/features/tasks/TasksPage';
 import PublicTanksPage from '@/features/public-tanks/PublicTanksPage';
 import PublicTankDetailPage from '@/features/public-tanks/PublicTankDetailPage';
@@ -29,6 +31,7 @@ import MyPublishedTanksPage from '@/features/my-published-tanks/MyPublishedTanks
 import MyContributionsPage from '@/features/community/MyContributionsPage';
 import SubmitSpeciesPage from '@/features/community/SubmitSpeciesPage';
 import AdminCommunityPage from '@/features/admin-community/AdminCommunityPage';
+import AdminArticlesPage from '@/features/admin-articles/AdminArticlesPage';
 import LegalPage from '@/features/legal/LegalPage';
 
 // Redirect "/" theo trạng thái đăng nhập.
@@ -60,8 +63,10 @@ export const router = createBrowserRouter([
       { path: '/market/:cc',          element: <MarketPage /> },
       { path: '/fish',                element: <FishSearchPage /> },
       { path: '/fish/:specCode',      element: <FishProfilePage /> },
+      { path: '/articles',            element: <ArticlesListPage /> },
+      // Route tĩnh phải đứng trước /articles/:slug, không thì "release" bị hiểu là slug bài viết
       { path: '/articles/release',    element: <ReleasePage /> },
-      { path: '/articles',            element: <Navigate to="/articles/release" replace /> },
+      { path: '/articles/:slug',      element: <ArticleDetailPage /> },
       { path: '/public/tanks',        element: <PublicTanksPage /> },
       { path: '/public/tanks/:slug',  element: <PublicTankDetailPage /> },
       { path: '/contests',            element: <ContestsPage /> },
@@ -90,7 +95,7 @@ export const router = createBrowserRouter([
       {
         element: <RoleGuard roles={['SystemAdmin', 'ContentAdmin']} />,
         children: [
-          { path: '/admin/articles', element: <PlaceholderPage /> },
+          { path: '/admin/articles', element: <AdminArticlesPage /> },
           { path: '/admin/media',    element: <PlaceholderPage /> },
           { path: '/admin/community', element: <AdminCommunityPage /> },
           { path: '/admin/market',    element: <AdminMarketPage /> },

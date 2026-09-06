@@ -1,4 +1,7 @@
+using FishDex.API.Filters;
 using FishDex.Domain.Extensions;
+using FishDex.Domain.Services;
+using FishDex.Domain.Services.Interfaces;
 using FishDex.Domain.Settings;
 using FishDex.EFCore.DbContexts;
 using FishDex.EFCore.Extensions;
@@ -6,6 +9,7 @@ using FishLover.Shared.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Events;
+using StackExchange.Redis;
 
 // ── Bootstrap logger (trước khi host khởi động) ───────────────
 Log.Logger = new LoggerConfiguration()
@@ -43,6 +47,30 @@ try
         builder.Configuration.GetSection(FishDexSettings.SectionName));
     builder.Services.Configure<StorageSettings>(
         builder.Configuration.GetSection(StorageSettings.SectionName));
+
+    // ── Hạn mức xem loài cho khách chưa đăng nhập ─────────────
+    // Redis dùng chung với UserManagement/AquaHome trên VM1. Không cấu hình chuỗi kết nối
+    // (local dev) thì AnonQuotaService tự cho qua tất cả — không phải dựng Redis mới chạy được API.
+    builder.Services.Configure<AnonQuotaSettings>(
+        builder.Configuration.GetSection(AnonQuotaSettings.SectionName));
+
+    var redisConnection = builder.Configuration.GetConnectionString("Redis");
+    if (!string.IsNullOrWhiteSpace(redisConnection))
+    {
+        builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
+        {
+            var config = ConfigurationOptions.Parse(redisConnection);
+            // Redis chết lúc API khởi động thì API vẫn phải lên — hạn mức fail-open, không chặn ai.
+            config.AbortOnConnectFail = false;
+            return ConnectionMultiplexer.Connect(config);
+        });
+    }
+
+    builder.Services.AddScoped<IAnonQuotaService>(sp => new AnonQuotaService(
+        sp.GetService<IConnectionMultiplexer>(),
+        sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<AnonQuotaSettings>>(),
+        sp.GetRequiredService<ILogger<AnonQuotaService>>()));
+    builder.Services.AddScoped<AnonSpeciesQuotaFilter>();
 
     // OpenTelemetry Configuration
     builder.Services.AddFishLoverTelemetry(builder.Configuration, "fishdex");
@@ -175,7 +203,10 @@ try
 
             policy.WithOrigins(allowedOrigins)
                 .AllowAnyHeader()
-                .AllowAnyMethod();
+                .AllowAnyMethod()
+                // Không expose thì trình duyệt giấu header custom khỏi JS và FE không đọc nổi
+                // số lượt còn lại của chính nó.
+                .WithExposedHeaders(AnonSpeciesQuotaFilter.ResponseHeaders);
         });
     });
 

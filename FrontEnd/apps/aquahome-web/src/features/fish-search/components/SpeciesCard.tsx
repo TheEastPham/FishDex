@@ -1,7 +1,6 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { SpeciesSearchResult, AquariumDto } from '@fishlover/shared';
-import { cn, useTranslation, useAuthStore } from '@fishlover/shared';
+import { cn, useTranslation } from '@fishlover/shared';
 import { Fish, Folder, ExternalLink, Share2 } from 'lucide-react';
 import { FavoriteButton, AddToAquariumButton } from './SpeciesCardActions';
 import AddToCountryButton from '../../market/components/AddToCountryButton';
@@ -22,9 +21,7 @@ const GRADIENTS = [
 export default function SpeciesCard({ species, index = 0, onFamilyClick, aquariums = [] }: Props) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const bgGradient = GRADIENTS[index % GRADIENTS.length];
-  const [loginHint, setLoginHint] = useState(false);
 
   return (
     <div className="group relative flex flex-col rounded-xl bg-[#202226] border border-slate-800/80 overflow-hidden hover:shadow-2xl hover:shadow-black/60 hover:-translate-y-1 transition-all duration-300">
@@ -92,10 +89,7 @@ export default function SpeciesCard({ species, index = 0, onFamilyClick, aquariu
         {/* Action Row */}
         <div className="flex mt-auto gap-2">
           <button
-            onClick={() => {
-              if (!isAuthenticated) { setLoginHint(true); return; }
-              navigate(`/fish/${species.specCode}`);
-            }}
+            onClick={() => navigate(`/fish/${species.specCode}`)}
             className="flex-1 flex items-center justify-center bg-[#2a2d32] hover:bg-[#32363c] text-white py-2 px-3 text-sm font-bold rounded-lg transition-colors"
           >
             {t('fish.viewProfile')}
@@ -106,19 +100,6 @@ export default function SpeciesCard({ species, index = 0, onFamilyClick, aquariu
           {/* Chỉ admin thấy nút này — người dùng thường không có nút nào */}
           <AddToCountryButton specCode={species.specCode} />
         </div>
-
-        {/* Chưa login → nhắc đăng nhập thay vì vào trang chi tiết (BE chưa có endpoint public cho detail) */}
-        {loginHint && (
-          <div className="mt-3 flex items-center justify-between gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
-            <span>{t('fish.loginToViewDetail')}</span>
-            <button
-              onClick={() => navigate('/login')}
-              className="shrink-0 px-2.5 py-1 rounded-md bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-200 font-semibold transition-colors"
-            >
-              {t('login.button')}
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

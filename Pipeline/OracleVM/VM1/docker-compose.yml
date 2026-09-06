@@ -90,6 +90,10 @@ services:
       # Khoá service-to-service — AquaHome.Worker gọi /api/market/ingest. Cùng giá trị với
       # UserManagement. Thiếu biến này thì endpoint ingest tự trả 503 chứ không mở toang.
       - InternalSettings__ApiKey=${INTERNAL_API_KEY}
+      # Redis cho hạn mức xem loài (khách chưa đăng nhập) — dùng chung với UserManagement/AquaHome.
+      # Redis chết thì hạn mức fail-open (cho xem), không chặn trang tra cứu.
+      # Con số hạn mức nằm ở appsettings.json (AnonQuota), không phải env.
+      - ConnectionStrings__Redis=${REDIS_CONN}
       - AutoMigrate__OnStartup=true
       - ASPNETCORE_HTTP_PORTS=8081
       - OpenTelemetry__ExportEndpoint=http://10.0.0.94:4317   # OTLP trace → Tempo (VM2)
@@ -97,6 +101,7 @@ services:
       - "env=prod"
     depends_on:
       - postgres
+      - redis
     networks:
       - fishlover_prod
 

@@ -29,7 +29,15 @@ builder.Services.AddCors(options =>
             : raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         policy.WithOrigins(origins)
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowAnyHeader()
+              // Gateway mới là origin mà trình duyệt nhìn thấy, nên Expose-Headers phải khai ở đây —
+              // khai bên FishDex không có tác dụng khi FE đi qua gateway. Đây là hạn mức xem loài
+              // của khách chưa đăng nhập (xem AnonSpeciesQuotaFilter bên FishDex.API).
+              .WithExposedHeaders(
+                  "X-Anon-Views-Limit",
+                  "X-Anon-Views-Used",
+                  "X-Anon-Views-Remaining",
+                  "X-Anon-Views-Reset");
     });
 });
 

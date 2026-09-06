@@ -19,6 +19,9 @@ public class AquaHomeDbContext(DbContextOptions<AquaHomeDbContext> options) : Db
     public DbSet<ContestEntry>         ContestEntries        => Set<ContestEntry>();
     public DbSet<ContestPrizeTier>     ContestPrizeTiers     => Set<ContestPrizeTier>();
     public DbSet<ContestSponsor>       ContestSponsors       => Set<ContestSponsor>();
+    public DbSet<Article>              Articles              => Set<Article>();
+    public DbSet<ArticleTranslation>   ArticleTranslations   => Set<ArticleTranslation>();
+    public DbSet<ArticleAsset>         ArticleAssets         => Set<ArticleAsset>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -180,6 +183,49 @@ public class AquaHomeDbContext(DbContextOptions<AquaHomeDbContext> options) : Db
             e.HasOne(x => x.Contest)
              .WithMany(c => c.Sponsors)
              .HasForeignKey(x => x.ContestId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        model.Entity<Article>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Slug).HasMaxLength(160).IsRequired();
+            e.HasIndex(x => x.Slug).IsUnique();
+            e.Property(x => x.TemplateKey).HasMaxLength(40).IsRequired();
+            e.Property(x => x.CoverObjectKey).HasMaxLength(500);
+            e.Property(x => x.AuthorName).HasMaxLength(100);
+            // Trang list công khai: lọc Published rồi sort PublishedAt DESC — index phủ đúng luồng đó.
+            e.HasIndex(x => new { x.Status, x.PublishedAt }).IsDescending(false, true);
+            e.HasIndex(x => new { x.Status, x.Type });
+            // Postgres text[] + GIN → Tags.Contains(tag) dùng được index thay vì seq scan.
+            e.HasIndex(x => x.Tags).HasMethod("gin");
+        });
+
+        model.Entity<ArticleTranslation>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Language).HasMaxLength(5).IsRequired();
+            e.Property(x => x.Title).HasMaxLength(200).IsRequired();
+            e.Property(x => x.Summary).HasMaxLength(500);
+            e.Property(x => x.ContentObjectKey).HasMaxLength(500).IsRequired();
+            // Một bài chỉ có một bản dịch cho mỗi ngôn ngữ.
+            e.HasIndex(x => new { x.ArticleId, x.Language }).IsUnique();
+            e.HasOne(x => x.Article)
+             .WithMany(a => a.Translations)
+             .HasForeignKey(x => x.ArticleId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        model.Entity<ArticleAsset>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.ObjectKey).HasMaxLength(500).IsRequired();
+            e.Property(x => x.ContentType).HasMaxLength(50).IsRequired();
+            e.Property(x => x.FileName).HasMaxLength(260);
+            e.HasIndex(x => x.ArticleId);
+            e.HasOne(x => x.Article)
+             .WithMany(a => a.Assets)
+             .HasForeignKey(x => x.ArticleId)
              .OnDelete(DeleteBehavior.Cascade);
         });
     }

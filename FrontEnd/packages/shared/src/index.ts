@@ -8,6 +8,8 @@ export type { DistributionPointDto, SnapshotFishDto, SnapshotDataDto, SnapshotPr
 export { PrizeTierLevel, SponsorTier, ContestStatus, ContestEntryStatus } from './types/snapshot';
 export type { CommunitySpeciesDto, SubmitCommunitySpeciesRequest, CommunityCommonNameDto, SubmitCommonNameRequest, CommunityImageUploadResultDto } from './types/community';
 export { CommunityCareLevel, CommunitySpeciesKind } from './types/community';
+export type { ArticleBlockType, ArticleBlock, ArticleContent, ArticleContentInput, ArticleAssetDto, ArticleListItemDto, ArticleDetailDto, AdminArticleDto, AdminArticleTranslationDto, GetArticlesParams, CreateArticlePayload, UpdateArticlePayload, UpsertTranslationPayload, ArticleValidationError } from './types/articles';
+export { ArticleType, ReadingLevel, ArticleStatus } from './types/articles';
 
 
 // ── Store ─────────────────────────────────────────────────
@@ -34,6 +36,7 @@ export { requestOtp, registerUser, forgotPassword, resetPassword, getMyProfile, 
 export type { RequestOtpResponse, RegisterRequest, RegisterResponse, ForgotPasswordResponse, ResetPasswordPayload, ResetPasswordResponse, UserProfileDto, UpdateProfilePayload, ChangePasswordPayload } from './lib/api/auth';
 export { previewSnapshot, publishSnapshot, unpublishSnapshot, getMySnapshots, getPublicSnapshots, getPublicSnapshotBySlug, likeSnapshot, unlikeSnapshot, getActiveContests, getContestLeaderboard, submitContestEntry, confirmEntryUpload, getMyContestEntries, getAllContests, createContest, updateContest, getPendingReviewEntries, approveContestEntry, rejectContestEntry, finalizeContest, createPrizeTier, updatePrizeTier, deletePrizeTier, requestPrizeTierImageUpload, createSponsor, updateSponsor, deleteSponsor, requestSponsorLogoUpload } from './lib/api/snapshots';
 export { getVapidPublicKey, saveSubscription, removeSubscription } from './lib/api/push';
+export { getArticles, getArticleBySlug, recordArticleView, fetchArticleContent, getAdminArticles, getAdminArticle, createArticle, updateArticle, upsertArticleTranslation, deleteArticleTranslation, uploadArticleAsset, deleteArticleAsset, setArticleCover, publishArticle, unpublishArticle, archiveArticle, deleteArticle } from './lib/api/articles';
 export type { MarketCountryDto, MarketSpeciesDto, MarketStatsDto, GetMarketSpeciesParams, SpeciesLookupDto, AddTradedSpeciesRequest } from './types/market';
 export { TradeStatus, LegalStatus, SizeBand, NameStatusFilter, SpeciesLookupOutcome } from './types/market';
 export { getMarketCountries, getMarketSpecies, getMarketStats, getSellingCountries, lookupSpecies, addTradedSpecies, removeTradedSpecies } from './lib/api/market';

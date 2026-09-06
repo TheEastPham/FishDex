@@ -80,15 +80,14 @@ export default function AppShell() {
   }, []);
 
   const navItems = useMemo<NavItem[]>(() => [
+    // Link thẳng, không phải nhóm: "Tổng quan" chính là trang tổng hợp, gói nó vào một nhóm
+    // chỉ có đúng một mục con thì người dùng phải bấm hai lần để tới cùng một chỗ.
     {
+      to: '/dashboard',
       icon: LayoutDashboard,
       label: t('nav.overviewGroup'),
       product: 'Overview',
       requireAuth: true,
-      subItems: [
-        { to: '/dashboard', icon: LayoutDashboard, label: t('nav.dashboard') },
-        { to: '/articles',  icon: FileText,         label: t('nav.article') },
-      ],
     },
     {
       icon: Home,
@@ -132,10 +131,11 @@ export default function AppShell() {
       icon: Settings,
       label: t('nav.utilitiesGroup'),
       product: 'Utilities',
-      requireAuth: true,
+      // Không đặt requireAuth ở cấp nhóm: bài viết mở cho khách, chỉ hai mục AI mới cần đăng nhập.
       subItems: [
-        { to: '/ai-chat',      icon: MessageCircle, label: t('nav.aiChat') },
-        { to: '/image-search', icon: Camera,        label: t('nav.imageSearch') },
+        { to: '/articles',     icon: FileText,      label: t('nav.article') },
+        { to: '/ai-chat',      icon: MessageCircle, label: t('nav.aiChat'), requireAuth: true },
+        { to: '/image-search', icon: Camera,        label: t('nav.imageSearch'), requireAuth: true },
       ],
     },
     {

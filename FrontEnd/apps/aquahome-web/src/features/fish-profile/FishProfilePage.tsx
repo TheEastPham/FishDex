@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  useTranslation, cn, useAuthStore,
+  useTranslation, cn, useAuthStore, useAnonQuotaStore,
   checkFavorite, addFavorite, removeFavorite, recordView,
   useFishProfile, getCached, setCached, invalidateCache, CacheKeys, FAVORITE_CHECK_TTL,
   MAP_TILE_LAYER,
@@ -11,7 +11,7 @@ import {
   ArrowLeft, Share2, Heart, Fish, Ruler, Droplets, Map as MapIcon,
   Image as ImageIcon, Scale, AlertTriangle, Shield,
   Thermometer, TestTube, BookOpen, FileText, Activity, Clock,
-  ChevronLeft, ChevronRight, Layers, Pencil, Lock
+  ChevronLeft, ChevronRight, Layers, Pencil
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -20,6 +20,8 @@ import SpeciesCard from '../fish-search/components/SpeciesCard';
 import AddLocalNameModal from '../community/AddLocalNameModal';
 import AddToCountryButton from '../market/components/AddToCountryButton';
 import SoldInBadge from '../market/components/SoldInBadge';
+import QuotaWall from './components/QuotaWall';
+import GuestQuotaBanner from './components/GuestQuotaBanner';
 
 // Fix leaflet default icon issue
 import iconUrl from 'leaflet/dist/images/marker-icon.png';
@@ -139,7 +141,8 @@ export default function FishProfilePage() {
   const [showAddName, setShowAddName] = useState(false);
   // Chỉ loài FishBase (< 500000) mới đóng góp tên được — loài community sửa tên trên snapshot.
   const canAddName = isAuthenticated && id !== null && id < 500000;
-  const { detail, media, distribution, relatedSpecies, loading } = useFishProfile(id, i18n.language);
+  const { detail, media, distribution, relatedSpecies, loading, quotaExceeded } = useFishProfile(id, i18n.language);
+  const quota = useAnonQuotaStore();
 
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
@@ -152,25 +155,29 @@ export default function FishProfilePage() {
     setSelectedImageIndex(null);
   }, [id]);
 
-  // Record view for recently-viewed history — fire-and-forget, auth failure is silent
+  // Record view for recently-viewed history — fire-and-forget, auth failure is silent.
+  // Khách thì bỏ hẳn: lịch sử xem là tính năng của tài khoản, gọi cũng chỉ nhận 401 và
+  // rác console — mà giờ trang này khách vào được nên rác đó xuất hiện ở mọi lượt xem.
   useEffect(() => {
-    if (!id) return;
+    if (!id || !isAuthenticated) return;
     recordView(id).catch(() => {});
-  }, [id]);
+  }, [id, isAuthenticated]);
 
   // Check favorite status — cached, AquaHome failure must not crash this page
   useEffect(() => {
-    if (!id) return;
+    if (!id || !isAuthenticated) return;
     const key = CacheKeys.favoriteCheck(id);
     const cached = getCached<boolean>(key);
     if (cached !== null) { setIsFavorite(cached); return; }
     checkFavorite(id)
       .then((val) => { setCached(key, val, FAVORITE_CHECK_TTL); setIsFavorite(val); })
       .catch(() => {});
-  }, [id]);
+  }, [id, isAuthenticated]);
 
   const handleToggleFavorite = async () => {
     if (!id || favoriteLoading) return;
+    // Khách bấm tim: đây là lúc nút này có ích nhất — dẫn sang đăng nhập thay vì im lặng 401.
+    if (!isAuthenticated) { navigate('/login'); return; }
     setFavoriteLoading(true);
     try {
       if (isFavorite) {
@@ -202,38 +209,13 @@ export default function FishProfilePage() {
     );
   }
 
-  // /fish/:specCode là route PUBLIC, nhưng BE chưa có endpoint public cho detail nên
-  // khách chưa đăng nhập luôn nhận 401 → detail = null. Trước đây chỗ này cho ra
-  // "Species not found", tức báo sai nguyên nhân: người dùng tưởng loài không tồn tại
-  // chứ không biết là phải đăng nhập.
+  // Khách xem được profile loài, nhưng chỉ N loài khác nhau mỗi ngày (đếm ở BE theo specCode).
+  // Hết lượt thì soft wall — vẫn có tên và ảnh loài, xem QuotaWall.
   //
-  // Chặn ở thẻ trên trang market/tra cứu là chưa đủ — còn URL trực tiếp, link chia sẻ,
-  // nút back, và PublicTankDetailPage (cũng public) cũng điều hướng sang đây. Chặn ở
-  // trang là chặn được mọi đường vào.
-  if (!detail && !isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-[#141518] flex items-center justify-center px-6">
-        <div className="max-w-sm w-full rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6 text-center">
-          <Lock className="w-10 h-10 text-amber-400 mx-auto mb-4" />
-          <p className="text-amber-200 font-semibold mb-2">{t('fish.loginToViewDetail')}</p>
-          <p className="text-sm text-amber-300/80 mb-5">{t('fish.loginToViewDetailBody')}</p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => navigate('/login')}
-              className="flex-1 py-2 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-100 font-semibold transition-colors"
-            >
-              {t('login.button')}
-            </button>
-            <button
-              onClick={() => navigate(-1)}
-              className="px-4 py-2 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 transition-colors"
-            >
-              {t('common.back')}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+  // Chặn ở thẻ trên trang market/tra cứu là chưa đủ — còn URL trực tiếp, link chia sẻ, nút back,
+  // và PublicTankDetailPage (cũng public) cũng điều hướng sang đây. Chặn ở trang là chặn mọi đường vào.
+  if (quotaExceeded && id !== null) {
+    return <QuotaWall specCode={id} limit={quota.limit} resetsInSeconds={quota.resetsInSeconds} />;
   }
 
   if (!detail) {
@@ -282,6 +264,8 @@ export default function FishProfilePage() {
   /* ── Render ───────────────────────────────────────────────── */
   return (
     <div className="flex flex-col min-h-screen bg-[#141518] pb-20 font-sans">
+
+      <GuestQuotaBanner />
 
       {/* ═══════════════════ HERO HEADER ═══════════════════ */}
       <div className="relative h-[380px] md:h-[440px] bg-[#0e0f11] w-full overflow-hidden flex flex-col justify-end pb-[110px]">
@@ -608,6 +592,17 @@ export default function FishProfilePage() {
                     </Marker>
                   ))}
                 </MapContainer>
+                {!isAuthenticated && filteredPoints.length === 0 && (
+                  <div className="absolute inset-x-0 bottom-0 z-[400] bg-[#141518]/90 backdrop-blur-sm border-t border-slate-700/60 px-4 py-3 text-center">
+                    <p className="text-xs text-slate-300">{t('quota.mapLocked')}</p>
+                    <button
+                      onClick={() => navigate('/login')}
+                      className="mt-1 text-xs font-semibold text-emerald-300 underline underline-offset-2"
+                    >
+                      {t('quota.loginCta')}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -678,6 +673,16 @@ export default function FishProfilePage() {
                 </button>
               ))}
             </div>
+
+            {/* Khách chỉ nhận ảnh đại diện từ endpoint public — nói thẳng còn gì phía sau. */}
+            {!isAuthenticated && (
+              <button
+                onClick={() => navigate('/login')}
+                className="mt-2 w-full min-h-[44px] rounded-lg border border-slate-700/60 bg-[#141518] text-xs text-slate-300 hover:bg-slate-800 transition-colors"
+              >
+                {t('quota.galleryLocked')}
+              </button>
+            )}
           </div>
         )}
 

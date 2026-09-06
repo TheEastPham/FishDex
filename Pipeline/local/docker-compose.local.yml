@@ -146,12 +146,19 @@ services:
       Storage__SecretKey:           ${FISHDEX_STORAGE_SECRET_KEY}
       Storage__BucketName:          ${FISHDEX_STORAGE_BUCKET}
       Storage__ForcePathStyle:      "false"
+      # Redis cho hạn mức xem loài (khách chưa đăng nhập) — dùng chung với UserManagement.
+      # Thiếu biến này thì appsettings rơi về localhost:6379, mà trong container localhost là
+      # chính nó → không kết nối được → hạn mức fail-open, test kiểu gì cũng thấy "xem thoải mái".
+      # Con số hạn mức nằm ở appsettings.Docker.json, không phải env.
+      ConnectionStrings__Redis:       ${REDIS_CONN}
     ports:
       - "8081:8080"
     networks:
       - fishlover_local
     depends_on:
       fishdex-db:
+        condition: service_healthy
+      usermanagement-redis:
         condition: service_healthy
       usermanagement-api:
         condition: service_started

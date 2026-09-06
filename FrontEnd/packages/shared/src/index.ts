@@ -14,6 +14,7 @@ export { ArticleType, ReadingLevel, ArticleStatus } from './types/articles';
 
 // ── Store ─────────────────────────────────────────────────
 export { useAuthStore }                            from './store/authStore';
+export { useAnonQuotaStore }                       from './store/anonQuotaStore';
 
 // ── Auth ──────────────────────────────────────────────────
 export { generateCodeVerifier, generateCodeChallenge, generateState } from './lib/auth/pkce';
@@ -29,7 +30,7 @@ export {
 // TODO(mobile): client.ts uses window.location — wrap in platform-specific impl
 export { apiClient }                               from './lib/api/client';
 // TODO(mobile): fishDex.ts uses import.meta.env — pass baseUrl via config object
-export { searchSpecies, getFamilies, getSpeciesDetail, getSpeciesSummaries, getSpeciesMedia, getSpeciesOccurrences, getSpeciesCountries, getSpeciesDistribution, getSpeciesDistributionsBatch, getRelatedSpecies } from './lib/api/fishDex';
+export { searchSpecies, getFamilies, getSpeciesDetail, getSpeciesSummaries, getSpeciesMedia, getSpeciesOccurrences, getSpeciesCountries, getSpeciesDistribution, getSpeciesDistributionsBatch, getRelatedSpecies, AnonQuotaError } from './lib/api/fishDex';
 export { getMyAquariums, getAquariumById, createAquarium, updateAquarium, deleteAquarium, addFishToAquarium, getAquariumFish, getMyFavorites, checkFavorite, addFavorite, removeFavorite, getRecentlyViewed, recordView, getAquariumMedia, requestMediaUpload, uploadToR2, confirmMediaUpload, deleteAquariumMedia, getReminders, createReminder, completeReminder, deleteReminder, getAllReminders } from './lib/api/aquaHome';
 export type { RecentlyViewedDto } from './types/aquahome';
 export { requestOtp, registerUser, forgotPassword, resetPassword, getMyProfile, updateMyProfile, changePassword } from './lib/api/auth';
@@ -66,6 +67,7 @@ export { MAP_TILE_LAYER }                          from './lib/tileConfig';
 
 // ── Utils ─────────────────────────────────────────────────
 export { cn, getCountryCode }                       from './lib/utils';
+export { getVisitorId }                             from './lib/visitor';
 
 // ── i18n ──────────────────────────────────────────────────
 export { i18n, setLanguage, useTranslation }       from './i18n';

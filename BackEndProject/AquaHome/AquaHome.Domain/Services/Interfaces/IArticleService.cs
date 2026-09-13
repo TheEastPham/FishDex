@@ -14,6 +14,10 @@ public interface IArticleService
 
     Task<ArticleDetailDto?> GetBySlugAsync(string slug, string? language, bool isAuthenticated, CancellationToken ct = default);
 
+    /// <summary>Bài liên quan hiện cuối trang đọc: ưu tiên trùng tag, sau đó cùng loại.</summary>
+    Task<IReadOnlyList<ArticleListItemDto>> GetRelatedAsync(
+        string slug, string? language, bool isAuthenticated, int limit, CancellationToken ct = default);
+
     Task IncrementViewAsync(string slug, CancellationToken ct = default);
 
     // ── Admin ────────────────────────────────────────────────────────────────

@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using AquaHome.Domain.DTOs;
 using AquaHome.Domain.Exceptions;
 
@@ -124,6 +125,17 @@ public static class ArticleContentBuilder
                     Alt: Trim(block.Alt, MaxAltChars));
             }
 
+            case ArticleBlockTypes.Video:
+            {
+                var videoId = ExtractYoutubeId(block.YoutubeId);
+                if (videoId is null)
+                {
+                    errors.Add($"{path}: link YouTube không hợp lệ (nhận link watch/youtu.be/shorts/embed hoặc id 11 ký tự)");
+                    return null;
+                }
+                return new ArticleBlockDto(type, Caption: Trim(block.Caption, MaxCaptionChars), YoutubeId: videoId);
+            }
+
             case ArticleBlockTypes.List:
             {
                 var items = (block.Items ?? [])
@@ -149,6 +161,27 @@ public static class ArticleContentBuilder
                 errors.Add($"{path}: loại block '{block.Type}' không hợp lệ (chỉ nhận {string.Join(", ", ArticleBlockTypes.All)})");
                 return null;
         }
+    }
+
+    /// <summary>
+    /// Bóc id video từ thứ admin dán vào: link watch, youtu.be, shorts, embed, hoặc chính id.
+    /// Trả null nếu không ra id hợp lệ — thà báo lỗi lúc lưu còn hơn để bài viết nhúng một khung
+    /// trống mà không ai biết vì sao.
+    /// </summary>
+    private static string? ExtractYoutubeId(string? input)
+    {
+        var value = input?.Trim();
+        if (string.IsNullOrEmpty(value)) return null;
+
+        // Id YouTube luôn là 11 ký tự trong [A-Za-z0-9_-]
+        if (Regex.IsMatch(value, "^[A-Za-z0-9_-]{11}$")) return value;
+
+        var match = Regex.Match(
+            value,
+            @"(?:youtu\.be/|/embed/|/shorts/|/live/|[?&]v=)([A-Za-z0-9_-]{11})",
+            RegexOptions.IgnoreCase);
+
+        return match.Success ? match.Groups[1].Value : null;
     }
 
     private static string? RequireText(string? text, string path, int maxChars, List<string> errors)

@@ -33,8 +33,8 @@ export enum ArticleStatus {
   Archived = 2,
 }
 
-/** BE chỉ chấp nhận đúng 6 loại này, gửi loại khác trả 422. */
-export type ArticleBlockType = 'paragraph' | 'heading' | 'image' | 'list' | 'quote' | 'tip';
+/** BE chỉ chấp nhận đúng 7 loại này, gửi loại khác trả 422. */
+export type ArticleBlockType = 'paragraph' | 'heading' | 'image' | 'list' | 'quote' | 'tip' | 'video';
 
 /**
  * Union phẳng: field không thuộc loại block thì vắng mặt (BE bỏ field null khi ghi file).
@@ -55,6 +55,11 @@ export interface ArticleBlock {
   items?: string[];
   /** quote */
   cite?: string;
+  /**
+   * video — id 11 ký tự của YouTube, KHÔNG phải URL. Admin dán link dạng nào cũng được, BE bóc
+   * id rồi vứt phần còn lại; FE tự ghép src nên không ai nhét được địa chỉ lạ vào iframe.
+   */
+  youtubeId?: string;
 }
 
 /** Chính là file content.json trên R2. */
@@ -179,6 +184,8 @@ export interface CreateArticlePayload {
   language: string;
   title: string;
   summary?: string;
+  /** Bỏ trống thì BE dùng "standard". */
+  templateKey?: string;
   content?: ArticleContentInput;
 }
 
@@ -187,6 +194,8 @@ export interface UpdateArticlePayload {
   readingLevel: ReadingLevel;
   tags?: string[];
   slug?: string;
+  /** Kiểu trình bày: standard | magazine | guide | photo. Bỏ trống thì BE giữ kiểu đang có. */
+  templateKey?: string;
   isFeatured: boolean;
 }
 

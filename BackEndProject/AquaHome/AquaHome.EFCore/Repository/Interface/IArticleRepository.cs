@@ -21,6 +21,10 @@ public interface IArticleRepository
     Task<(IReadOnlyList<Article> Items, int TotalCount)> GetForAdminAsync(
         int? status, string? q, int page, int pageSize, CancellationToken ct = default);
 
+    /// <summary>Ứng viên cho khối "bài liên quan": cùng loại HOẶC trùng tag, trừ chính bài đang đọc.</summary>
+    Task<IReadOnlyList<Article>> GetRelatedCandidatesAsync(
+        Guid excludeId, int type, IReadOnlyList<string> tags, int take, CancellationToken ct = default);
+
     Task AddAsync(Article article, CancellationToken ct = default);
     void Remove(Article article);
 

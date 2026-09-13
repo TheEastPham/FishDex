@@ -55,6 +55,16 @@ public class ArticlesController(IArticleService articleService) : ControllerBase
         return result.Succeeded;
     }
 
+    /// <summary>Bài liên quan — hiện cuối trang đọc để người đọc xong còn chỗ đi tiếp.</summary>
+    [HttpGet("{slug}/related")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetRelated(
+        string slug, [FromQuery] string? lang, [FromQuery] int limit = 3, CancellationToken ct = default)
+    {
+        var related = await articleService.GetRelatedAsync(slug, lang, await IsSignedInAsync(), limit, ct);
+        return Ok(related);
+    }
+
     /// <summary>Đếm lượt xem. Không auth — FE gọi một lần khi mở trang detail.</summary>
     [HttpPost("{slug}/view")]
     [AllowAnonymous]

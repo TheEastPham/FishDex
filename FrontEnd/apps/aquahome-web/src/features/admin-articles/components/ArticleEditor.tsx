@@ -8,10 +8,12 @@ import {
 } from '@fishlover/shared';
 import type { AdminArticleDto, ArticleBlock } from '@fishlover/shared';
 import {
-  ArrowLeft, Loader2, Save, Upload, Trash2, Globe, ImagePlus, AlertTriangle, Eye, EyeOff, Archive,
+  ArrowLeft, Loader2, Save, Upload, Trash2, Globe, ImagePlus, AlertTriangle, Eye, EyeOff, Archive, PenLine, X,
 } from 'lucide-react';
 import BlockListEditor from './BlockListEditor';
+import ArticleContentRenderer from '../../articles/ArticleContentRenderer';
 import { ARTICLE_TYPES, READING_LEVELS, TYPE_KEYS, LEVEL_KEYS } from '../../articles/labels';
+import { ARTICLE_TEMPLATES, templateSpec } from '../../articles/templates';
 
 const LANGUAGES = ['vi', 'en', 'de', 'zh'];
 
@@ -25,12 +27,19 @@ interface Props {
 const inputCls =
   'w-full rounded-lg border border-slate-700 bg-[#141518] px-3 py-2 text-base text-slate-200 placeholder:text-slate-600 focus:border-sky-500/50 focus:outline-none sm:text-sm';
 
-/** Bỏ block rỗng trước khi gửi — admin hay để lại một ô trống lúc soạn, không nên vì thế mà 422. */
+/**
+ * Bỏ block rỗng trước khi gửi — admin hay để lại một ô trống lúc soạn, không nên vì thế mà 422.
+ *
+ * Mỗi loại block có tiêu chí "rỗng" riêng: block image và video không có `text`, nên phải xét
+ * theo assetId / youtubeId. Thiếu nhánh riêng thì chúng rơi vào nhánh text ở cuối và bị vứt im
+ * lặng — vừa mất block mới thêm, vừa xóa mất video của bài cũ mỗi lần admin bấm Lưu.
+ */
 function prune(blocks: ArticleBlock[]): ArticleBlock[] {
   return blocks
     .map((b) => (b.type === 'list' ? { ...b, items: (b.items ?? []).map((i) => i.trim()).filter(Boolean) } : b))
     .filter((b) => {
       if (b.type === 'image') return Boolean(b.assetId);
+      if (b.type === 'video') return Boolean(b.youtubeId?.trim());
       if (b.type === 'list') return (b.items ?? []).length > 0;
       return Boolean(b.text?.trim());
     });
@@ -65,6 +74,8 @@ export default function ArticleEditor({ articleId, onBack, onChanged }: Props) {
   const [tags, setTags] = useState('');
   const [slug, setSlug] = useState('');
   const [featured, setFeatured] = useState(false);
+  const [templateKey, setTemplateKey] = useState('standard');
+  const [showPreview, setShowPreview] = useState(false);
 
   const coverInput = useRef<HTMLInputElement>(null);
   const assetInput = useRef<HTMLInputElement>(null);
@@ -75,6 +86,7 @@ export default function ArticleEditor({ articleId, onBack, onChanged }: Props) {
     setLevel(data.readingLevel);
     setTags(data.tags.join(', '));
     setSlug(data.slug);
+    setTemplateKey(data.templateKey);
     setFeatured(data.isFeatured);
   }, []);
 
@@ -147,6 +159,7 @@ export default function ArticleEditor({ articleId, onBack, onChanged }: Props) {
         readingLevel: level,
         tags: tags.split(',').map((x) => x.trim()).filter(Boolean),
         slug: slug.trim() || undefined,
+        templateKey,
         isFeatured: featured,
       });
       applyArticle(data);
@@ -248,7 +261,7 @@ export default function ArticleEditor({ articleId, onBack, onChanged }: Props) {
   const missingLanguages = LANGUAGES.filter((l) => !article.translations.some((tr) => tr.language === l));
 
   return (
-    <div className="space-y-5 pb-16">
+    <div className={cn('space-y-5 pb-16', showPreview && 'lg:pr-[52%]')}>
       {/* Thanh trên cùng */}
       <div className="flex flex-wrap items-center gap-3">
         <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-white">
@@ -326,6 +339,23 @@ export default function ArticleEditor({ articleId, onBack, onChanged }: Props) {
           <label className="text-xs text-slate-400">
             {t('adminArticles.tags')}
             <input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="medaka, thuy sinh" className={`${inputCls} mt-1`} />
+          </label>
+
+          {/* Kiểu trình bày: đổi ở đây rồi bật Xem trước là thấy ngay khác biệt, không cần lưu */}
+          <label className="text-xs text-slate-400 sm:col-span-2">
+            {t('adminArticles.template')}
+            <select
+              value={templateKey}
+              onChange={(e) => setTemplateKey(e.target.value)}
+              className={`${inputCls} mt-1`}
+            >
+              {ARTICLE_TEMPLATES.map((tpl) => (
+                <option key={tpl.key} value={tpl.key}>{t(tpl.labelKey)}</option>
+              ))}
+            </select>
+            <span className="mt-1 block text-[11px] leading-relaxed text-slate-500">
+              {t(templateSpec(templateKey).descKey)}
+            </span>
           </label>
         </div>
 
@@ -467,16 +497,85 @@ export default function ArticleEditor({ articleId, onBack, onChanged }: Props) {
       )}
 
       {/* Thanh lưu dính đáy — bài dài không phải cuộn ngược lên để bấm lưu */}
-      <div className="sticky bottom-0 -mx-4 border-t border-slate-800 bg-[#141518]/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
+      <div className="sticky bottom-0 -mx-4 flex gap-2 border-t border-slate-800 bg-[#141518]/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
+        <button
+          onClick={() => setShowPreview((v) => !v)}
+          className="flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-slate-700 bg-[#1A1B1F] px-4 text-sm font-semibold text-slate-200 hover:border-sky-500/40"
+        >
+          {showPreview ? <PenLine className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          <span className="hidden sm:inline">
+            {showPreview ? t('adminArticles.previewHide') : t('adminArticles.preview')}
+          </span>
+        </button>
+
         <button
           onClick={saveContent}
           disabled={saving || !title.trim()}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 py-3 text-sm font-semibold text-white hover:bg-sky-400 disabled:opacity-50"
+          className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-sky-500 py-3 text-sm font-semibold text-white hover:bg-sky-400 disabled:opacity-50"
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           {t('adminArticles.saveContent', { lang: language.toUpperCase() })}
         </button>
       </div>
+
+      {/*
+        Xem trước:
+        - mobile/tablet: đè kín màn hình, vì 390px không đủ chỗ cho hai cột
+        - từ lg: chiếm nửa phải, editor vẫn cuộn và sửa được ở nửa trái → sửa một chữ là thấy đổi
+        Dựng từ state đang soạn nên xem được cả phần chưa lưu, và bài Draft không phải publish
+        trước mới xem được mặt thật. Dùng đúng component của trang đọc, không phải bản mô phỏng.
+      */}
+      {showPreview && (
+        <div className="fixed inset-0 z-40 flex flex-col border-slate-800 bg-[#0F172A] lg:left-1/2 lg:border-l">
+          <div className="flex items-center gap-2 border-b border-slate-800 px-4 py-2.5">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-sky-400">
+              {t('adminArticles.previewTitle')}
+            </span>
+            <span className="rounded-full border border-slate-700 px-2 py-0.5 text-[10px] text-slate-400">
+              {t(templateSpec(templateKey).labelKey)}
+            </span>
+            <button
+              onClick={() => setShowPreview(false)}
+              className="ml-auto flex min-h-[36px] items-center gap-1.5 rounded-lg px-2.5 text-xs text-slate-400 hover:text-white"
+            >
+              <X className="h-4 w-4" /> {t('adminArticles.previewHide')}
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-4 py-8 sm:px-6">
+            {article.thumbnailUrl && (
+              <img
+                src={article.thumbnailUrl}
+                alt=""
+                className="mx-auto mb-8 max-h-[40vh] w-full max-w-4xl rounded-2xl border border-slate-800 object-cover"
+              />
+            )}
+
+            <h1 className="mx-auto w-full max-w-[38rem] text-[26px] font-black leading-[1.15] text-white">
+              {title || t('adminArticles.previewNoTitle')}
+            </h1>
+            {summary && (
+              <p className="mx-auto mt-4 w-full max-w-[66ch] text-lg font-light leading-[1.6] text-slate-300">
+                {summary}
+              </p>
+            )}
+
+            <div className="mt-10">
+              <ArticleContentRenderer
+                content={{
+                  schemaVersion: 1,
+                  template: templateKey,
+                  intro: prune(intro),
+                  body: prune(body),
+                  conclusion: prune(conclusion),
+                }}
+                assets={article.assets}
+                templateKey={templateKey}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

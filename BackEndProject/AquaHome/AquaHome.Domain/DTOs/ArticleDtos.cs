@@ -93,6 +93,8 @@ public record CreateArticleRequest(
     string Language,
     string Title,
     string? Summary,
+    /// <summary>Kiểu trình bày. Bỏ trống thì dùng "standard".</summary>
+    string? TemplateKey,
     ArticleContentInput? Content);
 
 public record UpdateArticleRequest(
@@ -100,6 +102,8 @@ public record UpdateArticleRequest(
     ReadingLevel ReadingLevel,
     IReadOnlyList<string>? Tags,
     string? Slug,
+    /// <summary>standard | magazine | guide | photo. Bỏ trống thì giữ kiểu đang có.</summary>
+    string? TemplateKey,
     bool IsFeatured);
 
 public record UpsertTranslationRequest(

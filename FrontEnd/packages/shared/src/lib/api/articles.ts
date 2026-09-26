@@ -28,6 +28,12 @@ export async function getArticleBySlug(slug: string, lang?: string): Promise<Art
   return data;
 }
 
+/** Bài liên quan hiện cuối trang đọc. BE đã xếp hạng sẵn theo tag trùng rồi tới cùng loại. */
+export async function getRelatedArticles(slug: string, lang?: string, limit = 3): Promise<ArticleListItemDto[]> {
+  const { data } = await apiClient.get<ArticleListItemDto[]>(`${BASE}/${slug}/related`, { params: { lang, limit } });
+  return data;
+}
+
 /** Đếm lượt xem — gọi một lần khi mở bài, lỗi thì kệ, không chặn việc đọc. */
 export async function recordArticleView(slug: string): Promise<void> {
   await apiClient.post(`${BASE}/${slug}/view`);

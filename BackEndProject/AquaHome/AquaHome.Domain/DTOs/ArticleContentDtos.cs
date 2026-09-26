@@ -9,8 +9,9 @@ public static class ArticleBlockTypes
     public const string List      = "list";
     public const string Quote     = "quote";
     public const string Tip       = "tip";
+    public const string Video     = "video";
 
-    public static readonly string[] All = [Paragraph, Heading, Image, List, Quote, Tip];
+    public static readonly string[] All = [Paragraph, Heading, Image, List, Quote, Tip, Video];
 }
 
 /// <summary>
@@ -27,7 +28,12 @@ public record ArticleBlockDto(
     string? Alt = null,                        // image
     bool? Ordered = null,                      // list
     IReadOnlyList<string>? Items = null,       // list
-    string? Cite = null);                      // quote
+    string? Cite = null,                       // quote
+    /// <summary>
+    /// video — CHỈ lưu id 11 ký tự của YouTube, không lưu URL. Admin dán link dạng nào cũng được,
+    /// BE bóc id ra rồi vứt phần còn lại: FE tự ghép src nên không ai nhét được địa chỉ lạ vào iframe.
+    /// </summary>
+    string? YoutubeId = null);
 
 /// <summary>
 /// Nội dung đầy đủ của một bản dịch — chính là file content.json trên R2. Template quyết định

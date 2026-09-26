@@ -1,8 +1,9 @@
 import { useState } from 'react';
+import { extractYoutubeId } from '../../articles/youtube';
 import { useTranslation } from '@fishlover/shared';
 import type { ArticleAssetDto, ArticleBlock, ArticleBlockType } from '@fishlover/shared';
 import {
-  ChevronUp, ChevronDown, Trash2, Type, Heading, Image as ImageIcon, List, Quote, Lightbulb, ClipboardPaste,
+  ChevronUp, ChevronDown, Trash2, Type, Heading, Image as ImageIcon, List, Quote, Lightbulb, ClipboardPaste, Youtube,
 } from 'lucide-react';
 
 /**
@@ -29,6 +30,7 @@ const NEW_BLOCK: Record<ArticleBlockType, ArticleBlock> = {
   list:      { type: 'list', ordered: false, items: [''] },
   quote:     { type: 'quote', text: '', cite: '' },
   tip:       { type: 'tip', text: '' },
+  video:     { type: 'video', youtubeId: '', caption: '' },
 };
 
 const ADD_BUTTONS: { type: ArticleBlockType; icon: typeof Type; labelKey: string }[] = [
@@ -38,6 +40,7 @@ const ADD_BUTTONS: { type: ArticleBlockType; icon: typeof Type; labelKey: string
   { type: 'list',      icon: List,       labelKey: 'adminArticles.blockList' },
   { type: 'quote',     icon: Quote,      labelKey: 'adminArticles.blockQuote' },
   { type: 'tip',       icon: Lightbulb,  labelKey: 'adminArticles.blockTip' },
+  { type: 'video',     icon: Youtube,    labelKey: 'adminArticles.blockVideo' },
 ];
 
 const inputCls =
@@ -167,6 +170,40 @@ export default function BlockListEditor({ label, hint, blocks, assets, onChange,
                   onChange={(e) => update(i, { items: e.target.value.split('\n') })}
                   rows={4}
                   placeholder={t('adminArticles.listPlaceholder')}
+                  className={inputCls}
+                />
+              </div>
+            )}
+
+            {block.type === 'video' && (
+              <div className="space-y-2">
+                <input
+                  value={block.youtubeId ?? ''}
+                  onChange={(e) => update(i, { youtubeId: e.target.value })}
+                  placeholder={t('adminArticles.videoPlaceholder')}
+                  className={inputCls}
+                />
+                {/* Cho thấy ngay id bóc được, khỏi phải lưu mới biết link có dùng được không */}
+                {(() => {
+                  const id = extractYoutubeId(block.youtubeId);
+                  if (!block.youtubeId?.trim()) return null;
+                  return id ? (
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={`https://i.ytimg.com/vi/${id}/default.jpg`}
+                        alt=""
+                        className="h-9 w-16 rounded border border-slate-700 object-cover"
+                      />
+                      <span className="text-[11px] text-slate-500">id: {id}</span>
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-amber-400">{t('adminArticles.videoInvalid')}</p>
+                  );
+                })()}
+                <input
+                  value={block.caption ?? ''}
+                  onChange={(e) => update(i, { caption: e.target.value })}
+                  placeholder={t('adminArticles.captionPlaceholder')}
                   className={inputCls}
                 />
               </div>

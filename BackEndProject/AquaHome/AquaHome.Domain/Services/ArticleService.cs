@@ -158,6 +158,49 @@ public class ArticleService(
             assets);
     }
 
+    public async Task<IReadOnlyList<ArticleListItemDto>> GetRelatedAsync(
+        string slug, string? language, bool isAuthenticated, int limit, CancellationToken ct = default)
+    {
+        var article = await articleRepo.GetBySlugAsync(slug, publishedOnly: true, ct);
+        if (article is null) return [];
+
+        limit = Math.Clamp(limit, 1, 6);
+
+        // Lấy dư rồi mới xếp hạng trong bộ nhớ: đếm số tag trùng bằng SQL thì phải viết raw query,
+        // mà số bài còn nhỏ nên lấy 24 bài mới nhất là quá đủ để chọn ra 3 bài sát nhất.
+        var candidates = await articleRepo.GetRelatedCandidatesAsync(
+            article.Id, article.Type, article.Tags, take: 24, ct);
+
+        var lang = NormalizeLanguage(language);
+        var ranked = candidates
+            .Select(a => new
+            {
+                Article = a,
+                SharedTags = a.Tags.Count(t => article.Tags.Contains(t)),
+                SameType = a.Type == article.Type,
+            })
+            .OrderByDescending(x => x.SharedTags)
+            .ThenByDescending(x => x.SameType)
+            .ThenByDescending(x => x.Article.PublishedAt)
+            .Take(limit)
+            .Select(x => x.Article);
+
+        var list = new List<ArticleListItemDto>(limit);
+        foreach (var candidate in ranked)
+        {
+            var translation = ResolveTranslation(candidate, lang);
+            if (translation is null) continue;
+
+            list.Add(new ArticleListItemDto(
+                candidate.Id, candidate.Slug, (ArticleType)candidate.Type, (ReadingLevel)candidate.ReadingLevel,
+                candidate.TemplateKey, candidate.Tags, translation.Language, translation.Title, translation.Summary,
+                await UrlAsync(candidate.CoverObjectKey, ct), candidate.AuthorName, translation.ReadingMinutes,
+                candidate.ViewCount, candidate.IsFeatured, !isAuthenticated && NeedsAuth(candidate), candidate.PublishedAt));
+        }
+
+        return list;
+    }
+
     public Task IncrementViewAsync(string slug, CancellationToken ct = default)
         => articleRepo.IncrementViewCountAsync(slug, ct);
 
@@ -204,7 +247,7 @@ public class ArticleService(
             Type         = (int)request.Type,
             ReadingLevel = (int)request.ReadingLevel,
             Status       = (int)ArticleStatus.Draft,
-            TemplateKey  = TemplateForType(request.Type),
+            TemplateKey  = NormalizeTemplate(request.TemplateKey),
             Tags         = NormalizeTags(request.Tags),
             AuthorUserId = currentUser.UserId,
             AuthorName   = currentUser.UserName,
@@ -248,6 +291,7 @@ public class ArticleService(
         article.Type         = (int)request.Type;
         article.ReadingLevel = (int)request.ReadingLevel;
         article.Tags         = NormalizeTags(request.Tags);
+        article.TemplateKey  = NormalizeTemplate(request.TemplateKey, article.TemplateKey);
         article.IsFeatured   = request.IsFeatured;
         article.UpdatedAt    = DateTime.UtcNow;
 
@@ -484,8 +528,18 @@ public class ArticleService(
     private string ContentKey(Article article, string language)
         => $"{article.ObjectKeyPrefix(Env)}/{language}/content.json";
 
-    /// <summary>Phase này mọi loại bài dùng chung template "standard".</summary>
-    private static string TemplateForType(ArticleType type) => "standard";
+    /// <summary>
+    /// Kiểu trình bày FE dựng được. Người viết tự chọn cho mỗi bài (không suy từ loại bài —
+    /// một bài Setup có thể muốn ảnh lớn kiểu photo, ép theo loại là cấm oan).
+    /// Key lạ thì lùi về standard chứ không ném lỗi: bài vẫn phải đọc được.
+    /// </summary>
+    private static readonly string[] TemplateKeys = ["standard", "magazine", "guide", "photo"];
+
+    private static string NormalizeTemplate(string? key, string fallback = "standard")
+    {
+        var normalized = key?.Trim().ToLowerInvariant();
+        return !string.IsNullOrEmpty(normalized) && TemplateKeys.Contains(normalized) ? normalized : fallback;
+    }
 
     private static ArticleTranslation? ResolveTranslation(Article article, string language)
     {

@@ -90,6 +90,16 @@ public class ArticleRepository(AquaHomeDbContext db) : IArticleRepository
         return (items, total);
     }
 
+    public async Task<IReadOnlyList<Article>> GetRelatedCandidatesAsync(
+        Guid excludeId, int type, IReadOnlyList<string> tags, int take, CancellationToken ct = default)
+        => await db.Articles
+            .Include(a => a.Translations)
+            .Where(a => a.Status == 1 && a.Id != excludeId) // ArticleStatus.Published
+            .Where(a => a.Type == type || a.Tags.Any(t => tags.Contains(t)))
+            .OrderByDescending(a => a.PublishedAt)
+            .Take(take)
+            .ToListAsync(ct);
+
     public async Task AddAsync(Article article, CancellationToken ct = default)
         => await db.Articles.AddAsync(article, ct);
 

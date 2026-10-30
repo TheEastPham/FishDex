@@ -115,7 +115,7 @@ public class SpeciesService(
             var imageUrl = pic != null
                 ? await storage.GetPresignedUrlAsync(pic.ObjectKey, ct)
                 : null;
-            return s.ToSearchResultDto(language, imageUrl);
+            return s.ToSearchResultDto(language, imageUrl, pic?.ObjectKey);
         }));
 
         return new PagedResult<SpeciesSearchResultDto>
@@ -144,6 +144,7 @@ public class SpeciesService(
                 GenusName           = s.GenusName,
                 FamilyName          = s.FamilyName,
                 ImageUrl            = imageUrl,
+                ImageKey            = s.ThumbnailObjectKey,
             });
         }
         return result;
@@ -174,6 +175,7 @@ public class SpeciesService(
             DemersPelag         = s.DemersPelag,
             LongevityCaptive    = s.LongevityCaptive,
             PreferredImageUrl   = imageUrl,
+            PreferredImageKey   = s.ThumbnailObjectKey,
             Ecology = hasEcology ? new SpeciesDetailEcologyDto
             {
                 FeedingType = s.FeedingType,
@@ -257,6 +259,9 @@ public class SpeciesService(
             PreferredImageUrl   = preferredUrl,
             MaleImageUrl        = maleUrl,
             FemaleImageUrl      = femaleUrl,
+            PreferredImageKey   = preferredPic?.ObjectKey,
+            MaleImageKey        = malePic?.ObjectKey,
+            FemaleImageKey      = femalePic?.ObjectKey,
             Ecology = feeding != null || habitat != null || associations != null ? new SpeciesDetailEcologyDto
             {
                 FeedingType  = feeding?.FeedingType,
@@ -340,7 +345,7 @@ public class SpeciesService(
             var imageUrl = pic != null
                 ? await storage.GetPresignedUrlAsync(pic.ObjectKey, ct)
                 : null;
-            return s.ToSearchResultDto(language, imageUrl);
+            return s.ToSearchResultDto(language, imageUrl, pic?.ObjectKey);
         }));
     }
 
@@ -377,7 +382,8 @@ public class SpeciesService(
                 SpecCode    = snap.SpecCode,
                 SpeciesName = snap.SpeciesName,
                 CommonName  = snap.CommonName,
-                ImageUrl    = imageUrl
+                ImageUrl    = imageUrl,
+                ImageKey    = snap.ThumbnailObjectKey
             };
         }));
     }

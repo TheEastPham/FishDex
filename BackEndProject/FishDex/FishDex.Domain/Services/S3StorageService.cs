@@ -41,7 +41,10 @@ public class S3StorageService : IStorageService
         _s3 = new AmazonS3Client(credentials, config);
     }
 
-    public async Task<string?> GetPresignedUrlAsync(string objectKey, CancellationToken ct = default)
+    public Task<string?> GetPresignedUrlAsync(string objectKey, CancellationToken ct = default)
+        => GetPresignedUrlAsync(objectKey, TimeSpan.FromMinutes(_settings.PresignedUrlExpiryMinutes), ct);
+
+    public async Task<string?> GetPresignedUrlAsync(string objectKey, TimeSpan expiry, CancellationToken ct = default)
     {
         if (string.IsNullOrEmpty(_settings.AccessKey))
         {
@@ -55,7 +58,7 @@ public class S3StorageService : IStorageService
             {
                 BucketName = _settings.BucketName,
                 Key        = objectKey,
-                Expires    = DateTime.UtcNow.AddMinutes(_settings.PresignedUrlExpiryMinutes),
+                Expires    = DateTime.UtcNow.Add(expiry),
                 Verb       = HttpVerb.GET,
             };
 

@@ -53,7 +53,9 @@ export interface MarketSpeciesDto {
   scientificName: string;
   /** Null nghĩa là loài đang chờ được đặt tên — chỗ này thành nút mời đóng góp. */
   localName: string | null;
+  /** Presigned cũ — fallback. Render qua useMediaUrl(imageKey, imageUrl). */
   imageUrl: string | null;
+  imageKey?: string | null;
   lengthCm: number | null;
   tradeStatus: TradeStatus | null;
   legalStatus: LegalStatus;

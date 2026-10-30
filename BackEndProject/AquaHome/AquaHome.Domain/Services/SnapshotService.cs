@@ -165,8 +165,17 @@ public class SnapshotService(
         if (snapshot is null) return null;
 
         var snapshotData = JsonSerializer.Deserialize<SnapshotDataDto>(snapshot.SnapshotData, JsonOptions);
-        if (snapshotData is not null)
-            snapshotData = await RefreshFishImagesAsync(snapshotData, ct);
+        if (snapshotData is not null && NeedsHealing(snapshotData))
+        {
+            var healed = await HealSnapshotDataAsync(snapshotData, ct);
+            if (healed is not null)
+            {
+                // Ghi lại để lần xem sau khỏi gọi FishDex. Không đụng UpdatedAt — nội dung bể không đổi.
+                snapshotData = healed;
+                snapshot.SnapshotData = JsonSerializer.Serialize(healed, JsonOptions);
+                await snapshotRepo.SaveChangesAsync(ct);
+            }
+        }
 
         var likedByMe = currentUser.IsAuthenticated
             && await likeRepo.ExistsAsync(snapshot.Id, currentUser.UserId, ct);
@@ -198,31 +207,50 @@ public class SnapshotService(
         return media is null ? null : await storage.GetPresignedUrlAsync(media.ObjectKey(Env), ct);
     }
 
-    /// <summary>
-    /// Ảnh loài cá trong JSONB là presigned URL từ FishDex → hết hạn, phải ký lại mỗi lần đọc.
-    /// Tiện thể refresh luôn tên loài để "chữa lành" snapshot cũ lỡ lưu fallback "Species #{code}"
-    /// (do lookup thất bại lúc publish). 1 call batch cho toàn bộ specCode của snapshot.
-    /// </summary>
-    private async Task<SnapshotDataDto> RefreshFishImagesAsync(SnapshotDataDto data, CancellationToken ct)
-    {
-        if (data.Fish.Count == 0) return data;
+    private const string FallbackSpeciesNamePrefix = "Species #";
 
+    /// <summary>
+    /// JSONB bản mới lưu ImageKey (bất biến) nên đọc thẳng, không gọi FishDex. Chỉ cần chữa khi:
+    /// Version &lt; 2 (snapshot cũ lưu presigned URL đã chết, hoặc lúc publish FishDex chưa trả key — xem
+    /// <see cref="ResolveVersion"/>), hoặc lỡ lưu tên fallback "Species #{code}" do lookup thất bại lúc publish.
+    /// </summary>
+    private static bool NeedsHealing(SnapshotDataDto data)
+        => data.Fish.Count > 0
+           && (data.Version < SnapshotDataDto.CurrentVersion
+               || data.Fish.Any(f => f.SpeciesName.StartsWith(FallbackSpeciesNamePrefix, StringComparison.Ordinal)));
+
+    /// <summary>
+    /// 1 call batch lấy ImageKey + tên loài cho toàn bộ specCode. Null nếu FishDex không trả gì
+    /// (lỗi mạng…) — khi đó giữ nguyên bản cũ, không ghi đè, lần xem sau thử lại.
+    /// </summary>
+    private async Task<SnapshotDataDto?> HealSnapshotDataAsync(SnapshotDataDto data, CancellationToken ct)
+    {
         var specCodes = data.Fish.Select(f => f.SpecCode).Distinct().ToList();
         var summaries = (await fishDexClient.GetSpeciesSummariesAsync(specCodes, ct)).ToDictionary(s => s.SpecCode);
+        if (summaries.Count == 0) return null;
 
         var fish = data.Fish
             .Select(f => summaries.TryGetValue(f.SpecCode, out var s)
                 ? f with
                 {
-                    ImageUrl = s.ImageUrl,
+                    ImageKey = s.ImageKey ?? f.ImageKey,
                     SpeciesName = string.IsNullOrWhiteSpace(s.SpeciesName) ? f.SpeciesName : s.SpeciesName,
                     CommonName = s.CommonName ?? f.CommonName,
                 }
                 : f)
             .ToList();
 
-        return data with { Fish = fish };
+        return data with { Fish = fish, Version = ResolveVersion(fish, data.Version) };
     }
+
+    /// <summary>
+    /// Chỉ chốt bản mới khi FishDex thật sự trả về key. FishDex còn bản cũ (chưa có ImageKey — vd AquaHome
+    /// deploy lên trước) thì mọi key đều null: giữ Version cũ để lần xem sau chữa tiếp, thay vì chốt vĩnh viễn
+    /// một snapshot không ảnh. Đổi lại, snapshot mà mọi loài đều không có ảnh sẽ gọi FishDex mỗi lần xem
+    /// (đúng như trước khi có media-access).
+    /// </summary>
+    private static int ResolveVersion(IReadOnlyList<SnapshotFishDto> fish, int fallback)
+        => fish.Count == 0 || fish.Any(f => f.ImageKey is not null) ? SnapshotDataDto.CurrentVersion : fallback;
 
     private async Task<SnapshotDataDto> BuildSnapshotDataAsync(Aquarium aquarium, CancellationToken ct)
     {
@@ -244,14 +272,14 @@ public class SnapshotService(
                 entry.SpecCode,
                 summary?.SpeciesName ?? $"Species #{entry.SpecCode}",
                 summary?.CommonName,
-                summary?.ImageUrl,
+                summary?.ImageKey,
                 entry.Quantity,
                 points));
         }
 
         return new SnapshotDataDto(
             aquarium.Name, currentUser.UserName, aquarium.LengthCm, aquarium.WidthCm, aquarium.HeightCm,
-            aquarium.VolumeLiters, aquarium.Description, fish);
+            aquarium.VolumeLiters, aquarium.Description, fish, ResolveVersion(fish, fallback: 0));
     }
 
     /// <summary>Slug rõ ràng: {tên bể}-{nickname user}. Trùng (vd 2 bể cùng tên) thì thêm hậu tố số.</summary>

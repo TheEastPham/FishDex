@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  useTranslation, cn, useAuthStore, useAnonQuotaStore,
+  useTranslation, useMediaUrl, cn, useAuthStore, useAnonQuotaStore,
   checkFavorite, addFavorite, removeFavorite, recordView,
   useFishProfile, getCached, setCached, invalidateCache, CacheKeys, FAVORITE_CHECK_TTL,
   MAP_TILE_LAYER,
@@ -143,6 +143,7 @@ export default function FishProfilePage() {
   const canAddName = isAuthenticated && id !== null && id < 500000;
   const { detail, media, distribution, relatedSpecies, loading, quotaExceeded } = useFishProfile(id, i18n.language);
   const quota = useAnonQuotaStore();
+  const mediaSrc = useMediaUrl();
 
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
@@ -261,6 +262,12 @@ export default function FishProfilePage() {
   };
   const socialBehavior = getSocialBehavior();
 
+  const heroSrc   = mediaSrc(detail.preferredImageKey, detail.preferredImageUrl);
+  const maleSrc   = mediaSrc(detail.maleImageKey, detail.maleImageUrl);
+  const femaleSrc = mediaSrc(detail.femaleImageKey, detail.femaleImageUrl);
+  const galleryItem = media[selectedImageIndex || 0];
+  const gallerySrc  = galleryItem ? mediaSrc(galleryItem.objectKey, galleryItem.url) : null;
+
   /* ── Render ───────────────────────────────────────────────── */
   return (
     <div className="flex flex-col min-h-screen bg-[#141518] pb-20 font-sans">
@@ -269,8 +276,8 @@ export default function FishProfilePage() {
 
       {/* ═══════════════════ HERO HEADER ═══════════════════ */}
       <div className="relative h-[380px] md:h-[440px] bg-[#0e0f11] w-full overflow-hidden flex flex-col justify-end pb-[110px]">
-        {detail.preferredImageUrl ? (
-          <img src={detail.preferredImageUrl} alt={detail.speciesName} className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-luminosity" />
+        {heroSrc ? (
+          <img src={heroSrc} alt={detail.speciesName} className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-luminosity" />
         ) : (
           <div className="absolute inset-0 w-full h-full flex items-center justify-center opacity-10 bg-gradient-to-br from-slate-700 to-slate-900">
             <Fish className="w-32 h-32 text-white" />
@@ -496,13 +503,13 @@ export default function FishProfilePage() {
         )}
 
         {/* ─── Row 5: Male vs Female Comparison ─── */}
-        {(detail.maleImageUrl || detail.femaleImageUrl) && (
+        {(maleSrc || femaleSrc) && (
           <div className="bg-[#202226] rounded-2xl p-6 shadow-lg border border-slate-800/80">
             <SectionHeader icon={<FileText className="w-5 h-5 text-pink-400" />} title={t('fish.sexualDimorphism')} />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {detail.maleImageUrl && (
+              {maleSrc && (
                 <div className="relative rounded-xl overflow-hidden border border-slate-800/50 group">
-                  <img src={detail.maleImageUrl} alt="Male" className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <img src={maleSrc} alt="Male" className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500" />
                   <div className="absolute bottom-0 w-full bg-gradient-to-t from-black/80 to-transparent p-3">
                     <span className="text-white font-bold text-sm flex items-center gap-1.5">
                       <span className="w-3 h-3 rounded-full bg-sky-400" /> {t('fish.male')}
@@ -510,9 +517,9 @@ export default function FishProfilePage() {
                   </div>
                 </div>
               )}
-              {detail.femaleImageUrl && (
+              {femaleSrc && (
                 <div className="relative rounded-xl overflow-hidden border border-slate-800/50 group">
-                  <img src={detail.femaleImageUrl} alt="Female" className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <img src={femaleSrc} alt="Female" className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500" />
                   <div className="absolute bottom-0 w-full bg-gradient-to-t from-black/80 to-transparent p-3">
                     <span className="text-white font-bold text-sm flex items-center gap-1.5">
                       <span className="w-3 h-3 rounded-full bg-pink-400" /> {t('fish.female')}
@@ -614,9 +621,9 @@ export default function FishProfilePage() {
             <SectionHeader icon={<ImageIcon className="w-5 h-5 text-indigo-400" />} title={`${t('fish.gallery')} (${media.length})`} />
             <div className="relative w-full h-[280px] md:h-[400px] rounded-xl overflow-hidden border border-slate-800/50 bg-[#141518] group">
               {/* Display Current Image */}
-              {media[selectedImageIndex || 0].url ? (
-                <img 
-                  src={media[selectedImageIndex || 0].url || undefined} 
+              {gallerySrc ? (
+                <img
+                  src={gallerySrc}
                   alt={media[selectedImageIndex || 0].name || undefined} 
                   className="w-full h-full object-contain" 
                 />
@@ -665,8 +672,8 @@ export default function FishProfilePage() {
                     (selectedImageIndex || 0) === i ? "border-indigo-500 scale-105" : "border-transparent opacity-50 hover:opacity-100"
                   )}
                 >
-                  {m.url ? (
-                    <img src={m.url || undefined} className="w-full h-full object-cover" />
+                  {mediaSrc(m.objectKey, m.url) ? (
+                    <img src={mediaSrc(m.objectKey, m.url) || undefined} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full bg-[#141518] flex items-center justify-center"><Fish className="w-4 h-4 text-slate-600"/></div>
                   )}

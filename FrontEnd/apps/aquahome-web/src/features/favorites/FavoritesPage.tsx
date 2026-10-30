@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   removeFavorite, cn,
-  useMyFavorites, useSpeciesSummaries, useTranslation,
+  useMyFavorites, useSpeciesSummaries, useTranslation, useMediaUrl,
 } from '@fishlover/shared';
 import { Heart, Fish, Loader, ArrowRight, Trash2 } from 'lucide-react';
 
 export default function FavoritesPage() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
+  const mediaSrc = useMediaUrl();
   const { favorites, loading, invalidate } = useMyFavorites();
   const [removingId, setRemovingId] = useState<number | null>(null);
   const [removed, setRemoved] = useState<Set<number>>(new Set());
@@ -77,6 +78,7 @@ export default function FavoritesPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {visibleCodes.map((specCode) => {
               const s = summaries[specCode];
+              const imgSrc = mediaSrc(s?.imageKey, s?.imageUrl);
               return (
                 <div
                   key={specCode}
@@ -87,10 +89,10 @@ export default function FavoritesPage() {
                     className="aspect-square cursor-pointer relative overflow-hidden bg-[#141518]"
                     onClick={() => navigate(`/fish/${specCode}`)}
                   >
-                    {s?.imageUrl ? (
+                    {imgSrc ? (
                       <img
-                        src={s.imageUrl}
-                        alt={s.commonName || s.speciesName}
+                        src={imgSrc}
+                        alt={s?.commonName || s?.speciesName}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       />
                     ) : (

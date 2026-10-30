@@ -56,7 +56,9 @@ public record MarketSpeciesDto(
     // Vulnerability: chỉ số của FishBase, phủ 100%. FE tự quyết ngưỡng hiện badge.
     int? Vulnerability,
     // Dangerous: giá trị thô của FishBase — harmless, venomous, traumatogenic… FE tự map.
-    string? Dangerous);
+    string? Dangerous,
+    // ImageKey: object key system-image cho media-access. ImageUrl (presigned) chỉ còn để tương thích bản cũ.
+    string? ImageKey = null);
 
 /// <summary>
 /// Ba con số của dải thống kê. <paramref name="AwaitingName"/> là con số được nhấn trên UI —

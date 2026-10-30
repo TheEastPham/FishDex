@@ -17,7 +17,7 @@ public class MediaService(
         return await Task.WhenAll(items.Select(async i =>
         {
             var url = await storage.GetPresignedUrlAsync(i.ObjectKey, ct);
-            return i.ToDto() with { Url = url };
+            return i.ToDto() with { Url = url, ObjectKey = i.ObjectKey };
         }));
     }
 
@@ -29,6 +29,6 @@ public class MediaService(
 
         var dto = entity.ToDto();
         var url = await storage.GetPresignedUrlAsync(entity.ObjectKey, ct);
-        return dto with { Url = url };
+        return dto with { Url = url, ObjectKey = entity.ObjectKey };
     }
 }

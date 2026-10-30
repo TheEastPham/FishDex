@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import type { MarketSpeciesDto, AquariumDto } from '@fishlover/shared';
-import { cn, useTranslation, useAuthStore, TradeStatus, LegalStatus } from '@fishlover/shared';
+import { cn, useTranslation, useMediaUrl, useAuthStore, TradeStatus, LegalStatus } from '@fishlover/shared';
 import { Fish, Pencil, AlertTriangle, Ruler } from 'lucide-react';
 import { FavoriteButton, AddToAquariumButton } from '../../fish-search/components/SpeciesCardActions';
 import AddToCountryButton from './AddToCountryButton';
@@ -40,6 +40,8 @@ export default function MarketSpeciesCard({ species, index = 0, aquariums = [], 
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const bgGradient = GRADIENTS[index % GRADIENTS.length];
+  const mediaSrc = useMediaUrl();
+  const imgSrc = mediaSrc(species.imageKey, species.imageUrl);
 
   const languageName = t(`languageNames.${countryAlpha2}`);
   const hasName = species.localName !== null;
@@ -53,9 +55,9 @@ export default function MarketSpeciesCard({ species, index = 0, aquariums = [], 
     )}>
       {/* Ảnh — cùng chiều cao 170px với thẻ tra cứu để hai lưới đứng cạnh nhau không lệch */}
       <div className="h-[170px] w-full relative overflow-hidden bg-slate-900">
-        {species.imageUrl ? (
+        {imgSrc ? (
           <img
-            src={species.imageUrl}
+            src={imgSrc}
             alt={species.scientificName}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
           />

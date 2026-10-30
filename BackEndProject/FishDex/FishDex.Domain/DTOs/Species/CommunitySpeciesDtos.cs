@@ -94,7 +94,9 @@ public record CommunitySpeciesDto(
     bool? FinNippingRisk,
     bool? JumpingRisk,
     SnapshotCareLevel? CareLevel,
-    int? MinTankLiters);
+    int? MinTankLiters,
+    // Object key system-image cho media-access. ImageUrl (presigned) chỉ còn để tương thích bản cũ.
+    string? ImageKey = null);
 
 public record CommunityImageUploadResultDto(string UploadUrl, string ObjectKey);
 public record CommunityImageUploadRequest(string FileName, string ContentType);

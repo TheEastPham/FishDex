@@ -10,4 +10,6 @@ public record SystemImageDto
     public ImageGender Gender { get; init; }
     /// <summary>Presigned URL từ object storage. Null nếu storage chưa được cấu hình.</summary>
     public string? Url { get; init; }
+    /// <summary>Object key system-image — FE ghép với SAS media-access. Url chỉ còn để tương thích bản cũ.</summary>
+    public string? ObjectKey { get; init; }
 }

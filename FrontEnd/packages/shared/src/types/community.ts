@@ -28,7 +28,9 @@ export interface CommunitySpeciesDto {
   isVerified: boolean;
   rejectionReason: string | null;
   contributedBy: string | null;
+  /** Presigned cũ — fallback. Render qua useMediaUrl(imageKey, imageUrl). */
   imageUrl: string | null;
+  imageKey?: string | null;
   populatedAt: string;
   suggestedKind: CommunitySpeciesKind | null;
   kind: CommunitySpeciesKind | null;

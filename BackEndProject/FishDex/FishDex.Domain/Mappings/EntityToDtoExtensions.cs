@@ -56,14 +56,16 @@ internal static class EntityToDtoExtensions
         FamilyName  = null
     };
 
-    internal static SpeciesSearchResultDto ToSearchResultDto(this Species e, string? language = null, string? imageUrl = null) => new()
+    internal static SpeciesSearchResultDto ToSearchResultDto(
+        this Species e, string? language = null, string? imageUrl = null, string? imageKey = null) => new()
     {
         SpecCode            = e.SpecCode,
         SpeciesName         = e.SpeciesName,
         PreferredCommonName = e.CommonNames.PickPreferredName(language),
         GenusName           = e.Genus?.GenusName,
         FamilyName          = e.Family?.Name,
-        ImageUrl            = imageUrl
+        ImageUrl            = imageUrl,
+        ImageKey            = imageKey
     };
 
     internal static string? PickPreferredName(this ICollection<CommonName> names, string? language)

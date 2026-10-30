@@ -44,7 +44,10 @@ export interface SnapshotFishDto {
   specCode: number;
   speciesName: string;
   commonName: string | null;
-  imageUrl: string | null;
+  /** Object key bucket system-image — render qua useMediaUrl(). */
+  imageKey?: string | null;
+  /** Chỉ có ở BE bản cũ (presigned URL) — fallback trong lúc chuyển giao. */
+  imageUrl?: string | null;
   quantity: number;
   distributionPoints: DistributionPointDto[];
 }

@@ -238,7 +238,8 @@ public class MarketService(
                 LegalStatus:    row.LegalStatus,
                 LegalNote:      row.LegalNote,
                 Vulnerability:  row.Vulnerability,
-                Dangerous:      row.Dangerous));
+                Dangerous:      row.Dangerous,
+                ImageKey:       snap?.ThumbnailObjectKey));
         }
 
         return result;

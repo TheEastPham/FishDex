@@ -30,7 +30,7 @@ public class PublicSpeciesController(
         .Take(100)
         .ToList();
 
-    /// <summary>Batch species summaries (name + commonName + presigned imageUrl mới ký) cho danh sách specCode.</summary>
+    /// <summary>Batch species summaries (name + commonName + imageKey bất biến, kèm imageUrl presigned cũ) cho danh sách specCode.</summary>
     [HttpGet("summaries")]
     public Task<IReadOnlyList<SpeciesSummaryDto>> GetSummaries(
         [FromQuery] string codes, [FromQuery] string? language, CancellationToken ct)

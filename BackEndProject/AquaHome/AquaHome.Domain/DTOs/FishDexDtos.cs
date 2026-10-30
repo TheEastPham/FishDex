@@ -4,7 +4,7 @@ public record SpeciesSummaryDto(
     int SpecCode,
     string SpeciesName,
     string? CommonName,
-    string? ImageUrl);
+    string? ImageKey);
 
 public record DistributionPointDto(
     double LatitudeDec,

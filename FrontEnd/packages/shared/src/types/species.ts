@@ -2,7 +2,10 @@ export interface SpeciesSummary {
   specCode: number;
   speciesName: string;
   commonName: string | null;
+  /** Presigned URL cũ — chết sau 60 phút, KHÔNG an toàn khi cache. Chỉ dùng làm fallback. */
   imageUrl: string | null;
+  /** Object key bất biến — render qua useMediaUrl(). Thiếu khi BE còn bản cũ. */
+  imageKey?: string | null;
 }
 
 export interface SpeciesSearchResult {
@@ -11,7 +14,9 @@ export interface SpeciesSearchResult {
   preferredCommonName: string | null;
   genusName: string | null;
   familyName: string | null;
+  /** Presigned cũ — chỉ dùng làm fallback, render qua useMediaUrl(imageKey, imageUrl). */
   imageUrl?: string | null;
+  imageKey?: string | null;
 }
 
 export interface Family {
@@ -52,9 +57,13 @@ export interface SpeciesDetail {
   longevityWild: number | null;
   longevityCaptive: number | null;
 
+  /** *ImageUrl: presigned cũ (fallback). *ImageKey: object key — render qua useMediaUrl(). */
   preferredImageUrl: string | null;
   maleImageUrl: string | null;
   femaleImageUrl: string | null;
+  preferredImageKey?: string | null;
+  maleImageKey?: string | null;
+  femaleImageKey?: string | null;
 
   ecology: {
     feedingType: string | null;
@@ -102,7 +111,9 @@ export interface SystemImageDto {
   pictureType: string;
   picPreferred: boolean | null;
   gender: 'Unknown' | 'Male' | 'Female' | 'Juvenile';
+  /** Presigned cũ — fallback. Render qua useMediaUrl(objectKey, url). */
   url: string | null;
+  objectKey?: string | null;
 }
 
 export interface OccurrenceDto {

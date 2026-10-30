@@ -230,6 +230,6 @@ public class CommunitySpeciesService(
             s.TempMin, s.TempMax, s.PhMin, s.PhMax, s.DhMin, s.DhMax,
             s.Length, s.LongevityCaptive, s.FeedingType, s.FeedingPosition, s.ActivityPattern,
             s.RequiresLiveFood, s.Aggressiveness, s.FinNippingRisk, s.JumpingRisk,
-            s.CareLevel, s.MinTankLiters);
+            s.CareLevel, s.MinTankLiters, s.ThumbnailObjectKey);
     }
 }

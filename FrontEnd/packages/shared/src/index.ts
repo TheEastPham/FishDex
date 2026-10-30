@@ -59,6 +59,7 @@ export { useFishProfile }                          from './hooks/useFishProfile'
 export { useMyFavorites }                          from './hooks/useMyFavorites';
 export { useMyAquariums }                          from './hooks/useMyAquariums';
 export { useSpeciesSummaries }                     from './hooks/useSpeciesSummaries';
+export { useMediaUrl }                             from './hooks/useMediaUrl';
 export { usePushNotification }                     from './hooks/usePushNotification';
 
 // ── Map ───────────────────────────────────────────────────

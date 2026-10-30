@@ -4,7 +4,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
   getSpeciesSummaries, getSpeciesDistributionsBatch,
-  getCached, setCached, CacheKeys, SPECIES_DATA_TTL, useTranslation,
+  getCached, setCached, CacheKeys, SPECIES_DATA_TTL, useTranslation, useMediaUrl,
   MAP_TILE_LAYER,
 } from '@fishlover/shared';
 import type { AquariumFishDto, SpeciesSummary, SpeciesDistributionDto } from '@fishlover/shared';
@@ -83,6 +83,7 @@ const ROW_HEIGHT = 40; // px — compact row
 
 export default function FishInventorySection({ aquariumId: _aquariumId, fishList, loading, onNavigateFish }: Props) {
   const { t } = useTranslation();
+  const mediaSrc = useMediaUrl();
   const [summaries, setSummaries]           = useState<Record<number, SpeciesSummary>>({});
   const [distributions, setDistributions]   = useState<Record<number, SpeciesDistributionDto>>({});
   const [selected, setSelected]             = useState<number | null>(null);
@@ -159,6 +160,7 @@ export default function FishInventorySection({ aquariumId: _aquariumId, fishList
   }, [selected, distributions, colorMap]);
 
   const hoverSummary = hover ? summaries[hover.specCode] : null;
+  const hoverSrc = hoverSummary ? mediaSrc(hoverSummary.imageKey, hoverSummary.imageUrl) : null;
 
   if (loading) {
     return (
@@ -270,6 +272,7 @@ export default function FishInventorySection({ aquariumId: _aquariumId, fishList
 
             {!summaryLoading && fishList.map(f => {
               const summary   = summaries[f.specCode];
+              const imgSrc    = mediaSrc(summary?.imageKey, summary?.imageUrl);
               const dist      = distributions[f.specCode];
               const isSelected = selected === f.specCode;
               const color     = getFishColor(colorMap[f.specCode] ?? 0);
@@ -288,12 +291,12 @@ export default function FishInventorySection({ aquariumId: _aquariumId, fishList
                   <div
                     className="flex items-center gap-2 flex-1 min-w-0"
                     onMouseMove={e => {
-                      if (summary?.imageUrl) setHover({ specCode: f.specCode, x: e.clientX, y: e.clientY });
+                      if (imgSrc) setHover({ specCode: f.specCode, x: e.clientX, y: e.clientY });
                     }}
                   >
                     <div className="w-7 h-7 rounded overflow-hidden bg-slate-800 shrink-0">
-                      {summary?.imageUrl
-                        ? <img src={summary.imageUrl} alt="" className="w-full h-full object-cover" />
+                      {imgSrc
+                        ? <img src={imgSrc} alt="" className="w-full h-full object-cover" />
                         : <div className="w-full h-full flex items-center justify-center"><Fish className="w-3.5 h-3.5 text-slate-600" /></div>
                       }
                     </div>
@@ -336,9 +339,9 @@ export default function FishInventorySection({ aquariumId: _aquariumId, fishList
       </div>
 
       {/* Hover image popup */}
-      {hover && hoverSummary?.imageUrl && (
+      {hover && hoverSummary && hoverSrc && (
         <HoverImagePopup
-          imageUrl={hoverSummary.imageUrl}
+          imageUrl={hoverSrc}
           name={hoverSummary.commonName ?? hoverSummary.speciesName}
           x={hover.x}
           y={hover.y}

@@ -13,10 +13,10 @@ namespace FishDex.API.Controllers;
 /// <para>Cả hai endpoint đều anonymous: system-image chỉ chứa ảnh loài vốn công khai, và trang snapshot /
 /// profile loài phải xem được khi chưa đăng nhập. Thứ được bảo vệ là thời hạn (SAS ≤ MaxExpiry) và việc
 /// không ai có URL R2 dài hạn để hotlink.</para>
-/// <para>Gateway có route riêng cho cả hai endpoint và KHÔNG bật rate limit: Ocelot đếm theo header
-/// <c>ClientId</c>, mà không ai gửi header đó → mọi người dùng chung 1 bộ đếm/path, tức giới hạn toàn site.
-/// 1 trang gallery = N request redeem nên giới hạn kiểu đó làm vỡ ảnh. Redeem rẻ (HMAC + presign cục bộ,
-/// chỉ ảnh community mới tra DB) nên bỏ giới hạn an toàn hơn.</para>
+/// <para>Gateway có route riêng cho cả hai endpoint và KHÔNG bật rate limit: 1 trang gallery = N request
+/// redeem cùng lúc, ăn chung hạn mức 60/phút của <c>/fishdex/v1</c> là vỡ ảnh. Redeem rẻ (HMAC + presign
+/// cục bộ, chỉ ảnh community mới tra DB) nên bỏ giới hạn an toàn hơn. Các route còn lại Ocelot đếm theo IP
+/// nhờ nginx gắn header <c>ClientId</c> (xem <c>Pipeline/OracleVM/VM1/services/nginx.conf</c>).</para>
 /// </remarks>
 [ApiController]
 [Route("api/public/media-access")]

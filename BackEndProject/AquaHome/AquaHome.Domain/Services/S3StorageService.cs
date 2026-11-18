@@ -39,6 +39,8 @@ public class S3StorageService : IStorageService
         _s3 = new AmazonS3Client(credentials, config);
     }
 
+    public bool IsConfigured => !string.IsNullOrEmpty(_settings.AccessKey);
+
     public Task<string?> GeneratePresignedPutUrlAsync(
         string objectKey, string contentType, long maxBytes, CancellationToken ct = default)
     {

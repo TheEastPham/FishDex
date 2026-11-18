@@ -30,7 +30,10 @@ public class ContestsController(IContestService contestService) : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>FE gọi sau khi PUT xong video lên R2 — trigger auto-validate + upload YouTube Unlisted.</summary>
+    /// <summary>
+    /// FE gọi sau khi PUT xong video lên R2 — upload YouTube Unlisted. Hết lượt upload trong ngày → 422, bài giữ
+    /// Pending + video R2 để gọi lại endpoint này hôm sau (nút "Xác nhận lại" ở mục bài dự thi của tôi).
+    /// </summary>
     [Authorize]
     [HttpPost("{id:guid}/entries/{entryId:guid}/confirm-upload")]
     public async Task<IActionResult> ConfirmUpload(Guid id, Guid entryId, CancellationToken ct)

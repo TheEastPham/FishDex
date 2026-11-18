@@ -136,6 +136,7 @@ export default function ContestEntryFormModal({ contest, onClose, onSubmitted }:
     setSubmitError(null);
     setProgress(0);
 
+    let entryCreated = false;
     try {
       const { entryId, uploadUrl } = await submitContestEntry(contest.id, {
         aquariumSnapshotId: selectedSnapshotId,
@@ -146,6 +147,7 @@ export default function ContestEntryFormModal({ contest, onClose, onSubmitted }:
         title: title.trim() || null,
         description: description.trim() || null,
       });
+      entryCreated = true;
 
       await uploadToR2(uploadUrl, file, file.type, setProgress);
       await confirmEntryUpload(contest.id, entryId);
@@ -161,6 +163,8 @@ export default function ContestEntryFormModal({ contest, onClose, onSubmitted }:
         : t('contests.errSubmit'),
       );
       setStep('form');
+      // Bài đã tạo (vd hết lượt đăng YouTube lúc confirm) → load lại để "Bài dự thi của tôi" hiện nút xác nhận lại.
+      if (entryCreated) onSubmitted();
     }
   };
 

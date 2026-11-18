@@ -167,6 +167,15 @@ services:
       - ExternalServices__YouTube__ClientSecret=${YOUTUBE_CLIENT_SECRET}
       - ExternalServices__YouTube__RefreshToken=${YOUTUBE_REFRESH_TOKEN}
       - ExternalServices__YouTube__ChannelId=${YOUTUBE_CHANNEL_ID}
+      # CleanupContestStagingBackgroundService (mỗi 24h) xoá video contest kẹt trên R2 staging.
+      # Cùng giá trị với service aquahome. Thiếu thì job tự bỏ qua (log warning), không dọn gì.
+      - Storage__Provider=r2
+      - Storage__ServiceUrl=${AQUAHOME_R2_SERVICE_URL}
+      - Storage__AccessKey=${AQUAHOME_R2_ACCESS_KEY}
+      - Storage__SecretKey=${AQUAHOME_R2_SECRET_KEY}
+      - Storage__BucketName=${AQUAHOME_R2_BUCKET_NAME}
+      - Storage__Environment=${AQUAHOME_R2_ENV}
+      - Storage__ForcePathStyle=false
       - OpenTelemetry__ExportEndpoint=http://10.0.0.94:4317   # OTLP trace → Tempo (VM2)
     depends_on:
       - postgres

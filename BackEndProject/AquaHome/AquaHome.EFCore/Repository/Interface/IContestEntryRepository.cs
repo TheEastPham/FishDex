@@ -17,6 +17,24 @@ public interface IContestEntryRepository
     /// Chặn nộp trùng — mỗi lần upload YouTube tốn 1.600 quota units trên tổng 10.000/ngày.
     /// </summary>
     Task<bool> HasActiveEntryForSnapshotAsync(Guid userId, Guid contestId, Guid snapshotId, CancellationToken ct = default);
+
+    /// <summary>Số bài của user trong contest, không tính bài đã bị từ chối — cho trần số bài / user / contest.</summary>
+    Task<int> CountActiveEntriesAsync(Guid userId, Guid contestId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Chuyển Pending → Validating bằng 1 câu UPDATE có điều kiện. Trả false nếu bài không còn Pending
+    /// (đang có request confirm khác xử lý). Không cập nhật entity đang được track.
+    /// </summary>
+    Task<bool> TryClaimForUploadAsync(Guid entryId, CancellationToken ct = default);
+
+    /// <summary>Bài Pending/Validating còn video trên R2 staging, nộp trước mốc này — cho job dọn staging.</summary>
+    Task<IReadOnlyList<ContestEntry>> GetStaleStagingAsync(DateTime submittedBefore, CancellationToken ct = default);
+
+    /// <summary>
+    /// Chuyển Rejected (kèm lý do) + bỏ VideoR2Key bằng 1 câu UPDATE, chỉ khi bài vẫn đang ở <paramref name="expectedStatus"/>.
+    /// False nếu bài vừa đổi trạng thái (user đang bấm xác nhận lại) — khi đó không được xoá video.
+    /// </summary>
+    Task<bool> TryExpireStagingAsync(Guid entryId, int expectedStatus, string reason, CancellationToken ct = default);
     Task<long> SumStagingVideoBytesAsync(CancellationToken ct = default);
     Task AddAsync(ContestEntry entry, CancellationToken ct = default);
     Task SaveChangesAsync(CancellationToken ct = default);

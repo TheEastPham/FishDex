@@ -1,5 +1,7 @@
+using AquaHome.Domain.Exceptions;
 using AquaHome.Domain.Services.Interfaces;
 using AquaHome.Domain.Settings;
+using Google;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Auth.OAuth2.Flows;
 using Google.Apis.Auth.OAuth2.Responses;
@@ -23,6 +25,9 @@ public class YouTubeUploadService(
     ILogger<YouTubeUploadService> logger) : IYouTubeUploadService
 {
     private const string ApplicationName = "FishLover";
+
+    // Reason Google trả khi kênh hết quota / hết lượt upload trong ngày — chờ qua ngày (giờ Pacific) là gọi lại được.
+    private static readonly HashSet<string> QuotaReasons = ["quotaExceeded", "dailyLimitExceeded", "uploadLimitExceeded"];
 
     private YouTubeService BuildClient()
     {
@@ -73,17 +78,30 @@ public class YouTubeUploadService(
 
             if (uploadStatus.Status != UploadStatus.Completed)
             {
+                ThrowIfQuotaExceeded(uploadStatus.Exception, objectKey);
                 logger.LogError(uploadStatus.Exception, "YouTube upload failed for {ObjectKey}", objectKey);
                 return null;
             }
 
             return request.ResponseBody?.Id;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not YouTubeQuotaExceededException)
         {
+            ThrowIfQuotaExceeded(ex, objectKey);
             logger.LogError(ex, "YouTube upload threw for {ObjectKey}", objectKey);
             return null;
         }
+    }
+
+    private void ThrowIfQuotaExceeded(Exception? ex, string objectKey)
+    {
+        var reason = (ex as GoogleApiException)?.Error?.Errors?
+            .Select(e => e.Reason)
+            .FirstOrDefault(r => r is not null && QuotaReasons.Contains(r));
+        if (reason is null) return;
+
+        logger.LogWarning("YouTube từ chối upload {ObjectKey}: {Reason} — giữ bài để xác nhận lại sau", objectKey, reason);
+        throw new YouTubeQuotaExceededException(reason);
     }
 
     public async Task SetPublicAsync(string youTubeVideoId, string? playlistId, CancellationToken ct = default)

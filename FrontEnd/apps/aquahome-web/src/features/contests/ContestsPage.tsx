@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  getActiveContests, getContestLeaderboard, getMyContestEntries,
+  getActiveContests, getContestLeaderboard, getMyContestEntries, confirmEntryUpload,
   SponsorTier, ContestEntryStatus, useAuthStore, useTranslation, cn,
 } from '@fishlover/shared';
 import type { ContestDto, LeaderboardEntryDto, ContestEntryDto, ContestPrizeTierDto, ContestSponsorDto } from '@fishlover/shared';
-import { Trophy, Youtube, Eye, Loader2, Upload, Medal, CalendarRange } from 'lucide-react';
+import { Trophy, Youtube, Eye, Loader2, Upload, Medal, CalendarRange, RotateCw } from 'lucide-react';
 import ContestEntryFormModal from './components/ContestEntryFormModal';
 import ContestGuideSection from './components/ContestGuideSection';
 import { awardBadgeStyle } from '../public-tanks/labels';
@@ -146,8 +146,36 @@ function EntryStatusBadge({ status, t }: { status: ContestEntryStatus; t: Return
 }
 
 /** Bài dự thi của chính user — trước đây nộp xong không có chỗ nào theo dõi. */
-function MyEntriesSection({ entries, t }: { entries: ContestEntryDto[]; t: ReturnType<typeof useTranslation>['t'] }) {
+function MyEntriesSection({ contestId, entries, t, onChanged }: {
+  contestId: string;
+  entries: ContestEntryDto[];
+  t: ReturnType<typeof useTranslation>['t'];
+  /** Load lại danh sách sau khi xác nhận lại — bài có thể đã đổi trạng thái kể cả khi request lỗi. */
+  onChanged: () => void;
+}) {
+  const [retryingId, setRetryingId] = useState<string | null>(null);
+  const [retryError, setRetryError] = useState<{ id: string; message: string } | null>(null);
+
   if (entries.length === 0) return null;
+
+  // Bài Pending = video đã lên R2 nhưng chưa đăng YouTube (hết lượt trong ngày, hoặc lần trước bị ngắt giữa chừng).
+  const handleRetry = async (entryId: string) => {
+    setRetryingId(entryId);
+    setRetryError(null);
+    try {
+      await confirmEntryUpload(contestId, entryId);
+    } catch (err: unknown) {
+      const res = (err as { response?: { status?: number; data?: { message?: string } } })?.response;
+      setRetryError({
+        id: entryId,
+        // 422 luôn kèm message cụ thể từ BE (vd "hôm nay đã hết lượt đăng video") — hiện thẳng cho user
+        message: res?.status === 422 ? (res.data?.message ?? t('contests.errSubmit')) : t('contests.errSubmit'),
+      });
+    } finally {
+      setRetryingId(null);
+      onChanged();
+    }
+  };
 
   return (
     <div className="px-3 pb-3">
@@ -169,6 +197,24 @@ function MyEntriesSection({ entries, t }: { entries: ContestEntryDto[]; t: Retur
             {e.status === ContestEntryStatus.Rejected && e.rejectionReason && (
               <p className="text-xs text-red-400/90 mt-1.5 leading-relaxed">{e.rejectionReason}</p>
             )}
+            {e.status === ContestEntryStatus.Pending && (
+              <div className="mt-2">
+                <p className="text-xs text-slate-500 leading-relaxed">{t('contests.pendingHint')}</p>
+                <button
+                  onClick={() => handleRetry(e.id)}
+                  disabled={retryingId !== null}
+                  className="mt-2 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-sky-500/15 border border-sky-500/30 text-sky-300 text-xs font-bold hover:bg-sky-500/25 transition-colors min-h-[44px] disabled:opacity-50"
+                >
+                  {retryingId === e.id
+                    ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    : <RotateCw className="w-3.5 h-3.5" />}
+                  {t('contests.retryConfirm')}
+                </button>
+                {retryError?.id === e.id && (
+                  <p className="text-xs text-red-400/90 mt-1.5 leading-relaxed">{retryError.message}</p>
+                )}
+              </div>
+            )}
             {e.youTubeVideoId && e.status === ContestEntryStatus.Published && (
               <a
                 href={`https://www.youtube.com/watch?v=${e.youTubeVideoId}`}
@@ -186,7 +232,7 @@ function MyEntriesSection({ entries, t }: { entries: ContestEntryDto[]; t: Retur
   );
 }
 
-function ContestCard({ contest, t, isAuthenticated, refreshKey, onEnter, onLogin }: {
+function ContestCard({ contest, t, isAuthenticated, refreshKey, onEnter, onLogin, onEntriesChanged }: {
   contest: ContestDto;
   t: ReturnType<typeof useTranslation>['t'];
   isAuthenticated: boolean;
@@ -194,6 +240,7 @@ function ContestCard({ contest, t, isAuthenticated, refreshKey, onEnter, onLogin
   refreshKey: number;
   onEnter: () => void;
   onLogin: () => void;
+  onEntriesChanged: () => void;
 }) {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntryDto[]>([]);
   const [myEntries, setMyEntries] = useState<ContestEntryDto[]>([]);
@@ -242,7 +289,7 @@ function ContestCard({ contest, t, isAuthenticated, refreshKey, onEnter, onLogin
         </div>
       </div>
 
-      <MyEntriesSection entries={myEntries} t={t} />
+      <MyEntriesSection contestId={contest.id} entries={myEntries} t={t} onChanged={onEntriesChanged} />
 
       {/* Leaderboard */}
       <div className="p-3">
@@ -326,6 +373,7 @@ export default function ContestsPage() {
               refreshKey={refreshKey}
               onEnter={() => setEntryContest(c)}
               onLogin={() => navigate('/login')}
+              onEntriesChanged={() => setRefreshKey(k => k + 1)}
             />
           ))}
         </div>

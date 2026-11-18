@@ -666,7 +666,7 @@ const zh = {
     subtitle: '与社区一同比拼——按 YouTube 播放量排名',
     guideTitle: '通用规则',
     guideVideoTitle: '参赛视频',
-    guideVideoBody: '横屏拍摄，时长 2–5 分钟，需清晰展示整缸和所养的物种。',
+    guideVideoBody: '横屏拍摄，时长 2–5 分钟，需清晰展示整缸和所养的物种。每个鱼缸限投 1 个作品，每人每场比赛最多 3 个作品。',
     guideCopyrightTitle: '不得使用有版权的音乐',
     guideCopyrightBody:
       '视频不得包含有版权的音乐——一旦被判定侵权，YouTube 可能静音或隐藏视频，从而影响你的播放量排名。',
@@ -692,6 +692,8 @@ const zh = {
     stReview: '等待审核',
     stPublished: '已发布',
     stRejected: '已驳回',
+    pendingHint: '视频已上传，但尚未发布到 YouTube。',
+    retryConfirm: '重新确认',
     empty: '当前没有进行中的比赛',
     emptyHint: '关注我们的 Facebook 主页，获取新比赛消息',
     loadError: '无法加载比赛，请重试。',

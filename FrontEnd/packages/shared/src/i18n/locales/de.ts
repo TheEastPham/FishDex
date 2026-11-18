@@ -683,7 +683,7 @@ const de = {
     guideTitle: 'Allgemeine Regeln',
     guideVideoTitle: 'Wettbewerbsvideo',
     guideVideoBody:
-      'Querformat, 2–5 Minuten, das gesamte Becken und die gepflegten Arten müssen klar erkennbar sein.',
+      'Querformat, 2–5 Minuten, das gesamte Becken und die gepflegten Arten müssen klar erkennbar sein. Ein Beitrag pro Becken, höchstens 3 Beiträge pro Person und Wettbewerb.',
     guideCopyrightTitle: 'Keine geschützte Musik',
     guideCopyrightBody:
       'Videos dürfen keine urheberrechtlich geschützte Musik enthalten — YouTube kann sie sonst stummschalten oder ausblenden, was deine Platzierung nach Aufrufen beeinflusst.',
@@ -709,6 +709,8 @@ const de = {
     stReview: 'Wartet auf Prüfung',
     stPublished: 'Veröffentlicht',
     stRejected: 'Abgelehnt',
+    pendingHint: 'Dein Video ist hochgeladen, aber noch nicht auf YouTube veröffentlicht.',
+    retryConfirm: 'Erneut bestätigen',
     empty: 'Derzeit läuft kein Wettbewerb',
     emptyHint: 'Folge unserer Facebook-Seite, um neue Wettbewerbe zu erfahren',
     loadError: 'Wettbewerbe konnten nicht geladen werden. Bitte versuche es erneut.',

@@ -2,6 +2,9 @@ namespace AquaHome.Domain.Services.Interfaces;
 
 public interface IStorageService
 {
+    /// <summary>Có credential chưa. Thiếu thì các hàm dưới đây chạy rỗng (trả null / không xoá gì) chứ không báo lỗi.</summary>
+    bool IsConfigured { get; }
+
     /// <summary>Presigned PUT URL để FE upload thẳng lên MinIO. Giới hạn size tối đa maxBytes.</summary>
     Task<string?> GeneratePresignedPutUrlAsync(string objectKey, string contentType, long maxBytes, CancellationToken ct = default);
 

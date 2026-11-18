@@ -1,3 +1,4 @@
+using AquaHome.Common.Enums;
 using AquaHome.Domain.DTOs;
 using AquaHome.Domain.Enums;
 using AquaHome.Domain.Exceptions;
@@ -20,8 +21,10 @@ public class ContestService(
     IAquariumSnapshotRepository snapshotRepo,
     IStorageService storage,
     IYouTubeUploadService youTube,
+    IQuotaRepository quotaRepo,
     ICurrentUserSession currentUser,
     IOptions<StorageSettings> storageOptions,
+    IOptions<YouTubeSettings> youTubeOptions,
     ILogger<ContestService> logger) : IContestService
 {
     // R2 free tier 10GB — hard block ở 90% (9GB) trước khi issue presigned PUT URL
@@ -30,6 +33,21 @@ public class ContestService(
     private const int MaxTitleLength = 100;       // trùng giới hạn title của YouTube
     private const int MaxDescriptionLength = 100; // chốt với user — mô tả ngắn gọn
     private const long MaxLogoUploadBytes = 2L * 1024 * 1024;    // 2MB — logo sponsor
+
+    // Mỗi bể vẫn chỉ nộp 1 lần/contest; trần này chặn 1 account nhiều bể chiếm hết lượt upload YouTube.
+    private const int MaxEntriesPerUserPerContest = 3;
+
+    // Đếm atomic lúc confirm nên script nộp song song cũng không vượt được (trần số bài ở trên thì có thể
+    // lọt vài bài khi nộp song song) → 1 account đốt tối đa 2 trong số YouTubeSettings.DailyUploadLimit lượt/ngày.
+    private const int MaxYouTubeUploadsPerUserPerDay = 2;
+
+    private const string NoUploadLeftAtSubmitMessage =
+        "Hôm nay đã hết lượt đăng video lên YouTube. Bạn quay lại nộp bài vào ngày mai nhé.";
+    private const string NoUploadLeftAtConfirmMessage =
+        "Hôm nay đã hết lượt đăng video lên YouTube. Video của bạn vẫn được giữ — ngày mai vào \"Bài dự thi của tôi\" bấm \"Xác nhận lại\".";
+
+    // Quota YouTube Data API reset lúc nửa đêm giờ Pacific → "ngày" của bộ đếm lượt upload cũng theo giờ đó.
+    private static readonly TimeZoneInfo YouTubeQuotaTimeZone = ResolvePacificTimeZone();
 
     private static readonly HashSet<string> AllowedContentTypes = ["video/mp4", "video/quicktime", "video/webm"];
     private static readonly HashSet<string> AllowedLogoContentTypes = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"];
@@ -116,6 +134,10 @@ public class ContestService(
         var contest = await contestRepo.GetByIdAsync(contestId, ct)
             ?? throw new ContestValidationException("Contest không tồn tại.");
 
+        var now = DateTime.UtcNow;
+        if (contest.Status != (int)ContestStatus.Active || now < contest.StartAt || now > contest.EndAt)
+            throw new ContestValidationException("Cuộc thi chưa mở hoặc đã hết hạn nhận bài.");
+
         var snapshot = await snapshotRepo.GetByIdAsync(request.AquariumSnapshotId, ct);
         if (snapshot is null || snapshot.UserId != currentUser.UserId)
             throw new ContestValidationException("Snapshot không hợp lệ hoặc không thuộc về bạn.");
@@ -133,6 +155,14 @@ public class ContestService(
         if (await entryRepo.HasActiveEntryForSnapshotAsync(
                 currentUser.UserId, contestId, request.AquariumSnapshotId, ct))
             throw new ContestValidationException("Bạn đã dự thi bằng bể này rồi. Hãy chọn bể khác.");
+
+        if (await entryRepo.CountActiveEntriesAsync(currentUser.UserId, contestId, ct) >= MaxEntriesPerUserPerContest)
+            throw new ContestValidationException(
+                $"Mỗi người nộp tối đa {MaxEntriesPerUserPerContest} bài cho một cuộc thi (bài bị từ chối không tính).");
+
+        // Báo ngay lúc nộp, đỡ cho user tải cả trăm MB lên rồi tới bước confirm mới biết hết lượt.
+        if (!await HasYouTubeUploadLeftAsync(ct))
+            throw new ContestValidationException(NoUploadLeftAtSubmitMessage);
 
         // Hard block 90% (9GB) — check trước khi issue presigned PUT URL
         var stagingTotal = await entryRepo.SumStagingVideoBytesAsync(ct);
@@ -176,10 +206,25 @@ public class ContestService(
         if (entry is null || entry.ContestId != contestId || entry.UserId != currentUser.UserId) return false;
         if (entry.Status != (int)ContestEntryStatus.Pending || string.IsNullOrEmpty(entry.VideoR2Key)) return false;
 
-        entry.Status = (int)ContestEntryStatus.Validating;
-        await entryRepo.SaveChangesAsync(ct);
-
+        // Không xét EndAt: bài nộp sát giờ đóng vẫn confirm được sau khi tải xong video; admin chuyển
+        // contest sang Ended mới là chặn hẳn.
         var contest = await contestRepo.GetByIdAsync(contestId, ct);
+        if (contest?.Status != (int)ContestStatus.Active)
+            throw new ContestValidationException("Cuộc thi đã đóng, không nhận thêm bài.");
+
+        // N request confirm song song cho cùng 1 bài: chỉ 1 request chiếm được. Không có bước này thì mỗi
+        // request giữ 1 lượt + upload 1 video trùng → 1 bài đốt sạch lượt YouTube trong ngày.
+        if (!await entryRepo.TryClaimForUploadAsync(entry.Id, ct)) return false;
+        entry.Status = (int)ContestEntryStatus.Validating;
+        await entryRepo.SaveChangesAsync(ct); // đồng bộ change tracker với DB, để trả về Pending bên dưới ghi được
+
+        if (!await TryReserveYouTubeUploadAsync(ct))
+        {
+            entry.Status = (int)ContestEntryStatus.Pending;
+            await entryRepo.SaveChangesAsync(ct);
+            throw new ContestValidationException(NoUploadLeftAtConfirmMessage);
+        }
+
         var snapshot = await snapshotRepo.GetByIdAsync(entry.AquariumSnapshotId, ct);
 
         // Ưu tiên tên người dự thi tự đặt → tên bể đã public → tên contest (bí quá mới dùng)
@@ -190,7 +235,19 @@ public class ContestService(
 
         var description = entry.Description ?? $"Bài dự thi {contest?.Title} — The FishLover";
 
-        var videoId = await youTube.UploadUnlistedAsync(entry.VideoR2Key, title, description, ct);
+        string? videoId;
+        try
+        {
+            videoId = await youTube.UploadUnlistedAsync(entry.VideoR2Key, title, description, ct);
+        }
+        catch (YouTubeQuotaExceededException)
+        {
+            // Lỗi phía kênh chứ không phải lỗi bài: trả về Pending + giữ video R2 để user xác nhận lại hôm sau.
+            // Trước đây nhánh này rơi vào Rejected + xoá video → bài thật mất trắng mỗi khi quota cạn.
+            entry.Status = (int)ContestEntryStatus.Pending;
+            await entryRepo.SaveChangesAsync(ct);
+            throw new ContestValidationException(NoUploadLeftAtConfirmMessage);
+        }
 
         if (videoId is null)
         {
@@ -199,6 +256,7 @@ public class ContestService(
             await storage.DeleteAsync(entry.VideoR2Key, ct);
             entry.VideoR2Key = null;
             entry.Status = (int)ContestEntryStatus.Rejected;
+            entry.RejectionReason = "Không đăng được video lên YouTube. Bạn hãy nộp lại bài.";
             await entryRepo.SaveChangesAsync(ct);
             return false;
         }
@@ -489,6 +547,46 @@ public class ContestService(
         // Cùng 1 DbContext (scoped) — SaveChanges qua bất kỳ repo nào cũng commit toàn bộ thay đổi đã track
         await entryRepo.SaveChangesAsync(ct);
         return true;
+    }
+
+    /// <summary>Còn lượt upload YouTube hôm nay cho user hiện tại và cho cả hệ thống không (chỉ đọc).</summary>
+    private async Task<bool> HasYouTubeUploadLeftAsync(CancellationToken ct)
+    {
+        var day = YouTubeQuotaDay();
+        const int type = (int)QuotaType.ContestYouTubeUploadPerDay;
+
+        return await quotaRepo.GetDailyUsageAsync(currentUser.UserId, type, day, ct) < MaxYouTubeUploadsPerUserPerDay
+            && await quotaRepo.GetDailyUsageAsync(Guid.Empty, type, day, ct) < youTubeOptions.Value.DailyUploadLimit;
+    }
+
+    /// <summary>
+    /// Giữ 1 lượt upload YouTube (atomic) cho user hiện tại rồi cho cả hệ thống, TRƯỚC khi gọi YouTube.
+    /// Lượt đã giữ không trả lại kể cả khi upload lỗi — YouTube có thể đã trừ quota.
+    /// </summary>
+    private async Task<bool> TryReserveYouTubeUploadAsync(CancellationToken ct)
+    {
+        var day = YouTubeQuotaDay();
+        const int type = (int)QuotaType.ContestYouTubeUploadPerDay;
+
+        return await quotaRepo.IncrementDailyUsageAsync(currentUser.UserId, type, day, ct) <= MaxYouTubeUploadsPerUserPerDay
+            && await quotaRepo.IncrementDailyUsageAsync(Guid.Empty, type, day, ct) <= youTubeOptions.Value.DailyUploadLimit;
+    }
+
+    private static DateOnly YouTubeQuotaDay()
+        => DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, YouTubeQuotaTimeZone));
+
+    private static TimeZoneInfo ResolvePacificTimeZone()
+    {
+        try
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("America/Los_Angeles");
+        }
+        catch (Exception ex) when (ex is TimeZoneNotFoundException or InvalidTimeZoneException)
+        {
+            // Image thiếu tzdata → PST cố định. Mùa hè (PDT) mốc ngày lệch Google 1 tiếng; có lọt quá trần
+            // thì YouTube báo hết quota và bài vẫn được giữ ở Pending.
+            return TimeZoneInfo.CreateCustomTimeZone("PST", TimeSpan.FromHours(-8), "PST", "PST");
+        }
     }
 
     private async Task<ContestDto> ToDtoAsync(Contest c, CancellationToken ct)

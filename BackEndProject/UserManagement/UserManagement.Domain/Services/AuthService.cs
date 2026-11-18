@@ -96,7 +96,7 @@ public class AuthService(
             var user = await userManager.Users
                 .FirstOrDefaultAsync(u => u.RefreshToken == request.RefreshToken);
 
-            if (user == null || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+            if (user == null || !user.IsActive || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
             {
                 throw new SecurityTokenException("Invalid refresh token");
             }

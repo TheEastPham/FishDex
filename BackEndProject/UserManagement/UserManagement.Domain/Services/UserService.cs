@@ -6,6 +6,7 @@ using UserManagement.EFCore.Entities.User;
 using UserManagement.EFCore.Repositories.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
+using OpenIddict.Abstractions;
 
 namespace UserManagement.Domain.Services;
 
@@ -13,15 +14,21 @@ public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
     private readonly UserManager<UserEntity> _userManager;
+    private readonly IOpenIddictAuthorizationManager _authorizationManager;
+    private readonly IOpenIddictTokenManager _tokenManager;
     private readonly ILogger<UserService> _logger;
 
     public UserService(
         IUserRepository userRepository,
         UserManager<UserEntity> userManager,
+        IOpenIddictAuthorizationManager authorizationManager,
+        IOpenIddictTokenManager tokenManager,
         ILogger<UserService> logger)
     {
         _userRepository = userRepository;
         _userManager = userManager;
+        _authorizationManager = authorizationManager;
+        _tokenManager = tokenManager;
         _logger = logger;
     }
 
@@ -162,13 +169,52 @@ public class UserService : IUserService
     {
         try
         {
-            return await _userRepository.DeleteAsync(id);
+            if (!await _userRepository.DeleteAsync(id)) return false;
+
+            await RevokeSessionsAsync(id);
+            return true;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting user {UserId}", id);
             throw;
         }
+    }
+
+    /// <summary>
+    /// Vô hiệu hoá chỉ set <c>IsActive = false</c> thì mọi phiên đang có vẫn sống: refresh token OpenIddict
+    /// (và refresh token legacy) vẫn đổi được access token mới. Thu hồi hết ở đây. Access token đã cấp (JWT,
+    /// FishDex/AquaHome tự verify) vẫn dùng được tới khi hết hạn (mặc định 1 giờ).
+    /// </summary>
+    private async Task RevokeSessionsAsync(Guid userId)
+    {
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user is not null)
+        {
+            user.RefreshToken = null;
+            user.RefreshTokenExpiryTime = null;
+            // Đổi stamp + lưu luôn 2 field trên: cookie đăng nhập ở /connect bị từ chối ở lần validate kế tiếp.
+            await _userManager.UpdateSecurityStampAsync(user);
+        }
+
+        var subject = userId.ToString();
+
+        // Gom hết rồi mới revoke: mỗi lần revoke là 1 SaveChanges, không chạy được khi DbContext còn đang
+        // stream kết quả FindBySubjectAsync.
+        var authorizations = new List<object>();
+        await foreach (var authorization in _authorizationManager.FindBySubjectAsync(subject))
+            authorizations.Add(authorization);
+        foreach (var authorization in authorizations)
+            await _authorizationManager.TryRevokeAsync(authorization);
+
+        var tokens = new List<object>();
+        await foreach (var token in _tokenManager.FindBySubjectAsync(subject))
+            tokens.Add(token);
+        foreach (var token in tokens)
+            await _tokenManager.TryRevokeAsync(token);
+
+        _logger.LogInformation("Revoked {Authorizations} authorizations and {Tokens} tokens of deactivated user {UserId}",
+            authorizations.Count, tokens.Count, userId);
     }
 
     public async Task<bool> AssignRoleAsync(AssignRoleRequest request)

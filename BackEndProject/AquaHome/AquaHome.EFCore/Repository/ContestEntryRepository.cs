@@ -56,11 +56,14 @@ public class ContestEntryRepository(AquaHomeDbContext db) : IContestEntryReposit
             .Where(e => e.Id == entryId && e.Status == 0) // ContestEntryStatus.Pending
             .ExecuteUpdateAsync(s => s.SetProperty(e => e.Status, 1), ct) == 1; // → Validating
 
-    public async Task<IReadOnlyList<ContestEntry>> GetStaleStagingAsync(DateTime submittedBefore, CancellationToken ct = default)
+    public async Task<IReadOnlyList<ContestEntry>> GetStaleStagingAsync(
+        DateTime verifiedSubmittedBefore, DateTime unverifiedSubmittedBefore, CancellationToken ct = default)
         => await db.ContestEntries.AsNoTracking()
             .Where(e => (e.Status == 0 || e.Status == 1) // ContestEntryStatus.Pending / Validating
                         && e.VideoR2Key != null
-                        && e.SubmittedAt < submittedBefore)
+                        && (e.VideoVerifiedAt != null
+                            ? e.SubmittedAt < verifiedSubmittedBefore
+                            : e.SubmittedAt < unverifiedSubmittedBefore))
             .ToListAsync(ct);
 
     public async Task<bool> TryExpireStagingAsync(Guid entryId, int expectedStatus, string reason, CancellationToken ct = default)
@@ -71,10 +74,11 @@ public class ContestEntryRepository(AquaHomeDbContext db) : IContestEntryReposit
                 .SetProperty(e => e.RejectionReason, reason)
                 .SetProperty(e => e.VideoR2Key, (string?)null), ct) == 1;
 
-    // R2 storage guard — tổng staging = SUM(VideoSizeBytes) WHERE VideoR2Key IS NOT NULL
-    public Task<long> SumStagingVideoBytesAsync(CancellationToken ct = default)
+    // R2 storage guard — file đã HEAD-verify + bài mới submit (đang upload dở) mới tính
+    public Task<long> SumStagingVideoBytesAsync(DateTime unverifiedSubmittedAfter, CancellationToken ct = default)
         => db.ContestEntries
-            .Where(e => e.VideoR2Key != null)
+            .Where(e => e.VideoR2Key != null
+                        && (e.VideoVerifiedAt != null || e.SubmittedAt > unverifiedSubmittedAfter))
             .SumAsync(e => e.VideoSizeBytes ?? 0, ct);
 
     public async Task AddAsync(ContestEntry entry, CancellationToken ct = default)

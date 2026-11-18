@@ -167,7 +167,7 @@ services:
       - ExternalServices__YouTube__ClientSecret=${YOUTUBE_CLIENT_SECRET}
       - ExternalServices__YouTube__RefreshToken=${YOUTUBE_REFRESH_TOKEN}
       - ExternalServices__YouTube__ChannelId=${YOUTUBE_CHANNEL_ID}
-      # CleanupContestStagingBackgroundService (mỗi 24h) xoá video contest kẹt trên R2 staging.
+      # CleanupContestStagingBackgroundService (mỗi 6h) xoá video contest kẹt trên R2 staging.
       # Cùng giá trị với service aquahome. Thiếu thì job tự bỏ qua (log warning), không dọn gì.
       - Storage__Provider=r2
       - Storage__ServiceUrl=${AQUAHOME_R2_SERVICE_URL}

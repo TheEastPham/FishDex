@@ -21,7 +21,13 @@ public class CommunitySpeciesService(
 {
     private const int MaxAllocationRetries = 3;
     private const long MaxImageUploadBytes = 5 * 1024 * 1024;
-    private static readonly HashSet<string> AllowedImageContentTypes = ["image/jpeg", "image/png", "image/webp"];
+    // Đuôi file suy từ content-type (đã ký vào presigned PUT), không lấy theo tên file client gửi.
+    private static readonly Dictionary<string, string> ImageExtensions = new()
+    {
+        ["image/jpeg"] = ".jpg",
+        ["image/png"] = ".png",
+        ["image/webp"] = ".webp",
+    };
 
     /// <summary>
     /// Ngưỡng 0.4 chọn theo phép thử thực tế: "Betta splendens" so với "Beta splenden"
@@ -147,16 +153,19 @@ public class CommunitySpeciesService(
     public async Task<CommunityImageUploadResultDto?> RequestImageUploadAsync(
         int specCode, string fileName, string contentType, CancellationToken ct = default)
     {
-        if (!AllowedImageContentTypes.Contains(contentType)) return null;
+        if (!ImageExtensions.TryGetValue(contentType, out var ext)) return null;
 
         var snapshot = await repo.GetCommunityByCodeAsync(specCode, ct);
         if (snapshot is null || snapshot.ContributedBy != currentUser.UserId) return null;
 
-        var ext = Path.GetExtension(fileName);
         var objectKey = $"community/{specCode}/cover{ext}";
 
         var uploadUrl = await storage.GeneratePresignedPutUrlAsync(objectKey, contentType, MaxImageUploadBytes, ct);
         if (uploadUrl is null) return null;
+
+        // Đổi định dạng ảnh (.png → .jpg) là đổi key → ảnh cũ thành rác trên R2 nếu không xoá. Cùng key thì PUT ghi đè.
+        if (!string.IsNullOrEmpty(snapshot.ThumbnailObjectKey) && snapshot.ThumbnailObjectKey != objectKey)
+            await storage.DeleteAsync(snapshot.ThumbnailObjectKey, ct);
 
         snapshot.ThumbnailObjectKey = objectKey;
         await repo.SaveChangesAsync(ct);

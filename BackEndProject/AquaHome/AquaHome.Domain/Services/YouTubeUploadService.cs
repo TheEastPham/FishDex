@@ -60,11 +60,16 @@ public class YouTubeUploadService(
             }
 
             using var http = httpClientFactory.CreateClient();
-            await using var videoStream = await http.GetStreamAsync(downloadUrl, ct);
+            using var response = await http.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead, ct);
+            response.EnsureSuccessStatusCode();
 
-            using var memory = new MemoryStream();
-            await videoStream.CopyToAsync(memory, ct);
-            memory.Position = 0;
+            // Ra file tạm chứ không vào RAM: video tới 500MB, MemoryStream làm container phình theo từng bài.
+            // File seekable nên thư viện Google vẫn resume được khi 1 chunk lỗi; DeleteOnClose tự dọn kể cả khi lỗi.
+            await using var videoFile = new FileStream(
+                Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.None,
+                bufferSize: 81920, FileOptions.DeleteOnClose | FileOptions.Asynchronous);
+            await response.Content.CopyToAsync(videoFile, ct);
+            videoFile.Position = 0;
 
             var youtube = BuildClient();
             var video = new Video
@@ -73,7 +78,7 @@ public class YouTubeUploadService(
                 Status = new VideoStatus { PrivacyStatus = "unlisted" },
             };
 
-            var request = youtube.Videos.Insert(video, "snippet,status", memory, "video/*");
+            var request = youtube.Videos.Insert(video, "snippet,status", videoFile, "video/*");
             var uploadStatus = await request.UploadAsync(ct);
 
             if (uploadStatus.Status != UploadStatus.Completed)

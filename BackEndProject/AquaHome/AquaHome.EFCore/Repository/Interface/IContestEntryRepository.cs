@@ -27,15 +27,23 @@ public interface IContestEntryRepository
     /// </summary>
     Task<bool> TryClaimForUploadAsync(Guid entryId, CancellationToken ct = default);
 
-    /// <summary>Bài Pending/Validating còn video trên R2 staging, nộp trước mốc này — cho job dọn staging.</summary>
-    Task<IReadOnlyList<ContestEntry>> GetStaleStagingAsync(DateTime submittedBefore, CancellationToken ct = default);
+    /// <summary>
+    /// Bài Pending/Validating còn video trên R2 staging đã quá hạn — cho job dọn staging. Bài đã verify (đang chờ
+    /// xác nhận lại vì hết lượt YouTube) và bài chưa verify (upload rồi bỏ) có mốc riêng.
+    /// </summary>
+    Task<IReadOnlyList<ContestEntry>> GetStaleStagingAsync(
+        DateTime verifiedSubmittedBefore, DateTime unverifiedSubmittedBefore, CancellationToken ct = default);
 
     /// <summary>
     /// Chuyển Rejected (kèm lý do) + bỏ VideoR2Key bằng 1 câu UPDATE, chỉ khi bài vẫn đang ở <paramref name="expectedStatus"/>.
     /// False nếu bài vừa đổi trạng thái (user đang bấm xác nhận lại) — khi đó không được xoá video.
     /// </summary>
     Task<bool> TryExpireStagingAsync(Guid entryId, int expectedStatus, string reason, CancellationToken ct = default);
-    Task<long> SumStagingVideoBytesAsync(CancellationToken ct = default);
+    /// <summary>
+    /// Dung lượng staging R2 cho trần 9GB: bài đã HEAD-verify (file thật) + bài chưa verify nộp sau mốc này
+    /// (đang upload dở). Bài khai dung lượng rồi bỏ đó không chiếm chỗ mãi — chỉ tính trong ít phút đầu.
+    /// </summary>
+    Task<long> SumStagingVideoBytesAsync(DateTime unverifiedSubmittedAfter, CancellationToken ct = default);
     Task AddAsync(ContestEntry entry, CancellationToken ct = default);
     Task SaveChangesAsync(CancellationToken ct = default);
 }

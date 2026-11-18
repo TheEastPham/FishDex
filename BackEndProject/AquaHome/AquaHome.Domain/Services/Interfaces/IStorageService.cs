@@ -11,6 +11,16 @@ public interface IStorageService
     /// <summary>Presigned GET URL để FE đọc ảnh.</summary>
     Task<string?> GetPresignedUrlAsync(string objectKey, CancellationToken ct = default);
 
+    /// <summary>
+    /// Dung lượng thật của object (HEAD). Null nếu object không tồn tại hoặc storage chưa cấu hình; lỗi khác
+    /// thì NÉM — người gọi phân biệt được "chưa upload" với "R2 trục trặc".
+    /// </summary>
+    /// <remarks>
+    /// Presigned PUT không chặn được dung lượng (R2 không có POST policy, header max-bytes không ký được vì
+    /// browser không gửi) → mọi luồng upload phải HEAD ở bước confirm rồi mới tin file.
+    /// </remarks>
+    Task<long?> GetObjectSizeAsync(string objectKey, CancellationToken ct = default);
+
     /// <summary>Xóa object khỏi storage.</summary>
     Task DeleteAsync(string objectKey, CancellationToken ct = default);
 

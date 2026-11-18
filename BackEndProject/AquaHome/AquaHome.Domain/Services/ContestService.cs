@@ -49,7 +49,20 @@ public class ContestService(
     // Quota YouTube Data API reset lúc nửa đêm giờ Pacific → "ngày" của bộ đếm lượt upload cũng theo giờ đó.
     private static readonly TimeZoneInfo YouTubeQuotaTimeZone = ResolvePacificTimeZone();
 
-    private static readonly HashSet<string> AllowedContentTypes = ["video/mp4", "video/quicktime", "video/webm"];
+    // Đuôi file suy từ content-type (đã ký vào presigned PUT), không lấy theo tên file client gửi.
+    private static readonly Dictionary<string, string> VideoExtensions = new()
+    {
+        ["video/mp4"] = ".mp4",
+        ["video/quicktime"] = ".mov",
+        ["video/webm"] = ".webm",
+    };
+
+    // Bài mới submit chưa confirm vẫn được tính vào trần staging trong khoảng này (đang upload dở). Quá thì không
+    // tính nữa — khai 500MB rồi không upload gì không giữ chỗ được mãi.
+    private static readonly TimeSpan UnverifiedUploadWindow = TimeSpan.FromMinutes(30);
+
+    private const string VideoNotFoundReason = "Không tìm thấy video đã tải lên. Bạn hãy nộp lại bài.";
+    private const string VideoSizeMismatchReason = "Video tải lên không khớp dung lượng đã khai. Bạn hãy nộp lại bài.";
     private static readonly HashSet<string> AllowedLogoContentTypes = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"];
 
     private string Env => storageOptions.Value.Environment;
@@ -125,10 +138,10 @@ public class ContestService(
                     ? "Video quá ngắn, tối thiểu 2 phút."
                     : "Video quá dài, tối đa 5 phút.");
 
-        if (!AllowedContentTypes.Contains(request.ContentType))
+        if (!VideoExtensions.TryGetValue(request.ContentType, out var ext))
             throw new ContestValidationException("Định dạng video không được hỗ trợ.");
 
-        if (request.FileSizeBytes > MaxVideoUploadBytes)
+        if (request.FileSizeBytes <= 0 || request.FileSizeBytes > MaxVideoUploadBytes)
             throw new ContestValidationException($"Video vượt quá dung lượng tối đa {MaxVideoUploadBytes / 1024 / 1024}MB.");
 
         var contest = await contestRepo.GetByIdAsync(contestId, ct)
@@ -165,7 +178,7 @@ public class ContestService(
             throw new ContestValidationException(NoUploadLeftAtSubmitMessage);
 
         // Hard block 90% (9GB) — check trước khi issue presigned PUT URL
-        var stagingTotal = await entryRepo.SumStagingVideoBytesAsync(ct);
+        var stagingTotal = await entryRepo.SumStagingVideoBytesAsync(DateTime.UtcNow - UnverifiedUploadWindow, ct);
         if (stagingTotal + request.FileSizeBytes > HardBlockBytes)
         {
             logger.LogWarning("R2 staging hard block hit: {Total} + {New} > {Limit}", stagingTotal, request.FileSizeBytes, HardBlockBytes);
@@ -173,7 +186,6 @@ public class ContestService(
         }
 
         var entryId = Guid.NewGuid();
-        var ext = Path.GetExtension(request.FileName);
         var objectKey = $"aquahome/{Env}/contests/{contestId}/{entryId}{ext}";
 
         var uploadUrl = await storage.GeneratePresignedPutUrlAsync(objectKey, request.ContentType, MaxVideoUploadBytes, ct)
@@ -217,6 +229,38 @@ public class ContestService(
         if (!await entryRepo.TryClaimForUploadAsync(entry.Id, ct)) return false;
         entry.Status = (int)ContestEntryStatus.Validating;
         await entryRepo.SaveChangesAsync(ct); // đồng bộ change tracker với DB, để trả về Pending bên dưới ghi được
+
+        // Presigned PUT không chặn được dung lượng → tin file thật trên R2 chứ không tin số client khai. Làm TRƯỚC
+        // khi giữ lượt YouTube: bài bỏ dở (chưa có file) bấm "Xác nhận lại" không tốn lượt.
+        long? actualSize;
+        try
+        {
+            actualSize = await storage.GetObjectSizeAsync(entry.VideoR2Key, ct);
+        }
+        catch
+        {
+            // R2 trục trặc chứ không phải lỗi bài — trả về Pending để user thử lại.
+            entry.Status = (int)ContestEntryStatus.Pending;
+            await entryRepo.SaveChangesAsync(ct);
+            throw;
+        }
+
+        if (actualSize is null || actualSize > MaxVideoUploadBytes || actualSize != entry.VideoSizeBytes)
+        {
+            if (actualSize is not null)
+                await storage.DeleteAsync(entry.VideoR2Key, ct);
+
+            logger.LogWarning("Contest entry {EntryId} rejected: R2 size {Actual} vs declared {Declared}",
+                entry.Id, actualSize, entry.VideoSizeBytes);
+            entry.VideoR2Key = null;
+            entry.Status = (int)ContestEntryStatus.Rejected;
+            entry.RejectionReason = actualSize is null ? VideoNotFoundReason : VideoSizeMismatchReason;
+            await entryRepo.SaveChangesAsync(ct);
+            return false;
+        }
+
+        entry.VideoVerifiedAt = DateTime.UtcNow;
+        await entryRepo.SaveChangesAsync(ct);
 
         if (!await TryReserveYouTubeUploadAsync(ct))
         {

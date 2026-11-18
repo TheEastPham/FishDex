@@ -64,7 +64,7 @@ public class S3StorageService : IStorageService
             // UNSIGNED-PAYLOAD tells R2 to skip body hash verification (required for browser PUT)
             // x-amz-meta-max-bytes is intentionally NOT signed — signing metadata forces FE to send
             // that header on PUT, but browsers don't, causing R2 signature mismatch → 403.
-            // Max-size enforcement is done at the controller layer before issuing the URL.
+            // => URL này KHÔNG chặn được dung lượng: luồng nào phát URL phải HEAD (GetObjectSizeAsync) lúc confirm.
             request.Headers["x-amz-content-sha256"] = "UNSIGNED-PAYLOAD";
 
             var url = _s3.GetPreSignedURL(request);
@@ -102,6 +102,22 @@ public class S3StorageService : IStorageService
         {
             _logger.LogWarning(ex, "Failed to generate presigned GET URL for {Key}", objectKey);
             return Task.FromResult<string?>(null);
+        }
+    }
+
+    public async Task<long?> GetObjectSizeAsync(string objectKey, CancellationToken ct = default)
+    {
+        if (string.IsNullOrEmpty(_settings.AccessKey))
+            return null;
+
+        try
+        {
+            var metadata = await _s3.GetObjectMetadataAsync(_settings.BucketName, objectKey, ct);
+            return metadata.ContentLength;
+        }
+        catch (AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
         }
     }
 

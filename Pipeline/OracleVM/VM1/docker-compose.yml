@@ -17,6 +17,9 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_HTTP_PORTS=5000
       - FE_ORIGIN=${FE_ORIGIN}
+      - OpenTelemetry__ExportEndpoint=http://10.0.0.94:4317   # OTLP trace → Tempo (VM2)
+    labels:
+      - "env=prod"
     networks:
       - fishlover_prod
 
@@ -45,8 +48,17 @@ services:
       - OpenIddict__KeyDir=/openiddict-keys
       - AllowedOrigins__0=${FE_ORIGIN}
       - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
+      - OpenTelemetry__ExportEndpoint=http://10.0.0.94:4317   # OTLP trace → Tempo (VM2)
+      # Web Push VAPID (Epic 9.2) — PrivateKey là secret, lấy từ .env, KHÔNG commit
+      - VapidSettings__PublicKey=${VAPID_PUBLIC_KEY}
+      - VapidSettings__PrivateKey=${VAPID_PRIVATE_KEY}
+      - VapidSettings__Subject=${VAPID_SUBJECT}
+      # Internal API key — AquaHome worker gọi /api/push/send xác thực bằng key này
+      - InternalSettings__ApiKey=${INTERNAL_API_KEY}
     volumes:
       - openiddict_keys:/openiddict-keys
+    labels:
+      - "env=prod"
     depends_on:
       - postgres
       - redis
@@ -69,16 +81,30 @@ services:
       - Storage__SecretKey=${FISHDEX_R2_SECRET_KEY}
       - Storage__BucketName=${FISHDEX_R2_BUCKET_NAME}
       - Storage__ForcePathStyle=false
+      # Khoá HMAC ký link media-access (ảnh system-image). Base64 ≥ 32 byte: `openssl rand -base64 32`.
+      # Thiếu thì /public/media-access trả 503 (ảnh snapshot/summaries không hiện). Đổi khoá = link cũ chết.
+      - MediaAccess__Key=${MEDIA_ACCESS_KEY}
       - AuthServer__Url=${OIDC_ISSUER}
       - AuthServer__Authority=${OIDC_ISSUER}
       - JwtSettings__SecretKey=${JWT_SECRET_KEY}
       - JwtSettings__Issuer=${JWT_ISSUER}
       - JwtSettings__Audience=${JWT_AUDIENCE}
       - Cors__AllowedOrigins__0=${FE_ORIGIN}
+      # Khoá service-to-service — AquaHome.Worker gọi /api/market/ingest. Cùng giá trị với
+      # UserManagement. Thiếu biến này thì endpoint ingest tự trả 503 chứ không mở toang.
+      - InternalSettings__ApiKey=${INTERNAL_API_KEY}
+      # Redis cho hạn mức xem loài (khách chưa đăng nhập) — dùng chung với UserManagement/AquaHome.
+      # Redis chết thì hạn mức fail-open (cho xem), không chặn trang tra cứu.
+      # Con số hạn mức nằm ở appsettings.json (AnonQuota), không phải env.
+      - ConnectionStrings__Redis=${REDIS_CONN}
       - AutoMigrate__OnStartup=true
       - ASPNETCORE_HTTP_PORTS=8081
+      - OpenTelemetry__ExportEndpoint=http://10.0.0.94:4317   # OTLP trace → Tempo (VM2)
+    labels:
+      - "env=prod"
     depends_on:
       - postgres
+      - redis
     networks:
       - fishlover_prod
 
@@ -104,9 +130,56 @@ services:
       - Storage__Environment=${AQUAHOME_R2_ENV}
       - Storage__ForcePathStyle=false
       - ASPNETCORE_HTTP_PORTS=8082
+      # Epic 11.0 — snapshot preview/publish gọi FishDex lấy species summaries + distribution points.
+      # THIẾU biến này → AquaHome fallback localhost:8081 → enrich fail → tên "Species #NNNNN" + map trống.
+      - FishDex__BaseUrl=http://fishdex:8081
+      # Epic 11 contest — YouTube upload + R2 warning email (rỗng = tính năng contest fail êm, không crash)
+      - ExternalServices__YouTube__ClientId=${YOUTUBE_CLIENT_ID}
+      - ExternalServices__YouTube__ClientSecret=${YOUTUBE_CLIENT_SECRET}
+      - ExternalServices__YouTube__RefreshToken=${YOUTUBE_REFRESH_TOKEN}
+      - ExternalServices__YouTube__ChannelId=${YOUTUBE_CHANNEL_ID}
+      - AdminAlerts__R2WarningEmail=${ADMIN_R2_WARNING_EMAIL}
+      - OpenTelemetry__ExportEndpoint=http://10.0.0.94:4317   # OTLP trace → Tempo (VM2)
+    labels:
+      - "env=prod"
     depends_on:
       - postgres
       - redis
+    networks:
+      - fishlover_prod
+
+  # ── AquaHome Worker (nhắc lịch — TaskReminderBackgroundService, Epic 9.7) ──
+  aquahome-worker:
+    image: ghcr.io/${GHCR_USERNAME}/aquahome-worker:latest
+    container_name: aquahome-worker
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=aquahome;Username=${AH_DB_USER};Password=${AH_DB_PASSWORD}
+      - AutoMigrate__OnStartup=false
+      - UserManagement__BaseUrl=http://usermanagement:8080
+      - UserManagement__InternalApiKey=${INTERNAL_API_KEY}
+      # Market Layer — job 8 tiếng gom cá theo quốc gia đẩy sang FishDex.
+      # Thiếu biến này thì rơi về localhost:8081 và bị Connection refused trong container.
+      - FishDex__BaseUrl=http://fishdex:8081
+      # Epic 11.3 — SyncContestViewCountsBackgroundService (mỗi 6h) gọi YouTube Data API
+      - ExternalServices__YouTube__ClientId=${YOUTUBE_CLIENT_ID}
+      - ExternalServices__YouTube__ClientSecret=${YOUTUBE_CLIENT_SECRET}
+      - ExternalServices__YouTube__RefreshToken=${YOUTUBE_REFRESH_TOKEN}
+      - ExternalServices__YouTube__ChannelId=${YOUTUBE_CHANNEL_ID}
+      # CleanupContestStagingBackgroundService (mỗi 6h) xoá video contest kẹt trên R2 staging.
+      # Cùng giá trị với service aquahome. Thiếu thì job tự bỏ qua (log warning), không dọn gì.
+      - Storage__Provider=r2
+      - Storage__ServiceUrl=${AQUAHOME_R2_SERVICE_URL}
+      - Storage__AccessKey=${AQUAHOME_R2_ACCESS_KEY}
+      - Storage__SecretKey=${AQUAHOME_R2_SECRET_KEY}
+      - Storage__BucketName=${AQUAHOME_R2_BUCKET_NAME}
+      - Storage__Environment=${AQUAHOME_R2_ENV}
+      - Storage__ForcePathStyle=false
+      - OpenTelemetry__ExportEndpoint=http://10.0.0.94:4317   # OTLP trace → Tempo (VM2)
+    depends_on:
+      - postgres
+      - usermanagement
     networks:
       - fishlover_prod
 
@@ -148,8 +221,13 @@ services:
     image: grafana/promtail:latest
     container_name: promtail
     restart: unless-stopped
+    ports:
+      # Bind private IP: Prometheus VM2 scrape /metrics của promtail (task 1), KHÔNG hở public
+      - "10.0.0.64:9080:9080"
     volumes:
       - ./promtail-config.yml:/etc/promtail/config.yml:ro
+      # positions trên volume (task 4) → recreate container không đọc lại log cũ
+      - promtail_positions:/promtail
       - /var/run/docker.sock:/var/run/docker.sock
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
     command: -config.file=/etc/promtail/config.yml
@@ -162,7 +240,8 @@ services:
     container_name: node-exporter
     restart: unless-stopped
     ports:
-      - "9100:9100"
+      # Bind private IP: chỉ Prometheus VM2 (10.0.0.94) scrape qua subnet private, KHÔNG hở public
+      - "10.0.0.64:9100:9100"
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
@@ -180,12 +259,17 @@ services:
     container_name: cadvisor
     restart: unless-stopped
     ports:
-      - "9200:8080"
+      # Bind private IP: chỉ Prometheus VM2 scrape, KHÔNG hở public
+      - "10.0.0.64:9200:8080"
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
+    command:
+      # Cắt cardinality: bỏ metrics per-CPU/per-process không dùng (xem comment VM2)
+      - '-docker_only'
+      - '-disable_metrics=percpu,sched,tcp,udp,advtcp,process,hugetlb,referenced_memory'
     networks:
       - fishlover_prod
 
@@ -206,6 +290,7 @@ services:
       - fishlover_prod
 
 volumes:
+  promtail_positions:
   postgres_data:
   redis_data:
   openiddict_keys:

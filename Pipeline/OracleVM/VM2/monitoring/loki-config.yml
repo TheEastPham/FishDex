@@ -28,6 +28,28 @@ schema_config:
 limits_config:
   retention_period: 30d
 
+  # ── Phanh ingestion (task 5) ────────────────────────────────────────────────
+  # Lưu lượng bình thường ~11 lines/s, ~vài chục KB/s. Đợt backfill 23/08/2026 từng
+  # đạt 25K lines/s và ~4MB/s — không có limit nào chặn, đó là đường dẫn tới full disk
+  # trên VM2 (volume loki_data không giới hạn kích thước).
+  ingestion_rate_mb: 8               # ngưỡng toàn tenant, gấp ~2 lần đỉnh backfill
+  ingestion_burst_size_mb: 16
+  per_stream_rate_limit: 3MB         # một service log bão không kéo sập cả tenant
+  per_stream_rate_limit_burst: 10MB
+  max_streams_per_user: 5000         # hiện ~19 stream; chạm mốc này = cardinality nổ
+  max_line_size: 256KB               # stack trace .NET sau multiline có thể rất dài
+  max_line_size_truncate: true       # cắt bớt thay vì bỏ cả dòng
+
+  # Ngưỡng "quá cũ" — phải khớp với `drop older_than` trong promtail-config.yml,
+  # nếu lệch thì promtail đẩy log mà Loki trả 400 (đúng sự cố 23/08/2026).
+  reject_old_samples: true
+  reject_old_samples_max_age: 168h
+
+  # ── Phanh query (bảo vệ Grafana khỏi panel quét cả tháng log) ───────────────
+  max_entries_limit_per_query: 5000
+  max_query_series: 1000
+  max_query_length: 31d              # dài hơn retention thì vô nghĩa
+
 compactor:
   working_directory: /loki/compactor
   compaction_interval: 10m

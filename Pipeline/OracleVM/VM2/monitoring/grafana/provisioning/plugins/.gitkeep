@@ -1,0 +1,2 @@
+# Giữ folder tồn tại để Grafana không log lỗi "Failed to read plugin provisioning files".
+# Hiện không provision plugin nào.

@@ -3,9 +3,10 @@ import { NavLink, Link, Outlet, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Search, MessageCircle, Camera, Fish, LogOut, ChevronRight,
   Droplets, TestTube, Calendar, Heart, History, BookOpen, ChevronDown,
-  Shield, Home, Settings, FileText, ImageIcon, User, LogIn, Menu, X, Globe, Bell, MoreHorizontal
+  Shield, Home, Settings, FileText, ImageIcon, User, LogIn, Menu, X, Globe, Bell, MoreHorizontal,
+  Users, Waves, Trophy, Store
 } from 'lucide-react';
-import { cn, useLogout, useTranslation, setLanguage, useAuthStore } from '@fishlover/shared';
+import { cn, useLogout, useTranslation, setLanguage, useAuthStore, type AppLanguage } from '@fishlover/shared';
 
 interface SubMenuItem {
   to: string;
@@ -46,10 +47,13 @@ export default function AppShell() {
   const langMenuRef = useRef<HTMLDivElement>(null);
 
   const { i18n } = useTranslation();
-  const currentLang = i18n.language as 'en' | 'vi';
-  const LANGUAGES: { code: 'en' | 'vi'; label: string }[] = [
+  const currentLang = i18n.language as AppLanguage;
+  // Nhãn viết bằng chính ngôn ngữ đó — người Đức tìm "Deutsch", không tìm "German".
+  const LANGUAGES: { code: AppLanguage; label: string }[] = [
     { code: 'en', label: 'English' },
     { code: 'vi', label: 'Tiếng Việt' },
+    { code: 'de', label: 'Deutsch' },
+    { code: 'zh', label: '中文' },
   ];
 
   const [selectedAvatar] = useState(() => localStorage.getItem('user_avatar') || '');
@@ -76,15 +80,14 @@ export default function AppShell() {
   }, []);
 
   const navItems = useMemo<NavItem[]>(() => [
+    // Link thẳng, không phải nhóm: "Tổng quan" chính là trang tổng hợp, gói nó vào một nhóm
+    // chỉ có đúng một mục con thì người dùng phải bấm hai lần để tới cùng một chỗ.
     {
+      to: '/dashboard',
       icon: LayoutDashboard,
       label: t('nav.overviewGroup'),
       product: 'Overview',
       requireAuth: true,
-      subItems: [
-        { to: '/dashboard', icon: LayoutDashboard, label: t('nav.dashboard') },
-        { to: '/articles',  icon: FileText,         label: t('nav.article') },
-      ],
     },
     {
       icon: Home,
@@ -102,20 +105,37 @@ export default function AppShell() {
       label: t('nav.fishdexGroup'),
       product: 'FishDex',
       subItems: [
+        // Đặt TRÊN "Tra cứu" vì đây là cửa vào dễ hơn: vào là thấy nội dung,
+        // không cần biết tên loài để gõ.
+        { to: '/market',    icon: Store,    label: t('nav.market') },
+        { to: '/admin/market', icon: Store, label: t('nav.marketAdmin'), requireRoles: ['SystemAdmin', 'ContentAdmin'] },
         { to: '/fish',      icon: Search,   label: t('nav.fishSearch') },
         { to: '/favorites', icon: Heart,    label: t('nav.favorites'), requireAuth: true },
         { to: '/history',   icon: History,  label: t('nav.history'),   requireAuth: true },
         { to: '/my-fish',   icon: BookOpen, label: t('nav.myFish'),    requireAuth: true },
+        { to: '/submit-species', icon: Fish, label: t('nav.submitSpecies'), requireAuth: true },
+      ],
+    },
+    {
+      icon: Users,
+      label: t('nav.communityGroup'),
+      product: 'Community',
+      subItems: [
+        { to: '/public/tanks', icon: Waves,  label: t('nav.publicTanks') },
+        { to: '/contests',     icon: Trophy, label: t('nav.contests') },
+        { to: '/my-published-tanks', icon: Globe, label: t('nav.myPublishedTanks'), requireAuth: true },
+        { to: '/my-contributions', icon: BookOpen, label: t('nav.myContributions'), requireAuth: true },
       ],
     },
     {
       icon: Settings,
       label: t('nav.utilitiesGroup'),
       product: 'Utilities',
-      requireAuth: true,
+      // Không đặt requireAuth ở cấp nhóm: bài viết mở cho khách, chỉ hai mục AI mới cần đăng nhập.
       subItems: [
-        { to: '/ai-chat',      icon: MessageCircle, label: t('nav.aiChat') },
-        { to: '/image-search', icon: Camera,        label: t('nav.imageSearch') },
+        { to: '/articles',     icon: FileText,      label: t('nav.article') },
+        { to: '/ai-chat',      icon: MessageCircle, label: t('nav.aiChat'), requireAuth: true },
+        { to: '/image-search', icon: Camera,        label: t('nav.imageSearch'), requireAuth: true },
       ],
     },
     {
@@ -126,6 +146,8 @@ export default function AppShell() {
       subItems: [
         { to: '/admin/articles', icon: FileText,  label: t('nav.articlesManager') },
         { to: '/admin/media',    icon: ImageIcon, label: t('nav.mediaManager') },
+        { to: '/admin/community', icon: Users,    label: t('nav.communityModeration') },
+        { to: '/admin/contests', icon: Trophy,    label: t('nav.contestsManager'), requireRoles: ['SystemAdmin'] },
       ],
     },
   ], [t]);

@@ -1,0 +1,270 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "refresh": "1m",
+  "schemaVersion": 39,
+  "tags": ["fishlover", "backend", "red"],
+  "time": { "from": "now-6h", "to": "now" },
+  "timezone": "browser",
+  "title": "App RED (request / error / duration)",
+  "uid": "fishlover-app-red",
+  "version": 1,
+  "templating": {
+    "list": [
+      {
+        "name": "job",
+        "label": "Service",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "definition": "label_values(http_server_request_duration_seconds_count, job)",
+        "query": { "query": "label_values(http_server_request_duration_seconds_count, job)", "refId": "PrometheusVariableQueryEditor-VariableQuery" },
+        "multi": true,
+        "includeAll": true,
+        "allValue": "app-.*",
+        "current": { "selected": true, "text": ["All"], "value": ["$__all"] },
+        "refresh": 1,
+        "sort": 1,
+        "hide": 0
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Request/s",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "none", "graphMode": "area", "textMode": "auto"
+      },
+      "fieldConfig": { "defaults": { "unit": "reqps", "decimals": 2, "noValue": "0" }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "editorMode": "code", "instant": true, "legendFormat": "req/s",
+          "expr": "sum(rate(http_server_request_duration_seconds_count{job=~\"$job\"}[$__rate_interval]))" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Ty le loi 5xx",
+      "description": "Ty le request tra 5xx tren tong request. Day la chi so de dat alert Epic 14.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "id": 2,
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background", "graphMode": "area", "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent", "decimals": 2, "noValue": "0",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null }, { "color": "orange", "value": 1 }, { "color": "red", "value": 5 }
+          ]}
+        },
+        "overrides": []
+      },
+      "targets": [
+        { "refId": "A", "editorMode": "code", "instant": true, "legendFormat": "5xx %",
+          "expr": "100 * sum(rate(http_server_request_duration_seconds_count{job=~\"$job\", http_response_status_code=~\"5..\"}[$__rate_interval])) / clamp_min(sum(rate(http_server_request_duration_seconds_count{job=~\"$job\"}[$__rate_interval])), 0.001)" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "p95 latency",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "id": 3,
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background", "graphMode": "area", "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s", "decimals": 3, "noValue": "0",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null }, { "color": "orange", "value": 1 }, { "color": "red", "value": 10 }
+          ]}
+        },
+        "overrides": []
+      },
+      "targets": [
+        { "refId": "A", "editorMode": "code", "instant": true, "legendFormat": "p95",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{job=~\"$job\"}[$__rate_interval])))" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Request dang xu ly",
+      "description": "http_server_active_requests — tang lien tuc = request bi treo, khong tra ve.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "id": 4,
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "none", "graphMode": "area", "textMode": "auto"
+      },
+      "fieldConfig": { "defaults": { "unit": "short", "noValue": "0" }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "editorMode": "code", "instant": true, "legendFormat": "active",
+          "expr": "sum(http_server_active_requests{job=~\"$job\"})" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Request/s theo service",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "id": 5,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "fieldConfig": {
+        "defaults": { "unit": "reqps", "custom": { "fillOpacity": 20, "lineWidth": 1, "showPoints": "never" } },
+        "overrides": []
+      },
+      "targets": [
+        { "refId": "A", "editorMode": "code", "legendFormat": "{{job}}",
+          "expr": "sum by (job) (rate(http_server_request_duration_seconds_count{job=~\"$job\"}[$__rate_interval]))" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Request/s theo status code",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "id": 6,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": { "fillOpacity": 40, "lineWidth": 1, "showPoints": "never", "stacking": { "mode": "normal", "group": "A" } }
+        },
+        "overrides": [
+          { "matcher": { "id": "byRegexp", "options": "2.*" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } } ] },
+          { "matcher": { "id": "byRegexp", "options": "4.*" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } } ] },
+          { "matcher": { "id": "byRegexp", "options": "5.*" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } } ] }
+        ]
+      },
+      "targets": [
+        { "refId": "A", "editorMode": "code", "legendFormat": "{{http_response_status_code}}",
+          "expr": "sum by (http_response_status_code) (rate(http_server_request_duration_seconds_count{job=~\"$job\"}[$__rate_interval]))" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Latency p50 / p95 / p99",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "id": 7,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "fieldConfig": {
+        "defaults": { "unit": "s", "custom": { "fillOpacity": 0, "lineWidth": 2, "showPoints": "never" } },
+        "overrides": []
+      },
+      "targets": [
+        { "refId": "A", "editorMode": "code", "legendFormat": "p50 {{job}}",
+          "expr": "histogram_quantile(0.50, sum by (le, job) (rate(http_server_request_duration_seconds_bucket{job=~\"$job\"}[$__rate_interval])))" },
+        { "refId": "B", "editorMode": "code", "legendFormat": "p95 {{job}}",
+          "expr": "histogram_quantile(0.95, sum by (le, job) (rate(http_server_request_duration_seconds_bucket{job=~\"$job\"}[$__rate_interval])))" },
+        { "refId": "C", "editorMode": "code", "legendFormat": "p99 {{job}}",
+          "expr": "histogram_quantile(0.99, sum by (le, job) (rate(http_server_request_duration_seconds_bucket{job=~\"$job\"}[$__rate_interval])))" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Loi 5xx theo route (top 10)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "id": 8,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "fieldConfig": {
+        "defaults": { "unit": "reqps", "noValue": "Khong co loi 5xx trong khoang nay", "custom": { "fillOpacity": 20, "lineWidth": 2, "showPoints": "auto" } },
+        "overrides": []
+      },
+      "targets": [
+        { "refId": "A", "editorMode": "code", "legendFormat": "{{job}} {{http_route}}",
+          "expr": "topk(10, sum by (job, http_route) (rate(http_server_request_duration_seconds_count{job=~\"$job\", http_response_status_code=~\"5..\"}[$__rate_interval])))" }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Route nhieu traffic nhat",
+      "description": "Route trong (empty) = request khong khop route nao (404, bot quet).",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 20 },
+      "id": 9,
+      "options": { "showHeader": true, "sortBy": [ { "displayName": "Value", "desc": true } ] },
+      "fieldConfig": { "defaults": { "unit": "reqps", "decimals": 3 }, "overrides": [] },
+      "transformations": [ { "id": "organize", "options": { "excludeByName": { "Time": true } } } ],
+      "targets": [
+        { "refId": "A", "editorMode": "code", "instant": true, "format": "table",
+          "expr": "topk(15, sum by (job, http_route, http_request_method) (rate(http_server_request_duration_seconds_count{job=~\"$job\"}[$__rate_interval])))" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": ".NET runtime: exception/s va bo nho",
+      "description": "dotnet_exceptions_total tang manh thuong xuat hien truoc khi 5xx tang.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 20 },
+      "id": 10,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "fillOpacity": 10, "lineWidth": 1, "showPoints": "never" } },
+        "overrides": [
+          { "matcher": { "id": "byRegexp", "options": "mem.*" },
+            "properties": [ { "id": "unit", "value": "bytes" }, { "id": "custom.axisPlacement", "value": "right" } ] }
+        ]
+      },
+      "targets": [
+        { "refId": "A", "editorMode": "code", "legendFormat": "exceptions/s {{job}}",
+          "expr": "sum by (job) (rate(dotnet_exceptions_total{job=~\"$job\"}[$__rate_interval]))" },
+        { "refId": "B", "editorMode": "code", "legendFormat": "mem {{job}}",
+          "expr": "sum by (job) (dotnet_process_memory_working_set_bytes{job=~\"$job\"})" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Kestrel: ket noi dang mo va queue",
+      "description": "queued_connections > 0 keo dai = server khong kip nhan ket noi.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 29 },
+      "id": 11,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "fillOpacity": 10, "lineWidth": 1, "showPoints": "never" } },
+        "overrides": [
+          { "matcher": { "id": "byRegexp", "options": "queued.*" },
+            "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } } ] }
+        ]
+      },
+      "targets": [
+        { "refId": "A", "editorMode": "code", "legendFormat": "active {{job}}",
+          "expr": "sum by (job) (kestrel_active_connections{job=~\"$job\"})" },
+        { "refId": "B", "editorMode": "code", "legendFormat": "queued {{job}}",
+          "expr": "sum by (job) (kestrel_queued_connections{job=~\"$job\"})" }
+      ]
+    }
+  ]
+}

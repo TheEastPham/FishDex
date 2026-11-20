@@ -12,6 +12,15 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IUserFavoriteRepository, UserFavoriteRepository>();
         services.AddScoped<IRecentlyViewedRepository, RecentlyViewedRepository>();
         services.AddScoped<IAquariumMediaRepository, AquariumMediaRepository>();
+        services.AddScoped<IAquariumTaskRepository, AquariumTaskRepository>();
+        services.AddScoped<IQuotaRepository, QuotaRepository>();
+        services.AddScoped<IAquariumSnapshotRepository, AquariumSnapshotRepository>();
+        services.AddScoped<IAquariumSnapshotLikeRepository, AquariumSnapshotLikeRepository>();
+        services.AddScoped<IContestRepository, ContestRepository>();
+        services.AddScoped<IContestEntryRepository, ContestEntryRepository>();
+        services.AddScoped<IContestPrizeTierRepository, ContestPrizeTierRepository>();
+        services.AddScoped<IContestSponsorRepository, ContestSponsorRepository>();
+        services.AddScoped<IArticleRepository, ArticleRepository>();
         return services;
     }
 }

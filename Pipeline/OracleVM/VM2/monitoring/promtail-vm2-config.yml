@@ -1,0 +1,41 @@
+# Promtail cho VM2 (task 2) — thu log của chính monitoring stack: loki, grafana,
+# prometheus, tempo, promtail-vm2. Trước đây VM2 không có promtail nên log của Loki
+# chưa từng được thu → dashboard "Error/warning messages logged by Loki itself" trống.
+#
+# Khác bản VM1: client trỏ http://loki:3100 (cùng network `monitoring`, không qua private IP)
+# và positions lưu trên named volume để recreate container không đọc lại log cũ.
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /promtail/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+    # Bỏ entry cũ hơn 7 ngày: Loki chặn (reject_old_samples_max_age=168h) và trả 400.
+    # Không có stage này thì lần đầu chạy / mỗi lần mất positions, promtail đọc log container
+    # từ đầu (container sống nhiều tháng) và spam "timestamp too old" hàng nghìn dòng.
+    pipeline_stages:
+      - drop:
+          older_than: 168h
+          drop_counter_reason: older_than_loki_limit
+    relabel_configs:
+      - source_labels: [__meta_docker_container_name]
+        regex: '/(.*)'
+        target_label: container
+      # service: tên service trong compose VM2 (prometheus/loki/grafana/tempo/promtail-vm2)
+      - source_labels: [__meta_docker_container_label_com_docker_compose_service]
+        target_label: service
+      - source_labels: [__meta_docker_container_image]
+        target_label: image
+      # host: hằng số phân biệt nguồn log VM2 với VM1 → query {host="vm2"}
+      - target_label: host
+        replacement: vm2

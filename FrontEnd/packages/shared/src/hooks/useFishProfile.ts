@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getSpeciesDetail, getSpeciesMedia, getSpeciesDistribution, getRelatedSpecies } from '../lib/api/fishDex';
+import { getSpeciesDetail, getSpeciesMedia, getSpeciesDistribution, getRelatedSpecies, AnonQuotaError } from '../lib/api/fishDex';
 import { getCached, setCached, CacheKeys } from '../lib/cache';
 import type { SpeciesDetail, SystemImageDto, SpeciesDistributionDto, SpeciesSearchResult } from '../types/species';
 
@@ -10,6 +10,8 @@ interface FishProfileState {
   relatedSpecies: SpeciesSearchResult[];
   loading: boolean;
   error: Error | null;
+  /** Khách đã hết lượt xem loài mới trong ngày — trang hiện soft wall thay vì "không tìm thấy". */
+  quotaExceeded: boolean;
 }
 
 const EMPTY: FishProfileState = {
@@ -19,6 +21,7 @@ const EMPTY: FishProfileState = {
   relatedSpecies: [],
   loading: false,
   error: null,
+  quotaExceeded: false,
 };
 
 export function useFishProfile(specCode: number | null, lang: string): FishProfileState {
@@ -33,6 +36,7 @@ export function useFishProfile(specCode: number | null, lang: string): FishProfi
       relatedSpecies: getCached<SpeciesSearchResult[]>(CacheKeys.relatedSpecies(specCode, lang)) ?? [],
       loading: false,
       error: null,
+      quotaExceeded: false,
     };
   });
 
@@ -48,6 +52,7 @@ export function useFishProfile(specCode: number | null, lang: string): FishProfi
         relatedSpecies: getCached<SpeciesSearchResult[]>(CacheKeys.relatedSpecies(specCode, lang)) ?? [],
         loading: false,
         error: null,
+        quotaExceeded: false,
       });
       return;
     }
@@ -65,10 +70,15 @@ export function useFishProfile(specCode: number | null, lang: string): FishProfi
         setCached(CacheKeys.speciesMedia(specCode), media);
         setCached(CacheKeys.speciesDistribution(specCode), distribution);
         setCached(CacheKeys.relatedSpecies(specCode, lang), relatedSpecies);
-        setState({ detail, media, distribution, relatedSpecies, loading: false, error: null });
+        setState({ detail, media, distribution, relatedSpecies, loading: false, error: null, quotaExceeded: false });
       })
       .catch((e: unknown) => {
-        setState({ ...EMPTY, loading: false, error: e instanceof Error ? e : new Error(String(e)) });
+        setState({
+          ...EMPTY,
+          loading: false,
+          error: e instanceof Error ? e : new Error(String(e)),
+          quotaExceeded: e instanceof AnonQuotaError,
+        });
       });
   }, [specCode, lang]);
 

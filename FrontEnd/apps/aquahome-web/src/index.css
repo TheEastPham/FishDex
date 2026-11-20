@@ -46,3 +46,11 @@
     overflow-x: hidden;
   }
 }
+
+/* ── Map basemap fallback ──────────────────────────────────
+   Chỉ áp dụng khi thiếu VITE_CARTO_API_KEY và tileConfig.ts fallback sang OSM.
+   OSM chỉ có nền sáng nên phải invert để khớp dark theme của app.
+   Invert xong hue-rotate 180deg để nước/cây trả về đúng tông màu thay vì bị đảo. */
+.map-tiles-inverted {
+  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9) saturate(0.7);
+}

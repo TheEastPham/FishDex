@@ -17,6 +17,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\Share\FishLover.Shared\FishLover.Shared.csproj" />
+        <ProjectReference Include="..\AquaHome.Common\AquaHome.Common.csproj" />
     </ItemGroup>
 
 </Project>

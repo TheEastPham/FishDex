@@ -23,6 +23,11 @@ EOSQL
 
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "fishdex" <<EOSQL
 CREATE EXTENSION IF NOT EXISTS vector;
+-- pg_trgm: dò tên loài gần giống khi user submit loài lai (bắt lỗi gõ và tên thương mại).
+-- Tạo bằng superuser ở đây cho khớp cách 'vector' đang làm. Migration EnableTrigramSearch
+-- cũng có CREATE EXTENSION IF NOT EXISTS để phủ các DB đã dựng từ trước — file này chỉ chạy
+-- lần đầu khi container postgres khởi tạo volume.
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 GRANT ALL ON SCHEMA public TO "${FD_DB_USER}";
 EOSQL
 

@@ -46,8 +46,8 @@ SQL_ENVIRONMENT = """
         "Northernmost","NorthSouthN","Southermost","NorthSouthS",
         "Westernmost","WestEastW","Easternmost","WestEastE",
         "TempMin","TempMax","TempPreferred","PHMin","PHMax","DHMin","DHMax",
-        "ResilienceRemark")
-    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        "Resilience","ResilienceRemark","BoundingRef","BoundingMethod")
+    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
     ON CONFLICT ("StockCode") DO UPDATE SET
         "TempMin"         = EXCLUDED."TempMin",
         "TempMax"         = EXCLUDED."TempMax",
@@ -56,8 +56,22 @@ SQL_ENVIRONMENT = """
         "PHMax"           = EXCLUDED."PHMax",
         "DHMin"           = EXCLUDED."DHMin",
         "DHMax"           = EXCLUDED."DHMax",
-        "ResilienceRemark"= EXCLUDED."ResilienceRemark"
+        "Resilience"      = EXCLUDED."Resilience",
+        "ResilienceRemark"= EXCLUDED."ResilienceRemark",
+        "BoundingRef"     = EXCLUDED."BoundingRef",
+        "BoundingMethod"  = EXCLUDED."BoundingMethod"
 """
+
+# stocks.parquet ghi Resilience bằng chữ, DB lưu số theo enum ResilienceLevel
+# (BackEndProject/.../Enum/ResilienceLevel.cs). Trước đây cột này không hề nằm
+# trong câu INSERT nên rỗng 100% (0/4.277) dù parquet có 3.874 dòng — kiểu lỗi
+# khác với sai tên cột: quên hẳn cột.
+RESILIENCE = {"very low": 0, "low": 1, "medium": 2, "high": 3}
+
+
+def resilience_code(val) -> int | None:
+    s = to_str(val)
+    return RESILIENCE.get(s.lower()) if s else None
 
 # ── StockExternalRef ──────────────────────────────────────────────────────────
 SQL_EXTERNAL = """
@@ -135,11 +149,16 @@ def load(spec_codes: set[int]):
             to_float(r.get("TempMin")),
             to_float(r.get("TempMax")),
             to_float(r.get("TempPreferred")),
-            to_float(r.get("PHMin")),
-            to_float(r.get("PHMax")),
-            to_float(r.get("DHMin")),
-            to_float(r.get("DHMax")),
+            # stocks.parquet viết THƯỜNG chữ đầu: pHMin/pHMax/dHMin/dHMax.
+            # Trước đây chỉ tìm PHMin/DHMin nên pH và dH rỗng 100% (0/4.277 dòng).
+            to_float(r.get("pHMin") or r.get("PHMin")),
+            to_float(r.get("pHMax") or r.get("PHMax")),
+            to_float(r.get("dHMin") or r.get("DHMin")),
+            to_float(r.get("dHMax") or r.get("DHMax")),
+            resilience_code(r.get("Resilience")),
             to_str(r.get("ResilienceRemark")),
+            to_str(r.get("BoundingRef")),
+            to_str(r.get("BoundingMethod")),
         ))
 
         ext_rows.append((

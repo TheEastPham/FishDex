@@ -41,7 +41,10 @@ public class S3StorageService : IStorageService
         _s3 = new AmazonS3Client(credentials, config);
     }
 
-    public async Task<string?> GetPresignedUrlAsync(string objectKey, CancellationToken ct = default)
+    public Task<string?> GetPresignedUrlAsync(string objectKey, CancellationToken ct = default)
+        => GetPresignedUrlAsync(objectKey, TimeSpan.FromMinutes(_settings.PresignedUrlExpiryMinutes), ct);
+
+    public async Task<string?> GetPresignedUrlAsync(string objectKey, TimeSpan expiry, CancellationToken ct = default)
     {
         if (string.IsNullOrEmpty(_settings.AccessKey))
         {
@@ -55,7 +58,7 @@ public class S3StorageService : IStorageService
             {
                 BucketName = _settings.BucketName,
                 Key        = objectKey,
-                Expires    = DateTime.UtcNow.AddMinutes(_settings.PresignedUrlExpiryMinutes),
+                Expires    = DateTime.UtcNow.Add(expiry),
                 Verb       = HttpVerb.GET,
             };
 
@@ -66,6 +69,54 @@ public class S3StorageService : IStorageService
         {
             _logger.LogWarning(ex, "Failed to generate presigned URL for {Key}", objectKey);
             return null;
+        }
+    }
+
+    public Task<string?> GeneratePresignedPutUrlAsync(
+        string objectKey, string contentType, long maxBytes, CancellationToken ct = default)
+    {
+        if (string.IsNullOrEmpty(_settings.AccessKey))
+        {
+            _logger.LogDebug("Storage not configured — skipping presigned PUT for {Key}", objectKey);
+            return Task.FromResult<string?>(null);
+        }
+
+        try
+        {
+            var request = new GetPreSignedUrlRequest
+            {
+                BucketName  = _settings.BucketName,
+                Key         = objectKey,
+                Expires     = DateTime.UtcNow.AddMinutes(_settings.PresignedPutUrlExpiryMinutes),
+                Verb        = HttpVerb.PUT,
+                ContentType = contentType,
+            };
+
+            // UNSIGNED-PAYLOAD: R2 bỏ qua body hash verify (bắt buộc để browser PUT thẳng không lỗi signature).
+            request.Headers["x-amz-content-sha256"] = "UNSIGNED-PAYLOAD";
+
+            var url = _s3.GetPreSignedURL(request);
+            return Task.FromResult<string?>(url);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to generate presigned PUT URL for {Key}", objectKey);
+            return Task.FromResult<string?>(null);
+        }
+    }
+
+    public async Task DeleteAsync(string objectKey, CancellationToken ct = default)
+    {
+        if (string.IsNullOrEmpty(_settings.AccessKey))
+            return;
+
+        try
+        {
+            await _s3.DeleteObjectAsync(_settings.BucketName, objectKey, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to delete object {Key}", objectKey);
         }
     }
 }

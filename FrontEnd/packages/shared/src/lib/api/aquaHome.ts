@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import type { AquariumDto, AquariumFishDto, CreateAquariumRequest, UpdateAquariumRequest, FavoriteDto, RecentlyViewedDto, AquariumMediaDto, PresignedUploadDto } from '../../types/aquahome';
+import type { AquariumDto, AquariumFishDto, CreateAquariumRequest, UpdateAquariumRequest, FavoriteDto, RecentlyViewedDto, AquariumMediaDto, PresignedUploadDto, ReminderDto, CreateReminderRequest, CompleteReminderResponse, UserReminderDto } from '../../types/aquahome';
 
 // ── Aquariums ─────────────────────────────────────────────
 
@@ -120,6 +120,34 @@ export async function confirmMediaUpload(aquariumId: string, mediaId: string): P
 
 export async function deleteAquariumMedia(aquariumId: string, mediaId: string): Promise<void> {
   await apiClient.delete(`/aquahome/v1/aquariums/${aquariumId}/media/${mediaId}`);
+}
+
+// ── Reminders ─────────────────────────────────────────────
+
+export async function getReminders(aquariumId: string): Promise<ReminderDto[]> {
+  const { data } = await apiClient.get<ReminderDto[]>(`/aquahome/v1/aquariums/${aquariumId}/reminders`);
+  return data;
+}
+
+export async function createReminder(aquariumId: string, req: CreateReminderRequest): Promise<ReminderDto> {
+  const { data } = await apiClient.post<ReminderDto>(`/aquahome/v1/aquariums/${aquariumId}/reminders`, req);
+  return data;
+}
+
+export async function completeReminder(aquariumId: string, reminderId: string): Promise<CompleteReminderResponse> {
+  const { data } = await apiClient.put<CompleteReminderResponse>(
+    `/aquahome/v1/aquariums/${aquariumId}/reminders/${reminderId}/complete`,
+  );
+  return data;
+}
+
+export async function deleteReminder(aquariumId: string, reminderId: string): Promise<void> {
+  await apiClient.delete(`/aquahome/v1/aquariums/${aquariumId}/reminders/${reminderId}`);
+}
+
+export async function getAllReminders(): Promise<UserReminderDto[]> {
+  const { data } = await apiClient.get<UserReminderDto[]>('/aquahome/v1/reminders');
+  return data;
 }
 
 // ── TODO(BE): Cần API batch get species by list of specCodes ─────

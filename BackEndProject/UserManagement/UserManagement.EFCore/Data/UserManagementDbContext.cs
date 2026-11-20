@@ -1,4 +1,5 @@
 ﻿using UserManagement.EFCore.Entities.User;
+using UserManagement.EFCore.Entities.Push;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using UserManagement.EFCore.Entities.Invitation;
@@ -11,6 +12,7 @@ public class UserManagementDbContext(DbContextOptions<UserManagementDbContext> o
     public DbSet<UserProfileEntity> UserProfiles { get; set; }
     public DbSet<Invitation> Invitations { get; set; }
     public DbSet<InvitationUsed> InvitationUsages { get; set; }
+    public DbSet<PushSubscriptionEntity> PushSubscriptions { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -73,6 +75,21 @@ public class UserManagementDbContext(DbContextOptions<UserManagementDbContext> o
         builder.Entity<InvitationUsed>(entity =>
         {
             entity.HasKey(e => new { e.InvitationId, e.UserId });
+        });
+
+        builder.Entity<PushSubscriptionEntity>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Endpoint).IsUnique();
+            entity.Property(e => e.Endpoint).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.P256dh).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Auth).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.UserAgent).HasMaxLength(300);
+
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // Seed default data

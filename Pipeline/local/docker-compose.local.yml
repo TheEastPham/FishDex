@@ -1,5 +1,3 @@
-version: "3.9"
-
 # ────────────────────────────────────────────────────────────────
 # FishLover Local Full Stack
 # Tương đương docker-compose.prod.yml nhưng dùng local builds + MinIO
@@ -68,6 +66,11 @@ services:
       OpenIddict__Issuer:                   http://localhost:5000
       OpenIddict__KeyDir:                   /openiddict-keys
       ASPNETCORE_FORWARDEDHEADERS_ENABLED:  "true"
+      # Web Push (Epic 9.2)
+      VapidSettings__PublicKey:             ${VAPID_PUBLIC_KEY}
+      VapidSettings__PrivateKey:            ${VAPID_PRIVATE_KEY}
+      VapidSettings__Subject:               ${VAPID_SUBJECT}
+      InternalSettings__ApiKey:             ${INTERNAL_API_KEY}
     volumes:
       - openiddict_keys:/openiddict-keys
     ports:
@@ -137,17 +140,26 @@ services:
       AuthServer__Url:              ${AUTH_SERVER_URL}
       AuthServer__Authority:        ${AUTH_SERVER_AUTHORITY}
       AuthServer__SwaggerUrl:       ${AUTH_SERVER_SWAGGER_URL}
+      InternalSettings__ApiKey:     ${INTERNAL_API_KEY}
       Storage__ServiceUrl:          ${FISHDEX_STORAGE_SERVICE_URL}
       Storage__AccessKey:           ${FISHDEX_STORAGE_ACCESS_KEY}
       Storage__SecretKey:           ${FISHDEX_STORAGE_SECRET_KEY}
       Storage__BucketName:          ${FISHDEX_STORAGE_BUCKET}
       Storage__ForcePathStyle:      "false"
+      MediaAccess__Key:             ${MEDIA_ACCESS_KEY}
+      # Redis cho hạn mức xem loài (khách chưa đăng nhập) — dùng chung với UserManagement.
+      # Thiếu biến này thì appsettings rơi về localhost:6379, mà trong container localhost là
+      # chính nó → không kết nối được → hạn mức fail-open, test kiểu gì cũng thấy "xem thoải mái".
+      # Con số hạn mức nằm ở appsettings.Docker.json, không phải env.
+      ConnectionStrings__Redis:       ${REDIS_CONN}
     ports:
       - "8081:8080"
     networks:
       - fishlover_local
     depends_on:
       fishdex-db:
+        condition: service_healthy
+      usermanagement-redis:
         condition: service_healthy
       usermanagement-api:
         condition: service_started
@@ -210,6 +222,17 @@ services:
       Storage__BucketName:                  ${AQUAHOME_STORAGE_BUCKET}
       Storage__Environment:                 ${AQUAHOME_STORAGE_ENV}
       Storage__ForcePathStyle:              "false"
+      # Gọi push qua UserManagement (service name trong docker network, KHÔNG phải localhost)
+      UserManagement__BaseUrl:              http://usermanagement-api:8080
+      UserManagement__InternalApiKey:       ${INTERNAL_API_KEY}
+      # Epic 11.0 — snapshot preview/publish gọi FishDex lấy species summaries + distribution points
+      FishDex__BaseUrl:                     http://fishdex-api:8080
+      # Epic 11.3 — contest video upload YouTube (rỗng = confirm-upload/approve/reject fail êm, không crash)
+      ExternalServices__YouTube__ClientId:     ${YOUTUBE_CLIENT_ID}
+      ExternalServices__YouTube__ClientSecret: ${YOUTUBE_CLIENT_SECRET}
+      ExternalServices__YouTube__RefreshToken: ${YOUTUBE_REFRESH_TOKEN}
+      ExternalServices__YouTube__ChannelId:     ${YOUTUBE_CHANNEL_ID}
+      AdminAlerts__R2WarningEmail:              ${ADMIN_R2_WARNING_EMAIL}
     ports:
       - "8082:8080"
     networks:
@@ -218,6 +241,44 @@ services:
       aquahome-db:
         condition: service_healthy
       aquahome-redis:
+        condition: service_healthy
+      usermanagement-api:
+        condition: service_started
+
+  # ── AquaHome Worker (nhắc lịch — TaskReminderBackgroundService, Epic 9.7) ──
+  aquahome-worker:
+    build:
+      context: ../../BackEndProject
+      dockerfile: ../Pipeline/local/AquaHome/Dockerfile.worker
+    image: aquahome-worker:local
+    container_name: aquahome_worker
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT:               Docker
+      ConnectionStrings__DefaultConnection: ${AQUAHOME_DB_CONN}
+      AutoMigrate__OnStartup:               "false"   # API đã migrate, worker không migrate (tránh race)
+      UserManagement__BaseUrl:              http://usermanagement-api:8080
+      UserManagement__InternalApiKey:       ${INTERNAL_API_KEY}
+      # Market Layer — SyncMarketSpeciesBackgroundService (mỗi 8h) gọi /api/market/ingest.
+      # Thiếu biến này thì HttpClient rơi về mặc định localhost:8081, mà trong container
+      # localhost là chính worker → Connection refused.
+      FishDex__BaseUrl:                     http://fishdex-api:8080
+      # Epic 11.3 — SyncContestViewCountsBackgroundService (mỗi 6h)
+      ExternalServices__YouTube__ClientId:     ${YOUTUBE_CLIENT_ID}
+      ExternalServices__YouTube__ClientSecret: ${YOUTUBE_CLIENT_SECRET}
+      ExternalServices__YouTube__RefreshToken: ${YOUTUBE_REFRESH_TOKEN}
+      ExternalServices__YouTube__ChannelId:     ${YOUTUBE_CHANNEL_ID}
+      # CleanupContestStagingBackgroundService (mỗi 6h) — xoá video contest kẹt trên R2 staging
+      Storage__ServiceUrl:                  ${AQUAHOME_STORAGE_SERVICE_URL}
+      Storage__AccessKey:                   ${AQUAHOME_STORAGE_ACCESS_KEY}
+      Storage__SecretKey:                   ${AQUAHOME_STORAGE_SECRET_KEY}
+      Storage__BucketName:                  ${AQUAHOME_STORAGE_BUCKET}
+      Storage__Environment:                 ${AQUAHOME_STORAGE_ENV}
+      Storage__ForcePathStyle:              "false"
+    networks:
+      - fishlover_local
+    depends_on:
+      aquahome-db:
         condition: service_healthy
       usermanagement-api:
         condition: service_started

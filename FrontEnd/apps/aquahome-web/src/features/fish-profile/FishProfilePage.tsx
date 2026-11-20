@@ -1,21 +1,27 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  useTranslation, cn,
+  useTranslation, useMediaUrl, cn, useAuthStore, useAnonQuotaStore,
   checkFavorite, addFavorite, removeFavorite, recordView,
   useFishProfile, getCached, setCached, invalidateCache, CacheKeys, FAVORITE_CHECK_TTL,
+  MAP_TILE_LAYER,
 } from '@fishlover/shared';
 import type { CountryDistributionDto, OccurrencePointDto } from '@fishlover/shared';
 import {
   ArrowLeft, Share2, Heart, Fish, Ruler, Droplets, Map as MapIcon,
   Image as ImageIcon, Scale, AlertTriangle, Shield,
   Thermometer, TestTube, BookOpen, FileText, Activity, Clock,
-  ChevronLeft, ChevronRight, Layers
+  ChevronLeft, ChevronRight, Layers, Pencil
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import SpeciesCard from '../fish-search/components/SpeciesCard';
+import AddLocalNameModal from '../community/AddLocalNameModal';
+import AddToCountryButton from '../market/components/AddToCountryButton';
+import SoldInBadge from '../market/components/SoldInBadge';
+import QuotaWall from './components/QuotaWall';
+import GuestQuotaBanner from './components/GuestQuotaBanner';
 
 // Fix leaflet default icon issue
 import iconUrl from 'leaflet/dist/images/marker-icon.png';
@@ -131,7 +137,13 @@ export default function FishProfilePage() {
   const { t, i18n } = useTranslation();
 
   const id = specCode ? parseInt(specCode, 10) : null;
-  const { detail, media, distribution, relatedSpecies, loading } = useFishProfile(id, i18n.language);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const [showAddName, setShowAddName] = useState(false);
+  // Chỉ loài FishBase (< 500000) mới đóng góp tên được — loài community sửa tên trên snapshot.
+  const canAddName = isAuthenticated && id !== null && id < 500000;
+  const { detail, media, distribution, relatedSpecies, loading, quotaExceeded } = useFishProfile(id, i18n.language);
+  const quota = useAnonQuotaStore();
+  const mediaSrc = useMediaUrl();
 
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
@@ -144,25 +156,29 @@ export default function FishProfilePage() {
     setSelectedImageIndex(null);
   }, [id]);
 
-  // Record view for recently-viewed history — fire-and-forget, auth failure is silent
+  // Record view for recently-viewed history — fire-and-forget, auth failure is silent.
+  // Khách thì bỏ hẳn: lịch sử xem là tính năng của tài khoản, gọi cũng chỉ nhận 401 và
+  // rác console — mà giờ trang này khách vào được nên rác đó xuất hiện ở mọi lượt xem.
   useEffect(() => {
-    if (!id) return;
+    if (!id || !isAuthenticated) return;
     recordView(id).catch(() => {});
-  }, [id]);
+  }, [id, isAuthenticated]);
 
   // Check favorite status — cached, AquaHome failure must not crash this page
   useEffect(() => {
-    if (!id) return;
+    if (!id || !isAuthenticated) return;
     const key = CacheKeys.favoriteCheck(id);
     const cached = getCached<boolean>(key);
     if (cached !== null) { setIsFavorite(cached); return; }
     checkFavorite(id)
       .then((val) => { setCached(key, val, FAVORITE_CHECK_TTL); setIsFavorite(val); })
       .catch(() => {});
-  }, [id]);
+  }, [id, isAuthenticated]);
 
   const handleToggleFavorite = async () => {
     if (!id || favoriteLoading) return;
+    // Khách bấm tim: đây là lúc nút này có ích nhất — dẫn sang đăng nhập thay vì im lặng 401.
+    if (!isAuthenticated) { navigate('/login'); return; }
     setFavoriteLoading(true);
     try {
       if (isFavorite) {
@@ -194,8 +210,30 @@ export default function FishProfilePage() {
     );
   }
 
+  // Khách xem được profile loài, nhưng chỉ N loài khác nhau mỗi ngày (đếm ở BE theo specCode).
+  // Hết lượt thì soft wall — vẫn có tên và ảnh loài, xem QuotaWall.
+  //
+  // Chặn ở thẻ trên trang market/tra cứu là chưa đủ — còn URL trực tiếp, link chia sẻ, nút back,
+  // và PublicTankDetailPage (cũng public) cũng điều hướng sang đây. Chặn ở trang là chặn mọi đường vào.
+  if (quotaExceeded && id !== null) {
+    return <QuotaWall specCode={id} limit={quota.limit} resetsInSeconds={quota.resetsInSeconds} />;
+  }
+
   if (!detail) {
-    return <div className="p-8 text-center text-red-500">Species not found.</div>;
+    return (
+      <div className="min-h-screen bg-[#141518] flex items-center justify-center px-6">
+        <div className="max-w-sm text-center">
+          <Fish className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+          <p className="text-slate-400">{t('fish.notFound')}</p>
+          <button
+            onClick={() => navigate(-1)}
+            className="mt-4 text-sm text-slate-300 underline underline-offset-2 hover:text-white"
+          >
+            {t('common.back')}
+          </button>
+        </div>
+      </div>
+    );
   }
 
   /* ── Derived data ─────────────────────────────────────────── */
@@ -224,14 +262,22 @@ export default function FishProfilePage() {
   };
   const socialBehavior = getSocialBehavior();
 
+  const heroSrc   = mediaSrc(detail.preferredImageKey, detail.preferredImageUrl);
+  const maleSrc   = mediaSrc(detail.maleImageKey, detail.maleImageUrl);
+  const femaleSrc = mediaSrc(detail.femaleImageKey, detail.femaleImageUrl);
+  const galleryItem = media[selectedImageIndex || 0];
+  const gallerySrc  = galleryItem ? mediaSrc(galleryItem.objectKey, galleryItem.url) : null;
+
   /* ── Render ───────────────────────────────────────────────── */
   return (
     <div className="flex flex-col min-h-screen bg-[#141518] pb-20 font-sans">
 
+      <GuestQuotaBanner />
+
       {/* ═══════════════════ HERO HEADER ═══════════════════ */}
       <div className="relative h-[380px] md:h-[440px] bg-[#0e0f11] w-full overflow-hidden flex flex-col justify-end pb-[110px]">
-        {detail.preferredImageUrl ? (
-          <img src={detail.preferredImageUrl} alt={detail.speciesName} className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-luminosity" />
+        {heroSrc ? (
+          <img src={heroSrc} alt={detail.speciesName} className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-luminosity" />
         ) : (
           <div className="absolute inset-0 w-full h-full flex items-center justify-center opacity-10 bg-gradient-to-br from-slate-700 to-slate-900">
             <Fish className="w-32 h-32 text-white" />
@@ -245,6 +291,13 @@ export default function FishProfilePage() {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex gap-2">
+            {/* Chỉ admin thấy — tự ẩn nếu không đủ quyền */}
+            {id !== null && <AddToCountryButton specCode={id} className="!min-h-[42px] rounded-full bg-black/30 backdrop-blur-md border-white/10" />}
+            {canAddName && (
+              <button onClick={() => setShowAddName(true)} className="p-2.5 bg-black/30 backdrop-blur-md text-white rounded-full hover:bg-black/60 transition-colors border border-white/10" title={t('contribute.addLocalName')}>
+                <Pencil className="w-5 h-5" />
+              </button>
+            )}
             <button className="p-2.5 bg-black/30 backdrop-blur-md text-white rounded-full hover:bg-black/60 transition-colors border border-white/10" title={t('fish.share')}>
               <Share2 className="w-5 h-5" />
             </button>
@@ -253,6 +306,10 @@ export default function FishProfilePage() {
             </button>
           </div>
         </div>
+
+        {showAddName && id !== null && (
+          <AddLocalNameModal specCode={id} onClose={() => setShowAddName(false)} />
+        )}
 
         {/* Title content */}
         <div className="relative z-10 w-full px-6 md:px-12 text-center max-w-5xl mx-auto">
@@ -276,6 +333,9 @@ export default function FishProfilePage() {
               {detail.speciesName}
             </h2>
           )}
+
+          {/* Chỉ báo sang lớp market — không đổi hành vi gì khác của trang tra cứu */}
+          {id !== null && <SoldInBadge specCode={id} />}
         </div>
       </div>
 
@@ -443,13 +503,13 @@ export default function FishProfilePage() {
         )}
 
         {/* ─── Row 5: Male vs Female Comparison ─── */}
-        {(detail.maleImageUrl || detail.femaleImageUrl) && (
+        {(maleSrc || femaleSrc) && (
           <div className="bg-[#202226] rounded-2xl p-6 shadow-lg border border-slate-800/80">
             <SectionHeader icon={<FileText className="w-5 h-5 text-pink-400" />} title={t('fish.sexualDimorphism')} />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {detail.maleImageUrl && (
+              {maleSrc && (
                 <div className="relative rounded-xl overflow-hidden border border-slate-800/50 group">
-                  <img src={detail.maleImageUrl} alt="Male" className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <img src={maleSrc} alt="Male" className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500" />
                   <div className="absolute bottom-0 w-full bg-gradient-to-t from-black/80 to-transparent p-3">
                     <span className="text-white font-bold text-sm flex items-center gap-1.5">
                       <span className="w-3 h-3 rounded-full bg-sky-400" /> {t('fish.male')}
@@ -457,9 +517,9 @@ export default function FishProfilePage() {
                   </div>
                 </div>
               )}
-              {detail.femaleImageUrl && (
+              {femaleSrc && (
                 <div className="relative rounded-xl overflow-hidden border border-slate-800/50 group">
-                  <img src={detail.femaleImageUrl} alt="Female" className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <img src={femaleSrc} alt="Female" className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500" />
                   <div className="absolute bottom-0 w-full bg-gradient-to-t from-black/80 to-transparent p-3">
                     <span className="text-white font-bold text-sm flex items-center gap-1.5">
                       <span className="w-3 h-3 rounded-full bg-pink-400" /> {t('fish.female')}
@@ -526,10 +586,7 @@ export default function FishProfilePage() {
               {/* Map — no remount on filter change */}
               <div className="flex-1 h-[280px] md:h-[400px] rounded-xl overflow-hidden border border-slate-800/50 relative z-0">
                 <MapContainer center={[0, 0]} zoom={2} scrollWheelZoom={true} className="h-full w-full z-0" style={{ background: '#141518' }}>
-                  <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                    url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                  />
+                  <TileLayer {...MAP_TILE_LAYER} />
                   <MapController points={filteredPoints} />
                   {filteredPoints.map((p, i) => (
                     <Marker key={i} position={[p.lat, p.lon]}>
@@ -542,6 +599,17 @@ export default function FishProfilePage() {
                     </Marker>
                   ))}
                 </MapContainer>
+                {!isAuthenticated && filteredPoints.length === 0 && (
+                  <div className="absolute inset-x-0 bottom-0 z-[400] bg-[#141518]/90 backdrop-blur-sm border-t border-slate-700/60 px-4 py-3 text-center">
+                    <p className="text-xs text-slate-300">{t('quota.mapLocked')}</p>
+                    <button
+                      onClick={() => navigate('/login')}
+                      className="mt-1 text-xs font-semibold text-emerald-300 underline underline-offset-2"
+                    >
+                      {t('quota.loginCta')}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -553,9 +621,9 @@ export default function FishProfilePage() {
             <SectionHeader icon={<ImageIcon className="w-5 h-5 text-indigo-400" />} title={`${t('fish.gallery')} (${media.length})`} />
             <div className="relative w-full h-[280px] md:h-[400px] rounded-xl overflow-hidden border border-slate-800/50 bg-[#141518] group">
               {/* Display Current Image */}
-              {media[selectedImageIndex || 0].url ? (
-                <img 
-                  src={media[selectedImageIndex || 0].url || undefined} 
+              {gallerySrc ? (
+                <img
+                  src={gallerySrc}
                   alt={media[selectedImageIndex || 0].name || undefined} 
                   className="w-full h-full object-contain" 
                 />
@@ -604,14 +672,24 @@ export default function FishProfilePage() {
                     (selectedImageIndex || 0) === i ? "border-indigo-500 scale-105" : "border-transparent opacity-50 hover:opacity-100"
                   )}
                 >
-                  {m.url ? (
-                    <img src={m.url || undefined} className="w-full h-full object-cover" />
+                  {mediaSrc(m.objectKey, m.url) ? (
+                    <img src={mediaSrc(m.objectKey, m.url) || undefined} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full bg-[#141518] flex items-center justify-center"><Fish className="w-4 h-4 text-slate-600"/></div>
                   )}
                 </button>
               ))}
             </div>
+
+            {/* Khách chỉ nhận ảnh đại diện từ endpoint public — nói thẳng còn gì phía sau. */}
+            {!isAuthenticated && (
+              <button
+                onClick={() => navigate('/login')}
+                className="mt-2 w-full min-h-[44px] rounded-lg border border-slate-700/60 bg-[#141518] text-xs text-slate-300 hover:bg-slate-800 transition-colors"
+              >
+                {t('quota.galleryLocked')}
+              </button>
+            )}
           </div>
         )}
 

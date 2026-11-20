@@ -18,6 +18,11 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
       - '--storage.tsdb.retention.time=30d'
+      # Trần dung lượng: vượt thì xoá block cũ nhất, thay vì phình tới khi đầy đĩa và
+      # kéo cả Loki/Grafana/Tempo chết theo. Đĩa VM2 58G; Prometheus đang 1.6G và dự kiến
+      # 3–5G sau khi thêm exporter VM2 + 4 job app (histogram tạo rất nhiều series).
+      # Điều kiện nào chạm trước (30d hoặc 8GB) thì áp dụng điều kiện đó.
+      - '--storage.tsdb.retention.size=8GB'
     networks:
       - monitoring
 
@@ -27,7 +32,8 @@ services:
     container_name: loki
     restart: unless-stopped
     ports:
-      - "3100:3100"
+      # Bind private IP: Promtail trên VM1 push qua subnet private, KHÔNG hở public
+      - "10.0.0.94:3100:3100"
     volumes:
       - loki_data:/loki
       - ./loki-config.yml:/etc/loki/local-config.yaml:ro
@@ -41,23 +47,102 @@ services:
     container_name: grafana
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      # Chỉ localhost: nginx (native trên VM2) reverse-proxy qua https://grafana.fishlover.org
+      - "127.0.0.1:3000:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_USER}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
       - GF_USERS_ALLOW_SIGN_UP=false
+      # Grafana đứng sau reverse proxy → set root_url để redirect/share link đúng domain
+      - GF_SERVER_ROOT_URL=https://grafana.fishlover.org
     volumes:
       - grafana_data:/var/lib/grafana
+      # Provisioning as code (task 10.6): datasource + dashboard load từ file, version-control trong git
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
     depends_on:
       - prometheus
       - loki
     networks:
       - monitoring
 
+  # ── Tempo (tracing backend — task 10.4) ──────────────────────────────────────
+  tempo:
+    image: grafana/tempo:latest
+    container_name: tempo
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3200:3200"     # Grafana datasource (cùng VM2 → localhost)
+      - "10.0.0.94:4317:4317"     # OTLP gRPC — nhận trace từ VM1 qua private network
+      - "10.0.0.94:4318:4318"     # OTLP HTTP
+    volumes:
+      - tempo_data:/tmp/tempo
+      - ./tempo-config.yml:/etc/tempo.yaml:ro
+    command: -config.file=/etc/tempo.yaml
+    networks:
+      - monitoring
+
+  # ── Promtail VM2 (task 2 — thu log của chính monitoring stack) ───────────────
+  # Không publish port: Prometheus cùng network `monitoring` scrape qua promtail-vm2:9080
+  promtail-vm2:
+    image: grafana/promtail:latest
+    container_name: promtail-vm2
+    restart: unless-stopped
+    volumes:
+      - ./promtail-vm2-config.yml:/etc/promtail/config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      # positions trên volume → recreate container không đọc lại log cũ (tránh log trùng)
+      - promtail_vm2_positions:/promtail
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    networks:
+      - monitoring
+
+  # ── Node Exporter VM2 (metrics hệ thống của chính máy monitoring) ────────────
+  # VM2 là máy chứa toàn bộ dữ liệu quan sát nhưng trước đây không được đo:
+  # đĩa VM2 đầy = mất Loki + Prometheus + Grafana + Tempo mà không thấy trước.
+  # Không publish port (khác VM1): Prometheus cùng network, scrape node-exporter-vm2:9100.
+  node-exporter-vm2:
+    image: prom/node-exporter:latest
+    container_name: node-exporter-vm2
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - monitoring
+
+  # ── cAdvisor VM2 (metrics từng container của monitoring stack) ───────────────
+  cadvisor-vm2:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor-vm2
+    restart: unless-stopped
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    command:
+      # Cắt cardinality: cAdvisor mặc định phát metrics per-CPU và per-process — phần lớn
+      # không bao giờ xem, nhưng chiếm đa số dung lượng TSDB (Prometheus 1.6G phần lớn là đây).
+      - '-docker_only'
+      - '-disable_metrics=percpu,sched,tcp,udp,advtcp,process,hugetlb,referenced_memory'
+    networks:
+      - monitoring
+
 volumes:
   prometheus_data:
+  promtail_vm2_positions:
   loki_data:
   grafana_data:
+  tempo_data:
 
 networks:
   monitoring:

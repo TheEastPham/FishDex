@@ -11,6 +11,13 @@ DB_URL = os.getenv(
     "postgresql://fishdex:fishdex_local_pwd@localhost:5433/fishdex",
 )
 
+# ── Explicit include list ───────────────────────────────────────────────────
+# Các SpecCode chỉ định thêm NGOÀI Aquarium filter — mỗi loài người chơi yêu cầu
+# thêm nhưng không pass bộ lọc phổ biến (vd Fresh nhưng Aquarium=null, hoặc brackish).
+# File: new_spec_codes.txt (ngăn cách bởi dấu phẩy / khoảng trắng / xuống dòng đều được).
+# Các code này BỎ QUA filter — chỉ cần tồn tại trong species.parquet là sẽ được load.
+NEW_SPEC_CODES_FILE = Path(__file__).parent.parent / "new_spec_codes.txt"
+
 # ── Parquet file paths ────────────────────────────────────────────────────────
 PARQUET_DIR = Path(__file__).parent.parent / "parquetData"
 
@@ -27,6 +34,12 @@ PARQUET_FILES = {
     "occurrence":  "occurrence.parquet",
     "comnames":    "comnames.parquet",
     "images":      "picturesmain.parquet",
+    # Nguồn phụ — species.parquet để trống gần hết mấy chỉ số dưới đây, FishBase
+    # để số thật ở các bảng chuyên biệt. Không sinh bảng mới, chỉ dùng để điền
+    # vào các cột đã có (Species.Weight/LongevityWild, FeedingAndDiets.DietTroph).
+    "popchar":     "popchar.parquet",    # Wmax (cân nặng lớn nhất), tmax (tuổi lớn nhất)
+    "popgrowth":   "popgrowth.parquet",  # tmax
+    "estimate":    "estimate.parquet",   # Troph (phủ 100% loài), AgeMax
 }
 
 # ── Aquarium filter ──────────────────────────────────────────────────────────
@@ -36,7 +49,7 @@ PARQUET_FILES = {
 AQUARIUM_VALUES: set[str] = {
     "highly commercial",
     "commercial",
-    # "of minor importance",  # bỏ comment nếu muốn lấy thêm
+    "potential",
 }
 
 # Lấy thêm brackish water không? (Fresh=0, Brack=1)

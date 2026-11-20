@@ -1,3 +1,4 @@
+using AquaHome.Common.Enums;
 using AquaHome.Domain.DTOs;
 using AquaHome.Domain.Services.Interfaces;
 using AquaHome.EFCore.Entity;
@@ -8,7 +9,8 @@ namespace AquaHome.Domain.Services;
 
 public class FavoriteService(
     IUserFavoriteRepository favoriteRepo,
-    ICurrentUserSession currentUser) : IFavoriteService
+    ICurrentUserSession currentUser,
+    IQuotaService quotaService) : IFavoriteService
 {
     public async Task<IReadOnlyList<FavoriteDto>> GetMyFavoritesAsync(CancellationToken ct = default)
     {
@@ -24,6 +26,9 @@ public class FavoriteService(
         var existing = await favoriteRepo.GetAsync(currentUser.UserId, specCode, ct);
         if (existing is not null)
             return new FavoriteDto(existing.SpecCode, existing.AddedAt);
+
+        // Quota theo role (Story 3.5) — check sau idempotent-check để add trùng không tốn quota
+        await quotaService.EnforceCountLimitAsync(QuotaType.MaxFavorites, ct);
 
         var entity = new UserFavorite
         {

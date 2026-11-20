@@ -13,7 +13,13 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<AquaHome.API.Filters.QuotaExceededExceptionFilter>(); // quota vượt → 429
+    options.Filters.Add<AquaHome.API.Filters.ContestValidationExceptionFilter>(); // video contest invalid → 422
+    options.Filters.Add<AquaHome.API.Filters.StorageOverloadedExceptionFilter>(); // R2 staging quá tải → 503
+    options.Filters.Add<AquaHome.API.Filters.ArticleValidationExceptionFilter>(); // content.json sai cấu trúc → 422
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -38,7 +44,7 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddMemoryCache();
 builder.Services.AddAquaHomeServices(builder.Configuration);
 builder.Services.AddAquaHomeRepositories();
-builder.Services.AddAquaHomeDomainServices();
+builder.Services.AddAquaHomeDomainServices(builder.Configuration);
 builder.Services.AddAquaHomeStorage(builder.Configuration);
 builder.Services.AddFishLoverJwtAuthentication(builder.Configuration);
 
@@ -50,6 +56,10 @@ builder.Services.AddAuthentication()
     {
         options.MetadataAddress = $"{authServerInternalUrl}/.well-known/openid-configuration";
         options.RequireHttpsMetadata = false;
+        // Tắt legacy inbound claim mapping — mặc định .NET tự đổi "role" → URI dài
+        // (http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role) khiến RoleClaimType="role" bên dưới
+        // không khớp claim thực tế → RequireRole("SystemAdmin") luôn fail → 403 dù token có đúng role.
+        options.MapInboundClaims = false;
         var issuer = authServerPublicUrl.TrimEnd('/');
         options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
         {
@@ -58,20 +68,37 @@ builder.Services.AddAuthentication()
             ValidateAudience = false,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
+            // Token OpenIddict để role ở claim "role" — map để RequireRole("SystemAdmin") khớp
+            RoleClaimType = "role",
+            NameClaimType = "name",
         };
     });
 
 builder.Services.AddFishLoverAuthorization();
-// [Authorize] chấp nhận cả Bearer (direct login) lẫn OpenIddict (OAuth2 PKCE)
+// [Authorize] + policy admin đều phải chấp nhận cả Bearer (direct login) lẫn OpenIddict (OAuth2 PKCE).
+// Policy shared RequireSystemAdmin/RequireContentAdmin KHÔNG khai báo scheme → chỉ dùng default (Bearer)
+// → token OpenIddict bị 401 (FE hiểu là hết phiên → logout). Đăng ký đè ở đây với cả 2 scheme.
 builder.Services.AddAuthorization(options =>
 {
-    options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder(
+    string[] bothSchemes =
+    [
         Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme,
-        "OpenIddict")
+        "OpenIddict",
+    ];
+
+    options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder(bothSchemes)
         .RequireAuthenticatedUser()
         .Build();
+
+    options.AddPolicy("RequireSystemAdmin", p => p
+        .AddAuthenticationSchemes(bothSchemes)
+        .RequireRole("SystemAdmin"));
+
+    options.AddPolicy("RequireContentAdmin", p => p
+        .AddAuthenticationSchemes(bothSchemes)
+        .RequireRole("SystemAdmin", "ContentAdmin"));
 });
-builder.Services.AddFishLoverTelemetry(builder.Configuration, "AquaHome.API");
+builder.Services.AddFishLoverTelemetry(builder.Configuration, "aquahome");
 
 builder.Services.AddCors(options =>
 {

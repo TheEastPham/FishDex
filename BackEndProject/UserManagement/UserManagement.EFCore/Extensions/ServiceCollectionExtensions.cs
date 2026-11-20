@@ -22,6 +22,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IInvitationRepository, InvitationRepository>();
         services.AddScoped<IInvitationUsedRepository, InvitationUsedRepository>();
+        services.AddScoped<IPushSubscriptionRepository, PushSubscriptionRepository>();
 
         // AddCore ở đây vì cần DbContext — AddServer/AddValidation ở API layer
         services.AddOpenIddict()

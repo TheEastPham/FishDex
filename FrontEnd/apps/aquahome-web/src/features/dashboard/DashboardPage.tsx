@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useMyAquariums, useMyFavorites, useSpeciesSummaries, cn, useTranslation, WaterType, AquariumStyle } from '@fishlover/shared';
+import { useMyAquariums, useMyFavorites, useSpeciesSummaries, useMediaUrl, cn, useTranslation, WaterType, AquariumStyle } from '@fishlover/shared';
 import type { AquariumDto, SpeciesSummary } from '@fishlover/shared';
 import {
   Droplets, Heart, Fish, ArrowRight, Layers,
@@ -149,13 +149,15 @@ function AquariumPreviewCard({ tank, onClick, compact }: { tank: AquariumDto; on
 }
 
 function FavoritePreview({ summary, onClick }: { summary: SpeciesSummary; onClick: () => void }) {
+  const mediaSrc = useMediaUrl();
+  const imgSrc = mediaSrc(summary.imageKey, summary.imageUrl);
   return (
     <div
       onClick={onClick}
       className="relative rounded-xl overflow-hidden aspect-square cursor-pointer group border border-slate-800/50 bg-[#172033]"
     >
-      {summary.imageUrl ? (
-        <img src={summary.imageUrl} alt={summary.commonName || summary.speciesName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+      {imgSrc ? (
+        <img src={imgSrc} alt={summary.commonName || summary.speciesName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
       ) : (
         <div className="w-full h-full flex items-center justify-center">
           <Fish className="w-8 h-8 text-slate-700" />

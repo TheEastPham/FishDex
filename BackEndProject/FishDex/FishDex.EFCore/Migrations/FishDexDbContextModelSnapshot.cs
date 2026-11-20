@@ -81,6 +81,9 @@ namespace FishDex.EFCore.Migrations
                     b.Property<bool?>("JumpingRisk")
                         .HasColumnType("boolean");
 
+                    b.Property<int?>("Kind")
+                        .HasColumnType("integer");
+
                     b.Property<decimal?>("Length")
                         .HasColumnType("numeric");
 
@@ -126,6 +129,9 @@ namespace FishDex.EFCore.Migrations
                     b.Property<string>("SpeciesName")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int?>("SuggestedKind")
+                        .HasColumnType("integer");
 
                     b.Property<double?>("TempMax")
                         .HasColumnType("double precision");
@@ -878,6 +884,91 @@ namespace FishDex.EFCore.Migrations
                     b.ToTable("EcosystemRef");
                 });
 
+            modelBuilder.Entity("FishDex.EFCore.Entity.Market.FishBaseSpeciesIndex", b =>
+                {
+                    b.Property<int>("SpecCode")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("SpecCode"));
+
+                    b.Property<string>("Aquarium")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("Brack")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("FamCode")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("Fresh")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Genus")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsLoaded")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("SpeciesName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("SpecCode");
+
+                    b.HasIndex("IsLoaded");
+
+                    b.HasIndex("SpeciesName");
+
+                    b.ToTable("FishBaseSpeciesIndex");
+                });
+
+            modelBuilder.Entity("FishDex.EFCore.Entity.Market.TradedSpecies", b =>
+                {
+                    b.Property<string>("CountryCode")
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
+                    b.Property<int>("SpecCode")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("AddedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("LastConfirmedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LegalNote")
+                        .HasColumnType("text");
+
+                    b.Property<string>("LegalSourceUrl")
+                        .HasColumnType("text");
+
+                    b.Property<int>("LegalStatus")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("Origin")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
+                    b.Property<int?>("TradeStatus")
+                        .HasColumnType("integer");
+
+                    b.HasKey("CountryCode", "SpecCode");
+
+                    b.HasIndex("SpecCode");
+
+                    b.HasIndex("CountryCode", "Status", "TradeStatus");
+
+                    b.ToTable("TradedSpecies");
+                });
+
             modelBuilder.Entity("FishDex.EFCore.Entity.Media.SystemImage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1505,11 +1596,19 @@ namespace FishDex.EFCore.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("ContributedBy")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("CountryCode")
                         .HasColumnType("text");
 
                     b.Property<bool>("IsPreferred")
                         .HasColumnType("boolean");
+
+                    b.Property<bool>("IsVerified")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
 
                     b.Property<string>("Language")
                         .HasColumnType("text");
@@ -1520,8 +1619,14 @@ namespace FishDex.EFCore.Migrations
                     b.Property<int>("Rank")
                         .HasColumnType("integer");
 
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("text");
+
                     b.Property<string>("Remarks")
                         .HasColumnType("text");
+
+                    b.Property<Guid?>("ReviewedBy")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("SpecCode")
                         .HasColumnType("integer");
@@ -1535,6 +1640,8 @@ namespace FishDex.EFCore.Migrations
                     b.HasKey("AutoCtr");
 
                     b.HasIndex("SpecCode");
+
+                    b.HasIndex("ContributedBy", "IsVerified");
 
                     b.HasIndex("Language", "IsPreferred");
 

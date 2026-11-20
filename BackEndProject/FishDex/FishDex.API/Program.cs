@@ -1,4 +1,7 @@
+using FishDex.API.Filters;
 using FishDex.Domain.Extensions;
+using FishDex.Domain.Services;
+using FishDex.Domain.Services.Interfaces;
 using FishDex.Domain.Settings;
 using FishDex.EFCore.DbContexts;
 using FishDex.EFCore.Extensions;
@@ -6,6 +9,7 @@ using FishLover.Shared.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Events;
+using StackExchange.Redis;
 
 // ── Bootstrap logger (trước khi host khởi động) ───────────────
 Log.Logger = new LoggerConfiguration()
@@ -43,9 +47,35 @@ try
         builder.Configuration.GetSection(FishDexSettings.SectionName));
     builder.Services.Configure<StorageSettings>(
         builder.Configuration.GetSection(StorageSettings.SectionName));
+    builder.Services.Configure<MediaAccessSettings>(
+        builder.Configuration.GetSection(MediaAccessSettings.SectionName));
+
+    // ── Hạn mức xem loài cho khách chưa đăng nhập ─────────────
+    // Redis dùng chung với UserManagement/AquaHome trên VM1. Không cấu hình chuỗi kết nối
+    // (local dev) thì AnonQuotaService tự cho qua tất cả — không phải dựng Redis mới chạy được API.
+    builder.Services.Configure<AnonQuotaSettings>(
+        builder.Configuration.GetSection(AnonQuotaSettings.SectionName));
+
+    var redisConnection = builder.Configuration.GetConnectionString("Redis");
+    if (!string.IsNullOrWhiteSpace(redisConnection))
+    {
+        builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
+        {
+            var config = ConfigurationOptions.Parse(redisConnection);
+            // Redis chết lúc API khởi động thì API vẫn phải lên — hạn mức fail-open, không chặn ai.
+            config.AbortOnConnectFail = false;
+            return ConnectionMultiplexer.Connect(config);
+        });
+    }
+
+    builder.Services.AddScoped<IAnonQuotaService>(sp => new AnonQuotaService(
+        sp.GetService<IConnectionMultiplexer>(),
+        sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<AnonQuotaSettings>>(),
+        sp.GetRequiredService<ILogger<AnonQuotaService>>()));
+    builder.Services.AddScoped<AnonSpeciesQuotaFilter>();
 
     // OpenTelemetry Configuration
-    builder.Services.AddFishLoverTelemetry(builder.Configuration, "FishDex.API");
+    builder.Services.AddFishLoverTelemetry(builder.Configuration, "fishdex");
 
     // JWT Authentication — symmetric scheme (direct-login tokens từ UserManagement)
     builder.Services.AddFishLoverJwtAuthentication(builder.Configuration);
@@ -58,6 +88,9 @@ try
         {
             options.MetadataAddress = $"{authServerInternalUrl}/.well-known/openid-configuration";
             options.RequireHttpsMetadata = false;
+            // Tắt legacy inbound claim mapping — mặc định .NET đổi "role" → URI dài khiến
+            // RoleClaimType="role" không khớp claim thực tế → RequireRole luôn fail (giống fix ở AquaHome).
+            options.MapInboundClaims = false;
             var issuer = authServerPublicUrl.TrimEnd('/');
             options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
             {
@@ -67,18 +100,35 @@ try
                 ValidateAudience = false,
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
+                // Token OpenIddict để role ở claim "role" — map để RequireRole khớp
+                RoleClaimType = "role",
+                NameClaimType = "name",
             };
         });
 
     builder.Services.AddFishLoverAuthorization();
-    // [Authorize] chấp nhận cả Bearer (direct login) lẫn OpenIddict (OAuth2 PKCE)
+    // [Authorize] + policy admin đều phải chấp nhận cả Bearer (direct login) lẫn OpenIddict (OAuth2 PKCE).
+    // Policy shared RequireContentAdmin/RequireSystemAdmin KHÔNG khai scheme → chỉ default → token
+    // OpenIddict bị 401. Đăng ký đè ở đây với cả 2 scheme (giống AquaHome).
     builder.Services.AddAuthorization(options =>
     {
-        options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder(
+        string[] bothSchemes =
+        [
             Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme,
-            "OpenIddict")
+            "OpenIddict",
+        ];
+
+        options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder(bothSchemes)
             .RequireAuthenticatedUser()
             .Build();
+
+        options.AddPolicy("RequireSystemAdmin", p => p
+            .AddAuthenticationSchemes(bothSchemes)
+            .RequireRole("SystemAdmin"));
+
+        options.AddPolicy("RequireContentAdmin", p => p
+            .AddAuthenticationSchemes(bothSchemes)
+            .RequireRole("SystemAdmin", "ContentAdmin"));
     });
 
 
@@ -155,7 +205,10 @@ try
 
             policy.WithOrigins(allowedOrigins)
                 .AllowAnyHeader()
-                .AllowAnyMethod();
+                .AllowAnyMethod()
+                // Không expose thì trình duyệt giấu header custom khỏi JS và FE không đọc nổi
+                // số lượt còn lại của chính nó.
+                .WithExposedHeaders(AnonSpeciesQuotaFilter.ResponseHeaders);
         });
     });
 
@@ -201,6 +254,9 @@ try
 
     app.MapControllers();
     app.MapHealthChecks("/health");
+    // Prometheus VM2 scrape qua private IP 10.0.0.64:8081/metrics.
+    // Metrics đã được cấu hình sẵn trong AddFishLoverTelemetry, chỉ thiếu endpoint này.
+    app.MapPrometheusScrapingEndpoint();
 
     app.Run();
 }

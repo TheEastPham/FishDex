@@ -1,0 +1,525 @@
+<title>Nhận diện FishLover</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@500&display=swap">
+
+<style>
+  :root{
+    --bg:#FBF8F1; --surface:#FFFFFF; --surface-2:#F4F1E8;
+    --ink:#14202F; --muted:#54687C; --dim:#8496A8;
+    --line:rgba(20,32,47,.13); --line-soft:rgba(20,32,47,.07);
+    --accent:#0B7A62; --accent-2:#0E7490; --warm:#B4802F;
+    --radius:14px;
+    --shadow:0 1px 2px rgba(20,32,47,.06),0 12px 32px rgba(20,32,47,.07);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#0B1421; --surface:#101B2B; --surface-2:#16233A;
+      --ink:#E7EEF7; --muted:#94A7BB; --dim:#6B7F93;
+      --line:rgba(148,163,184,.17); --line-soft:rgba(148,163,184,.09);
+      --accent:#10B981; --accent-2:#22D3EE; --warm:#E9C87A;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 16px 40px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0B1421; --surface:#101B2B; --surface-2:#16233A;
+    --ink:#E7EEF7; --muted:#94A7BB; --dim:#6B7F93;
+    --line:rgba(148,163,184,.17); --line-soft:rgba(148,163,184,.09);
+    --accent:#10B981; --accent-2:#22D3EE; --warm:#E9C87A;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 16px 40px rgba(0,0,0,.35);
+  }
+
+  *,*::before,*::after{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',sans-serif;
+    font-size:16px; line-height:1.65; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1040px; margin:0 auto; padding:clamp(28px,5vw,64px) clamp(18px,4vw,32px) 96px}
+
+  h1,h2{font-family:'Newsreader',Georgia,serif; font-weight:600; text-wrap:balance; margin:0; line-height:1.15}
+  h1{font-size:clamp(2.1rem,5.2vw,3.4rem); letter-spacing:-.015em}
+  h2{font-size:clamp(1.55rem,3.2vw,2.1rem); letter-spacing:-.01em}
+  h3{margin:0; font-size:1.05rem; font-family:'Be Vietnam Pro',sans-serif; font-weight:600; letter-spacing:-.005em; text-wrap:balance; line-height:1.3}
+  p{margin:0}
+  code{font-family:'IBM Plex Mono',ui-monospace,monospace; font-size:.86em}
+  a{color:var(--accent); text-underline-offset:3px}
+  a:focus-visible{outline:2px solid var(--accent-2); outline-offset:3px; border-radius:4px}
+
+  .eyebrow{
+    font-family:'IBM Plex Mono',ui-monospace,monospace; font-weight:500;
+    font-size:.7rem; letter-spacing:.16em; text-transform:uppercase; color:var(--dim);
+  }
+  .lede{font-size:1.09rem; color:var(--muted); max-width:63ch}
+  .note{color:var(--muted); font-size:.93rem; max-width:70ch}
+  .stack{display:flex; flex-direction:column; gap:14px}
+  section{display:flex; flex-direction:column; gap:26px; padding-block:clamp(38px,6vw,64px); border-top:1px solid var(--line-soft)}
+  section:first-of-type{border-top:0; padding-top:0}
+  .sec-head{display:flex; flex-direction:column; gap:10px}
+
+  /* ---------- artwork tiles ---------- */
+  .tile{
+    --art-ground:#0B1421; --art-fish:#F0E4C8; --art-accent:#10B981;
+    --art-eye:#0B1421; --art-star:#22D3EE;
+    background:var(--art-ground); border-radius:22%; display:grid; place-items:center;
+    aspect-ratio:1; overflow:hidden; box-shadow:var(--shadow);
+  }
+  .tile--rice{--art-ground:#F3EBD8; --art-fish:#132033; --art-accent:#0B7A62; --art-eye:#F3EBD8; --art-star:#0E7490}
+  .tile--mono{--art-ground:#FFFFFF; --art-fish:#132033; --art-accent:#132033; --art-eye:#FFFFFF; --art-star:#132033; border:1px solid var(--line)}
+  .tile--ink{--art-ground:#132033; --art-fish:#FFFFFF; --art-accent:#FFFFFF; --art-eye:#132033; --art-star:#FFFFFF}
+  .tile svg{width:100%; height:100%; display:block}
+
+  .concept{display:grid; grid-template-columns:300px 1fr; gap:clamp(24px,4vw,44px); align-items:start}
+  @media (max-width:800px){.concept{grid-template-columns:1fr}}
+  .concept-art{display:flex; flex-direction:column; gap:12px}
+  .concept-body{display:flex; flex-direction:column; gap:20px}
+
+  .badge{
+    display:inline-flex; align-items:center; gap:7px; align-self:flex-start;
+    font-family:'IBM Plex Mono',monospace; font-size:.66rem; letter-spacing:.11em; text-transform:uppercase;
+    padding:5px 11px; border-radius:999px; border:1px solid var(--line); color:var(--muted); background:var(--surface);
+  }
+  .badge--pick{border-color:color-mix(in srgb,var(--accent) 45%,transparent); color:var(--accent); background:color-mix(in srgb,var(--accent) 9%,var(--surface))}
+  .dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex:0 0 6px}
+
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:clamp(18px,3vw,26px); display:flex; flex-direction:column; gap:16px}
+  .card--flat{background:var(--surface-2); border-color:transparent}
+
+  ul.reasons{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:11px}
+  ul.reasons li{position:relative; padding-left:19px; color:var(--muted); font-size:.95rem}
+  ul.reasons li::before{content:""; position:absolute; left:0; top:.62em; width:5px; height:5px; border-radius:50%; background:var(--accent)}
+  ul.reasons b{color:var(--ink); font-weight:600}
+
+  /* ---------- lockups ---------- */
+  .lockup{display:flex; align-items:center; gap:15px; padding:20px 22px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); overflow-x:auto}
+  .lockup .tile{width:54px; flex:0 0 54px; border-radius:26%}
+  .lockup-name{font-weight:700; font-size:1.5rem; letter-spacing:-.028em; white-space:nowrap}
+  .lockup-name .lo{color:var(--accent)}
+  .lockup--serif .lockup-name{font-family:'Newsreader',serif; font-weight:600; letter-spacing:.005em}
+  .lockup-tag{font-family:'IBM Plex Mono',monospace; font-size:.64rem; letter-spacing:.2em; text-transform:uppercase; color:var(--dim); white-space:nowrap}
+  .lockup-stack{display:flex; flex-direction:column; gap:2px; line-height:1.1}
+  .lockup-sub{font-size:.76rem; color:var(--muted)}
+  .lockup-sub--mono{font-family:'IBM Plex Mono',monospace; font-size:.62rem; letter-spacing:.22em; text-transform:uppercase; color:var(--dim)}
+
+  /* ---------- grids ---------- */
+  .sizes{display:flex; align-items:flex-end; gap:clamp(16px,3vw,30px); flex-wrap:wrap}
+  .size{display:flex; flex-direction:column; align-items:center; gap:10px}
+  .size .tile{border-radius:23%}
+  .size-label{font-family:'IBM Plex Mono',monospace; font-size:.65rem; color:var(--dim); letter-spacing:.05em; text-align:center}
+  .s512{width:104px} .s192{width:72px} .s64{width:52px} .s32{width:32px} .s16{width:16px; border-radius:4px}
+
+  .variants{display:grid; grid-template-columns:repeat(auto-fit,minmax(118px,1fr)); gap:16px}
+  .variant{display:flex; flex-direction:column; gap:10px}
+
+  .swatches{display:grid; grid-template-columns:repeat(auto-fit,minmax(148px,1fr)); gap:14px}
+  .sw{border:1px solid var(--line); border-radius:12px; overflow:hidden; background:var(--surface)}
+  .sw-chip{height:66px}
+  .sw-meta{padding:11px 13px; display:flex; flex-direction:column; gap:2px}
+  .sw-name{font-size:.85rem; font-weight:600}
+  .sw-hex{font-family:'IBM Plex Mono',monospace; font-size:.71rem; color:var(--muted); letter-spacing:.02em}
+  .sw-role{font-size:.73rem; color:var(--dim)}
+
+  .type-row{display:grid; grid-template-columns:132px 1fr; gap:18px; padding:16px 0; border-top:1px solid var(--line-soft); align-items:baseline}
+  .type-row:first-child{border-top:0; padding-top:0}
+  @media (max-width:620px){.type-row{grid-template-columns:1fr; gap:6px}}
+  .type-key{font-family:'IBM Plex Mono',monospace; font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; color:var(--dim)}
+  .spec{display:flex; flex-direction:column; gap:5px}
+  .spec-serif{font-family:'Newsreader',serif; font-size:1.7rem; line-height:1.2}
+  .spec-sans{font-family:'Be Vietnam Pro',sans-serif; font-size:1.2rem; font-weight:500}
+  .spec-mono{font-family:'IBM Plex Mono',monospace; font-size:.95rem}
+
+  .tscroll{overflow-x:auto}
+  .files{width:100%; border-collapse:collapse; font-size:.87rem; min-width:520px}
+  .files th{text-align:left; font-family:'IBM Plex Mono',monospace; font-size:.65rem; letter-spacing:.11em; text-transform:uppercase; color:var(--dim); font-weight:500; padding:0 14px 9px 0; border-bottom:1px solid var(--line)}
+  .files td{padding:11px 14px 11px 0; border-bottom:1px solid var(--line-soft); vertical-align:top; color:var(--muted)}
+  .files td code{color:var(--ink); word-break:break-all}
+  .files td:nth-child(2){font-variant-numeric:tabular-nums; white-space:nowrap}
+
+  .banner-frame{border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); line-height:0}
+  .banner-frame svg{width:100%; height:auto; display:block}
+
+  .qbox{border-left:3px solid var(--warm); background:color-mix(in srgb,var(--warm) 8%,var(--surface)); border-radius:0 var(--radius) var(--radius) 0; padding:18px 22px; display:flex; flex-direction:column; gap:11px}
+
+  .twinkle{animation:tw 4.5s ease-in-out infinite}
+  .twinkle--b{animation-delay:2.2s}
+  @keyframes tw{0%,100%{opacity:.5}50%{opacity:1}}
+  @media (prefers-reduced-motion:reduce){.twinkle{animation:none; opacity:.9}}
+</style>
+
+<svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+  <defs>
+    <!-- trái tim liền khối; nét cong chia nó thành hai con cá gạo -->
+    <path id="heartFull" d="M50 88 C27 76 6 54 6 36 C6 19 23 7 37 16 C43 20 47 27 50 34 C53 27 57 20 63 16 C77 7 94 19 94 36 C94 54 73 76 50 88 Z"/>
+    <path id="seamS" d="M50 35 C41 52 59 68 50 87"/>
+    <path id="grainArc" d="M34 14 C13 32 13 68 34 86 C23 68 21 32 34 14 Z"/>
+
+    <!-- A · Song Ngư Tim -->
+    <symbol id="mark-a" viewBox="0 0 100 100">
+      <g transform="translate(0,-3)">
+        <use href="#heartFull" fill="var(--art-fish)"></use>
+        <use href="#seamS" fill="none" stroke="var(--art-accent)" stroke-width="3.2" stroke-linecap="round"></use>
+        <circle cx="22" cy="28" r="3.2" fill="var(--art-eye)"></circle>
+        <circle cx="78" cy="28" r="3.2" fill="var(--art-eye)"></circle>
+      </g>
+    </symbol>
+    <symbol id="mark-a-solid" viewBox="0 0 100 100">
+      <g transform="translate(0,-3)">
+        <use href="#heartFull" fill="var(--art-fish)"></use>
+        <use href="#seamS" fill="none" stroke="var(--art-ground)" stroke-width="2.8" stroke-linecap="round"></use>
+        <circle cx="22" cy="28" r="3.4" fill="var(--art-eye)"></circle>
+        <circle cx="78" cy="28" r="3.4" fill="var(--art-eye)"></circle>
+      </g>
+    </symbol>
+    <symbol id="mark-a-min" viewBox="0 0 100 100">
+      <g transform="translate(0,-3)">
+        <use href="#heartFull" fill="var(--art-fish)"></use>
+      </g>
+    </symbol>
+
+    <!-- B · Chòm Song Ngư -->
+    <symbol id="mark-b" viewBox="0 0 100 100">
+      <g transform="translate(0,-3)">
+        <g fill="none" stroke="var(--art-star)" stroke-width="1.3" opacity=".5" stroke-linecap="round">
+          <path d="M50 88 L28 76 L8 54 L6 32 L20 11 L38 17 L50 34 L62 17 L80 11 L94 32 L92 54 L72 76 Z"></path>
+          <use href="#seamS"></use>
+        </g>
+        <g fill="var(--art-fish)">
+          <circle cx="50" cy="88" r="2.6"></circle><circle cx="28" cy="76" r="1.9"></circle>
+          <circle cx="8" cy="54" r="1.9"></circle><circle cx="6" cy="32" r="2.4"></circle>
+          <circle cx="20" cy="11" r="1.9"></circle><circle cx="38" cy="17" r="1.9"></circle>
+          <circle cx="50" cy="34" r="2.6"></circle><circle cx="62" cy="17" r="1.9"></circle>
+          <circle cx="80" cy="11" r="1.9"></circle><circle cx="94" cy="32" r="2.4"></circle>
+          <circle cx="92" cy="54" r="1.9"></circle><circle cx="72" cy="76" r="1.9"></circle>
+        </g>
+        <g fill="var(--art-accent)">
+          <circle cx="22" cy="30" r="3.6" class="twinkle"></circle>
+          <circle cx="78" cy="30" r="3.6" class="twinkle twinkle--b"></circle>
+        </g>
+      </g>
+    </symbol>
+
+    <!-- C · Song Ngư Mộc -->
+    <symbol id="mark-c" viewBox="0 0 100 100">
+      <g fill="var(--art-fish)">
+        <use href="#grainArc"></use>
+        <use href="#grainArc" transform="translate(100,0) scale(-1,1)"></use>
+        <path d="M34 80 L28 94 L34 90 L40 94 Z"></path>
+        <path d="M66 80 L60 94 L66 90 L72 94 Z"></path>
+      </g>
+      <g stroke="var(--art-accent)" stroke-width="4" stroke-linecap="round">
+        <path d="M7 50 H40"></path><path d="M60 50 H93"></path>
+      </g>
+      <use href="#heartFull" fill="var(--art-fish)" transform="translate(39.9,39.6) scale(.202)"></use>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+
+  <!-- ============ MỞ ĐẦU ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="eyebrow">Bộ nhận diện · fishlover.org</span>
+      <h1>Song Ngư, cá gạo,<br>và yêu thương</h1>
+      <p class="lede">Ba thứ bạn đưa ra hội tụ vào đúng một hình: <b>hai con cá hình hạt gạo, quay ngược chiều nhau, ghép lại thành một trái tim.</b> Dưới đây là ba hướng khai triển cùng ý đó, kèm bộ icon và banner dựng sẵn để bạn chọn.</p>
+    </div>
+
+    <div class="card">
+      <span class="eyebrow">Ý tưởng dịch sang hình</span>
+      <ul class="reasons">
+        <li><b>Cung Song Ngư ♓</b> — hai con cá bơi ngược chiều, buộc với nhau bằng một sợi dây. Sợi dây đó chính là nét cong xanh chia đôi hình; hai bên nét là hai con cá.</li>
+        <li><b>Cá gạo</b> — thân cá là một hạt gạo: hình thoi bầu, không vảy, không vi rườm rà. Và <b>màu gạo mộc <code>#F0E4C8</code></b> làm màu thân cá — thứ chưa thấy ai trong ngành cá cảnh dùng, trong khi xanh lá với xanh biển thì đầy.</li>
+        <li><b>Yêu thương</b> — không vẽ thêm trái tim bên cạnh. Hai con cá <em>chính là</em> trái tim: hai cái đầu là hai múi trên, hai cái đuôi chụm lại ở chóp dưới.</li>
+      </ul>
+      <p class="note">Ba tôn chỉ của dự án cũng nằm trong đó: mark đối xứng và hình học (<b>tôn trọng khoa học</b>), màu gạo và mặt nước (<b>tôn trọng tự nhiên</b>), trái tim (<b>bảo vệ con người</b>).</p>
+    </div>
+  </section>
+
+  <!-- ============ HƯỚNG A ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="eyebrow">Hướng A</span>
+      <h2>Song Ngư Tim</h2>
+    </div>
+    <div class="concept">
+      <div class="concept-art">
+        <div class="tile"><svg viewBox="0 0 100 100"><use href="#mark-a" width="100" height="100"></use></svg></div>
+        <span class="badge badge--pick"><span class="dot"></span>Đề xuất chọn hướng này</span>
+      </div>
+      <div class="concept-body">
+        <p class="note">Nhìn hai phần mười giây đầu: một trái tim. Nhìn thêm một giây: nét xanh cong chia nó thành hai con cá gạo bơi ngược chiều, mỗi con một con mắt, đuôi chụm ở chóp dưới. Nét xanh đó vừa là sợi dây buộc hai con cá trong thần thoại Song Ngư, vừa là dòng nước.</p>
+        <ul class="reasons">
+          <li><b>Sống được ở 16px.</b> Silhouette là một khối liền, không có khe hở hay nét mảnh nào phải giữ. Đây là tiêu chí quyết định cho favicon và icon PWA.</li>
+          <li><b>Kể được hai tầng.</b> Người không biết gì thấy trái tim. Người nuôi cá nhận ra hai con cá. Người biết chiêm tinh nhận ra Song Ngư.</li>
+          <li><b>Không đụng ai.</b> Logo cá cảnh gần như luôn là một con cá nhìn ngang, màu xanh. Cái này là trái tim màu gạo.</li>
+        </ul>
+        <div class="stack">
+          <span class="eyebrow">Lockup ngang · Be Vietnam Pro 700</span>
+          <div class="lockup">
+            <div class="tile"><svg viewBox="0 0 100 100"><use href="#mark-a" width="100" height="100"></use></svg></div>
+            <div class="lockup-stack">
+              <span class="lockup-name">Fish<span class="lo">Lover</span></span>
+              <span class="lockup-sub">Biết rõ để yêu đúng</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HƯỚNG B ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="eyebrow">Hướng B</span>
+      <h2>Chòm Song Ngư</h2>
+    </div>
+    <div class="concept">
+      <div class="concept-art">
+        <div class="tile"><svg viewBox="0 0 100 100"><use href="#mark-b" width="100" height="100"></use></svg></div>
+        <span class="badge"><span class="dot"></span>Mạnh cho FishDex</span>
+      </div>
+      <div class="concept-body">
+        <p class="note">Cùng hình trái tim hai cá, nhưng vẽ như bản đồ sao: các đỉnh thành ngôi sao, nối bằng nét chỉ. Hai mắt cá là hai sao sáng nhất. Đây là nghĩa gốc nhất của chữ "cung Song Ngư" — một chòm sao thật trên trời.</p>
+        <ul class="reasons">
+          <li><b>Ăn với phần dữ liệu.</b> FishDex là bộ dữ liệu FishBase hàng chục nghìn loài. Chòm sao đọc ra danh mục, tra cứu, bản đồ.</li>
+          <li><b>Điểm yếu: nét mảnh.</b> Xuống 16px thì đám sao dính vào nhau thành một vệt. Buộc phải có bản đặc thay thế cho favicon.</li>
+          <li><b>Dùng tốt nhất làm hoa văn.</b> Rải sao mờ làm nền banner, nền hero, nền empty-state.</li>
+        </ul>
+        <div class="stack">
+          <span class="eyebrow">Lockup · phải có bản đặc cho cỡ nhỏ</span>
+          <div class="lockup">
+            <div class="tile"><svg viewBox="0 0 100 100"><use href="#mark-b" width="100" height="100"></use></svg></div>
+            <div class="lockup-stack">
+              <span class="lockup-name" style="font-weight:600">FishLover</span>
+              <span class="lockup-sub lockup-sub--mono">fishlover.org</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HƯỚNG C ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="eyebrow">Hướng C</span>
+      <h2>Song Ngư Mộc</h2>
+    </div>
+    <div class="concept">
+      <div class="concept-art">
+        <div class="tile"><svg viewBox="0 0 100 100"><use href="#mark-c" width="100" height="100"></use></svg></div>
+        <span class="badge"><span class="dot"></span>Trầm, kiểu sách tra cứu</span>
+      </div>
+      <div class="concept-body">
+        <p class="note">Dựng lại đúng ký tự ♓, nhưng hai nét cong là hai hạt gạo thuôn có đuôi chẻ. Sợi dây buộc hai con cá — trong thần thoại Song Ngư — được thay bằng một trái tim nhỏ ở chính giữa. Yêu thương ở đây là <em>cái nối</em>, không phải cái vỏ.</p>
+        <ul class="reasons">
+          <li><b>Đọc ra như một chữ.</b> Đứng cạnh wordmark serif rất yên, giống bìa một quyển sách tra cứu loài.</li>
+          <li><b>Trung tính nhất.</b> Không "thương mại", không "app". Phù hợp nếu bạn muốn fishlover.org nghiêng về tư liệu hơn là sản phẩm.</li>
+          <li><b>Điểm yếu: ít ấm.</b> Trái tim bé quá nên từ 32px xuống là mất, chỉ còn lại ♓.</li>
+        </ul>
+        <div class="stack">
+          <span class="eyebrow">Lockup · Newsreader 600</span>
+          <div class="lockup lockup--serif">
+            <div class="tile"><svg viewBox="0 0 100 100"><use href="#mark-c" width="100" height="100"></use></svg></div>
+            <span class="lockup-name">FishLover</span>
+            <span class="lockup-tag">Việt Nam</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ICON ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="eyebrow">Icon chính</span>
+      <h2>Một mark, năm cỡ, bốn nền</h2>
+      <p class="lede">Dựng theo hướng A. Nguyên tắc: càng nhỏ càng bỏ chi tiết — nét xanh chuyển thành nét nền trước, rồi bỏ mắt, cuối cùng chỉ còn khối.</p>
+    </div>
+
+    <div class="card">
+      <span class="eyebrow">Thang giảm chi tiết</span>
+      <div class="sizes">
+        <div class="size"><div class="tile s512"><svg viewBox="0 0 100 100"><use href="#mark-a" width="100" height="100"></use></svg></div><span class="size-label">512 · đủ chi tiết</span></div>
+        <div class="size"><div class="tile s192"><svg viewBox="0 0 100 100"><use href="#mark-a" width="100" height="100"></use></svg></div><span class="size-label">192 · đủ chi tiết</span></div>
+        <div class="size"><div class="tile s64"><svg viewBox="0 0 100 100"><use href="#mark-a-solid" width="100" height="100"></use></svg></div><span class="size-label">64 · nét nền</span></div>
+        <div class="size"><div class="tile s32"><svg viewBox="0 0 100 100"><use href="#mark-a-solid" width="100" height="100"></use></svg></div><span class="size-label">32 · nét nền</span></div>
+        <div class="size"><div class="tile s16"><svg viewBox="0 0 100 100"><use href="#mark-a-min" width="100" height="100"></use></svg></div><span class="size-label">16 · chỉ khối</span></div>
+      </div>
+    </div>
+
+    <div class="variants">
+      <div class="variant">
+        <div class="tile"><svg viewBox="0 0 100 100"><use href="#mark-a" width="100" height="100"></use></svg></div>
+        <span class="size-label">Nền tối · mặc định</span>
+      </div>
+      <div class="variant">
+        <div class="tile tile--rice"><svg viewBox="0 0 100 100"><use href="#mark-a" width="100" height="100"></use></svg></div>
+        <span class="size-label">Nền gạo · light mode</span>
+      </div>
+      <div class="variant">
+        <div class="tile tile--mono"><svg viewBox="0 0 100 100"><use href="#mark-a-solid" width="100" height="100"></use></svg></div>
+        <span class="size-label">Một màu · in ấn, dập</span>
+      </div>
+      <div class="variant">
+        <div class="tile tile--ink"><svg viewBox="0 0 100 100"><use href="#mark-a-solid" width="100" height="100"></use></svg></div>
+        <span class="size-label">Đảo màu · watermark</span>
+      </div>
+    </div>
+
+    <div class="card card--flat">
+      <h3>Ba sản phẩm, một mark</h3>
+      <p class="note">Repo đang có ba đầu ra: WikiPage (giới thiệu), FishDex (dữ liệu), AquaHome (app nuôi cá). Đừng vẽ ba logo. Giữ nguyên mark, chỉ đổi màu nét chia theo đúng token đã có trong <code>global.css</code>.</p>
+      <div class="variants">
+        <div class="variant">
+          <div class="tile" style="--art-accent:#0EA5E9"><svg viewBox="0 0 100 100"><use href="#mark-a" width="100" height="100"></use></svg></div>
+          <span class="size-label">FishLover · <code>--c-primary</code></span>
+        </div>
+        <div class="variant">
+          <div class="tile" style="--art-accent:#06B6D4"><svg viewBox="0 0 100 100"><use href="#mark-a" width="100" height="100"></use></svg></div>
+          <span class="size-label">FishDex · <code>--c-ai</code></span>
+        </div>
+        <div class="variant">
+          <div class="tile" style="--art-accent:#10B981"><svg viewBox="0 0 100 100"><use href="#mark-a" width="100" height="100"></use></svg></div>
+          <span class="size-label">AquaHome · <code>--c-nature</code></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ BANNER ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="eyebrow">Banner</span>
+      <h2>Ảnh chia sẻ và ảnh bìa</h2>
+      <p class="lede">Cùng một bố cục: mark bên trái, chữ bên phải, mặt nước xanh chạy ngang, sao mờ của hướng B làm nền. Mọi thứ quan trọng nằm trong phần giữa để không bị crop mất.</p>
+    </div>
+
+    <div class="stack">
+      <span class="eyebrow">og:image · 1200 × 630</span>
+      <div class="banner-frame">
+        <svg viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Banner FishLover 1200 nhân 630">
+          <defs>
+            <linearGradient id="bgA" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#0F172A"></stop><stop offset=".55" stop-color="#0A1626"></stop><stop offset="1" stop-color="#06111E"></stop>
+            </linearGradient>
+            <radialGradient id="glowA" cx=".28" cy=".5" r=".55">
+              <stop offset="0" stop-color="#10B981" stop-opacity=".16"></stop><stop offset="1" stop-color="#10B981" stop-opacity="0"></stop>
+            </radialGradient>
+          </defs>
+          <rect width="1200" height="630" fill="url(#bgA)"></rect>
+          <rect width="1200" height="630" fill="url(#glowA)"></rect>
+          <g fill="#22D3EE" opacity=".38">
+            <circle cx="118" cy="86" r="2"></circle><circle cx="252" cy="146" r="1.5"></circle><circle cx="66" cy="252" r="1.5"></circle>
+            <circle cx="1064" cy="112" r="2"></circle><circle cx="948" cy="72" r="1.5"></circle><circle cx="1136" cy="248" r="1.5"></circle>
+            <circle cx="196" cy="540" r="1.5"></circle><circle cx="1008" cy="524" r="2"></circle><circle cx="884" cy="576" r="1.5"></circle>
+            <circle cx="620" cy="66" r="1.5"></circle><circle cx="740" cy="580" r="1.5"></circle>
+          </g>
+          <path d="M0 470 C300 440 900 440 1200 470" fill="none" stroke="#10B981" stroke-width="2" opacity=".3"></path>
+          <g style="--art-fish:#F0E4C8;--art-accent:#10B981;--art-eye:#0F172A">
+            <use href="#mark-a" x="132" y="185" width="260" height="260"></use>
+          </g>
+          <text x="452" y="284" font-family="Be Vietnam Pro, sans-serif" font-size="86" font-weight="700" letter-spacing="-2.6" fill="#F0E4C8">Fish<tspan fill="#10B981">Lover</tspan></text>
+          <text x="452" y="344" font-family="Newsreader, serif" font-size="36" font-style="italic" fill="#94A3B8">Biết rõ để yêu đúng.</text>
+          <rect x="452" y="386" width="72" height="2" fill="#10B981" opacity=".7"></rect>
+          <text x="452" y="432" font-family="Be Vietnam Pro, sans-serif" font-size="22" fill="#7C8FA4">Dữ liệu cá cảnh cho người nuôi cá Việt Nam</text>
+          <text x="452" y="486" font-family="IBM Plex Mono, monospace" font-size="19" letter-spacing="4.4" fill="#5A6E82">FISHLOVER.ORG</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="stack">
+      <span class="eyebrow">Ảnh bìa ngang · 1500 × 500</span>
+      <div class="banner-frame">
+        <svg viewBox="0 0 1500 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ảnh bìa FishLover 1500 nhân 500">
+          <defs>
+            <linearGradient id="bgB" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#06111E"></stop><stop offset=".5" stop-color="#0F172A"></stop><stop offset="1" stop-color="#06111E"></stop>
+            </linearGradient>
+          </defs>
+          <rect width="1500" height="500" fill="url(#bgB)"></rect>
+          <g fill="#22D3EE" opacity=".3">
+            <circle cx="96" cy="92" r="1.8"></circle><circle cx="214" cy="184" r="1.4"></circle><circle cx="330" cy="76" r="1.4"></circle>
+            <circle cx="1180" cy="128" r="1.8"></circle><circle cx="1330" cy="220" r="1.4"></circle><circle cx="1420" cy="88" r="1.4"></circle>
+            <circle cx="168" cy="404" r="1.4"></circle><circle cx="1266" cy="416" r="1.8"></circle>
+          </g>
+          <path d="M0 340 C375 306 1125 306 1500 340" fill="none" stroke="#10B981" stroke-width="2" opacity=".28"></path>
+          <g style="--art-fish:#F0E4C8;--art-accent:#10B981;--art-eye:#0F172A">
+            <use href="#mark-a" x="675" y="66" width="150" height="150"></use>
+          </g>
+          <text x="750" y="288" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-size="62" font-weight="700" letter-spacing="-1.8" fill="#F0E4C8">Fish<tspan fill="#10B981">Lover</tspan></text>
+          <text x="750" y="336" text-anchor="middle" font-family="Newsreader, serif" font-size="27" font-style="italic" fill="#94A3B8">Biết rõ để yêu đúng.</text>
+          <text x="750" y="400" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="16" letter-spacing="4" fill="#5A6E82">FISHLOVER.ORG</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="qbox">
+      <h3>Câu tagline là đề xuất, chưa chốt</h3>
+      <p class="note">CLAUDE.md của WikiPage ghi rõ Philosophy và Mission do bạn định nghĩa, không để AI viết. Nên tôi để ba phương án và không tự chọn: <b>"Biết rõ để yêu đúng."</b> · <b>"Nuôi cá bằng dữ liệu, thương cá bằng tay."</b> · <b>"Cá nào cũng có tên."</b> Banner trên dùng phương án đầu, chỉ để bạn thấy nó chiếm chỗ ra sao.</p>
+    </div>
+  </section>
+
+  <!-- ============ MÀU & CHỮ ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="eyebrow">Nền tảng</span>
+      <h2>Màu và chữ</h2>
+      <p class="lede">Bốn màu đầu đã có trong <code>WikiPage/src/styles/global.css</code>, không đổi gì. Chỉ thêm đúng một token mới: màu gạo.</p>
+    </div>
+    <div class="swatches">
+      <div class="sw"><div class="sw-chip" style="background:#0F172A"></div><div class="sw-meta"><span class="sw-name">Nước sâu</span><span class="sw-hex">#0F172A</span><span class="sw-role">--c-base · nền icon</span></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#F0E4C8"></div><div class="sw-meta"><span class="sw-name">Gạo mộc</span><span class="sw-hex">#F0E4C8 · mới</span><span class="sw-role">--c-rice · thân cá</span></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#10B981"></div><div class="sw-meta"><span class="sw-name">Tự nhiên</span><span class="sw-hex">#10B981</span><span class="sw-role">--c-nature · nét chia</span></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#06B6D4"></div><div class="sw-meta"><span class="sw-name">Sao</span><span class="sw-hex">#06B6D4</span><span class="sw-role">--c-ai · chòm sao</span></div></div>
+      <div class="sw"><div class="sw-chip" style="background:#0EA5E9"></div><div class="sw-meta"><span class="sw-name">Trời</span><span class="sw-hex">#0EA5E9</span><span class="sw-role">--c-primary · theme-color</span></div></div>
+    </div>
+    <p class="note">Gạo mộc trên nước sâu cho tỉ lệ tương phản khoảng <b>14:1</b>; xanh tự nhiên trên nước sâu khoảng <b>7:1</b>. Cả hai vượt AA cho cả chữ lẫn hình, nên mark đọc được cả khi in đen trắng lẫn khi thu về 16px.</p>
+
+    <div class="card">
+      <div class="type-row">
+        <span class="type-key">Hiển thị</span>
+        <div class="spec"><div class="spec-serif">Cá lia thia trong chum sành</div><span class="size-label" style="text-align:left">Newsreader · 400/600 + italic · có đủ dấu tiếng Việt</span></div>
+      </div>
+      <div class="type-row">
+        <span class="type-key">Nội dung + wordmark</span>
+        <div class="spec"><div class="spec-sans">Bể 60 lít, pH 6.8, nhiệt độ 26°C</div><span class="size-label" style="text-align:left">Be Vietnam Pro · 400/500/600/700 · thiết kế riêng cho dấu tiếng Việt</span></div>
+      </div>
+      <div class="type-row">
+        <span class="type-key">Nhãn và số</span>
+        <div class="spec"><div class="spec-mono">Betta splendens · IUCN: VU</div><span class="size-label" style="text-align:left">IBM Plex Mono · 500 · tên khoa học, mã loài, mã màu</span></div>
+      </div>
+    </div>
+    <p class="note">Repo đang dùng Inter. Đề xuất chuyển phần chữ hiển thị và wordmark sang Be Vietnam Pro vì nó được vẽ riêng cho dấu tiếng Việt — đúng chỗ Inter hay bị dấu chồng lên chữ hoa. Newsreader chỉ dùng cho tiêu đề lớn và câu tagline in nghiêng, không dùng cho UI.</p>
+  </section>
+
+  <!-- ============ FILE ============ -->
+  <section>
+    <div class="sec-head">
+      <span class="eyebrow">Bước tiếp</span>
+      <h2>File cần xuất</h2>
+      <p class="lede">Sau khi bạn chốt hướng, đây là danh sách theo đúng đường dẫn trong repo hiện tại.</p>
+    </div>
+    <div class="tscroll">
+      <table class="files">
+        <thead><tr><th>File</th><th>Cỡ</th><th>Bản dùng</th></tr></thead>
+        <tbody>
+          <tr><td><code>WikiPage/public/favicon.svg</code></td><td>32</td><td>bản nét chia nền</td></tr>
+          <tr><td><code>WikiPage/public/og-image.png</code></td><td>1200×630</td><td>banner đầy đủ</td></tr>
+          <tr><td><code>FrontEnd/apps/aquahome-web/public/icons/icon-512.png</code></td><td>512×512</td><td>đủ chi tiết, nét <code>--c-nature</code></td></tr>
+          <tr><td><code>FrontEnd/apps/aquahome-web/public/icons/icon-192.png</code></td><td>192×192</td><td>đủ chi tiết</td></tr>
+          <tr><td><code>FrontEnd/apps/aquahome-web/public/icons/apple-touch-icon.png</code></td><td>180×180</td><td>nền đặc, không tự bo góc, iOS bo hộ</td></tr>
+          <tr><td><code>FrontEnd/apps/aquahome-web/index.html</code></td><td>—</td><td><code>theme-color</code> đang là <code>#0ea5e9</code>, nên đổi sang <code>#0F172A</code> cho khớp nền icon</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="qbox">
+      <h3>Hai chỗ cần bạn chốt</h3>
+      <ul class="reasons">
+        <li><b>"Cá gạo" ý bạn là gì?</b> Tôi hiểu theo hai nghĩa, may là cả hai cùng cho ra một hình: hạt gạo (hình dáng thân cá), hoặc cá medaka / cá gạo Nhật (loài cá thật, thân cũng thuôn như hạt gạo). Nếu bạn muốn nhắc đúng loài medaka thì tôi thêm vây lưng và vây bụng đặc trưng của nó vào mark.</li>
+        <li><b>Chọn A, B, hay C.</b> Chốt xong tôi dựng file SVG thật rồi xuất đủ bộ PNG theo bảng trên.</li>
+      </ul>
+    </div>
+  </section>
+
+</div>

@@ -3,11 +3,12 @@ import { useMap, MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaf
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
-  getSpeciesSummaries, getSpeciesDistribution,
-  getCached, setCached, CacheKeys, SPECIES_DATA_TTL, useTranslation,
+  getSpeciesSummaries, getSpeciesDistributionsBatch,
+  getCached, setCached, CacheKeys, SPECIES_DATA_TTL, useTranslation, useMediaUrl,
+  MAP_TILE_LAYER,
 } from '@fishlover/shared';
 import type { AquariumFishDto, SpeciesSummary, SpeciesDistributionDto } from '@fishlover/shared';
-import { Fish, Globe, ExternalLink, Loader2 } from 'lucide-react';
+import { Fish, Globe, ExternalLink, Loader2, MapPin } from 'lucide-react';
 
 // ── Color palette — 10 distinct colors per fish ──────────────────────────────
 const FISH_COLORS = [
@@ -30,6 +31,21 @@ function getFishColor(index: number) {
 // ── MapController ─────────────────────────────────────────────────────────────
 function MapController({ points }: { points: Array<{ lat: number; lon: number }> }) {
   const map = useMap();
+
+  // Fix Leaflet lệch tile: container đổi kích thước sau khi map mount (flex layout, scrollbar, đổi tab)
+  useEffect(() => {
+    const invalidate = () => map.invalidateSize();
+    const raf = requestAnimationFrame(invalidate);
+    const ro = new ResizeObserver(invalidate);
+    ro.observe(map.getContainer());
+    window.addEventListener('resize', invalidate);
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+      window.removeEventListener('resize', invalidate);
+    };
+  }, [map]);
+
   useEffect(() => {
     if (!points.length) {
       map.setView([20, 0], 2);
@@ -67,6 +83,7 @@ const ROW_HEIGHT = 40; // px — compact row
 
 export default function FishInventorySection({ aquariumId: _aquariumId, fishList, loading, onNavigateFish }: Props) {
   const { t } = useTranslation();
+  const mediaSrc = useMediaUrl();
   const [summaries, setSummaries]           = useState<Record<number, SpeciesSummary>>({});
   const [distributions, setDistributions]   = useState<Record<number, SpeciesDistributionDto>>({});
   const [selected, setSelected]             = useState<number | null>(null);
@@ -101,17 +118,27 @@ export default function FishInventorySection({ aquariumId: _aquariumId, fishList
       .catch(console.error)
       .finally(() => setSummaryLoading(false));
 
+    // Distribution: lấy từ cache trước, chỉ batch 1 request cho các loài chưa cache
+    const missing: number[] = [];
     specCodes.forEach(specCode => {
-      const cacheKey = CacheKeys.speciesDistribution(specCode);
-      const cached = getCached<SpeciesDistributionDto>(cacheKey);
-      if (cached) { setDistributions(prev => ({ ...prev, [specCode]: cached })); return; }
-      getSpeciesDistribution(specCode)
-        .then(data => {
-          setCached(cacheKey, data, SPECIES_DATA_TTL);
-          setDistributions(prev => ({ ...prev, [specCode]: data }));
+      const cached = getCached<SpeciesDistributionDto>(CacheKeys.speciesDistribution(specCode));
+      if (cached) setDistributions(prev => ({ ...prev, [specCode]: cached }));
+      else missing.push(specCode);
+    });
+
+    if (missing.length > 0) {
+      getSpeciesDistributionsBatch(missing)
+        .then(batch => {
+          Object.entries(batch).forEach(([code, data]) => {
+            setCached(CacheKeys.speciesDistribution(Number(code)), data, SPECIES_DATA_TTL);
+          });
+          setDistributions(prev => ({
+            ...prev,
+            ...Object.fromEntries(Object.entries(batch).map(([code, data]) => [Number(code), data])),
+          }));
         })
         .catch(() => {});
-    });
+    }
   }, [loading, fishList]);
 
   const mapPoints = useMemo(() => {
@@ -133,6 +160,7 @@ export default function FishInventorySection({ aquariumId: _aquariumId, fishList
   }, [selected, distributions, colorMap]);
 
   const hoverSummary = hover ? summaries[hover.specCode] : null;
+  const hoverSrc = hoverSummary ? mediaSrc(hoverSummary.imageKey, hoverSummary.imageUrl) : null;
 
   if (loading) {
     return (
@@ -174,13 +202,13 @@ export default function FishInventorySection({ aquariumId: _aquariumId, fishList
           <MapContainer
             center={[20, 0]}
             zoom={2}
+            minZoom={2}
+            maxBounds={[[-85, -180], [85, 180]]}
+            maxBoundsViscosity={1.0}
             style={{ height: '100%', width: '100%' }}
             zoomControl={false}
           >
-            <TileLayer
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-              attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-            />
+            <TileLayer {...MAP_TILE_LAYER} />
             <MapController points={mapPoints} />
             {mapPoints.map((p, i) => (
               <CircleMarker
@@ -210,15 +238,25 @@ export default function FishInventorySection({ aquariumId: _aquariumId, fishList
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 w-8 text-right shrink-0">{t('tanks_detail.colOrigin')}</span>
             <span className="w-5 shrink-0" />
           </div>
-          {/* Show-all chip — only when a fish is selected */}
-          {selected !== null && (
-            <button
-              onClick={() => setSelected(null)}
-              className="mx-2 mt-1.5 flex items-center gap-1 px-2 py-0.5 rounded-full bg-sky-500/15 border border-sky-500/30 text-sky-400 text-[10px] font-semibold hover:bg-sky-500/25 transition-colors self-start shrink-0"
-            >
-              <span>✕</span> All
-            </button>
-          )}
+          {/* Filter banner — chỉ hiện khi đang focus 1 loài trên bản đồ */}
+          {selected !== null && (() => {
+            const sel = summaries[selected];
+            const name = sel?.commonName ?? sel?.speciesName ?? `#${selected}`;
+            return (
+              <div className="mx-2 mt-1.5 flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg bg-sky-500/10 border border-sky-500/25 shrink-0">
+                <span className="flex items-center gap-1.5 text-[11px] text-sky-300 min-w-0">
+                  <MapPin className="w-3 h-3 shrink-0" />
+                  <span className="truncate">{t('tanks_detail.mapFocusHint')}: <span className="font-semibold text-white">{name}</span></span>
+                </span>
+                <button
+                  onClick={() => setSelected(null)}
+                  className="px-2.5 py-1 rounded-full bg-sky-500/20 border border-sky-500/40 text-sky-300 text-[11px] font-semibold hover:bg-sky-500/30 hover:text-white transition-colors shrink-0"
+                >
+                  {t('tanks_detail.showAll')}
+                </button>
+              </div>
+            );
+          })()}
           <div
             className="overflow-y-auto flex-1 p-2 space-y-0.5 max-h-[200px] md:max-h-[320px]"
           >
@@ -234,6 +272,7 @@ export default function FishInventorySection({ aquariumId: _aquariumId, fishList
 
             {!summaryLoading && fishList.map(f => {
               const summary   = summaries[f.specCode];
+              const imgSrc    = mediaSrc(summary?.imageKey, summary?.imageUrl);
               const dist      = distributions[f.specCode];
               const isSelected = selected === f.specCode;
               const color     = getFishColor(colorMap[f.specCode] ?? 0);
@@ -252,12 +291,12 @@ export default function FishInventorySection({ aquariumId: _aquariumId, fishList
                   <div
                     className="flex items-center gap-2 flex-1 min-w-0"
                     onMouseMove={e => {
-                      if (summary?.imageUrl) setHover({ specCode: f.specCode, x: e.clientX, y: e.clientY });
+                      if (imgSrc) setHover({ specCode: f.specCode, x: e.clientX, y: e.clientY });
                     }}
                   >
                     <div className="w-7 h-7 rounded overflow-hidden bg-slate-800 shrink-0">
-                      {summary?.imageUrl
-                        ? <img src={summary.imageUrl} alt="" className="w-full h-full object-cover" />
+                      {imgSrc
+                        ? <img src={imgSrc} alt="" className="w-full h-full object-cover" />
                         : <div className="w-full h-full flex items-center justify-center"><Fish className="w-3.5 h-3.5 text-slate-600" /></div>
                       }
                     </div>
@@ -300,9 +339,9 @@ export default function FishInventorySection({ aquariumId: _aquariumId, fishList
       </div>
 
       {/* Hover image popup */}
-      {hover && hoverSummary?.imageUrl && (
+      {hover && hoverSummary && hoverSrc && (
         <HoverImagePopup
-          imageUrl={hoverSummary.imageUrl}
+          imageUrl={hoverSrc}
           name={hoverSummary.commonName ?? hoverSummary.speciesName}
           x={hover.x}
           y={hover.y}

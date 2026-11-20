@@ -1,0 +1,70 @@
+khoa,tenQuocTe,loaiChaSpecCode,loaiChaTen,truc,dacDiem,nguonGoc,nguon,canDuyet,ghiChu
+goldfish-comet,Comet,271,Carassius auratus,hinhThai,"Đuôi đơn dài chẻ sâu",US,wikipedia-goldfish-varieties,,
+goldfish-shubunkin,Shubunkin,271,Carassius auratus,hinhThai,"Vảy nacreous — trong/xà cừ",JP,wikipedia-goldfish-varieties,,"Cấu trúc vảy, không phải sắc tố"
+goldfish-nymph,Nymph,271,Carassius auratus,hinhThai,"Đuôi và vây hậu môn đơn — gen lặn",,wikipedia-goldfish-varieties,,
+goldfish-tamasaba,Tamasaba,271,Carassius auratus,hinhThai,"Thân gù kiểu ryukin + đuôi đơn dài",JP,wikipedia-goldfish-varieties,,
+goldfish-wakin,Wakin,271,Carassius auratus,hinhThai,"Đuôi và vây hậu môn đôi trên thân dài",JP,wikipedia-goldfish-varieties,,
+goldfish-watonai,Watonai,271,Carassius auratus,hinhThai,"Đuôi đôi kiểu comet",JP,wikipedia-goldfish-varieties,,
+goldfish-jikin,Jikin,271,Carassius auratus,hinhThai,"Đuôi đôi xoè ngang ra hai bên",JP,wikipedia-goldfish-varieties,,
+goldfish-fantail,Fantail,271,Carassius auratus,hinhThai,"Thân trứng + vây lưng cao + đuôi đôi",CN,wikipedia-goldfish-varieties,,
+goldfish-veiltail,Veiltail,271,Carassius auratus,hinhThai,"Vây dài rủ như màn",US,wikipedia-goldfish-varieties,,
+goldfish-ryukin,Ryukin,271,Carassius auratus,hinhThai,"Gù vai rõ; thân ngắn và sâu",JP,wikipedia-goldfish-varieties,,
+goldfish-pearlscale,Pearlscale,271,Carassius auratus,hinhThai,"Thân cầu + vảy nổi hạt như ngọc",CN,wikipedia-goldfish-varieties,,"Vừa thân vừa vảy"
+goldfish-telescope,Telescope,271,Carassius auratus,hinhThai,"Mắt lồi ra ngoài",CN,wikipedia-goldfish-varieties,,"Nhóm Dragon Eye trong hệ Trung Quốc"
+goldfish-demekin,Demekin,271,Carassius auratus,hinhThai,"Mắt lồi + gù vai ryukin",JP,wikipedia-goldfish-varieties,,
+goldfish-oranda,Oranda,271,Carassius auratus,hinhThai,"Mũ đầu (wen) phủ đầu trừ mắt và miệng",CN,wikipedia-goldfish-varieties,,"Nhóm Wen trong hệ Trung Quốc"
+goldfish-curled-gill,Curled-gill,271,Carassius auratus,hinhThai,"Nắp mang lộn ra ngoài",,wikipedia-goldfish-varieties,,"Dòng hiếm"
+goldfish-tosakin,Tosakin,271,Carassius auratus,hinhThai,"Đuôi đôi không chẻ; cuộn ngang thành hình quạt",JP,wikipedia-goldfish-varieties,,"Dòng hiếm"
+goldfish-butterfly-tail,Butterfly Tail,271,Carassius auratus,hinhThai,"Đuôi hình cánh bướm khi nhìn từ trên",CN,wikipedia-goldfish-varieties,,
+goldfish-meteor,Meteor,271,Carassius auratus,hinhThai,"Không có đuôi; vây hậu môn phát triển",,wikipedia-goldfish-varieties,,"Dòng hiếm"
+goldfish-eggfish,Eggfish,271,Carassius auratus,hinhThai,"Thân trứng; KHÔNG vây lưng",CN,wikipedia-goldfish-varieties,,"Nhóm Egg trong hệ Trung Quốc"
+goldfish-phoenix,Phoenix,271,Carassius auratus,hinhThai,"Eggfish + vây dài rủ",CN,wikipedia-goldfish-varieties,,
+goldfish-izumo-nankin,Izumo Nankin,271,Carassius auratus,hinhThai,"Gù vai nhưng không vây lưng",JP,wikipedia-goldfish-varieties,,"Dòng hiếm"
+goldfish-pompom,Pompom,271,Carassius auratus,hinhThai,"Vách mũi phình thành chùm như quả bông",CN,wikipedia-goldfish-varieties,,
+goldfish-lionhead,Lionhead,271,Carassius auratus,hinhThai,"Mũ đầu + KHÔNG vây lưng",CN,wikipedia-goldfish-varieties,,"獅頭 — gốc Trung Quốc"
+goldfish-lionchu,Lionchu,271,Carassius auratus,hinhThai,"Mũ đầu lionhead + lưng cong sâu kiểu ranchu",JP,wikipedia-goldfish-varieties,,
+goldfish-ranchu,Ranchu,271,Carassius auratus,hinhThai,"KHÔNG vây lưng; lưng cong; đuôi ngắn cụp xuống",JP,wikipedia-goldfish-varieties,,"Nhật tinh luyện từ giống Trung Quốc"
+goldfish-shukin,Shukin,271,Carassius auratus,hinhThai,"Thân ranchu + đuôi đôi dài rủ",JP,wikipedia-goldfish-varieties,,
+goldfish-celestial-eye,Celestial Eye,271,Carassius auratus,hinhThai,"Mắt lồi hướng thẳng lên trời",CN,wikipedia-goldfish-varieties,,
+goldfish-bubble-eye,Bubble Eye,271,Carassius auratus,hinhThai,"Hai túi dịch lớn cạnh mắt; không vây lưng",CN,wikipedia-goldfish-varieties,,
+koi-kohaku,Kōhaku,1450,Cyprinus carpio,mauSac,"Da trắng với vệt đỏ lớn trên lưng",JP,wikipedia-koi,,
+koi-taisho-sanshoku,Taishō Sanshoku,1450,Cyprinus carpio,mauSac,"Như Kōhaku, thêm vệt đen",JP,wikipedia-koi,,"Thường gọi tắt Sanke"
+koi-showa-sanshoku,Shōwa Sanshoku,1450,Cyprinus carpio,mauSac,"Nền đen với vệt đỏ và trắng",JP,wikipedia-koi,,"Thường gọi tắt Showa"
+koi-bekko,Bekkō,1450,Cyprinus carpio,mauSac,"Nền trắng, đỏ hoặc vàng với vệt đen",JP,wikipedia-koi,,
+koi-utsurimono,Utsurimono,1450,Cyprinus carpio,mauSac,"Nền đen với vệt trắng, đỏ hoặc vàng kiểu vằn",JP,wikipedia-koi,,
+koi-asagi,Asagi,1450,Cyprinus carpio,mauSac,"Xanh nhạt phía trên, đỏ hoặc vàng dưới đường bên",JP,wikipedia-koi,,
+koi-shusui,Shūsui,1450,Cyprinus carpio,mauSac,"Xám xanh nhạt trên, đỏ hoặc cam dưới",JP,wikipedia-koi,,
+koi-koromo,Koromo,1450,Cyprinus carpio,mauSac,"Nền trắng, vảy viền xanh hoặc đen chồng lên vệt đỏ",JP,wikipedia-koi,,
+koi-goshiki,Goshiki,1450,Cyprinus carpio,mauSac,"Nền tối với vệt đỏ và vảy dạng lưới",JP,wikipedia-koi,,
+koi-tancho,Tanchō,1450,Cyprinus carpio,mauSac,"Một vệt đỏ duy nhất trên đầu — áp cho nhiều variety",JP,wikipedia-koi,,
+koi-chagoi,Chagoi,1450,Cyprinus carpio,mauSac,"Màu trà — từ ô liu tới đồng",JP,wikipedia-koi,,
+koi-ogon,Ōgon,1450,Cyprinus carpio,mauSac,"Một màu ánh kim duy nhất",JP,wikipedia-koi,,
+koi-kumonryu,Kumonryū,1450,Cyprinus carpio,mauSac,"Đen với vệt trắng uốn lượn",JP,wikipedia-koi,,
+koi-ochiba,Ochiba,1450,Cyprinus carpio,mauSac,"Xám xanh nhạt với hoa văn đồng như lá thu",JP,wikipedia-koi,,
+koi-doitsu,Doitsu,1450,Cyprinus carpio,hinhThai,"Không vảy hoặc chỉ một hàng vảy dọc vây lưng",JP,wikipedia-koi,,"Cấu trúc — kết hợp được với mọi variety màu"
+koi-kinginrin,Kinginrin,1450,Cyprinus carpio,hinhThai,"Vảy ánh kim lấp lánh",JP,wikipedia-koi,,"Cấu trúc — kết hợp được với mọi variety màu"
+koi-butterfly,Butterfly Koi,1450,Cyprinus carpio,laiKhacLoai,"Vây dài rủ — lai koi với cá chép châu Á",US,wikipedia-koi,x,"Nguồn ghi là lai khác loài nên có thể thuộc nhánh hybrid"
+betta-veiltail,Veiltail,4768,Betta splendens,hinhThai,"Đuôi dài rủ xuống một phía",,wikipedia-betta-splendens,,
+betta-plakat,Plakat,4768,Betta splendens,hinhThai,"Vây ngắn — dạng gần hoang dã",TH,wikipedia-betta-splendens,,
+betta-doubletail,Double Tail,4768,Betta splendens,hinhThai,"Hai vây đuôi tách rời",IN,wikipedia-betta-splendens,,
+betta-delta,Delta,4768,Betta splendens,hinhThai,"Đuôi tam giác; xoè dưới 180 độ",DE,wikipedia-betta-splendens,,
+betta-halfmoon,Halfmoon,4768,Betta splendens,hinhThai,"Đuôi xoè đủ 180 độ thành nửa vòng tròn",,kien-thuc,x,"Cần đối chiếu chuẩn IBC"
+betta-crowntail,Crowntail,4768,Betta splendens,hinhThai,"Màng vây tụt sâu để lộ tia vây như vương miện",ID,kien-thuc,x,"Cần đối chiếu chuẩn IBC"
+betta-rosetail,Rosetail,4768,Betta splendens,hinhThai,"Tia vây phân nhánh quá mức; mép đuôi xếp nếp",,kien-thuc,x,"Cần đối chiếu chuẩn IBC"
+betta-dumbo,Dumbo / Elephant Ear,4768,Betta splendens,hinhThai,"Vây ngực phình rộng như tai voi",,kien-thuc,x,"Cần đối chiếu chuẩn IBC"
+hybrid-blood-parrot,Blood Parrot,4786,Amphilophus citrinellus,laiKhacLoai,"Miệng không khép được; thân tròn",TW,wikipedia-blood-parrot,,"A. citrinellus × Vieja melanurus (12322), tạo ở Đài Loan ~1986. Không có tên nhị thức hợp lệ"
+hybrid-flowerhorn,Flowerhorn,,,laiKhacLoai,"Gù đầu (kok)",MY,wikipedia-flowerhorn,,"Lai từ Amphilophus labiatus × A. trimaculatus × blood parrot"
+flowerhorn-golden-monkey,Golden Monkey,,,laiKhacLoai,"Dòng đắt nhất — trên 1000 USD",MY,wikipedia-flowerhorn,,
+flowerhorn-zhen-zhu,Zhen Zhu,,,laiKhacLoai,"Đuôi tròn; miệng lớn; mắt đỏ lồi; gù đầu rõ",MY,wikipedia-flowerhorn,,"Từ dòng luohan"
+flowerhorn-king-kamfa,King Kamfa,,,laiKhacLoai,"Gù đầu (kok) rất lớn; hoa văn đa dạng",MY,wikipedia-flowerhorn,,
+flowerhorn-kamfamalau,Kamfamalau,,,laiKhacLoai,"Lai Kamfa đực × Malau cái",MY,wikipedia-flowerhorn,,
+discus-turquoise,Turquoise,11185,Symphysodon aequifasciatus,mauSac,"Màu ngọc lam",,wikipedia-discus,,"Các dòng nuôi xuất từ discus hoang xanh lá/xanh/nâu, KHÔNG từ Heckel"
+discus-pigeon,Pigeon,11185,Symphysodon aequifasciatus,mauSac,"Dòng bồ câu",,wikipedia-discus,,
+discus-ghost,Ghost,11185,Symphysodon aequifasciatus,mauSac,"Nhạt/trong",,wikipedia-discus,,
+discus-cobalt,Cobalt,11185,Symphysodon aequifasciatus,mauSac,"Xanh cobalt",,wikipedia-discus,,
+discus-solid-red,Solid Red,11185,Symphysodon aequifasciatus,mauSac,"Đỏ đều toàn thân",,wikipedia-discus,,
+platy-wagtail,Wagtail,3232,Xiphophorus maculatus,mauSac,"Vây và đuôi đen tương phản thân",,wikipedia-platy,,
+platy-hifin,Hi-fin,3232,Xiphophorus maculatus,hinhThai,"Vây lưng cao",,wikipedia-platy,,
+platy-sunset,Sunset,3232,Xiphophorus maculatus,mauSac,"Chuyển sắc vàng sang đỏ",,wikipedia-platy,,
+platy-twin-bar,Twin Bar / Comet,3232,Xiphophorus maculatus,mauSac,"Hai vạch đen ở mép đuôi",,wikipedia-platy,,
+platy-salt-pepper,Salt and Pepper,3232,Xiphophorus maculatus,mauSac,"Đốm rải như muối tiêu",,wikipedia-platy,,

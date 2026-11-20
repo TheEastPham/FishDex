@@ -15,6 +15,9 @@ builder.Services.AddOcelot();
 // ADD JWT AUTHENTICATION HERE
 builder.Services.AddFishLoverJwtAuthentication(builder.Configuration);
 
+// OpenTelemetry — trace chặng gateway + propagate traceparent sang downstream services
+builder.Services.AddFishLoverTelemetry(builder.Configuration, "gateway");
+
 // Add CORS
 builder.Services.AddCors(options =>
 {
@@ -26,7 +29,15 @@ builder.Services.AddCors(options =>
             : raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         policy.WithOrigins(origins)
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowAnyHeader()
+              // Gateway mới là origin mà trình duyệt nhìn thấy, nên Expose-Headers phải khai ở đây —
+              // khai bên FishDex không có tác dụng khi FE đi qua gateway. Đây là hạn mức xem loài
+              // của khách chưa đăng nhập (xem AnonSpeciesQuotaFilter bên FishDex.API).
+              .WithExposedHeaders(
+                  "X-Anon-Views-Limit",
+                  "X-Anon-Views-Used",
+                  "X-Anon-Views-Remaining",
+                  "X-Anon-Views-Reset");
     });
 });
 
@@ -43,6 +54,12 @@ if (app.Environment.IsDevelopment())
 
 app.UseRouting();
 app.UseCors();
+
+// /metrics phải map TRƯỚC Ocelot. UseOcelot là middleware terminal: nếu để sau, nó sẽ coi
+// /metrics là một request cần route xuống downstream và trả UnableToFindDownstreamRouteError.
+// Endpoint này KHÔNG được ra internet — nginx chặn /metrics, Prometheus VM2 scrape trực tiếp
+// qua private IP 10.0.0.64:5000.
+app.UseEndpoints(endpoints => endpoints.MapPrometheusScrapingEndpoint());
 
 // Use Ocelot middleware
 await app.UseOcelot();

@@ -35,4 +35,4 @@ Thêm key mới vào cả `vi.ts` và `en.ts` cùng lúc.
 
 ## Commits
 
-CLAUDE.md `BackEndProject/` có rule: chỉ commit `BackEndProject/` và `Pipeline/`. FE tự quản lý commit riêng — không bao giờ stage FrontEnd/ khi đang làm task BE.
+KHÔNG gộp code BE (`BackEndProject/`, `Pipeline/`) và FE (`FrontEnd/`) trong cùng 1 commit khi implement feature — tách commit riêng cho mỗi bên. **Ngoại lệ**: fix bug thì được gộp BE+FE trong 1 commit.

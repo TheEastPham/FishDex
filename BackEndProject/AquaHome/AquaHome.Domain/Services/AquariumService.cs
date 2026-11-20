@@ -1,3 +1,4 @@
+using AquaHome.Common.Enums;
 using AquaHome.Domain.DTOs;
 using AquaHome.Domain.Enums;
 using AquaHome.Domain.Services.Interfaces;
@@ -9,7 +10,8 @@ namespace AquaHome.Domain.Services;
 
 public class AquariumService(
     IAquariumRepository aquariumRepo,
-    ICurrentUserSession currentUser) : IAquariumService
+    ICurrentUserSession currentUser,
+    IQuotaService quotaService) : IAquariumService
 {
     public async Task<IReadOnlyList<AquariumDto>> GetMyAquariumsAsync(CancellationToken ct = default)
     {
@@ -25,6 +27,9 @@ public class AquariumService(
 
     public async Task<AquariumDto> CreateAsync(CreateAquariumRequest request, CancellationToken ct = default)
     {
+        // Quota theo role (Story 3.5) — ném QuotaExceededException (→ HTTP 429) nếu chạm giới hạn
+        await quotaService.EnforceCountLimitAsync(QuotaType.MaxAquariums, ct);
+
         var entity = new Aquarium
         {
             Id          = Guid.NewGuid(),
@@ -35,6 +40,8 @@ public class AquariumService(
             HeightCm    = request.HeightCm,
             WaterType   = (int?)request.WaterType,
             Style       = (int?)request.Style,
+            // Quốc gia đặt bể — nguồn dữ liệu cho lớp market bên FishDex.
+            CountryCode = request.CountryCode,
             Description = request.Description,
             CreatedAt   = DateTime.UtcNow
         };
@@ -55,6 +62,7 @@ public class AquariumService(
         if (request.WaterType.HasValue) entity.WaterType = (int)request.WaterType.Value;
         if (request.Style.HasValue)     entity.Style     = (int)request.Style.Value;
         if (request.Description is not null) entity.Description = request.Description;
+        if (request.CountryCode is not null) entity.CountryCode = request.CountryCode;
 
         await aquariumRepo.UpdateAsync(entity);
         return ToDto(entity);
@@ -121,5 +129,6 @@ public class AquariumService(
         a.Style.HasValue     ? (AquariumStyle)a.Style.Value : null,
         a.Description, a.CreatedAt,
         FishCount: a.Fish?.Count ?? 0,
-        TotalQuantity: a.Fish?.Sum(f => f.Quantity) ?? 0);
+        TotalQuantity: a.Fish?.Sum(f => f.Quantity) ?? 0,
+        CountryCode: a.CountryCode);
 }

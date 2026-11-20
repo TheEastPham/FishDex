@@ -25,9 +25,13 @@ public class SpeciesDetailDto
     public double? LongevityWild { get; init; }
     public double? LongevityCaptive { get; init; }
 
+    // *ImageUrl: presigned cũ, giữ cho FE chưa lên bản media-access. *ImageKey: object key bất biến.
     public string? PreferredImageUrl { get; init; }
     public string? MaleImageUrl { get; init; }
     public string? FemaleImageUrl { get; init; }
+    public string? PreferredImageKey { get; init; }
+    public string? MaleImageKey { get; init; }
+    public string? FemaleImageKey { get; init; }
 
     public SpeciesDetailEcologyDto? Ecology { get; init; }
     public SpeciesDetailConservationDto? Conservation { get; init; }

@@ -1,0 +1,189 @@
+using FishDex.Domain.DTOs.Species;
+using FishDex.Domain.Helpers;
+using FishDex.Domain.Services.Interfaces;
+using FishDex.EFCore.Entity.Species;
+using FishDex.EFCore.Repository.Interface;
+using FishLover.Shared.Services;
+using Microsoft.Extensions.Logging;
+
+namespace FishDex.Domain.Services;
+
+/// <summary>
+/// User đóng góp tên địa phương (tiếng Việt) cho loài FishBase đã tồn tại — submit + moderation.
+/// Lưu thẳng vào CommonNames (ContributedBy != null, IsVerified=false). Species Profile đọc CommonNames
+/// trực tiếp (lọc IsVerified) ở mọi đường đọc, nên verify xong là tên hiện ngay — không có cache nào
+/// phải invalidate.
+/// </summary>
+public class CommunityCommonNameService(
+    ICommunityCommonNameRepository repo,
+    ICurrentUserSession currentUser,
+    ILogger<CommunityCommonNameService> logger) : ICommunityCommonNameService
+{
+    private const int ContributedRank = 999; // xếp sau tên preferred gốc của FishBase trong cùng ngôn ngữ
+
+    public async Task<SubmitCommonNameResult> SubmitAsync(int specCode, SubmitCommonNameRequest request, CancellationToken ct = default)
+    {
+        // Loài lai (SpecCode ≥ 500.000) ĐƯỢC PHÉP đặt tên — chúng nằm trong danh sách market và
+        // thẻ của chúng hiện nút "đặt tên tiếng Việt". Repo tự tra đúng bảng theo hai nhánh.
+        if (!await repo.SpeciesExistsAsync(specCode, ct))
+            return new SubmitCommonNameResult(SubmitCommonNameOutcome.SpeciesNotFound);
+
+        var language = NormalizeLanguage(request.Language);
+        if (!IsSupportedLanguage(language))
+            return new SubmitCommonNameResult(SubmitCommonNameOutcome.UnsupportedLanguage);
+
+        var comName = request.ComName.Trim();
+
+        if (await repo.ExistsAsync(specCode, comName, language, ct: ct))
+            return new SubmitCommonNameResult(SubmitCommonNameOutcome.Duplicate);
+
+        if (await repo.HasPendingByUserAsync(currentUser.UserId, specCode, language, ct))
+            return new SubmitCommonNameResult(SubmitCommonNameOutcome.PendingExists);
+
+        var name = new CommonName
+        {
+            SpecCode        = specCode,
+            ComName         = comName,
+            Language        = language,
+            CountryCode     = string.IsNullOrWhiteSpace(request.CountryCode) ? null : request.CountryCode.Trim().ToUpperInvariant(),
+            Transliteration = request.Transliteration?.Trim(),
+            NameType        = "Vernacular",
+            IsPreferred     = false,
+            Rank            = ContributedRank,
+            ContributedBy   = currentUser.UserId,
+            IsVerified      = false,
+        };
+
+        await repo.AddAsync(name, ct);
+        await repo.SaveChangesAsync(ct);
+        logger.LogInformation("Community common name submitted for SpecCode {SpecCode} by {UserId}", specCode, currentUser.UserId);
+
+        return new SubmitCommonNameResult(SubmitCommonNameOutcome.Created, ToDto(name));
+    }
+
+    public async Task<UpdateCommonNameResult> UpdateAsync(int autoCtr, string comName, CancellationToken ct = default)
+    {
+        var name = await repo.GetContributedByIdAsync(autoCtr, ct);
+        if (name is null || name.ContributedBy != currentUser.UserId)
+            return new UpdateCommonNameResult(UpdateCommonNameOutcome.NotFound);
+
+        if (name.IsVerified || name.RejectionReason != null)
+            return new UpdateCommonNameResult(UpdateCommonNameOutcome.NotPending);
+
+        var trimmed = comName.Trim();
+        if (await repo.ExistsAsync(name.SpecCode, trimmed, name.Language, excludeAutoCtr: autoCtr, ct: ct))
+            return new UpdateCommonNameResult(UpdateCommonNameOutcome.Duplicate);
+
+        name.ComName = trimmed;
+        await repo.SaveChangesAsync(ct);
+        logger.LogInformation("Community common name {AutoCtr} updated by {UserId}", autoCtr, currentUser.UserId);
+        return new UpdateCommonNameResult(UpdateCommonNameOutcome.Updated, ToDto(name));
+    }
+
+    public async Task<IReadOnlyList<CommunityCommonNameDto>> GetMineAsync(CancellationToken ct = default)
+        => (await repo.GetByContributorAsync(currentUser.UserId, ct)).Select(ToDto).ToList();
+
+    public async Task<IReadOnlyList<CommunityCommonNameDto>> GetPendingAsync(CancellationToken ct = default)
+        => (await repo.GetPendingAsync(ct)).Select(ToDto).ToList();
+
+    public async Task<bool> VerifyAsync(int autoCtr, CancellationToken ct = default)
+    {
+        var name = await repo.GetContributedByIdAsync(autoCtr, ct);
+        if (name is null) return false;
+
+        name.IsVerified      = true;
+        name.RejectionReason = null;
+        name.ReviewedBy      = currentUser.UserId;
+        await repo.SaveChangesAsync(ct);
+
+        logger.LogInformation("Community common name {AutoCtr} verified (SpecCode {SpecCode}) by {UserId}", autoCtr, name.SpecCode, currentUser.UserId);
+        return true;
+    }
+
+    public async Task<int> VerifyBatchAsync(IReadOnlyList<int> autoCtrs, CancellationToken ct = default)
+    {
+        if (autoCtrs.Count == 0) return 0;
+
+        var names = await repo.GetContributedByIdsAsync(autoCtrs, ct);
+        if (names.Count == 0) return 0;
+
+        foreach (var n in names)
+        {
+            n.IsVerified      = true;
+            n.RejectionReason = null;
+            n.ReviewedBy      = currentUser.UserId;
+        }
+        await repo.SaveChangesAsync(ct);
+
+        logger.LogInformation("Batch-verified {Count} community common names by {UserId}", names.Count, currentUser.UserId);
+        return names.Count;
+    }
+
+    public async Task<bool> RejectAsync(int autoCtr, string reason, CancellationToken ct = default)
+    {
+        var name = await repo.GetContributedByIdAsync(autoCtr, ct);
+        if (name is null) return false;
+
+        name.IsVerified      = false;
+        name.RejectionReason = reason;
+        name.ReviewedBy      = currentUser.UserId;
+        await repo.SaveChangesAsync(ct);
+        logger.LogInformation("Community common name {AutoCtr} rejected by {UserId}", autoCtr, currentUser.UserId);
+        return true;
+    }
+
+    public async Task<bool> DeleteAsync(int autoCtr, CancellationToken ct = default)
+    {
+        var name = await repo.GetContributedByIdAsync(autoCtr, ct);
+        if (name is null || name.ContributedBy != currentUser.UserId) return false;
+
+        // Đã verified = đang public — không cho tự xoá.
+        if (name.IsVerified) return false;
+
+        repo.Remove(name);
+        await repo.SaveChangesAsync(ct);
+        logger.LogInformation("Community common name {AutoCtr} deleted by {UserId}", autoCtr, currentUser.UserId);
+        return true;
+    }
+
+    private static CommunityCommonNameDto ToDto(CommonName c) => new(
+        c.AutoCtr, c.SpecCode, c.ComName, c.Language, c.CountryCode, c.IsVerified, c.RejectionReason, c.ContributedBy);
+
+    /// <summary>
+    /// Whitelist ngôn ngữ = hợp của các ngôn ngữ thuộc 12 nước có market, lấy đúng cách FishBase
+    /// viết tên (vd "Bahasa Indonesia" chứ không phải "Indonesian").
+    ///
+    /// <para>Trước đây nhánh mặc định trả về nguyên chuỗi người dùng gõ, nên mở rộng ra nhiều
+    /// quốc gia sẽ sinh ra "Thai" lẫn "thai" lẫn "Tiếng Thái" trong cùng một cột — và bộ đếm
+    /// tên bản ngữ sẽ đếm hụt mà không ai biết.</para>
+    /// </summary>
+    private static readonly HashSet<string> SupportedLanguages =
+        MarketCountries.All
+            .SelectMany(c => c.Languages)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+    private static bool IsSupportedLanguage(string language)
+        => SupportedLanguages.Contains(language);
+
+    /// <summary>
+    /// Đưa alias người dùng gõ về đúng tên ngôn ngữ của FishBase. Giá trị không nhận diện được
+    /// vẫn trả về nguyên trạng để <see cref="IsSupportedLanguage"/> từ chối tường minh,
+    /// thay vì âm thầm ghi rác vào DB.
+    /// </summary>
+    private static string NormalizeLanguage(string? lang) => lang?.Trim().ToLowerInvariant() switch
+    {
+        "vn" or "vi" or "vietnamese"          => "Vietnamese",
+        "en" or "eng" or "english"            => "English",
+        "th" or "thai"                        => "Thai",
+        "id" or "indonesian" or "bahasa"      => "Bahasa Indonesia",
+        "ms" or "malay"                       => "Malay",
+        "zh" or "cn" or "chinese" or "mandarin" => "Mandarin Chinese",
+        "ja" or "jp" or "japanese"            => "Japanese",
+        "de" or "german"                      => "German",
+        "nl" or "dutch"                       => "Dutch",
+        "hi" or "hindi"                       => "Hindi",
+        "ta" or "tamil"                       => "Tamil",
+        null or ""                            => "Vietnamese",
+        _                                     => lang!.Trim(),
+    };
+}

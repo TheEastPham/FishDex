@@ -1,0 +1,97 @@
+tenBan,loai,tenKhoaHoc,loaiCha,nguon,ghiChu
+Cá Hồng Cam Vây Dài,loai,Pethia conchonius,,senaquatic,Tiệm ghi Puntius conchonius — FishBase đã chuyển sang chi Pethia
+Cá Lemon Tetra,loai,Hyphessobrycon pulchripinnis,,senaquatic,
+Cá Killi Cardinalis,loai,Nothobranchius cardinalis,,senaquatic,FishBase gắn never/rarely nên ETL chưa nạp
+Cá Pleco L134,loai,Peckoltia compta,,senaquatic,FishBase gắn never/rarely nên ETL chưa nạp
+Cá Cắt Kéo,loai,Moenkhausia costae,,senaquatic + kingaqua,FishBase gắn never/rarely nên ETL chưa nạp
+Cá Cánh Buồm,loai,Gymnocorymbus ternetzi,,senaquatic + kingaqua,
+Cá Snakeskin Barb,loai,Desmopuntius rhomboocellatus,,senaquatic,FishBase gắn never/rarely nên ETL chưa nạp
+Cá Bleeding Heart Tetra,loai,Hyphessobrycon erythrostigma,,senaquatic,
+Cá Hỏa Liên Đăng,loai,Cyprinella lutrensis,,senaquatic,
+Cá Chuột Eques,loai,Corydoras eques,,senaquatic,FishBase gắn never/rarely nên ETL chưa nạp
+Cá Kim Tơ Việt,loai,Tanichthys micagemmae,,senaquatic,Loài đặc hữu Việt Nam — never/rarely nên ETL chưa nạp
+Cá Chuột Venezuela,loai,Corydoras aeneus,,senaquatic,
+Cá Chuột Albino,loai,Corydoras aeneus,,senaquatic,Cùng loài với chuột Venezuela — chỉ khác màu
+Cá Diamond Tetra,loai,Moenkhausia pittieri,,senaquatic + kingaqua,Kingaqua gọi là neon kim cương
+Cá Diếc Vẩy Rồng Odessa,loai,Pethia padamya,,senaquatic,never/rarely nhưng tiệm nào cũng bán — bằng chứng rõ nhất là trường Aquarium không đáng tin
+Cá Phượng Hoàng Đức,loai,Mikrogeophagus ramirezi,,senaquatic + kingaqua,Kingaqua gọi là phượng hoàng lam / ngũ sắc
+Cá Nóc Mini,loai,Carinotetraodon travancoricus,,senaquatic + kingaqua,
+Cá Neon Green,loai,Hemigrammus hyanuary,,senaquatic,
+Cá Mã Giáp,loai,Trichopodus leerii,,senaquatic + kingaqua,
+Cá Tam Giác Tím,loai,Trigonostigma heteromorpha,,senaquatic + kingaqua,
+Cá Mún,loai,Xiphophorus maculatus,,senaquatic + kingaqua,"Gồm mún lửa, mún đỏ, mickey, uyên ương — người mua coi ""mún"" là một loại, màu chỉ là biến thể"
+Cá Neon,loai,Paracheirodon innesi,,senaquatic + kingaqua,
+Cá Ember Tetra,loai,Hyphessobrycon amandae,,senaquatic,
+Cá Thuỷ Tinh Ấn Độ,loai,Parambassis ranga,,senaquatic,
+Cá Chuột Panda,loai,Corydoras panda,,senaquatic + kingaqua,
+Cá Rosy Tetra,loai,Hyphessobrycon rosaceus,,senaquatic,
+Cá Bác Sĩ,loai,Garra flavatra,,senaquatic,
+Cá Diếc Anh Đào,loai,Puntius titteya,,senaquatic + kingaqua,
+Cá Cầu Vồng Mellis,loai,Pseudomugil mellis,,thuysinhtim,
+Cá Bọ Cạp,loai,Tetraroge barbata,,thuysinhtim,Nước lợ nên ETL chưa nạp
+Cá Bống Rễ Cau,loai,Taenioides gracilis,,thuysinhtim,Nước lợ nên ETL chưa nạp
+Freshwater Frogfish,loai,Antennarius biocellatus,,thuysinhtim,Nước lợ/mặn nên ETL chưa nạp
+Cá dĩa,loai,Symphysodon aequifasciatus,,cacanhthienduc,"18 ""loại"" trên trang (bồ câu, marlboro, lam đức, mắt đỏ...) đều là một loài"
+Cá bảy màu,loai,Poecilia reticulata,,kingaqua,Khoảng 50 mặt hàng ở kingaqua đều là loài này
+Cá bảy màu Endler,loai,Poecilia wingei,,kingaqua,Là LOÀI RIÊNG chứ không phải dòng bảy màu — never/rarely nên ETL chưa nạp
+Cá thần tiên,loai,Pterophyllum scalare,,kingaqua,"Khoảng 40 mặt hàng (koi, marble, red devil, sunset...) đều là loài này"
+Cá kiếm,loai,Xiphophorus hellerii,,kingaqua,Gồm kiếm đỏ / kiếm xanh / hắc kiếm
+Cá molly,loai,Poecilia sphenops,,kingaqua,Còn gọi cá bình tích
+Cá sọc ngựa,loai,Danio rerio,,kingaqua,Gồm cả dòng dạ quang và cánh tiên
+Cá neon vua,loai,Paracheirodon axelrodi,,kingaqua,
+Cá neon đen,loai,Hyphessobrycon herbertaxelrodi,,kingaqua,
+Cá neon hoàng đế,loai,Nematobrycon palmeri,,kingaqua,
+Cá sóc đầu đỏ,loai,Hemigrammus bleheri,,kingaqua,CHƯA TRA ĐƯỢC — không có trong FishBaseSpeciesIndex dưới tên này
+Cá hồng my ấn độ,loai,Dawkinsia denisonii,,kingaqua,Hay được ghi là Sahyadria denisonii
+Cá kim tơ,loai,Tanichthys albonubes,,kingaqua,
+Cá chuột muối tiêu,loai,Corydoras paleatus,,kingaqua,
+Cá nóc số 8,loai,Dichotomyctere ocellatus,,kingaqua,
+Cá phượng hoàng Acara,loai,Andinoacara pulcher,,kingaqua,
+Cá sặc xanh,loai,Trichopodus trichopterus,,kingaqua,
+Cá chim cánh cụt,loai,Thayeria boehlkei,,kingaqua,
+Cá cáo bay,loai,Epalzeorhynchos kalopterum,,kingaqua,FishBase dùng đuôi -um chứ không phải -us
+Cá bút chì thái,loai,Crossocheilus oblongus,,kingaqua,
+Cá cầu vồng Trifas,loai,Melanotaenia trifasciata,,kingaqua,
+Cá cầu vồng Parkinsoni,loai,Melanotaenia parkinsoni,,kingaqua,
+Cá cầu vồng Chấm bi,loai,Pseudomugil gertrudae,,kingaqua,
+Cá cầu vồng Táo đỏ,loai,Glossolepis incisa,,kingaqua,FishBase dùng đuôi -a chứ không phải -us
+Cá Ranchu,laiTao,,Carassius auratus,kingaqua,Dòng cá vàng thân tròn không vây lưng — chia nhỏ tiếp được nhưng vẫn là "Ranchu + bổ nghĩa" nên dừng ở đây
+Cá Ping Pong,laiTao,,Carassius auratus,kingaqua,Dòng cá vàng thân cầu
+Cá trân châu,laiTao,,Carassius auratus,kingaqua,Dòng cá vàng vảy nổi hạt
+Cá ket,laiTao,,,kingaqua,Blood parrot — lai khác loài thật (Amphilophus citrinellus × loài khác) nên không có loài cha hợp lệ
+Cá longfin 24k,laiTao,,,kingaqua,Dòng Ancistrus sp. vây dài — chưa xác định được loài
+Cá xecan,chuaTra,,,kingaqua + senaquatic,
+Cá tì bà,chuaTra,,,kingaqua,Hypostomus/Pterygoplichthys — tên tiệm không đủ phân biệt loài
+Cá ali,chuaTra,,,kingaqua,Cichlid hồ Malawi — chỉ tới cấp giống
+Cá thè be,chuaTra,,,kingaqua,
+Cá otto,chuaTra,,,kingaqua,Otocinclus — chưa rõ loài nào
+Cá chuột trân châu,chuaTra,,,kingaqua,
+Cá chuột mỹ,chuaTra,,,kingaqua,
+Cá chuột sao,chuaTra,,,kingaqua,
+Cá chuột cafe,chuaTra,,,kingaqua,
+Cá chuột botia,chuaTra,,,kingaqua,
+Cá nana,chuaTra,,,kingaqua,
+Cá vạn long,chuaTra,,,kingaqua,
+Cá ngân bình,chuaTra,,,kingaqua,
+Cá hồng tử kỳ,chuaTra,,,kingaqua,
+Cá hồng nhung,chuaTra,,,kingaqua,
+Cá kitti tetra,chuaTra,,,kingaqua,
+Cá bống tê giác,chuaTra,,,kingaqua,
+Cá thạch mỹ nhân,chuaTra,,,kingaqua,
+Cá Chạch Culi,chuaTra,,,senaquatic,Kuhli loach — Pangio sp.
+Cá Neon Vua Cardinal,chuaTra,,,senaquatic,Trùng với cá neon vua ở kingaqua — cần gộp khi curate
+Cá Dario Scarlet Badis,chuaTra,,,senaquatic,
+Cá Thủy Tinh Râu Rồng,chuaTra,,,senaquatic,Ghost glass catfish
+Cá Mèo Đốm Petricola,chuaTra,,,senaquatic,
+Cá Chuột Pygmy,chuaTra,,,senaquatic + kingaqua,
+Cá Sóc Platinum Firehead,chuaTra,,,senaquatic,
+Cá Pleco L333,chuaTra,,,senaquatic,
+Cá Pleco L600,chuaTra,,,senaquatic,
+Cá Pleco L397,chuaTra,,,senaquatic,
+Cá Pleco 191,chuaTra,,,senaquatic,
+Cá Khủng Long 6 Sừng,chuaTra,,,thuysinhtim,Axolotl — Ambystoma mexicanum là kỳ giông chứ không phải cá
+Cá Killi Blue Gularis,chuaTra,,,thuysinhtim,
+Cá Nóc Da Beo,chuaTra,,,thuysinhtim,
+Cá Đĩa Lam,chuaTra,,,thuysinhtim,Có thể là dòng cá dĩa — cần đối chiếu
+Cá Hải Long Tầng Giữa,chuaTra,,,thuysinhtim,Red line pipefish
+Cá Chình Nước Ngọt,chuaTra,,,thuysinhtim,Freshwater moray eel

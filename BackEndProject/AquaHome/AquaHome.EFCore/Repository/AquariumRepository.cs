@@ -44,4 +44,27 @@ public class AquariumRepository(AquaHomeDbContext context)
             .Where(f => f.AquariumId == aquariumId)
             .OrderBy(f => f.AddedAt)
             .ToListAsync(ct);
+
+    public async Task<IReadOnlyDictionary<string, IReadOnlyList<int>>> GetSpecCodesByCountryAsync(
+        CancellationToken ct = default)
+    {
+        var pairs = _db.AquariumFish.AsNoTracking()
+            .Join(_db.Aquariums.AsNoTracking(),
+                  fish => fish.AquariumId,
+                  tank => tank.Id,
+                  (fish, tank) => new { tank.CountryCode, fish.SpecCode })
+            .Where(x => x.CountryCode != null);
+
+        // Distinct ở SQL: một loài nuôi trong nhiều bể cùng nước vẫn chỉ là một tín hiệu.
+        var rows = await pairs
+            .Select(x => new { CountryCode = x.CountryCode!, x.SpecCode })
+            .Distinct()
+            .ToListAsync(ct);
+
+        return rows
+            .GroupBy(x => x.CountryCode)
+            .ToDictionary(
+                g => g.Key,
+                g => (IReadOnlyList<int>)g.Select(x => x.SpecCode).ToList());
+    }
 }

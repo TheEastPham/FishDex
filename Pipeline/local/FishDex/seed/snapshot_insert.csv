@@ -1,0 +1,70 @@
+SpecCode,SpeciesName,CommonName,GenusName,WaterType,Kind,DataSource,PopulatedFrom,IsVerified,ParentSpecCode
+500001,Carassius auratus 'Comet',Comet,Carassius,1,1,1,1,true,271
+500002,Carassius auratus 'Shubunkin',Shubunkin,Carassius,1,1,1,1,true,271
+500003,Carassius auratus 'Nymph',Nymph,Carassius,1,1,1,1,true,271
+500004,Carassius auratus 'Tamasaba',Tamasaba,Carassius,1,1,1,1,true,271
+500005,Carassius auratus 'Wakin',Wakin,Carassius,1,1,1,1,true,271
+500006,Carassius auratus 'Watonai',Watonai,Carassius,1,1,1,1,true,271
+500007,Carassius auratus 'Jikin',Jikin,Carassius,1,1,1,1,true,271
+500008,Carassius auratus 'Fantail',Fantail,Carassius,1,1,1,1,true,271
+500009,Carassius auratus 'Veiltail',Veiltail,Carassius,1,1,1,1,true,271
+500010,Carassius auratus 'Ryukin',Ryukin,Carassius,1,1,1,1,true,271
+500011,Carassius auratus 'Pearlscale',Pearlscale,Carassius,1,1,1,1,true,271
+500012,Carassius auratus 'Telescope',Telescope,Carassius,1,1,1,1,true,271
+500013,Carassius auratus 'Demekin',Demekin,Carassius,1,1,1,1,true,271
+500014,Carassius auratus 'Oranda',Oranda,Carassius,1,1,1,1,true,271
+500015,Carassius auratus 'Curled-gill',Curled-gill,Carassius,1,1,1,1,true,271
+500016,Carassius auratus 'Tosakin',Tosakin,Carassius,1,1,1,1,true,271
+500017,Carassius auratus 'Butterfly Tail',Butterfly Tail,Carassius,1,1,1,1,true,271
+500018,Carassius auratus 'Meteor',Meteor,Carassius,1,1,1,1,true,271
+500019,Carassius auratus 'Eggfish',Eggfish,Carassius,1,1,1,1,true,271
+500020,Carassius auratus 'Phoenix',Phoenix,Carassius,1,1,1,1,true,271
+500021,Carassius auratus 'Izumo Nankin',Izumo Nankin,Carassius,1,1,1,1,true,271
+500022,Carassius auratus 'Pompom',Pompom,Carassius,1,1,1,1,true,271
+500023,Carassius auratus 'Lionhead',Lionhead,Carassius,1,1,1,1,true,271
+500024,Carassius auratus 'Lionchu',Lionchu,Carassius,1,1,1,1,true,271
+500025,Carassius auratus 'Ranchu',Ranchu,Carassius,1,1,1,1,true,271
+500026,Carassius auratus 'Shukin',Shukin,Carassius,1,1,1,1,true,271
+500027,Carassius auratus 'Celestial Eye',Celestial Eye,Carassius,1,1,1,1,true,271
+500028,Carassius auratus 'Bubble Eye',Bubble Eye,Carassius,1,1,1,1,true,271
+500029,Cyprinus carpio 'Kōhaku',Kōhaku,Cyprinus,1,1,1,1,true,1450
+500030,Cyprinus carpio 'Taishō Sanshoku',Taishō Sanshoku,Cyprinus,1,1,1,1,true,1450
+500031,Cyprinus carpio 'Shōwa Sanshoku',Shōwa Sanshoku,Cyprinus,1,1,1,1,true,1450
+500032,Cyprinus carpio 'Bekkō',Bekkō,Cyprinus,1,1,1,1,true,1450
+500033,Cyprinus carpio 'Utsurimono',Utsurimono,Cyprinus,1,1,1,1,true,1450
+500034,Cyprinus carpio 'Asagi',Asagi,Cyprinus,1,1,1,1,true,1450
+500035,Cyprinus carpio 'Shūsui',Shūsui,Cyprinus,1,1,1,1,true,1450
+500036,Cyprinus carpio 'Koromo',Koromo,Cyprinus,1,1,1,1,true,1450
+500037,Cyprinus carpio 'Goshiki',Goshiki,Cyprinus,1,1,1,1,true,1450
+500038,Cyprinus carpio 'Tanchō',Tanchō,Cyprinus,1,1,1,1,true,1450
+500039,Cyprinus carpio 'Chagoi',Chagoi,Cyprinus,1,1,1,1,true,1450
+500040,Cyprinus carpio 'Ōgon',Ōgon,Cyprinus,1,1,1,1,true,1450
+500041,Cyprinus carpio 'Kumonryū',Kumonryū,Cyprinus,1,1,1,1,true,1450
+500042,Cyprinus carpio 'Ochiba',Ochiba,Cyprinus,1,1,1,1,true,1450
+500043,Cyprinus carpio 'Doitsu',Doitsu,Cyprinus,1,1,1,1,true,1450
+500044,Cyprinus carpio 'Kinginrin',Kinginrin,Cyprinus,1,1,1,1,true,1450
+500045,Cyprinus carpio 'Butterfly Koi',Butterfly Koi,Cyprinus,1,1,1,1,true,1450
+500046,Betta splendens 'Veiltail',Veiltail,Betta,1,1,1,1,true,4768
+500047,Betta splendens 'Plakat',Plakat,Betta,1,1,1,1,true,4768
+500048,Betta splendens 'Double Tail',Double Tail,Betta,1,1,1,1,true,4768
+500049,Betta splendens 'Delta',Delta,Betta,1,1,1,1,true,4768
+500050,Betta splendens 'Halfmoon',Halfmoon,Betta,1,1,1,1,true,4768
+500051,Betta splendens 'Crowntail',Crowntail,Betta,1,1,1,1,true,4768
+500052,Betta splendens 'Rosetail',Rosetail,Betta,1,1,1,1,true,4768
+500053,Betta splendens 'Dumbo / Elephant Ear',Dumbo / Elephant Ear,Betta,1,1,1,1,true,4768
+500054,Amphilophus citrinellus 'Blood Parrot',Blood Parrot,Amphilophus,1,1,1,1,true,4786
+500055,Flowerhorn,Flowerhorn,,1,1,1,1,true,
+500056,Golden Monkey,Golden Monkey,,1,1,1,1,true,
+500057,Zhen Zhu,Zhen Zhu,,1,1,1,1,true,
+500058,King Kamfa,King Kamfa,,1,1,1,1,true,
+500059,Kamfamalau,Kamfamalau,,1,1,1,1,true,
+500060,Symphysodon aequifasciatus 'Turquoise',Turquoise,Symphysodon,1,1,1,1,true,11185
+500061,Symphysodon aequifasciatus 'Pigeon',Pigeon,Symphysodon,1,1,1,1,true,11185
+500062,Symphysodon aequifasciatus 'Ghost',Ghost,Symphysodon,1,1,1,1,true,11185
+500063,Symphysodon aequifasciatus 'Cobalt',Cobalt,Symphysodon,1,1,1,1,true,11185
+500064,Symphysodon aequifasciatus 'Solid Red',Solid Red,Symphysodon,1,1,1,1,true,11185
+500065,Xiphophorus maculatus 'Wagtail',Wagtail,Xiphophorus,1,1,1,1,true,3232
+500066,Xiphophorus maculatus 'Hi-fin',Hi-fin,Xiphophorus,1,1,1,1,true,3232
+500067,Xiphophorus maculatus 'Sunset',Sunset,Xiphophorus,1,1,1,1,true,3232
+500068,Xiphophorus maculatus 'Twin Bar / Comet',Twin Bar / Comet,Xiphophorus,1,1,1,1,true,3232
+500069,Xiphophorus maculatus 'Salt and Pepper',Salt and Pepper,Xiphophorus,1,1,1,1,true,3232

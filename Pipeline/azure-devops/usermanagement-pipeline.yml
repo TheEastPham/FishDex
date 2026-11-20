@@ -1,10 +1,9 @@
 # UserManagement API — Build & Deploy to Oracle Cloud VM
-# Trigger: push lên release/v1.0 + thay đổi trong UserManagement hoặc Share
 
 trigger:
   branches:
     include:
-      - release/v1.0
+      - release/v1.1
   paths:
     include:
       - BackEndProject/UserManagement/**

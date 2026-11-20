@@ -33,6 +33,11 @@ export interface AquariumDto {
   createdAt: string;
   fishCount: number;      // số loài đang nuôi (species count)
   totalQuantity: number;  // tổng số cá thể (sum of quantity)
+  /**
+   * C_Code của FishBase (vd "704" = Việt Nam). Quốc gia gắn vào BỂ chứ không vào user,
+   * nên một người có thể có bể ở nhiều nước. Nguồn dữ liệu cho lớp market bên FishDex.
+   */
+  countryCode: string | null;
 }
 
 export interface CreateAquariumRequest {
@@ -43,6 +48,8 @@ export interface CreateAquariumRequest {
   waterType?: WaterType | null;
   style?: AquariumStyle | null;
   description?: string | null;
+  /** C_Code của FishBase, vd "704" = Việt Nam. Xem ghi chú ở `AquariumDto.countryCode`. */
+  countryCode?: string | null;
 }
 
 export interface UpdateAquariumRequest {
@@ -53,6 +60,8 @@ export interface UpdateAquariumRequest {
   waterType?: WaterType | null;
   style?: AquariumStyle | null;
   description?: string | null;
+  /** C_Code của FishBase, vd "704" = Việt Nam. Xem ghi chú ở `AquariumDto.countryCode`. */
+  countryCode?: string | null;
 }
 
 export interface AquariumFishDto {
@@ -83,4 +92,42 @@ export interface PresignedUploadDto {
   mediaId: string;
   uploadUrl: string;
   objectKey: string;
+}
+
+// ── Reminders ─────────────────────────────────────────────
+export enum AquaTaskType {
+  WaterChange    = 0,
+  FilterCleaning = 1,
+}
+
+export interface ReminderDto {
+  id: string;
+  aquariumId: string;
+  aquaTaskType: AquaTaskType;
+  dueAt: string;
+  intervalDays: number | null;
+  isCompleted: boolean;
+  completedAt: string | null;
+}
+
+export interface CreateReminderRequest {
+  aquaTaskType: AquaTaskType;
+  dueAt: string;
+  intervalDays: number | null;
+}
+
+export interface CompleteReminderResponse {
+  completedId: string;
+  suggestedNextDueAt: string | null;
+}
+
+export interface UserReminderDto {
+  id: string;
+  aquariumId: string;
+  aquariumName: string;
+  aquaTaskType: AquaTaskType;
+  dueAt: string;
+  intervalDays: number | null;
+  isCompleted: boolean;
+  completedAt: string | null;
 }

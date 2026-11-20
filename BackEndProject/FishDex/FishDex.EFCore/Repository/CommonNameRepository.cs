@@ -11,8 +11,7 @@ public class CommonNameRepository(FishDexDbContext context)
 {
     private readonly FishDexDbContext _db = context;
 
-    public async Task<IReadOnlyList<(string Language, int Count)>> GetTopLanguagesAsync(
-        int topCount, CancellationToken ct = default)
+    public async Task<IReadOnlyList<(string Language, int Count)>> GetTopLanguagesAsync(int topCount, CancellationToken ct = default)
     {
         var rows = await _db.CommonNames
             .Where(c => c.Language != null)

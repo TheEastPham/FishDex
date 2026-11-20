@@ -6,9 +6,7 @@ using FishDex.EFCore.Repository.Interface;
 
 namespace FishDex.Domain.Services;
 
-public class MediaService(
-    ISystemImageRepository imageRepo,
-    IStorageService storage) : IMediaService
+public class MediaService(ISystemImageRepository imageRepo, IStorageService storage) : IMediaService
 {
     public async Task<IReadOnlyList<SystemImageDto>> GetBySpecCodeAsync(int specCode, CancellationToken ct = default)
     {

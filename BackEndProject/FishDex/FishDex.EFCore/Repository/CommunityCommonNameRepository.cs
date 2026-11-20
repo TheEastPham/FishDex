@@ -16,12 +16,11 @@ public class CommunityCommonNameRepository(FishDexDbContext db) : ICommunityComm
     /// và chúng được phép vào danh sách market.
     /// </summary>
     public async Task<bool> SpeciesExistsAsync(int specCode, CancellationToken ct = default)
-        => specCode >= SpeciesCodes.CommunityStart
-            ? await db.SpeciesSnapshots.AnyAsync(
-                s => s.SpecCode == specCode
-                     && s.DataSource == SnapshotDataSource.Community
-                     && s.IsVerified, ct)
+    {
+        return specCode >= SpeciesCodes.CommunityStart
+            ? await db.SpeciesSnapshots.AnyAsync(s => s.SpecCode == specCode && s.DataSource == SnapshotDataSource.Community && s.IsVerified, ct)
             : await db.Species.AnyAsync(s => s.SpecCode == specCode, ct);
+    }
 
     public async Task<bool> ExistsAsync(int specCode, string comName, string? language, int? excludeAutoCtr = null, CancellationToken ct = default)
     {
@@ -34,39 +33,55 @@ public class CommunityCommonNameRepository(FishDexDbContext db) : ICommunityComm
     }
 
     public async Task<bool> HasPendingByUserAsync(Guid userId, int specCode, string? language, CancellationToken ct = default)
-        => await db.CommonNames.AnyAsync(
+    {
+        return await db.CommonNames.AnyAsync(
             c => c.ContributedBy == userId && c.SpecCode == specCode && c.Language == language
                  && !c.IsVerified && c.RejectionReason == null, ct);
+    }
 
     public async Task AddAsync(CommonName name, CancellationToken ct = default)
-        => await db.CommonNames.AddAsync(name, ct);
+    {
+        await db.CommonNames.AddAsync(name, ct);
+    }
 
     public void Remove(CommonName name)
-        => db.CommonNames.Remove(name);
+    {
+        db.CommonNames.Remove(name);
+    }
 
     public async Task<CommonName?> GetContributedByIdAsync(int autoCtr, CancellationToken ct = default)
-        => await db.CommonNames
+    {
+        return await db.CommonNames
             .FirstOrDefaultAsync(c => c.AutoCtr == autoCtr && c.ContributedBy != null, ct);
+    }
 
     public async Task<IReadOnlyList<CommonName>> GetContributedByIdsAsync(IReadOnlyList<int> autoCtrs, CancellationToken ct = default)
-        => await db.CommonNames
+    {
+        return await db.CommonNames
             .Where(c => c.ContributedBy != null && autoCtrs.Contains(c.AutoCtr))
             .ToListAsync(ct);
+    }
 
     public async Task<IReadOnlyList<CommonName>> GetPendingAsync(CancellationToken ct = default)
-        => await db.CommonNames
+    {
+        return await db.CommonNames
             .Where(c => c.ContributedBy != null && !c.IsVerified && c.RejectionReason == null)
             .OrderBy(c => c.AutoCtr)
             .AsNoTracking()
             .ToListAsync(ct);
+    }
 
     public async Task<IReadOnlyList<CommonName>> GetByContributorAsync(Guid userId, CancellationToken ct = default)
-        => await db.CommonNames
+    {
+        return await db.CommonNames
             .Where(c => c.ContributedBy == userId)
             .OrderByDescending(c => c.AutoCtr)
             .AsNoTracking()
             .ToListAsync(ct);
+    }
 
     public async Task SaveChangesAsync(CancellationToken ct = default)
-        => await db.SaveChangesAsync(ct);
+    {
+        await db.SaveChangesAsync(ct);
+    }
 }

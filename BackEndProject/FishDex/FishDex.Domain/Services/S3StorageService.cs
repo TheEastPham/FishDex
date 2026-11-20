@@ -42,7 +42,9 @@ public class S3StorageService : IStorageService
     }
 
     public Task<string?> GetPresignedUrlAsync(string objectKey, CancellationToken ct = default)
-        => GetPresignedUrlAsync(objectKey, TimeSpan.FromMinutes(_settings.PresignedUrlExpiryMinutes), ct);
+    {
+        return GetPresignedUrlAsync(objectKey, TimeSpan.FromMinutes(_settings.PresignedUrlExpiryMinutes), ct);
+    }
 
     public async Task<string?> GetPresignedUrlAsync(string objectKey, TimeSpan expiry, CancellationToken ct = default)
     {
@@ -72,8 +74,7 @@ public class S3StorageService : IStorageService
         }
     }
 
-    public Task<string?> GeneratePresignedPutUrlAsync(
-        string objectKey, string contentType, long maxBytes, CancellationToken ct = default)
+    public Task<string?> GeneratePresignedPutUrlAsync(string objectKey, string contentType, long maxBytes, CancellationToken ct = default)
     {
         if (string.IsNullOrEmpty(_settings.AccessKey))
         {

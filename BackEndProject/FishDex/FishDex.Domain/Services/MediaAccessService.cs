@@ -90,8 +90,7 @@ public class MediaAccessService : IMediaAccessService
         return new SharedMediaAccessSignatureDto(sas, DateTimeOffset.FromUnixTimeSeconds(expiresAt));
     }
 
-    public async Task<MediaAccessRedeemResult> RedeemAsync(
-        string? path, string? shared, string? exp, string? sig, CancellationToken ct = default)
+    public async Task<MediaAccessRedeemResult> RedeemAsync(string? path, string? shared, string? exp, string? sig, CancellationToken ct = default)
     {
         if (_key is null)
             return MediaAccessRedeemResult.Deny(MediaAccessDenial.NotConfigured);
@@ -186,7 +185,9 @@ public class MediaAccessService : IMediaAccessService
     }
 
     private static string ToBase64Url(byte[] bytes)
-        => Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+    {
+        return Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+    }
 
     private static bool TryFromBase64Url(string? value, Span<byte> destination)
     {
@@ -200,5 +201,7 @@ public class MediaAccessService : IMediaAccessService
     }
 
     private static bool IsBase64UrlChar(char c)
-        => c is (>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or (>= '0' and <= '9') or '-' or '_';
+    {
+        return c is (>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or (>= '0' and <= '9') or '-' or '_';
+    }
 }

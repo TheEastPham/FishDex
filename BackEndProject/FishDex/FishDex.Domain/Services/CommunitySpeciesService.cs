@@ -36,8 +36,7 @@ public class CommunitySpeciesService(
     /// </summary>
     private const double SimilarityThreshold = 0.4;
 
-    public async Task<IReadOnlyList<SimilarSpeciesDto>> FindSimilarAsync(
-        string speciesName, CancellationToken ct = default)
+    public async Task<IReadOnlyList<SimilarSpeciesDto>> FindSimilarAsync(string speciesName, CancellationToken ct = default)
     {
         var matches = await repo.FindSimilarNamesAsync(speciesName, SimilarityThreshold, limit: 5, ct);
 

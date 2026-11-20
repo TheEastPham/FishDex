@@ -54,18 +54,24 @@ public class CommunityCommonNamesController(ICommunityCommonNameService service)
     /// <summary>Tên do user hiện tại đã gửi (mọi trạng thái).</summary>
     [HttpGet("common-names/mine")]
     public Task<IReadOnlyList<CommunityCommonNameDto>> GetMine(CancellationToken ct)
-        => service.GetMineAsync(ct);
+    {
+        return service.GetMineAsync(ct);
+    }
 
     /// <summary>Danh sách chờ duyệt — admin.</summary>
     [HttpGet("common-names/pending")]
     [Authorize(Policy = "RequireContentAdmin")]
     public Task<IReadOnlyList<CommunityCommonNameDto>> GetPending(CancellationToken ct)
-        => service.GetPendingAsync(ct);
+    {
+        return service.GetPendingAsync(ct);
+    }
 
     [HttpPatch("common-names/{autoCtr:int}/verify")]
     [Authorize(Policy = "RequireContentAdmin")]
     public async Task<IActionResult> Verify(int autoCtr, CancellationToken ct)
-        => await service.VerifyAsync(autoCtr, ct) ? NoContent() : NotFound();
+    {
+        return await service.VerifyAsync(autoCtr, ct) ? NoContent() : NotFound();
+    }
 
     /// <summary>Duyệt hàng loạt nhiều tên trong 1 request.</summary>
     [HttpPatch("common-names/verify-batch")]
@@ -89,5 +95,7 @@ public class CommunityCommonNamesController(ICommunityCommonNameService service)
     /// <summary>Chủ sở hữu tự xoá hẳn tên mình đã gửi (chưa được duyệt — kể cả đã bị từ chối).</summary>
     [HttpDelete("common-names/{autoCtr:int}")]
     public async Task<IActionResult> Delete(int autoCtr, CancellationToken ct)
-        => await service.DeleteAsync(autoCtr, ct) ? NoContent() : NotFound();
+    {
+        return await service.DeleteAsync(autoCtr, ct) ? NoContent() : NotFound();
+    }
 }

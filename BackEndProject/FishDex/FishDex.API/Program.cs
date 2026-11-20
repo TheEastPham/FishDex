@@ -43,18 +43,14 @@ try
     builder.Services.AddFishDexRepositories();
     builder.Services.AddFishDexServices();
     builder.Services.AddMemoryCache(opts => opts.SizeLimit = 3_000);
-    builder.Services.Configure<FishDexSettings>(
-        builder.Configuration.GetSection(FishDexSettings.SectionName));
-    builder.Services.Configure<StorageSettings>(
-        builder.Configuration.GetSection(StorageSettings.SectionName));
-    builder.Services.Configure<MediaAccessSettings>(
-        builder.Configuration.GetSection(MediaAccessSettings.SectionName));
+    builder.Services.Configure<FishDexSettings>(builder.Configuration.GetSection(FishDexSettings.SectionName));
+    builder.Services.Configure<StorageSettings>(builder.Configuration.GetSection(StorageSettings.SectionName));
+    builder.Services.Configure<MediaAccessSettings>(builder.Configuration.GetSection(MediaAccessSettings.SectionName));
 
     // ── Hạn mức xem loài cho khách chưa đăng nhập ─────────────
     // Redis dùng chung với UserManagement/AquaHome trên VM1. Không cấu hình chuỗi kết nối
     // (local dev) thì AnonQuotaService tự cho qua tất cả — không phải dựng Redis mới chạy được API.
-    builder.Services.Configure<AnonQuotaSettings>(
-        builder.Configuration.GetSection(AnonQuotaSettings.SectionName));
+    builder.Services.Configure<AnonQuotaSettings>(builder.Configuration.GetSection(AnonQuotaSettings.SectionName));
 
     var redisConnection = builder.Configuration.GetConnectionString("Redis");
     if (!string.IsNullOrWhiteSpace(redisConnection))
@@ -214,10 +210,7 @@ try
 
     // ── HealthChecks ──────────────────────────────────────────
     builder.Services.AddHealthChecks()
-        .AddNpgSql(
-            builder.Configuration.GetConnectionString("FishDexDb")!,
-            name: "fishdex-db",
-            tags: ["db", "postgres"]);
+        .AddNpgSql(builder.Configuration.GetConnectionString("FishDexDb")!, name: "fishdex-db", tags: ["db", "postgres"]);
 
     var app = builder.Build();
 

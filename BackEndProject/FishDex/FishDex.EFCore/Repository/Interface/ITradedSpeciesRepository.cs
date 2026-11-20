@@ -50,12 +50,10 @@ public interface ITradedSpeciesRepository
     /// Danh sách loài đang bán ở một quốc gia, phân trang ở SQL. Trả tuple để tầng service
     /// dựng <c>PagedResult</c> (phân trang ở SQL, đếm tổng một lần).
     /// </summary>
-    Task<(IReadOnlyList<TradedSpeciesRow> Items, int TotalCount)> QueryAsync(
-        TradedSpeciesQuery query, CancellationToken ct = default);
+    Task<(IReadOnlyList<TradedSpeciesRow> Items, int TotalCount)> QueryAsync(TradedSpeciesQuery query, CancellationToken ct = default);
 
     /// <summary>Hai con số cho dải thống kê. Chỉ COUNT, không đụng tới ảnh.</summary>
-    Task<(int TotalCount, int WithLocalName)> GetStatsAsync(
-        string countryCode, string[] languages, CancellationToken ct = default);
+    Task<(int TotalCount, int WithLocalName)> GetStatsAsync(string countryCode, string[] languages, CancellationToken ct = default);
 
     Task<TradedSpecies?> GetAsync(string countryCode, int specCode, CancellationToken ct = default);
 
@@ -74,8 +72,7 @@ public interface ITradedSpeciesRepository
     /// <c>LastConfirmedAt</c>; loài chưa có thì thêm mới với <c>Origin = TankDerived</c>,
     /// <c>AddedBy = null</c>. Trả về số dòng THÊM MỚI.
     /// </summary>
-    Task<int> UpsertTankDerivedAsync(
-        string countryCode, IReadOnlyCollection<int> specCodes, CancellationToken ct = default);
+    Task<int> UpsertTankDerivedAsync(string countryCode, IReadOnlyCollection<int> specCodes, CancellationToken ct = default);
 
     /// <summary>
     /// Validate SpecCode theo HAI NHÁNH: dưới 500.000 tra bảng <c>Species</c>, từ 500.000 tra

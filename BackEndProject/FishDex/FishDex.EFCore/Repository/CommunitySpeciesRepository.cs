@@ -80,33 +80,45 @@ public class CommunitySpeciesRepository(FishDexDbContext db) : ICommunitySpecies
     }
 
     public async Task AddAsync(SpeciesSnapshot snapshot, CancellationToken ct = default)
-        => await db.SpeciesSnapshots.AddAsync(snapshot, ct);
+    {
+        await db.SpeciesSnapshots.AddAsync(snapshot, ct);
+    }
 
     public void Detach(SpeciesSnapshot snapshot)
-        => db.Entry(snapshot).State = EntityState.Detached;
+    {
+        db.Entry(snapshot).State = EntityState.Detached;
+    }
 
     public void Remove(SpeciesSnapshot snapshot)
-        => db.SpeciesSnapshots.Remove(snapshot);
+    {
+        db.SpeciesSnapshots.Remove(snapshot);
+    }
 
     public async Task<SpeciesSnapshot?> GetCommunityByCodeAsync(int specCode, CancellationToken ct = default)
-        => await db.SpeciesSnapshots
+    {
+        return await db.SpeciesSnapshots
             .FirstOrDefaultAsync(s => s.SpecCode == specCode && s.DataSource == SnapshotDataSource.Community, ct);
+    }
 
     public async Task<IReadOnlyList<SpeciesSnapshot>> GetByContributorAsync(Guid userId, CancellationToken ct = default)
-        => await db.SpeciesSnapshots
+    {
+        return await db.SpeciesSnapshots
             .Where(s => s.DataSource == SnapshotDataSource.Community && s.ContributedBy == userId)
             .OrderByDescending(s => s.PopulatedAt)
             .AsNoTracking()
             .ToListAsync(ct);
+    }
 
     public async Task<IReadOnlyList<SpeciesSnapshot>> GetPendingAsync(CancellationToken ct = default)
-        => await db.SpeciesSnapshots
+    {
+        return await db.SpeciesSnapshots
             .Where(s => s.DataSource == SnapshotDataSource.Community
                         && !s.IsVerified
                         && s.RejectionReason == null)
             .OrderBy(s => s.PopulatedAt)
             .AsNoTracking()
             .ToListAsync(ct);
+    }
 
     public async Task<IReadOnlyList<SpeciesSnapshot>> SearchVerifiedAsync(string? query, CancellationToken ct = default)
     {
@@ -124,12 +136,16 @@ public class CommunitySpeciesRepository(FishDexDbContext db) : ICommunitySpecies
     }
 
     public async Task<SpeciesSnapshot?> GetVerifiedByCodeAsync(int specCode, CancellationToken ct = default)
-        => await db.SpeciesSnapshots
+    {
+        return await db.SpeciesSnapshots
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.SpecCode == specCode
                                       && s.DataSource == SnapshotDataSource.Community
                                       && s.IsVerified, ct);
+    }
 
     public async Task SaveChangesAsync(CancellationToken ct = default)
-        => await db.SaveChangesAsync(ct);
+    {
+        await db.SaveChangesAsync(ct);
+    }
 }

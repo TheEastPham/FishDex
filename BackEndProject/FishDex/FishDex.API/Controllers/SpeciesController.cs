@@ -2,6 +2,7 @@ using FishDex.Domain.DTOs.Media;
 using FishDex.Domain.DTOs.Occurrence;
 using FishDex.Domain.DTOs.Species;
 using FishDex.Domain.Services.Interfaces;
+using FishDex.Domain.SpeciesProfiles;
 using FishLover.Shared.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +14,7 @@ namespace FishDex.API.Controllers;
 [Authorize]
 public class SpeciesController(
     ISpeciesService speciesService,
+    ISpeciesProfile speciesProfile,
     IMediaService mediaService,
     IOccurrenceService occurrenceService) : ControllerBase
 {
@@ -26,7 +28,7 @@ public class SpeciesController(
 
     [HttpGet("search")]
     public Task<PagedResult<SpeciesSearchResultDto>> Search([FromQuery] GetSpeciesSearchRequest request, CancellationToken ct)
-        => speciesService.SearchSpeciesAsync(request, ct);
+        => speciesProfile.SearchAsync(request, ct);
 
     [HttpGet("languages")]
     public Task<IReadOnlyList<LanguageCountDto>> GetTopLanguages(CancellationToken ct)
@@ -34,7 +36,7 @@ public class SpeciesController(
 
     [HttpGet("{specCode:int}/detail")]
     public Task<SpeciesDetailDto?> GetDetail(int specCode, [FromQuery] string? language, CancellationToken ct)
-        => speciesService.GetDetailAsync(specCode, language, ct);
+        => speciesProfile.GetDetailAsync(specCode, language, ct);
 
     [HttpGet("{specCode:int}/media")]
     public Task<IReadOnlyList<SystemImageDto>> GetMedia(int specCode, CancellationToken ct)
@@ -46,7 +48,7 @@ public class SpeciesController(
 
     [HttpGet("{specCode:int}/related")]
     public Task<IReadOnlyList<SpeciesSearchResultDto>> GetRelated(int specCode, [FromQuery] int limit = 6, [FromQuery] string? language = null, CancellationToken ct = default)
-        => speciesService.GetRelatedAsync(specCode, limit, language, ct);
+        => speciesProfile.GetRelatedAsync(specCode, limit, language, ct);
 
     [HttpGet("{specCode:int}/countries")]
     public Task<IReadOnlyList<CountryDto>> GetCountries(int specCode, CancellationToken ct)
@@ -68,6 +70,6 @@ public class SpeciesController(
             .Take(100)
             .ToList();
 
-        return await speciesService.GetSummariesAsync(specCodes, language, ct);
+        return await speciesProfile.GetSummariesAsync(specCodes, language, ct);
     }
 }

@@ -31,6 +31,14 @@ public class AuthService(
 {
     private const int CodeExpiryMinutes = 5;
 
+    // Mỗi mã chỉ được thử bấy nhiêu lần (tính cả lần đăng ký lỗi vì mật khẩu yếu...), quá thì huỷ mã,
+    // phải xin mã mới — không dò tiếp được trên cùng 1 mã.
+    private const int MaxCodeAttempts = 5;
+
+    // 1 mã / email / phút: chặn dùng endpoint này để spam email người khác (qua Resend của mình)
+    // và chặn xin mã mới liên tục để reset số lần nhập sai.
+    private static readonly TimeSpan CodeResendCooldown = TimeSpan.FromMinutes(1);
+
 
     public async Task<LoginResponse> LoginAsync(LoginRequest request)
     {
@@ -88,7 +96,7 @@ public class AuthService(
             var user = await userManager.Users
                 .FirstOrDefaultAsync(u => u.RefreshToken == request.RefreshToken);
 
-            if (user == null || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+            if (user == null || !user.IsActive || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
             {
                 throw new SecurityTokenException("Invalid refresh token");
             }
@@ -146,21 +154,34 @@ public class AuthService(
             }
 
             var cacheKey = GetCacheKey(request.Email);
-            if (!cache.TryGetValue(cacheKey, out VerificationCode? cacheData))
+            if (!cache.TryGetValue(cacheKey, out VerificationCode? cacheData) || cacheData is null)
             {
                 return new RegisterResponse(false, "Verification code expired or not found");
             }
 
-            if (cacheData?.Code != request.VerificationCode)
+            // Đếm lượt TRƯỚC khi so mã: so trước rồi mới đếm thì cả loạt request gửi song song đều kịp so
+            // với mã trước khi entry bị xoá.
+            if (cacheData.CountAttempt() > MaxCodeAttempts)
+            {
+                cache.Remove(cacheKey);
+                return new RegisterResponse(false,
+                    "Too many invalid attempts. Please request a new verification code.");
+            }
+
+            if (!string.Equals(cacheData.Code, request.VerificationCode.Trim(), StringComparison.OrdinalIgnoreCase))
             {
                 return new RegisterResponse(false, "Invalid verification code");
             }
-            
+
             var (user, createError) = await CreateUserAsync(request);
             if (user == null)
             {
+                // Giữ mã: lỗi do dữ liệu đăng ký (mật khẩu yếu...) chứ không phải do mã — user sửa rồi gửi lại được.
                 return new RegisterResponse(false, createError ?? "Failed to create user");
             }
+
+            // Mã dùng 1 lần.
+            cache.Remove(cacheKey);
 
             await emailService.SendWelcomeEmailAsync(user.Email!, user.FirstName!);
             if (cacheData.InvitationId.HasValue)
@@ -226,8 +247,15 @@ public class AuthService(
             return new EmailVerificationResponse(false, "Email already exists");
         }
 
-        var code = GeneratorCode.GenerateRandomCode(email, 8);
         var cacheKey = GetCacheKey(email);
+        if (cache.TryGetValue(cacheKey, out VerificationCode? previous)
+            && previous is not null
+            && DateTime.UtcNow - previous.CreatedAt < CodeResendCooldown)
+        {
+            return new EmailVerificationResponse(false, "Please wait a minute before requesting a new code.");
+        }
+
+        var code = GeneratorCode.GenerateRandomCode(8);
         var cacheData = new VerificationCode
         {
             Code = code,

@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useMap, MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useTranslation, MAP_TILE_LAYER } from '@fishlover/shared';
+import { useTranslation, useMediaUrl, MAP_TILE_LAYER } from '@fishlover/shared';
 import type { SnapshotFishDto } from '@fishlover/shared';
 import { Fish, Globe, ExternalLink, MapPin } from 'lucide-react';
 
@@ -57,6 +57,7 @@ const ROW_HEIGHT = 40; // px — compact row
  */
 export default function SnapshotFishSection({ fish, onNavigateFish }: Props) {
   const { t } = useTranslation();
+  const mediaSrc = useMediaUrl();
   const [selected, setSelected] = useState<number | null>(null);
 
   const colorMap = useMemo(() => {
@@ -158,6 +159,7 @@ export default function SnapshotFishSection({ fish, onNavigateFish }: Props) {
             {fish.map(f => {
               const isSelected = selected === f.specCode;
               const color = getFishColor(colorMap[f.specCode] ?? 0);
+              const imgSrc = mediaSrc(f.imageKey, f.imageUrl);
 
               return (
                 <button
@@ -169,8 +171,8 @@ export default function SnapshotFishSection({ fish, onNavigateFish }: Props) {
                   style={{ height: ROW_HEIGHT }}
                 >
                   <div className="w-7 h-7 rounded overflow-hidden bg-slate-800 shrink-0">
-                    {f.imageUrl
-                      ? <img src={f.imageUrl} alt="" className="w-full h-full object-cover" />
+                    {imgSrc
+                      ? <img src={imgSrc} alt="" className="w-full h-full object-cover" />
                       : <div className="w-full h-full flex items-center justify-center"><Fish className="w-3.5 h-3.5 text-slate-600" /></div>
                     }
                   </div>

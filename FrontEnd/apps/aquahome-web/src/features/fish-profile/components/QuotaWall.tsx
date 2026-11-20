@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation, getSpeciesSummaries } from '@fishlover/shared';
+import { useTranslation, useMediaUrl, getSpeciesSummaries } from '@fishlover/shared';
 import type { SpeciesSummary } from '@fishlover/shared';
 import { Fish, Lock, Clock } from 'lucide-react';
 
@@ -28,6 +28,8 @@ export default function QuotaWall({ specCode, limit, resetsInSeconds }: Props) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [summary, setSummary] = useState<SpeciesSummary | null>(null);
+  const mediaSrc = useMediaUrl();
+  const imgSrc = mediaSrc(summary?.imageKey, summary?.imageUrl);
 
   useEffect(() => {
     let cancelled = false;
@@ -42,8 +44,8 @@ export default function QuotaWall({ specCode, limit, resetsInSeconds }: Props) {
       <div className="w-full max-w-sm rounded-2xl border border-slate-700/60 bg-[#1a1c20] overflow-hidden shadow-2xl">
 
         <div className="relative h-44 bg-[#0e0f11] flex items-center justify-center">
-          {summary?.imageUrl ? (
-            <img src={summary.imageUrl} alt={summary.speciesName} className="w-full h-full object-cover opacity-60" />
+          {imgSrc ? (
+            <img src={imgSrc} alt={summary?.speciesName ?? ''} className="w-full h-full object-cover opacity-60" />
           ) : (
             <Fish className="w-14 h-14 text-slate-700" />
           )}

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import type { SpeciesSearchResult, AquariumDto } from '@fishlover/shared';
-import { cn, useTranslation } from '@fishlover/shared';
+import { cn, useTranslation, useMediaUrl } from '@fishlover/shared';
 import { Fish, Folder, ExternalLink, Share2 } from 'lucide-react';
 import { FavoriteButton, AddToAquariumButton } from './SpeciesCardActions';
 import AddToCountryButton from '../../market/components/AddToCountryButton';
@@ -22,15 +22,17 @@ export default function SpeciesCard({ species, index = 0, onFamilyClick, aquariu
   const { t } = useTranslation();
   const navigate = useNavigate();
   const bgGradient = GRADIENTS[index % GRADIENTS.length];
+  const mediaSrc = useMediaUrl();
+  const imgSrc = mediaSrc(species.imageKey, species.imageUrl);
 
   return (
     <div className="group relative flex flex-col rounded-xl bg-[#202226] border border-slate-800/80 overflow-hidden hover:shadow-2xl hover:shadow-black/60 hover:-translate-y-1 transition-all duration-300">
 
       {/* Image Area */}
       <div className="h-[170px] w-full relative overflow-hidden bg-slate-900">
-        {species.imageUrl ? (
+        {imgSrc ? (
           <img
-            src={species.imageUrl}
+            src={imgSrc}
             alt={species.speciesName}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
           />

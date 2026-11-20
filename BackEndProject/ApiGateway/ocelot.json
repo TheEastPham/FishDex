@@ -46,6 +46,35 @@
       }
     },
     {
+      "DownstreamPathTemplate": "/api/public/media-access",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "fishdex",
+          "Port": 8081
+        }
+      ],
+      "UpstreamPathTemplate": "/fishdex/v1/public/media-access",
+      "UpstreamHttpMethod": [ "GET" ],
+      "Priority": 2,
+      "HttpHandlerOptions": {
+        "AllowAutoRedirect": false
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/api/public/media-access/sas",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "fishdex",
+          "Port": 8081
+        }
+      ],
+      "UpstreamPathTemplate": "/fishdex/v1/public/media-access/sas",
+      "UpstreamHttpMethod": [ "POST" ],
+      "Priority": 2
+    },
+    {
       "DownstreamPathTemplate": "/api/{everything}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [

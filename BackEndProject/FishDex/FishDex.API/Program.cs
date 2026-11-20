@@ -47,6 +47,8 @@ try
         builder.Configuration.GetSection(FishDexSettings.SectionName));
     builder.Services.Configure<StorageSettings>(
         builder.Configuration.GetSection(StorageSettings.SectionName));
+    builder.Services.Configure<MediaAccessSettings>(
+        builder.Configuration.GetSection(MediaAccessSettings.SectionName));
 
     // ── Hạn mức xem loài cho khách chưa đăng nhập ─────────────
     // Redis dùng chung với UserManagement/AquaHome trên VM1. Không cấu hình chuỗi kết nối

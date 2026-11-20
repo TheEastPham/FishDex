@@ -48,7 +48,7 @@ public interface ITradedSpeciesRepository
 {
     /// <summary>
     /// Danh sách loài đang bán ở một quốc gia, phân trang ở SQL. Trả tuple để tầng service
-    /// dựng <c>PagedResult</c> — theo đúng cách <c>SpeciesRepository.SearchWithCountAsync</c> đang làm.
+    /// dựng <c>PagedResult</c> (phân trang ở SQL, đếm tổng một lần).
     /// </summary>
     Task<(IReadOnlyList<TradedSpeciesRow> Items, int TotalCount)> QueryAsync(
         TradedSpeciesQuery query, CancellationToken ct = default);

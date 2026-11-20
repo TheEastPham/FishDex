@@ -498,6 +498,9 @@ namespace AquaHome.EFCore.Migrations
                     b.Property<long?>("VideoSizeBytes")
                         .HasColumnType("bigint");
 
+                    b.Property<DateTime?>("VideoVerifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("YouTubeVideoId")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");

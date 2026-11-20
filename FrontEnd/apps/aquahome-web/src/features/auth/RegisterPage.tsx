@@ -15,6 +15,12 @@ const LANGUAGES = [
   { value: 'pt-BR', label: 'Português' },
 ];
 
+// BE trả 400 kèm { message } (vd "Invalid verification code", "Please wait a minute…") — axios ném lỗi
+// với 400 nên trước đây message này không bao giờ tới được user, chỉ thấy câu lỗi chung.
+function serverMessage(err: unknown): string | undefined {
+  return (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+}
+
 export default function RegisterPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -47,8 +53,8 @@ export default function RegisterPage() {
       } else {
         setStep(2);
       }
-    } catch {
-      setError('An error occurred. Please try again.');
+    } catch (err: unknown) {
+      setError(serverMessage(err) ?? 'An error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -88,8 +94,8 @@ export default function RegisterPage() {
         setSuccess(t('register.success'));
         setTimeout(() => navigate('/login'), 2000);
       }
-    } catch {
-      setError('An error occurred. Please try again.');
+    } catch (err: unknown) {
+      setError(serverMessage(err) ?? 'An error occurred. Please try again.');
     } finally {
       setLoading(false);
     }

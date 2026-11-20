@@ -41,6 +41,19 @@ public class AuthorizationController(
         var user = await userManager.GetUserAsync(result.Principal)
             ?? throw new InvalidOperationException("The user details cannot be retrieved.");
 
+        // Cookie đăng nhập còn hạn nhưng tài khoản đã bị vô hiệu hoá → huỷ cookie, không cấp code mới.
+        if (!user.IsActive)
+        {
+            await signInManager.SignOutAsync();
+            return Forbid(
+                authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
+                properties: new AuthenticationProperties(new Dictionary<string, string?>
+                {
+                    [OpenIddictServerAspNetCoreConstants.Properties.Error] = Errors.AccessDenied,
+                    [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] = "The account is disabled."
+                }));
+        }
+
         var identity = new ClaimsIdentity(
             authenticationType: TokenValidationParameters.DefaultAuthenticationType,
             nameType: Claims.Name,
@@ -103,7 +116,8 @@ public class AuthorizationController(
         var password = Request.Form["password"].ToString();
 
         var user = await userManager.FindByEmailAsync(email);
-        if (user is not null)
+        // Tài khoản bị vô hiệu hoá báo cùng lỗi như sai mật khẩu — không lộ email nào đang tồn tại / bị khoá.
+        if (user is { IsActive: true })
         {
             var signInResult = await signInManager.PasswordSignInAsync(user, password, isPersistent: false, lockoutOnFailure: true);
             if (signInResult.Succeeded)
@@ -157,7 +171,8 @@ public class AuthorizationController(
         var userId = result.Principal?.GetClaim(Claims.Subject);
         var user = userId is not null ? await userManager.FindByIdAsync(userId) : null;
 
-        if (user is null)
+        // Chặn cả đổi code lẫn refresh: user bị vô hiệu hoá thì refresh token đang cầm cũng hết tác dụng.
+        if (user is not { IsActive: true })
         {
             return Forbid(
                 authenticationSchemes: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme,
@@ -190,7 +205,7 @@ public class AuthorizationController(
     public async Task<IActionResult> UserInfo()
     {
         var user = await userManager.GetUserAsync(User);
-        if (user is null)
+        if (user is not { IsActive: true })
             return Challenge(authenticationSchemes: OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme);
 
         var displayName = $"{user.FirstName} {user.LastName}".Trim();

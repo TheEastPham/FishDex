@@ -1,7 +1,7 @@
 using FishDex.Domain.DTOs.Market;
 using FishDex.Domain.Helpers;
 using FishDex.Domain.Services.Interfaces;
-using FishDex.EFCore.Cache;
+using FishDex.Domain.SpeciesProfiles;
 using FishDex.EFCore.Entity.Market;
 using FishDex.EFCore.Repository.Interface;
 using FishLover.Shared.Common;
@@ -16,8 +16,7 @@ namespace FishDex.Domain.Services;
 public class MarketService(
     ITradedSpeciesRepository repo,
     IFishBaseSpeciesIndexRepository indexRepo,
-    ISpeciesCache speciesCache,
-    IStorageService storage,
+    ISpeciesProfile speciesProfile,
     ICurrentUserSession currentUser,
     ILogger<MarketService> logger) : IMarketService
 {
@@ -206,39 +205,34 @@ public class MarketService(
     // ── Helper ────────────────────────────────────────────────────
 
     /// <summary>
-    /// Đổi hàng repository thành DTO. Tên và ảnh lấy từ <c>SpeciesSnapshot</c> — gọi
-    /// <c>GetOrPopulateManyAsync</c> cho cả trang một lượt để loài chưa ai xem cũng có dữ liệu,
-    /// thay vì để trống. Presign chạy sau vì <c>ObjectKey</c> là computed property.
+    /// Đổi hàng repository thành DTO. Tên khoa học và ảnh lấy từ Species Profile — cùng rule
+    /// ảnh với trang detail/search — cho cả trang một lượt.
     /// </summary>
     private async Task<List<MarketSpeciesDto>> HydrateAsync(
         IReadOnlyList<TradedSpeciesRow> rows, CancellationToken ct)
     {
         if (rows.Count == 0) return [];
 
-        var snapshots = await speciesCache.GetOrPopulateManyAsync(rows.Select(r => r.SpecCode), ct);
-        var byCode = snapshots.ToDictionary(s => s.SpecCode);
+        var summaries = await speciesProfile.GetSummariesAsync(rows.Select(r => r.SpecCode), ct: ct);
+        var byCode = summaries.ToDictionary(s => s.SpecCode);
 
         var result = new List<MarketSpeciesDto>(rows.Count);
         foreach (var row in rows)
         {
-            byCode.TryGetValue(row.SpecCode, out var snap);
-
-            // S3 presign là ký HMAC local, không gọi mạng — tuần tự ở đây là chấp nhận được.
-            var imageUrl = snap?.ThumbnailObjectKey is { } key
-                ? await storage.GetPresignedUrlAsync(key, ct)
-                : null;
+            byCode.TryGetValue(row.SpecCode, out var card);
 
             result.Add(new MarketSpeciesDto(
                 SpecCode:       row.SpecCode,
-                ScientificName: snap?.SpeciesName ?? $"SpecCode {row.SpecCode}",
+                ScientificName: card?.SpeciesName ?? $"SpecCode {row.SpecCode}",
                 LocalName:      row.LocalName,
-                ImageUrl:       imageUrl,
-                LengthCm:       row.Length ?? snap?.Length,
+                ImageUrl:       card?.ImageUrl,
+                LengthCm:       row.Length ?? card?.Length,
                 TradeStatus:    row.TradeStatus,
                 LegalStatus:    row.LegalStatus,
                 LegalNote:      row.LegalNote,
                 Vulnerability:  row.Vulnerability,
-                Dangerous:      row.Dangerous));
+                Dangerous:      row.Dangerous,
+                ImageKey:       card?.ImageKey));
         }
 
         return result;

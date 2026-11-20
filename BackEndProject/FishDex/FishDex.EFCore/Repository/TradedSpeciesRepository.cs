@@ -9,7 +9,6 @@ namespace FishDex.EFCore.Repository;
 
 public class TradedSpeciesRepository(FishDexDbContext db) : ITradedSpeciesRepository
 {
-    private const int CommunityMinSpecCode = 500_000;
 
     public async Task<(IReadOnlyList<TradedSpeciesRow> Items, int TotalCount)> QueryAsync(
         TradedSpeciesQuery query, CancellationToken ct = default)
@@ -151,7 +150,7 @@ public class TradedSpeciesRepository(FishDexDbContext db) : ITradedSpeciesReposi
 
     public async Task<bool> SpecCodeExistsAsync(int specCode, CancellationToken ct = default)
     {
-        if (specCode < CommunityMinSpecCode)
+        if (specCode < SpeciesCodes.CommunityStart)
             return await db.Species.AnyAsync(s => s.SpecCode == specCode, ct);
 
         return await db.SpeciesSnapshots

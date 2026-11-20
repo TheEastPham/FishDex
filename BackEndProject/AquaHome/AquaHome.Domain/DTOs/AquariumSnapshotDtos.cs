@@ -6,7 +6,7 @@ public record SnapshotFishDto(
     int SpecCode,
     string SpeciesName,
     string? CommonName,
-    string? ImageUrl,
+    string? ImageKey,        // object key bucket system-image của FishDex — bất biến, FE ghép với SAS media-access
     int Quantity,
     IReadOnlyList<DistributionPointDto> DistributionPoints);
 
@@ -19,7 +19,12 @@ public record SnapshotDataDto(
     double? HeightCm,
     double? VolumeLiters,
     string? Description,
-    IReadOnlyList<SnapshotFishDto> Fish);
+    IReadOnlyList<SnapshotFishDto> Fish,
+    int Version = 0)         // 0 = bản cũ lưu presigned imageUrl; xem SnapshotDataDto.CurrentVersion
+{
+    /// <summary>2 = fish lưu ImageKey thay vì presigned URL — đọc không cần gọi FishDex nữa.</summary>
+    public const int CurrentVersion = 2;
+}
 
 public record SnapshotPreviewDto(
     WaterType? WaterType,

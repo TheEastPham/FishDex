@@ -20,15 +20,20 @@ public class AquariumMediaService(
     private const int MaxPhotosPerAquarium = 10;
     private const long MaxUploadBytes      = 1 * 1024 * 1024; // 1 MB
 
-    private static readonly HashSet<string> AllowedContentTypes =
-        ["image/jpeg", "image/png", "image/webp"];
+    // Đuôi file suy từ content-type (đã ký vào presigned PUT), không lấy theo tên file client gửi.
+    private static readonly Dictionary<string, string> ImageExtensions = new()
+    {
+        ["image/jpeg"] = ".jpg",
+        ["image/png"]  = ".png",
+        ["image/webp"] = ".webp",
+    };
 
     private string Env => storageOptions.Value.Environment;
 
     public async Task<PresignedUploadDto?> RequestUploadAsync(
         Guid aquariumId, string fileName, string contentType, CancellationToken ct = default)
     {
-        if (!AllowedContentTypes.Contains(contentType))
+        if (!ImageExtensions.TryGetValue(contentType, out var ext))
         {
             logger.LogWarning("Rejected upload for {AquariumId}: unsupported content-type {CT}", aquariumId, contentType);
             return null;
@@ -50,7 +55,8 @@ public class AquariumMediaService(
         {
             Id          = Guid.NewGuid(),
             AquariumId  = aquariumId,
-            FileName    = fileName,
+            // ObjectKey lấy đuôi từ FileName → ép đuôi theo content-type ngay đây; row cũ giữ nguyên key.
+            FileName    = Path.GetFileNameWithoutExtension(fileName) + ext,
             ContentType = contentType,
             CreatedAt   = DateTime.UtcNow,
         };
@@ -79,7 +85,21 @@ public class AquariumMediaService(
         if (aquarium is null)
             return null;
 
-        var url = await storage.GetPresignedUrlAsync(media.ObjectKey(Env), ct);
+        // Presigned PUT không chặn được dung lượng → kiểm file thật. Không có file hoặc quá 1MB thì bỏ hẳn ảnh
+        // (row tạo sẵn lúc xin URL, để lại sẽ chiếm 1 trong 10 suất ảnh của bể).
+        var objectKey = media.ObjectKey(Env);
+        var size = await storage.GetObjectSizeAsync(objectKey, ct);
+        if (size is null or > MaxUploadBytes)
+        {
+            logger.LogWarning("Rejected aquarium photo {MediaId}: R2 size {Size}", mediaId, size);
+            if (size is not null)
+                await storage.DeleteAsync(objectKey, ct);
+            mediaRepo.Remove(media);
+            await mediaRepo.SaveChangesAsync(ct);
+            return null;
+        }
+
+        var url = await storage.GetPresignedUrlAsync(objectKey, ct);
         return ToDto(media, url);
     }
 

@@ -146,6 +146,7 @@ services:
       Storage__SecretKey:           ${FISHDEX_STORAGE_SECRET_KEY}
       Storage__BucketName:          ${FISHDEX_STORAGE_BUCKET}
       Storage__ForcePathStyle:      "false"
+      MediaAccess__Key:             ${MEDIA_ACCESS_KEY}
       # Redis cho hạn mức xem loài (khách chưa đăng nhập) — dùng chung với UserManagement.
       # Thiếu biến này thì appsettings rơi về localhost:6379, mà trong container localhost là
       # chính nó → không kết nối được → hạn mức fail-open, test kiểu gì cũng thấy "xem thoải mái".
@@ -267,6 +268,13 @@ services:
       ExternalServices__YouTube__ClientSecret: ${YOUTUBE_CLIENT_SECRET}
       ExternalServices__YouTube__RefreshToken: ${YOUTUBE_REFRESH_TOKEN}
       ExternalServices__YouTube__ChannelId:     ${YOUTUBE_CHANNEL_ID}
+      # CleanupContestStagingBackgroundService (mỗi 6h) — xoá video contest kẹt trên R2 staging
+      Storage__ServiceUrl:                  ${AQUAHOME_STORAGE_SERVICE_URL}
+      Storage__AccessKey:                   ${AQUAHOME_STORAGE_ACCESS_KEY}
+      Storage__SecretKey:                   ${AQUAHOME_STORAGE_SECRET_KEY}
+      Storage__BucketName:                  ${AQUAHOME_STORAGE_BUCKET}
+      Storage__Environment:                 ${AQUAHOME_STORAGE_ENV}
+      Storage__ForcePathStyle:              "false"
     networks:
       - fishlover_local
     depends_on:

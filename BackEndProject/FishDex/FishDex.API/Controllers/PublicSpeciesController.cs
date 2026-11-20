@@ -3,6 +3,7 @@ using FishDex.Domain.DTOs.Media;
 using FishDex.Domain.DTOs.Occurrence;
 using FishDex.Domain.DTOs.Species;
 using FishDex.Domain.Services.Interfaces;
+using FishDex.Domain.SpeciesProfiles;
 using FishLover.Shared.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,6 +19,7 @@ namespace FishDex.API.Controllers;
 [AllowAnonymous]
 public class PublicSpeciesController(
     ISpeciesService speciesService,
+    ISpeciesProfile speciesProfile,
     IOccurrenceService occurrenceService,
     IMediaService mediaService) : ControllerBase
 {
@@ -30,11 +32,11 @@ public class PublicSpeciesController(
         .Take(100)
         .ToList();
 
-    /// <summary>Batch species summaries (name + commonName + presigned imageUrl mới ký) cho danh sách specCode.</summary>
+    /// <summary>Batch species summaries (name + commonName + imageKey bất biến, kèm imageUrl presigned cũ) cho danh sách specCode.</summary>
     [HttpGet("summaries")]
     public Task<IReadOnlyList<SpeciesSummaryDto>> GetSummaries(
         [FromQuery] string codes, [FromQuery] string? language, CancellationToken ct)
-        => speciesService.GetSummariesAsync(ParseCodes(codes), language, ct);
+        => speciesProfile.GetSummariesAsync(ParseCodes(codes), language, ct);
 
     /// <summary>Batch distribution cho nhiều loài trong 1 request — thay cho gọi /{specCode}/distribution N lần.</summary>
     [HttpGet("distributions")]
@@ -50,7 +52,7 @@ public class PublicSpeciesController(
     /// <summary>Search loài — clone public của SpeciesController.Search. Tách riêng để sau này dễ hạn chế field trả về cho public.</summary>
     [HttpGet("search")]
     public Task<PagedResult<SpeciesSearchResultDto>> Search([FromQuery] GetSpeciesSearchRequest request, CancellationToken ct)
-        => speciesService.SearchSpeciesAsync(request, ct);
+        => speciesProfile.SearchAsync(request, ct);
 
     // ── Profile loài cho khách chưa đăng nhập ────────────────────────────────
     // Bốn endpoint dưới đây là những gì FishProfilePage cần để render. Chúng trừ hạn mức
@@ -63,7 +65,7 @@ public class PublicSpeciesController(
     [HttpGet("{specCode:int}/detail")]
     [ServiceFilter(typeof(AnonSpeciesQuotaFilter))]
     public Task<SpeciesDetailDto?> GetDetail(int specCode, [FromQuery] string? language, CancellationToken ct)
-        => speciesService.GetDetailAsync(specCode, language, ct);
+        => speciesProfile.GetDetailAsync(specCode, language, ct);
 
     /// <summary>Ảnh loài — chỉ ảnh đại diện. Gallery đầy đủ dành cho người đã đăng nhập.</summary>
     [HttpGet("{specCode:int}/media")]
@@ -91,5 +93,5 @@ public class PublicSpeciesController(
     [ServiceFilter(typeof(AnonSpeciesQuotaFilter))]
     public Task<IReadOnlyList<SpeciesSearchResultDto>> GetRelated(
         int specCode, [FromQuery] int limit = 6, [FromQuery] string? language = null, CancellationToken ct = default)
-        => speciesService.GetRelatedAsync(specCode, limit, language, ct);
+        => speciesProfile.GetRelatedAsync(specCode, limit, language, ct);
 }

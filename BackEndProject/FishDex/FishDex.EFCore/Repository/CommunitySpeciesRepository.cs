@@ -1,6 +1,7 @@
 using FishDex.EFCore.DbContexts;
 using FishDex.EFCore.Entity.Cache;
 using FishDex.EFCore.Entity.Market;
+using FishDex.EFCore.Entity.Species;
 using FishDex.EFCore.Repository.Interface;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,7 +9,6 @@ namespace FishDex.EFCore.Repository;
 
 public class CommunitySpeciesRepository(FishDexDbContext db) : ICommunitySpeciesRepository
 {
-    private const int CommunityMinSpecCode = 500_000;
 
     public async Task<IReadOnlyList<SimilarSpeciesName>> FindSimilarNamesAsync(
         string speciesName, double threshold = 0.4, int limit = 5, CancellationToken ct = default)
@@ -72,11 +72,11 @@ public class CommunitySpeciesRepository(FishDexDbContext db) : ICommunitySpecies
     public async Task<int> GetNextCommunitySpecCodeAsync(CancellationToken ct = default)
     {
         var max = await db.SpeciesSnapshots
-            .Where(s => s.SpecCode >= CommunityMinSpecCode)
+            .Where(s => s.SpecCode >= SpeciesCodes.CommunityStart)
             .Select(s => (int?)s.SpecCode)
             .MaxAsync(ct);
 
-        return (max ?? CommunityMinSpecCode - 1) + 1;
+        return (max ?? SpeciesCodes.CommunityStart - 1) + 1;
     }
 
     public async Task AddAsync(SpeciesSnapshot snapshot, CancellationToken ct = default)

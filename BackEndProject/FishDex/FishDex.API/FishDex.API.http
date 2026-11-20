@@ -1,6 +1,49 @@
 @FishDex.API_HostAddress = http://localhost:5147
 
-GET {{FishDex.API_HostAddress}}/weatherforecast/
-Accept: application/json
+### ── Media-access (ảnh bucket system-image) ─────────────────────────────
+# Chạy FishDex.API ở profile Development (có sẵn MediaAccess:Key dev) + R2 creds trong appsettings.Local.json.
+# Thiếu R2 creds thì redeem trả 503 (presign null) — sas vẫn phát được.
+
+### 1. Phát SAS → copy giá trị "sas" vào biến @sas bên dưới
+POST {{FishDex.API_HostAddress}}/api/public/media-access/sas
+Content-Type: application/json
+
+{}
+
+### 2. Lấy 1 object key thật → copy "imageKey" vào @key bên dưới
+GET {{FishDex.API_HostAddress}}/api/public/species/summaries?codes=1,2,3
 
 ###
+@sas = shared=1&exp=PASTE&sig=PASTE
+@key = PASTE_IMAGE_KEY
+
+### 3. Redeem hợp lệ → mong đợi 302, Location = presigned R2 URL, Cache-Control: private, max-age=840, Vary: Origin
+# (Tắt "follow redirects" trong IDE để thấy 302 thay vì ảnh)
+GET {{FishDex.API_HostAddress}}/api/public/media-access?path={{key}}&{{sas}}
+
+### 4. Sửa chữ ký → mong đợi 403 {"code":"FORBIDDEN"}
+GET {{FishDex.API_HostAddress}}/api/public/media-access?path={{key}}&shared=1&exp=9999999999&sig=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+### 5. Path traversal bị encode → mong đợi 403
+GET {{FishDex.API_HostAddress}}/api/public/media-access?path=..%252F..%252Fsecret&{{sas}}
+
+### 6. Thiếu shared=1 → mong đợi 403
+GET {{FishDex.API_HostAddress}}/api/public/media-access?path={{key}}&exp=1&sig=x
+
+### 7. SAS sống 1 giây → đợi ~2s rồi redeem bằng SAS này → mong đợi 403 {"code":"MEDIA_ACCESS_EXPIRED"}
+POST {{FishDex.API_HostAddress}}/api/public/media-access/sas
+Content-Type: application/json
+
+{ "expiryInSeconds": 1 }
+
+### 8. Vượt trần MaxExpiry (7200) → mong đợi 400
+POST {{FishDex.API_HostAddress}}/api/public/media-access/sas
+Content-Type: application/json
+
+{ "expiryInSeconds": 999999 }
+
+### 9. Các DTO đã có key: imageKey / preferredImageKey / objectKey
+GET {{FishDex.API_HostAddress}}/api/public/species/search?query=oryzias
+
+###
+GET {{FishDex.API_HostAddress}}/api/public/species/summaries?codes=1,2,3

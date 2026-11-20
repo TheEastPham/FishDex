@@ -41,6 +41,11 @@ dotnet run --project FishDex/FishDex.API/FishDex.API.csproj
 dotnet run --project ApiGateway/ApiGateway.csproj
 ```
 
+**Run tests** (cần Docker — Testcontainers tự dựng Postgres `pgvector/pgvector:pg16`):
+```
+dotnet test FishDex/FishDex.Tests/FishDex.Tests.csproj
+```
+
 **Run with hot reload:**
 ```
 dotnet watch --project UserManagement/UserManagement.API/UserManagement.API.csproj

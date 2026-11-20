@@ -9,6 +9,12 @@ public class ContestEntry
 
     public string? VideoR2Key { get; set; }       // null sau khi upload YouTube xong (R2 chỉ là staging)
     public long? VideoSizeBytes { get; set; }      // dùng cho R2 storage guard (SUM WHERE VideoR2Key IS NOT NULL)
+
+    /// <summary>
+    /// Lúc confirm đã HEAD R2 và thấy file thật đúng dung lượng khai. Null = mới chỉ khai lúc submit
+    /// (có thể không bao giờ upload) → trần staging chỉ tính bài loại này trong ít phút đầu.
+    /// </summary>
+    public DateTime? VideoVerifiedAt { get; set; }
     public int VideoDurationSeconds { get; set; }  // 120–300s, đo ở FE trước khi upload
 
     // Tên + mô tả video do người dự thi tự đặt, nhập lúc submit và dùng lại lúc confirm-upload

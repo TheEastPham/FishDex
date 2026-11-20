@@ -1,7 +1,7 @@
-using System.IO;
 using FishDex.Domain.DTOs.Media;
 using FishDex.Domain.Mappings;
 using FishDex.Domain.Services.Interfaces;
+using FishDex.Domain.SpeciesProfiles;
 using FishDex.EFCore.Repository.Interface;
 
 namespace FishDex.Domain.Services;
@@ -21,14 +21,13 @@ public class MediaService(
         }));
     }
 
+    /// <summary>Ảnh đại diện — cùng rule thumbnail với Species Profile (detail, search, summaries).</summary>
     public async Task<SystemImageDto?> GetPreferredImageAsync(int specCode, CancellationToken ct = default)
     {
-        var items = await imageRepo.FindAsync(i => i.SpecCode == specCode && i.PicPreferred == true);
-        var entity = items.FirstOrDefault();
+        var entity = SpeciesRules.PickThumbnail(await imageRepo.FindAsync(i => i.SpecCode == specCode));
         if (entity is null) return null;
 
-        var dto = entity.ToDto();
         var url = await storage.GetPresignedUrlAsync(entity.ObjectKey, ct);
-        return dto with { Url = url, ObjectKey = entity.ObjectKey };
+        return entity.ToDto() with { Url = url, ObjectKey = entity.ObjectKey };
     }
 }

@@ -8,7 +8,6 @@ namespace FishDex.EFCore.Repository;
 
 public class CommunityCommonNameRepository(FishDexDbContext db) : ICommunityCommonNameRepository
 {
-    private const int CommunityMinSpecCode = 500_000;
 
     /// <summary>
     /// Hai nhánh: dưới 500.000 tra bảng <c>Species</c> của FishBase, từ 500.000 tra
@@ -17,7 +16,7 @@ public class CommunityCommonNameRepository(FishDexDbContext db) : ICommunityComm
     /// và chúng được phép vào danh sách market.
     /// </summary>
     public async Task<bool> SpeciesExistsAsync(int specCode, CancellationToken ct = default)
-        => specCode >= CommunityMinSpecCode
+        => specCode >= SpeciesCodes.CommunityStart
             ? await db.SpeciesSnapshots.AnyAsync(
                 s => s.SpecCode == specCode
                      && s.DataSource == SnapshotDataSource.Community

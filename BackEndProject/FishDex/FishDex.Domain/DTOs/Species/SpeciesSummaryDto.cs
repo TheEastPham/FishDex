@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace FishDex.Domain.DTOs.Species;
 
 public class SpeciesSummaryDto
@@ -10,4 +12,8 @@ public class SpeciesSummaryDto
 
     /// <summary>Object key trong system-image — bất biến, lưu/cache được. FE ghép với SAS media-access.</summary>
     public string? ImageKey { get; init; }
+
+    /// <summary>Chiều dài tối đa (cm) — chỉ dùng nội bộ (market lấy làm fallback), không lộ ra JSON.</summary>
+    [JsonIgnore]
+    public decimal? Length { get; init; }
 }

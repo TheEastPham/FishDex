@@ -1,7 +1,6 @@
 using FishDex.Domain.DTOs.Species;
 using FishDex.Domain.Helpers;
 using FishDex.Domain.Services.Interfaces;
-using FishDex.EFCore.Cache;
 using FishDex.EFCore.Entity.Species;
 using FishDex.EFCore.Repository.Interface;
 using FishLover.Shared.Services;
@@ -11,16 +10,15 @@ namespace FishDex.Domain.Services;
 
 /// <summary>
 /// User đóng góp tên địa phương (tiếng Việt) cho loài FishBase đã tồn tại — submit + moderation.
-/// Lưu thẳng vào CommonNames (ContributedBy != null, IsVerified=false). Read path đã đọc CommonNames
-/// nên chỉ cần lọc IsVerified; verify xong invalidate SpeciesSnapshot để tên preferred re-flatten.
+/// Lưu thẳng vào CommonNames (ContributedBy != null, IsVerified=false). Species Profile đọc CommonNames
+/// trực tiếp (lọc IsVerified) ở mọi đường đọc, nên verify xong là tên hiện ngay — không có cache nào
+/// phải invalidate.
 /// </summary>
 public class CommunityCommonNameService(
     ICommunityCommonNameRepository repo,
-    ISpeciesCache speciesCache,
     ICurrentUserSession currentUser,
     ILogger<CommunityCommonNameService> logger) : ICommunityCommonNameService
 {
-    private const int CommunityMinSpecCode = 500_000;
     private const int ContributedRank = 999; // xếp sau tên preferred gốc của FishBase trong cùng ngôn ngữ
 
     public async Task<SubmitCommonNameResult> SubmitAsync(int specCode, SubmitCommonNameRequest request, CancellationToken ct = default)
@@ -98,8 +96,6 @@ public class CommunityCommonNameService(
         name.ReviewedBy      = currentUser.UserId;
         await repo.SaveChangesAsync(ct);
 
-        // Snapshot đã bake CommonName lúc flatten — invalidate để lần đọc sau lấy tên mới.
-        await speciesCache.InvalidateAsync(name.SpecCode, ct);
         logger.LogInformation("Community common name {AutoCtr} verified (SpecCode {SpecCode}) by {UserId}", autoCtr, name.SpecCode, currentUser.UserId);
         return true;
     }
@@ -118,10 +114,6 @@ public class CommunityCommonNameService(
             n.ReviewedBy      = currentUser.UserId;
         }
         await repo.SaveChangesAsync(ct);
-
-        // Invalidate 1 lần cho mỗi specCode bị ảnh hưởng (nhiều tên có thể cùng 1 loài).
-        foreach (var specCode in names.Select(n => n.SpecCode).Distinct())
-            await speciesCache.InvalidateAsync(specCode, ct);
 
         logger.LogInformation("Batch-verified {Count} community common names by {UserId}", names.Count, currentUser.UserId);
         return names.Count;

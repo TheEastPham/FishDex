@@ -1,5 +1,4 @@
 ﻿using System;
-using FishDex.EFCore.Cache;
 using FishDex.EFCore.DbContexts;
 using FishDex.EFCore.Repository;
 using FishDex.EFCore.Repository.Interface;
@@ -49,35 +48,11 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddFishDexRepositories(this IServiceCollection services)
     {
-        services.AddScoped<ISpeciesRepository,             SpeciesRepository>();
         services.AddScoped<IFamiliesRepository,            FamiliesRepository>();
         services.AddScoped<IGenusRepository,               GenusRepository>();
         services.AddScoped<ICommonNameRepository,          CommonNameRepository>();
-        services.AddScoped<IStockRepository,               StockRepository>();
-        services.AddScoped<IStockConservationRepository,   StockConservationRepository>();
-        services.AddScoped<IStockEnvironmentRepository,    StockEnvironmentRepository>();
-        services.AddScoped<IStockExternalRefRepository,    StockExternalRefRepository>();
-        services.AddScoped<IStockDataAvailabilityRepository, StockDataAvailabilityRepository>();
-        services.AddScoped<IStockMetadataRepository,       StockMetadataRepository>();
-        services.AddScoped<IEcologyRepository,             EcologyRepository>();
-        services.AddScoped<IHabitatZoneRepository,         HabitatZoneRepository>();
-        services.AddScoped<IFeedingAndDietRepository,      FeedingAndDietRepository>();
-        services.AddScoped<IAssociationsRepository,        AssociationsRepository>();
-        services.AddScoped<ISubstrateRepository,           SubstrateRepository>();
-        services.AddScoped<ISpecialHabitatRepository,      SpecialHabitatRepository>();
-        services.AddScoped<ICircadianBehaviorRepository,   CircadianBehaviorRepository>();
-        services.AddScoped<IMorphDataRepository,           MorphDataRepository>();
-        services.AddScoped<IMorphTeethRepository,          MorphTeethRepository>();
-        services.AddScoped<IMorphPigmentationRepository,   MorphPigmentationRepository>();
-        services.AddScoped<IMorphFinsRepository,           MorphFinsRepository>();
-        services.AddScoped<IMorphMeristicsRepository,      MorphMeristicsRepository>();
-        services.AddScoped<IMorphMetricsRepository,        MorphMetricsRepository>();
         services.AddScoped<IOccurrenceRepository,          OccurrenceRepository>();
-        services.AddScoped<IEcosystemRepository,           EcosystemRepository>();
-        services.AddScoped<IEcosystemRefRepository,        EcosystemRefRepository>();
         services.AddScoped<ISystemImageRepository,         SystemImageRepository>();
-        services.AddScoped<FishBaseFlattener>();
-        services.AddScoped<ISpeciesCache,                  DbSpeciesCache>();
         services.AddScoped<ICommunitySpeciesRepository,    CommunitySpeciesRepository>();
         services.AddScoped<ICommunityCommonNameRepository, CommunityCommonNameRepository>();
         services.AddScoped<ITradedSpeciesRepository,       TradedSpeciesRepository>();

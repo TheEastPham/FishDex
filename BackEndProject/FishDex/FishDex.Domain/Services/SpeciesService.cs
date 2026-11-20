@@ -359,7 +359,10 @@ public class SpeciesService(
         var rows = await commonNameRepo.GetTopLanguagesAsync(_languageTopCount, ct);
         var result = rows.Select(r => new LanguageCountDto { Language = r.Language, Count = r.Count }).ToList();
 
-        cache.Set(cacheKey, result, TimeSpan.FromHours(24));
+        // AddMemoryCache đặt SizeLimit (Program.cs) → mọi entry BẮT BUỘC có Size, thiếu là ném InvalidOperationException.
+        cache.Set(cacheKey, result, new MemoryCacheEntryOptions()
+            .SetSize(1)
+            .SetAbsoluteExpiration(TimeSpan.FromHours(24)));
 
         return result;
     }

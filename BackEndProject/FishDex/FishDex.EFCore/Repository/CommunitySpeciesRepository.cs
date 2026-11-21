@@ -109,6 +109,11 @@ public class CommunitySpeciesRepository(FishDexDbContext db) : ICommunitySpecies
             .ToListAsync(ct);
     }
 
+    public async Task<int> CountUnverifiedByContributorAsync(Guid userId, CancellationToken ct = default)
+    {
+        return await db.SpeciesSnapshots.CountAsync(s => s.DataSource == SnapshotDataSource.Community && s.ContributedBy == userId && !s.IsVerified, ct);
+    }
+
     public async Task<IReadOnlyList<SpeciesSnapshot>> GetPendingAsync(CancellationToken ct = default)
     {
         return await db.SpeciesSnapshots

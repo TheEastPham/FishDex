@@ -41,6 +41,11 @@ export async function requestCommunitySpeciesImageUpload(
   return data;
 }
 
+/** Gọi sau khi PUT ảnh lên R2 — BE kiểm tra dung lượng thật rồi mới gắn ảnh vào loài. 400 IMAGE_TOO_LARGE nếu vượt 1 MB. */
+export async function confirmCommunitySpeciesImageUpload(specCode: number, objectKey: string): Promise<void> {
+  await apiClient.post(`${BASE}/community/${specCode}/image/confirm`, { objectKey });
+}
+
 export async function rejectCommunitySpecies(specCode: number, reason: string): Promise<void> {
   await apiClient.patch(`${BASE}/community/${specCode}/reject`, { reason });
 }

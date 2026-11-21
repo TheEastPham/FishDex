@@ -14,11 +14,7 @@ public enum SimilarNameSource
 }
 
 /// <param name="Score">Độ giống trigram 0..1. Càng gần 1 càng nhiều khả năng là cùng một loài.</param>
-public sealed record SimilarSpeciesName(
-    int SpecCode,
-    string SpeciesName,
-    SimilarNameSource Source,
-    double Score);
+public sealed record SimilarSpeciesName(int SpecCode, string SpeciesName, SimilarNameSource Source, double Score);
 
 /// <summary>
 /// Truy cập SpeciesSnapshot cho luồng community (loài lai tạo do user submit).

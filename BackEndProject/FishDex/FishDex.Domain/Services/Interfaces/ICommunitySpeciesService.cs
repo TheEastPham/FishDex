@@ -22,8 +22,7 @@ public interface ICommunitySpeciesService
     /// trả thẳng DTO, chặn ở đó sẽ phải đổi kiểu trả về và sửa controller của một luồng đang
     /// chạy tốt. FE gọi cái này khi user gõ tên rồi hiện "có phải bạn định nói…".</para>
     /// </summary>
-    Task<IReadOnlyList<SimilarSpeciesDto>> FindSimilarAsync(
-        string speciesName, CancellationToken ct = default);
+    Task<IReadOnlyList<SimilarSpeciesDto>> FindSimilarAsync(string speciesName, CancellationToken ct = default);
 
     /// <summary>User submit loài mới → tạo SpeciesSnapshot Community, IsVerified=false, chờ duyệt.</summary>
     Task<CommunitySpeciesDto> SubmitAsync(SubmitCommunitySpeciesRequest request, CancellationToken ct = default);
@@ -53,6 +52,5 @@ public interface ICommunitySpeciesService
     /// Cấp presigned PUT URL để user tự upload ảnh cho loài community vừa submit (chỉ chủ sở hữu).
     /// Ghi ObjectKey vào ThumbnailObjectKey ngay — ảnh chỉ hiện public sau khi admin duyệt.
     /// </summary>
-    Task<CommunityImageUploadResultDto?> RequestImageUploadAsync(
-        int specCode, string fileName, string contentType, CancellationToken ct = default);
+    Task<CommunityImageUploadResultDto?> RequestImageUploadAsync(int specCode, string fileName, string contentType, CancellationToken ct = default);
 }

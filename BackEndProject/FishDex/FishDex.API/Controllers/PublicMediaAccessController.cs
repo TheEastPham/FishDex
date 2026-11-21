@@ -1,5 +1,6 @@
 using FishDex.Domain.DTOs.Media;
 using FishDex.Domain.Services.Interfaces;
+using FishLover.Storage.MediaAccess;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;

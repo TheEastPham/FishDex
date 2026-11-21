@@ -1,11 +1,11 @@
 using AquaHome.Domain.DTOs;
 using AquaHome.Domain.Services.Interfaces;
-using AquaHome.Domain.Settings;
+using AquaHome.Domain.Storage;
 using AquaHome.EFCore.Entity;
 using AquaHome.EFCore.Repository.Interface;
 using FishLover.Shared.Services;
+using FishLover.Storage;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace AquaHome.Domain.Services;
 
@@ -14,7 +14,7 @@ public class AquariumMediaService(
     IAquariumRepository      aquariumRepo,
     IStorageService          storage,
     ICurrentUserSession      currentUser,
-    IOptions<StorageSettings> storageOptions,
+    AquaHomeObjectKeys keys,
     ILogger<AquariumMediaService> logger) : IAquariumMediaService
 {
     private const int MaxPhotosPerAquarium = 10;
@@ -28,7 +28,6 @@ public class AquariumMediaService(
         ["image/webp"] = ".webp",
     };
 
-    private string Env => storageOptions.Value.Environment;
 
     public async Task<PresignedUploadDto?> RequestUploadAsync(
         Guid aquariumId, string fileName, string contentType, CancellationToken ct = default)
@@ -61,8 +60,8 @@ public class AquariumMediaService(
             CreatedAt   = DateTime.UtcNow,
         };
 
-        var objectKey  = media.ObjectKey(Env);
-        var uploadUrl  = await storage.GeneratePresignedPutUrlAsync(objectKey, contentType, MaxUploadBytes, ct);
+        var objectKey  = keys.AquariumMedia(media);
+        var uploadUrl  = await storage.GeneratePresignedPutUrlAsync(objectKey, contentType, ct);
 
         if (uploadUrl is null)
             return null;
@@ -87,7 +86,7 @@ public class AquariumMediaService(
 
         // Presigned PUT không chặn được dung lượng → kiểm file thật. Không có file hoặc quá 1MB thì bỏ hẳn ảnh
         // (row tạo sẵn lúc xin URL, để lại sẽ chiếm 1 trong 10 suất ảnh của bể).
-        var objectKey = media.ObjectKey(Env);
+        var objectKey = keys.AquariumMedia(media);
         var size = await storage.GetObjectSizeAsync(objectKey, ct);
         if (size is null or > MaxUploadBytes)
         {
@@ -115,7 +114,7 @@ public class AquariumMediaService(
         var dtos = new List<AquariumMediaDto>(list.Count);
         foreach (var m in list)
         {
-            var url = await storage.GetPresignedUrlAsync(m.ObjectKey(Env), ct);
+            var url = await storage.GetPresignedUrlAsync(keys.AquariumMedia(m), ct);
             dtos.Add(ToDto(m, url));
         }
         return dtos;
@@ -131,7 +130,7 @@ public class AquariumMediaService(
         if (media is null || media.AquariumId != aquariumId)
             return false;
 
-        await storage.DeleteAsync(media.ObjectKey(Env), ct);
+        await storage.DeleteAsync(keys.AquariumMedia(media), ct);
         mediaRepo.Remove(media);
         await mediaRepo.SaveChangesAsync(ct);
         return true;

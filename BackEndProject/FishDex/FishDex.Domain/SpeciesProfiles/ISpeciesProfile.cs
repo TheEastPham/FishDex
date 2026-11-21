@@ -27,17 +27,14 @@ public interface ISpeciesProfile
     /// Thẻ tóm tắt cho nhiều loài một lượt — giữ thứ tự đầu vào, bỏ qua mã không tồn tại.
     /// Đây là hợp đồng mà AquaHome dùng (qua /api/public/species/summaries).
     /// </summary>
-    Task<IReadOnlyList<SpeciesSummaryDto>> GetSummariesAsync(
-        IEnumerable<int> specCodes, string? language = null, CancellationToken ct = default);
+    Task<IReadOnlyList<SpeciesSummaryDto>> GetSummariesAsync(IEnumerable<int> specCodes, string? language = null, CancellationToken ct = default);
 
     /// <summary>
     /// Tìm theo tên khoa học hoặc tên thường gọi. Loài cộng đồng đã duyệt đứng trước loài FishBase
     /// và chỉ xuất hiện khi không lọc theo họ/chi; phân trang xuyên suốt cả hai nguồn.
     /// </summary>
-    Task<PagedResult<SpeciesSearchResultDto>> SearchAsync(
-        GetSpeciesSearchRequest request, CancellationToken ct = default);
+    Task<PagedResult<SpeciesSearchResultDto>> SearchAsync(GetSpeciesSearchRequest request, CancellationToken ct = default);
 
     /// <summary>Loài liên quan: cùng chi trước, bù bằng cùng họ. <paramref name="limit"/> kẹp trong 3–6.</summary>
-    Task<IReadOnlyList<SpeciesSearchResultDto>> GetRelatedAsync(
-        int specCode, int limit = 6, string? language = null, CancellationToken ct = default);
+    Task<IReadOnlyList<SpeciesSearchResultDto>> GetRelatedAsync(int specCode, int limit = 6, string? language = null, CancellationToken ct = default);
 }

@@ -60,19 +60,25 @@ public class CommunitySpeciesController(ICommunitySpeciesService service) : Cont
     /// <summary>Danh sách loài community do user hiện tại gửi (mọi trạng thái).</summary>
     [HttpGet("mine")]
     public Task<IReadOnlyList<CommunitySpeciesDto>> GetMine(CancellationToken ct)
-        => service.GetMineAsync(ct);
+    {
+        return service.GetMineAsync(ct);
+    }
 
     /// <summary>Danh sách chờ duyệt — admin.</summary>
     [HttpGet("pending")]
     [Authorize(Policy = "RequireContentAdmin")]
     public Task<IReadOnlyList<CommunitySpeciesDto>> GetPending(CancellationToken ct)
-        => service.GetPendingAsync(ct);
+    {
+        return service.GetPendingAsync(ct);
+    }
 
     /// <summary>Admin duyệt → loài xuất hiện ở search/detail. Body optional để xác nhận lại Kind.</summary>
     [HttpPatch("{specCode:int}/verify")]
     [Authorize(Policy = "RequireContentAdmin")]
     public async Task<IActionResult> Verify(int specCode, [FromBody] VerifyCommunitySpeciesRequest? request, CancellationToken ct)
-        => await service.VerifyAsync(specCode, request?.Kind, ct) ? NoContent() : NotFound();
+    {
+        return await service.VerifyAsync(specCode, request?.Kind, ct) ? NoContent() : NotFound();
+    }
 
     /// <summary>Admin từ chối (kèm lý do).</summary>
     [HttpPatch("{specCode:int}/reject")]
@@ -88,7 +94,9 @@ public class CommunitySpeciesController(ICommunitySpeciesService service) : Cont
     /// <summary>Chủ sở hữu tự xoá hẳn loài mình đã gửi (chưa được duyệt — kể cả đã bị admin từ chối).</summary>
     [HttpDelete("{specCode:int}")]
     public async Task<IActionResult> Delete(int specCode, CancellationToken ct)
-        => await service.DeleteAsync(specCode, ct) ? NoContent() : NotFound();
+    {
+        return await service.DeleteAsync(specCode, ct) ? NoContent() : NotFound();
+    }
 
     /// <summary>Chủ sở hữu (người submit) xin presigned URL để upload ảnh cho loài vừa gửi.</summary>
     [HttpPost("{specCode:int}/image/presign")]

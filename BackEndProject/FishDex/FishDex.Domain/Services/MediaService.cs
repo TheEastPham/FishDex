@@ -3,12 +3,11 @@ using FishDex.Domain.Mappings;
 using FishDex.Domain.Services.Interfaces;
 using FishDex.Domain.SpeciesProfiles;
 using FishDex.EFCore.Repository.Interface;
+using FishLover.Storage;
 
 namespace FishDex.Domain.Services;
 
-public class MediaService(
-    ISystemImageRepository imageRepo,
-    IStorageService storage) : IMediaService
+public class MediaService(ISystemImageRepository imageRepo, IStorageService storage) : IMediaService
 {
     public async Task<IReadOnlyList<SystemImageDto>> GetBySpecCodeAsync(int specCode, CancellationToken ct = default)
     {

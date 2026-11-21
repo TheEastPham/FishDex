@@ -8,13 +8,13 @@ using AquaHome.Domain.Enums;
 using AquaHome.Domain.Exceptions;
 using AquaHome.Domain.Extensions;
 using AquaHome.Domain.Services.Interfaces;
-using AquaHome.Domain.Settings;
+using AquaHome.Domain.Storage;
 using AquaHome.EFCore.Entity;
 using AquaHome.EFCore.Repository.Interface;
 using FishLover.Shared.Common;
 using FishLover.Shared.Services;
+using FishLover.Storage;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace AquaHome.Domain.Services;
 
@@ -26,7 +26,7 @@ namespace AquaHome.Domain.Services;
 public class ArticleService(
     IArticleRepository articleRepo,
     IStorageService storage,
-    IOptions<StorageSettings> storageOptions,
+    AquaHomeObjectKeys keys,
     ICurrentUserSession currentUser,
     ILogger<ArticleService> logger) : IArticleService
 {
@@ -55,7 +55,6 @@ public class ArticleService(
     private const int MaxTagChars = 30;
     private const int MaxPageSize = 50;
 
-    private string Env => storageOptions.Value.Environment;
 
     // ── Công khai ────────────────────────────────────────────────────────────
 
@@ -391,7 +390,7 @@ public class ArticleService(
             Bytes       = file.Content.Length,
             CreatedAt   = DateTime.UtcNow,
         };
-        asset.ObjectKey = $"{article.ObjectKeyPrefix(Env)}/assets/{asset.Id}{ExtensionFor(file)}";
+        asset.ObjectKey = keys.ArticleAsset(article.Id, asset.Id, ExtensionFor(file));
 
         await storage.PutObjectAsync(asset.ObjectKey, file.Content, file.ContentType, ct);
 
@@ -427,7 +426,7 @@ public class ArticleService(
 
         RequireImage(file, MaxCoverBytes);
 
-        var key = $"{article.ObjectKeyPrefix(Env)}/cover{ExtensionFor(file)}";
+        var key = keys.ArticleCover(article.Id, ExtensionFor(file));
         await storage.PutObjectAsync(key, file.Content, file.ContentType, ct);
 
         // Đổi định dạng ảnh (jpg sang webp) làm key khác nhau, phải dọn file cũ không thì mồ côi.
@@ -468,7 +467,7 @@ public class ArticleService(
         var article = await articleRepo.GetByIdAsync(id, ct);
         if (article is null) return false;
 
-        var prefix = article.ObjectKeyPrefix(Env);
+        var prefix = keys.ArticleFolder(article.Id);
         var slug = article.Slug;
 
         articleRepo.Remove(article); // cascade xóa Translations + Assets
@@ -526,7 +525,7 @@ public class ArticleService(
     }
 
     private string ContentKey(Article article, string language)
-        => $"{article.ObjectKeyPrefix(Env)}/{language}/content.json";
+        => keys.ArticleContent(article.Id, language);
 
     /// <summary>
     /// Kiểu trình bày FE dựng được. Người viết tự chọn cho mỗi bài (không suy từ loại bài —

@@ -160,9 +160,13 @@ internal static class CountryCodeMap
         ["862"]  = "ve", ["894"]  = "zm",
     };
 
-    public static string Resolve(string code) =>
-        _map.TryGetValue(code, out var name) ? name : code;
+    public static string Resolve(string code)
+    {
+        return _map.TryGetValue(code, out var name) ? name : code;
+    }
 
-    public static string? ResolveAlpha2(string code) =>
-        _alpha2Map.TryGetValue(code, out var alpha2) ? alpha2 : null;
+    public static string? ResolveAlpha2(string code)
+    {
+        return _alpha2Map.TryGetValue(code, out var alpha2) ? alpha2 : null;
+    }
 }

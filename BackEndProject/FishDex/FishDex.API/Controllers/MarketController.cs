@@ -23,15 +23,16 @@ public class MarketController(IMarketService service) : ControllerBase
     /// <summary>Các nước đã bật trang market — đổ vào dropdown chọn quốc gia.</summary>
     [HttpGet("countries")]
     public ActionResult<IReadOnlyList<MarketCountryDto>> GetCountries()
-        => Ok(service.GetCountries());
+    {
+        return Ok(service.GetCountries());
+    }
 
     /// <summary>
     /// Danh sách loài đang bán, phân trang 24. Hai bộ lọc: <c>sizeBand</c> và <c>nameStatus</c>.
     /// Không có bộ lọc mức phổ biến ở v1 vì dòng sinh từ bể cá không mang TradeStatus.
     /// </summary>
     [HttpGet("{cc}/species")]
-    public async Task<ActionResult<PagedResult<MarketSpeciesDto>>> GetSpecies(
-        string cc, [FromQuery] MarketSpeciesQuery query, CancellationToken ct)
+    public async Task<ActionResult<PagedResult<MarketSpeciesDto>>> GetSpecies(string cc, [FromQuery] MarketSpeciesQuery query, CancellationToken ct)
     {
         var result = await service.GetSpeciesAsync(cc, query, ct);
         return result is null
@@ -57,9 +58,10 @@ public class MarketController(IMarketService service) : ControllerBase
     /// badge "có bán ở ‹nước›". Mảng rỗng nghĩa là chưa nước nào có loài này trong danh sách.
     /// </summary>
     [HttpGet("species/{specCode:int}/countries")]
-    public async Task<ActionResult<IReadOnlyList<string>>> GetSellingCountries(
-        int specCode, CancellationToken ct)
-        => Ok(await service.GetSellingCountriesAsync(specCode, ct));
+    public async Task<ActionResult<IReadOnlyList<string>>> GetSellingCountries(int specCode, CancellationToken ct)
+    {
+        return Ok(await service.GetSellingCountriesAsync(specCode, ct));
+    }
 
     /// <summary>
     /// Tra tên khoa học trên index toàn bộ FishBase để biết loài nằm ở nhánh nào:

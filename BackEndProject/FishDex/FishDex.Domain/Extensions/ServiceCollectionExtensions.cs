@@ -1,6 +1,7 @@
 using FishDex.Domain.Services;
 using FishDex.Domain.Services.Interfaces;
 using FishDex.Domain.SpeciesProfiles;
+using FishLover.Storage.MediaAccess;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -17,8 +18,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IOccurrenceService, OccurrenceService>();
         services.AddScoped<IMediaService, MediaService>();
         services.AddScoped<IMarketService, MarketService>();
-        services.AddSingleton<IStorageService, S3StorageService>();
         services.TryAddSingleton(TimeProvider.System);
+        services.AddSingleton<MediaAccessSigner>();
         services.AddSingleton<IMediaAccessService, MediaAccessService>();
         return services;
     }

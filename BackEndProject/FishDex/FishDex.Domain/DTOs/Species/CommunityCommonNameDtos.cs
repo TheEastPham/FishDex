@@ -1,11 +1,7 @@
 namespace FishDex.Domain.DTOs.Species;
 
 /// <summary>User đóng góp 1 tên địa phương cho loài FishBase đã tồn tại.</summary>
-public record SubmitCommonNameRequest(
-    string ComName,
-    string Language = "Vietnamese",
-    string? Transliteration = null,
-    string? CountryCode = null);
+public record SubmitCommonNameRequest(string ComName, string Language = "Vietnamese", string? Transliteration = null, string? CountryCode = null);
 
 public record UpdateCommonNameRequest(string ComName);
 

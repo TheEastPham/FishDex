@@ -6,6 +6,7 @@ using FishDex.EFCore.Entity.Cache;
 using FishDex.EFCore.Entity.Media;
 using FishDex.EFCore.Entity.Species;
 using FishDex.EFCore.Repository.Interface;
+using FishLover.Storage;
 using FishLover.Shared.Common;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,15 +17,11 @@ namespace FishDex.Domain.SpeciesProfiles;
 /// và đọc loài cộng đồng từ <c>SpeciesSnapshots</c>. Không có cache tầng DB: không ghi trong GET,
 /// không có chuyện snapshot cũ. Rule chọn ảnh/tên/ecology ở <see cref="SpeciesRules"/>.
 /// </summary>
-public sealed class SpeciesProfile(
-    FishDexDbContext db,
-    ICommunitySpeciesRepository communityRepo,
-    IStorageService storage) : ISpeciesProfile
+public sealed class SpeciesProfile(FishDexDbContext db, ICommunitySpeciesRepository communityRepo, IStorageService storage) : ISpeciesProfile
 {
     // ── Detail ───────────────────────────────────────────────────────────────
 
-    public async Task<SpeciesDetailDto?> GetDetailAsync(
-        int specCode, string? language = null, CancellationToken ct = default)
+    public async Task<SpeciesDetailDto?> GetDetailAsync(int specCode, string? language = null, CancellationToken ct = default)
     {
         language = SpeciesRules.NormalizeLanguage(language);
 
@@ -243,8 +240,7 @@ public sealed class SpeciesProfile(
 
     // ── Search ───────────────────────────────────────────────────────────────
 
-    public async Task<PagedResult<SpeciesSearchResultDto>> SearchAsync(
-        GetSpeciesSearchRequest request, CancellationToken ct = default)
+    public async Task<PagedResult<SpeciesSearchResultDto>> SearchAsync(GetSpeciesSearchRequest request, CancellationToken ct = default)
     {
         var language = SpeciesRules.NormalizeLanguage(request.Language);
         var skip = (request.Page - 1) * request.PageSize;
@@ -355,8 +351,7 @@ public sealed class SpeciesProfile(
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private async Task<List<SpeciesSearchResultDto>> ToFishBaseCardsAsync(
-        IReadOnlyList<Species> species, string? language, CancellationToken ct)
+    private async Task<List<SpeciesSearchResultDto>> ToFishBaseCardsAsync(IReadOnlyList<Species> species, string? language, CancellationToken ct)
     {
         var images = await LoadImagesAsync(species.Select(s => s.SpecCode).ToList(), ct);
 
@@ -378,8 +373,7 @@ public sealed class SpeciesProfile(
         return result;
     }
 
-    private async Task<List<SpeciesSearchResultDto>> ToCommunityCardsAsync(
-        IReadOnlyList<SpeciesSnapshot> items, CancellationToken ct)
+    private async Task<List<SpeciesSearchResultDto>> ToCommunityCardsAsync(IReadOnlyList<SpeciesSnapshot> items, CancellationToken ct)
     {
         var result = new List<SpeciesSearchResultDto>(items.Count);
         foreach (var s in items)

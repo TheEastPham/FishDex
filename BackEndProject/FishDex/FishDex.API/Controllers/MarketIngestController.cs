@@ -18,10 +18,7 @@ namespace FishDex.API.Controllers;
 [ApiController]
 [Route("api/market/ingest")]
 [AllowAnonymous]
-public class MarketIngestController(
-    IMarketService service,
-    IConfiguration config,
-    ILogger<MarketIngestController> logger) : ControllerBase
+public class MarketIngestController(IMarketService service, IConfiguration config, ILogger<MarketIngestController> logger) : ControllerBase
 {
     [HttpPost]
     public async Task<ActionResult<IngestResultDto>> Ingest(

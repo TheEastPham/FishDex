@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace FishDex.Domain.Services.MediaAccess;
+namespace FishLover.Storage.MediaAccess;
 
 /// <summary>
 /// Đưa object key về đúng một cách viết duy nhất trước khi ký presigned URL.
@@ -8,7 +8,7 @@ namespace FishDex.Domain.Services.MediaAccess;
 /// <remarks>
 /// SAS không ký path — client tự ghép key vào URL — nên key từ client phải không thể thoát ra ngoài
 /// bucket. Decode đúng 1 lần rồi từ chối <c>%</c> còn sót, để traversal bị encode (<c>..%2F</c>) không lọt
-/// được vào URL R2. Port nguyên từ grapeseed-student-service.
+/// được vào URL R2. Dùng chung cho mọi service có media-access.
 /// </remarks>
 public static class AssetKeyCanonicalizer
 {

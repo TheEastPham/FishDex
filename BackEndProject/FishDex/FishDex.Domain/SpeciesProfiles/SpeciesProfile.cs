@@ -6,6 +6,7 @@ using FishDex.EFCore.Entity.Cache;
 using FishDex.EFCore.Entity.Media;
 using FishDex.EFCore.Entity.Species;
 using FishDex.EFCore.Repository.Interface;
+using FishLover.Storage;
 using FishLover.Shared.Common;
 using Microsoft.EntityFrameworkCore;
 

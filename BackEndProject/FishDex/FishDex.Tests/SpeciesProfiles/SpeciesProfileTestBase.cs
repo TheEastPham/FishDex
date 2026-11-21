@@ -2,6 +2,7 @@ using FishDex.Domain.SpeciesProfiles;
 using FishDex.EFCore.DbContexts;
 using FishDex.EFCore.Repository;
 using FishDex.Tests.Infrastructure;
+using FishLover.Storage;
 
 namespace FishDex.Tests.SpeciesProfiles;
 
@@ -30,7 +31,7 @@ public abstract class SpeciesProfileTestBase(PostgresFixture pg) : IAsyncLifetim
     protected ISpeciesProfile NewProfile(out FishDexDbContext db, bool storageConfigured = true)
     {
         db = Pg.CreateDb();
-        return new SpeciesProfile(db, new CommunitySpeciesRepository(db), new FakeStorage(storageConfigured));
+        return new SpeciesProfile(db, new CommunitySpeciesRepository(db), new InMemoryStorageService(storageConfigured));
     }
 
     protected ISpeciesProfile NewProfile(bool storageConfigured = true)

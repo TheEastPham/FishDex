@@ -1,8 +1,10 @@
 using FishDex.Domain.DTOs.Species;
 using FishDex.Domain.Services.Interfaces;
+using FishDex.Domain.Storage;
 using FishDex.EFCore.Entity.Cache;
 using FishDex.EFCore.Repository.Interface;
 using FishLover.Shared.Services;
+using FishLover.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -20,7 +22,6 @@ public class CommunitySpeciesService(
     ILogger<CommunitySpeciesService> logger) : ICommunitySpeciesService
 {
     private const int MaxAllocationRetries = 3;
-    private const long MaxImageUploadBytes = 5 * 1024 * 1024;
     // Đuôi file suy từ content-type (đã ký vào presigned PUT), không lấy theo tên file client gửi.
     private static readonly Dictionary<string, string> ImageExtensions = new()
     {
@@ -157,9 +158,9 @@ public class CommunitySpeciesService(
         var snapshot = await repo.GetCommunityByCodeAsync(specCode, ct);
         if (snapshot is null || snapshot.ContributedBy != currentUser.UserId) return null;
 
-        var objectKey = $"community/{specCode}/cover{ext}";
+        var objectKey = FishDexObjectKeys.CommunityCover(specCode, ext);
 
-        var uploadUrl = await storage.GeneratePresignedPutUrlAsync(objectKey, contentType, MaxImageUploadBytes, ct);
+        var uploadUrl = await storage.GeneratePresignedPutUrlAsync(objectKey, contentType, ct);
         if (uploadUrl is null) return null;
 
         // Đổi định dạng ảnh (.png → .jpg) là đổi key → ảnh cũ thành rác trên R2 nếu không xoá. Cùng key thì PUT ghi đè.

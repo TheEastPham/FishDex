@@ -1,7 +1,7 @@
-namespace FishDex.Domain.Settings;
+namespace FishLover.Storage.MediaAccess;
 
 /// <summary>
-/// Khoá ký + chính sách thời hạn cho link media-access (ảnh bucket system-image).
+/// Khoá ký + chính sách thời hạn cho link media-access (section <c>MediaAccess</c> của service phát link).
 /// Port từ grapeseed-student-service, bỏ country/tenant vì FishLover không có khái niệm đó.
 /// </summary>
 /// <remarks>

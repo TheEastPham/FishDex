@@ -1,4 +1,5 @@
 using FishDex.Tests.Infrastructure;
+using FishLover.Storage;
 
 namespace FishDex.Tests.SpeciesProfiles;
 
@@ -232,7 +233,7 @@ public sealed class DetailTests(PostgresFixture pg) : SpeciesProfileTestBase(pg)
 
         Assert.Equal(18, rich!.Environment!.TempMin);
         Assert.True(rich.Ecology!.Schooling);
-        Assert.Equal(FakeStorage.Url("community/500001/t.jpg"), rich.PreferredImageUrl);
+        Assert.Equal(InMemoryStorageService.UrlFor("community/500001/t.jpg"), rich.PreferredImageUrl);
         Assert.Null(bare!.Environment);
         Assert.Null(bare.Ecology);
     }

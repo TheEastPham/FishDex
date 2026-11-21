@@ -3,6 +3,7 @@ using FishDex.Domain.Mappings;
 using FishDex.Domain.Services.Interfaces;
 using FishDex.Domain.SpeciesProfiles;
 using FishDex.EFCore.Repository.Interface;
+using FishLover.Storage;
 
 namespace FishDex.Domain.Services;
 

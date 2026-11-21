@@ -2,6 +2,7 @@ using FishDex.Domain.DTOs.Species;
 using FishDex.Domain.Services;
 using FishDex.EFCore.Repository;
 using FishDex.Tests.Infrastructure;
+using FishLover.Storage;
 
 namespace FishDex.Tests.SpeciesProfiles;
 
@@ -29,7 +30,7 @@ public sealed class ThumbnailRuleTests(PostgresFixture pg) : SpeciesProfileTestB
         var summary = (await profile.GetSummariesAsync([100])).Single();
         var search  = (await profile.SearchAsync(new GetSpeciesSearchRequest { Query = "latipes" })).Items.Single();
         var related = (await profile.GetRelatedAsync(101)).Single();
-        var media   = await new MediaService(new SystemImageRepository(db), new FakeStorage()).GetPreferredImageAsync(100);
+        var media   = await new MediaService(new SystemImageRepository(db), new InMemoryStorageService()).GetPreferredImageAsync(100);
 
         Assert.Equal(male.ObjectKey, detail!.PreferredImageKey);
         Assert.Equal(male.ObjectKey, summary.ImageKey);
@@ -88,7 +89,7 @@ public sealed class ThumbnailRuleTests(PostgresFixture pg) : SpeciesProfileTestB
         await Seed.SaveAsync();
 
         await using var db = Pg.CreateDb();
-        var media = await new MediaService(new SystemImageRepository(db), new FakeStorage()).GetPreferredImageAsync(100);
+        var media = await new MediaService(new SystemImageRepository(db), new InMemoryStorageService()).GetPreferredImageAsync(100);
 
         Assert.Null(media);
     }

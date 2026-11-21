@@ -1,0 +1,32 @@
+# Quy ước code cho toàn bộ BackEndProject — Rider, Visual Studio và `dotnet format` đều đọc file này.
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+insert_final_newline = true
+
+[*.cs]
+indent_size = 4
+# Rider/ReSharper: "Hard wrap at" — chỉ xuống dòng khi vượt 150 ký tự.
+max_line_length = 150
+
+# Không dùng expression body (=>) cho thành phần có logic — viết block body { ... }.
+# Lambda trong LINQ (.Where(x => ...)) không bị ảnh hưởng.
+csharp_style_expression_bodied_methods = false:warning
+csharp_style_expression_bodied_constructors = false:warning
+csharp_style_expression_bodied_operators = false:warning
+csharp_style_expression_bodied_local_functions = false:warning
+# Property/indexer/accessor một dòng (vd computed property ObjectKey) vẫn được phép.
+csharp_style_expression_bodied_properties = when_on_single_line:suggestion
+csharp_style_expression_bodied_indexers = when_on_single_line:suggestion
+csharp_style_expression_bodied_accessors = when_on_single_line:suggestion
+csharp_style_expression_bodied_lambdas = true:none
+
+# ReSharper/Rider: không tự gộp body về arrow khi reformat.
+resharper_method_or_operator_body = block_body
+resharper_local_function_body = block_body
+resharper_constructor_or_destructor_body = block_body
+
+[*.{csproj,props,targets,json,yml,yaml}]
+indent_size = 2

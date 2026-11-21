@@ -6,6 +6,8 @@ using FishDex.Domain.Settings;
 using FishDex.EFCore.DbContexts;
 using FishDex.EFCore.Extensions;
 using FishLover.Shared.Extensions;
+using FishLover.Storage;
+using FishLover.Storage.MediaAccess;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Events;
@@ -44,7 +46,13 @@ try
     builder.Services.AddFishDexServices();
     builder.Services.AddMemoryCache(opts => opts.SizeLimit = 3_000);
     builder.Services.Configure<FishDexSettings>(builder.Configuration.GetSection(FishDexSettings.SectionName));
-    builder.Services.Configure<StorageSettings>(builder.Configuration.GetSection(StorageSettings.SectionName));
+    // Mặc định riêng của FishDex — appsettings / env var Storage__* luôn thắng.
+    builder.Services.AddObjectStorage(builder.Configuration, defaults: s =>
+    {
+        s.Provider = "minio";
+        s.BucketName = "fish-images";
+        s.PresignedPutUrlExpiryMinutes = 15;
+    });
     builder.Services.Configure<MediaAccessSettings>(builder.Configuration.GetSection(MediaAccessSettings.SectionName));
 
     // ── Hạn mức xem loài cho khách chưa đăng nhập ─────────────

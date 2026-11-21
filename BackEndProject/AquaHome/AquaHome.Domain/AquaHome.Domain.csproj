@@ -9,7 +9,6 @@
     <ItemGroup>
         <PackageReference Include="Google.Apis.YouTube.v3" Version="1.75.0.4176" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.4" />
-        <PackageReference Include="AWSSDK.S3" Version="3.7.415.2" />
         <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.4" />
     </ItemGroup>
 
@@ -17,6 +16,7 @@
         <ProjectReference Include="..\..\Share\FishLover.Shared\FishLover.Shared.csproj" />
         <ProjectReference Include="..\AquaHome.Common\AquaHome.Common.csproj" />
         <ProjectReference Include="..\AquaHome.EFCore\AquaHome.EFCore.csproj" />
+        <ProjectReference Include="..\..\Share\FishLover.Storage\FishLover.Storage.csproj" />
     </ItemGroup>
 
 </Project>

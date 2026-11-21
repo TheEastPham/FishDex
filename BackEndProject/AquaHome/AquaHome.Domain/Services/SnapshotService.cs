@@ -4,13 +4,13 @@ using AquaHome.Domain.DTOs;
 using AquaHome.Domain.Enums;
 using AquaHome.Domain.Extensions;
 using AquaHome.Domain.Services.Interfaces;
-using AquaHome.Domain.Settings;
+using AquaHome.Domain.Storage;
 using AquaHome.EFCore.Entity;
 using AquaHome.EFCore.Repository.Interface;
 using FishLover.Shared.Common;
 using FishLover.Shared.Services;
+using FishLover.Storage;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace AquaHome.Domain.Services;
 
@@ -21,13 +21,12 @@ public class SnapshotService(
     IAquariumMediaRepository mediaRepo,
     IFishDexClient fishDexClient,
     IStorageService storage,
-    IOptions<StorageSettings> storageOptions,
+    AquaHomeObjectKeys keys,
     ICurrentUserSession currentUser,
     ILogger<SnapshotService> logger) : ISnapshotService
 {
     private const int MaxSnapshotsPerAquarium = 5;
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
-    private string Env => storageOptions.Value.Environment;
 
     public async Task<SnapshotPreviewDto?> PreviewAsync(Guid aquariumId, CancellationToken ct = default)
     {
@@ -204,7 +203,7 @@ public class SnapshotService(
         if (coverMediaId is null) return null;
 
         var media = await mediaRepo.GetByIdAsync(coverMediaId.Value, ct);
-        return media is null ? null : await storage.GetPresignedUrlAsync(media.ObjectKey(Env), ct);
+        return media is null ? null : await storage.GetPresignedUrlAsync(keys.AquariumMedia(media), ct);
     }
 
     private const string FallbackSpeciesNamePrefix = "Species #";

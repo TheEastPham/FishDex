@@ -5,9 +5,11 @@ using AquaHome.Domain.Exceptions;
 using AquaHome.Domain.Extensions;
 using AquaHome.Domain.Services.Interfaces;
 using AquaHome.Domain.Settings;
+using AquaHome.Domain.Storage;
 using AquaHome.EFCore.Entity;
 using AquaHome.EFCore.Repository.Interface;
 using FishLover.Shared.Services;
+using FishLover.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -23,7 +25,7 @@ public class ContestService(
     IYouTubeUploadService youTube,
     IQuotaRepository quotaRepo,
     ICurrentUserSession currentUser,
-    IOptions<StorageSettings> storageOptions,
+    AquaHomeObjectKeys keys,
     IOptions<YouTubeSettings> youTubeOptions,
     ILogger<ContestService> logger) : IContestService
 {
@@ -65,7 +67,6 @@ public class ContestService(
     private const string VideoSizeMismatchReason = "Video tải lên không khớp dung lượng đã khai. Bạn hãy nộp lại bài.";
     private static readonly HashSet<string> AllowedLogoContentTypes = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"];
 
-    private string Env => storageOptions.Value.Environment;
 
     public async Task<IReadOnlyList<ContestDto>> GetAllAsync(CancellationToken ct = default)
     {
@@ -186,9 +187,9 @@ public class ContestService(
         }
 
         var entryId = Guid.NewGuid();
-        var objectKey = $"aquahome/{Env}/contests/{contestId}/{entryId}{ext}";
+        var objectKey = keys.ContestEntryVideo(contestId, entryId, ext);
 
-        var uploadUrl = await storage.GeneratePresignedPutUrlAsync(objectKey, request.ContentType, MaxVideoUploadBytes, ct)
+        var uploadUrl = await storage.GeneratePresignedPutUrlAsync(objectKey, request.ContentType, ct)
             ?? throw new ContestValidationException("Không thể tạo upload URL, vui lòng thử lại.");
 
         var entry = new ContestEntry
@@ -455,9 +456,9 @@ public class ContestService(
         if (tier is null || tier.ContestId != contestId) return null;
 
         var ext = Path.GetExtension(fileName);
-        var objectKey = $"aquahome/{Env}/contests/{contestId}/prize-tiers/{tierId}{ext}";
+        var objectKey = keys.ContestPrizeTierLogo(contestId, tierId, ext);
 
-        var uploadUrl = await storage.GeneratePresignedPutUrlAsync(objectKey, contentType, MaxLogoUploadBytes, ct);
+        var uploadUrl = await storage.GeneratePresignedPutUrlAsync(objectKey, contentType, ct);
         if (uploadUrl is null) return null;
 
         tier.ImageObjectKey = objectKey;
@@ -525,9 +526,9 @@ public class ContestService(
         if (sponsor is null || sponsor.ContestId != contestId) return null;
 
         var ext = Path.GetExtension(fileName);
-        var objectKey = $"aquahome/{Env}/contests/{contestId}/sponsors/{sponsorId}{ext}";
+        var objectKey = keys.ContestSponsorLogo(contestId, sponsorId, ext);
 
-        var uploadUrl = await storage.GeneratePresignedPutUrlAsync(objectKey, contentType, MaxLogoUploadBytes, ct);
+        var uploadUrl = await storage.GeneratePresignedPutUrlAsync(objectKey, contentType, ct);
         if (uploadUrl is null) return null;
 
         sponsor.LogoObjectKey = objectKey;

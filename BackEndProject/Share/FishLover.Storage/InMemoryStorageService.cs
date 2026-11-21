@@ -6,12 +6,16 @@ namespace FishLover.Storage;
 /// Adapter thứ hai: bucket trong bộ nhớ, cho test (và chạy local không có R2). Cùng hợp đồng với
 /// <see cref="S3StorageService"/>, kể cả hành vi khi chưa cấu hình (<c>configured: false</c>).
 /// </summary>
-/// <remarks>URL "presigned" có dạng <c>memory://{key}</c> — so được trong test qua <see cref="UrlFor"/>.</remarks>
-public sealed class InMemoryStorageService(bool configured = true) : IStorageService
+/// <remarks>
+/// URL "presigned" có dạng <c>memory://{key}</c> — so được trong test qua <see cref="UrlFor"/>. Thời điểm ghi lấy từ
+/// <c>time</c> (mặc định đồng hồ hệ thống) để test job dọn dẹp giả lập được object cũ.
+/// </remarks>
+public sealed class InMemoryStorageService(bool configured = true, TimeProvider? time = null) : IStorageService
 {
     private readonly ConcurrentDictionary<string, StoredObject> _objects = new(StringComparer.Ordinal);
+    private readonly TimeProvider _time = time ?? TimeProvider.System;
 
-    public sealed record StoredObject(byte[] Content, string ContentType);
+    public sealed record StoredObject(byte[] Content, string ContentType, DateTimeOffset LastModified);
 
     public bool IsConfigured => configured;
 
@@ -55,7 +59,7 @@ public sealed class InMemoryStorageService(bool configured = true) : IStorageSer
             throw new InvalidOperationException("Storage chưa cấu hình — không ghi được object.");
         }
 
-        _objects[objectKey] = new StoredObject(content.ToArray(), contentType);
+        _objects[objectKey] = new StoredObject(content.ToArray(), contentType, _time.GetUtcNow());
         return Task.CompletedTask;
     }
 
@@ -67,6 +71,21 @@ public sealed class InMemoryStorageService(bool configured = true) : IStorageSer
         }
 
         return Task.CompletedTask;
+    }
+
+    public Task<IReadOnlyList<StoredObjectInfo>> ListAsync(string prefix, CancellationToken ct = default)
+    {
+        if (!configured || string.IsNullOrWhiteSpace(prefix))
+        {
+            return Task.FromResult<IReadOnlyList<StoredObjectInfo>>([]);
+        }
+
+        IReadOnlyList<StoredObjectInfo> result = _objects
+            .Where(o => o.Key.StartsWith(prefix, StringComparison.Ordinal))
+            .OrderBy(o => o.Key, StringComparer.Ordinal)
+            .Select(o => new StoredObjectInfo(o.Key, o.Value.Content.LongLength, o.Value.LastModified))
+            .ToList();
+        return Task.FromResult(result);
     }
 
     public Task DeleteByPrefixAsync(string prefix, CancellationToken ct = default)

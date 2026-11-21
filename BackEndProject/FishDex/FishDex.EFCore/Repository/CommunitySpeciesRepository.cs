@@ -109,6 +109,14 @@ public class CommunitySpeciesRepository(FishDexDbContext db) : ICommunitySpecies
             .ToListAsync(ct);
     }
 
+    public async Task<IReadOnlyDictionary<string, int>> GetCommunityThumbnailKeysAsync(CancellationToken ct = default)
+    {
+        return await db.SpeciesSnapshots
+            .AsNoTracking()
+            .Where(s => s.DataSource == SnapshotDataSource.Community && s.ThumbnailObjectKey != null)
+            .ToDictionaryAsync(s => s.ThumbnailObjectKey!, s => s.SpecCode, StringComparer.Ordinal, ct);
+    }
+
     public async Task<int> CountUnverifiedByContributorAsync(Guid userId, CancellationToken ct = default)
     {
         return await db.SpeciesSnapshots.CountAsync(s => s.DataSource == SnapshotDataSource.Community && s.ContributedBy == userId && !s.IsVerified, ct);

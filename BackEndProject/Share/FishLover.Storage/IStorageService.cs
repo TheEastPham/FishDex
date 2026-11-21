@@ -1,5 +1,8 @@
 namespace FishLover.Storage;
 
+/// <summary>Một object trong bucket, như ListObjects trả về.</summary>
+public sealed record StoredObjectInfo(string Key, long Size, DateTimeOffset LastModified);
+
 /// <summary>
 /// Object storage của một bucket (R2 / MinIO / S3). Mỗi service có một bucket riêng, cấu hình ở section <c>Storage</c>.
 /// </summary>
@@ -41,6 +44,12 @@ public interface IStorageService
 
     /// <summary>Xoá object. Lỗi chỉ ghi log — object mồ côi dọn sau được.</summary>
     Task DeleteAsync(string objectKey, CancellationToken ct = default);
+
+    /// <summary>
+    /// Liệt kê object có key bắt đầu bằng <paramref name="prefix"/> (đi hết mọi trang). Prefix rỗng hoặc chưa cấu hình → rỗng.
+    /// Lỗi thì NÉM — job dọn dẹp cần biết lần quét bị hụt.
+    /// </summary>
+    Task<IReadOnlyList<StoredObjectInfo>> ListAsync(string prefix, CancellationToken ct = default);
 
     /// <summary>Xoá mọi object có key bắt đầu bằng <paramref name="prefix"/>. Prefix rỗng thì không làm gì. Lỗi chỉ ghi log.</summary>
     Task DeleteByPrefixAsync(string prefix, CancellationToken ct = default);

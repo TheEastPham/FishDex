@@ -1,3 +1,4 @@
+using FishDex.API.BackgroundServices;
 using FishDex.API.Filters;
 using FishDex.Domain.Extensions;
 using FishDex.Domain.Services;
@@ -44,6 +45,7 @@ try
     builder.Services.AddFishDexDatabase(builder.Configuration);
     builder.Services.AddFishDexRepositories();
     builder.Services.AddFishDexServices();
+    builder.Services.AddHostedService<CommunityImageCleanupService>();
     builder.Services.AddMemoryCache(opts => opts.SizeLimit = 3_000);
     builder.Services.Configure<FishDexSettings>(builder.Configuration.GetSection(FishDexSettings.SectionName));
     // Mặc định riêng của FishDex — appsettings / env var Storage__* luôn thắng.

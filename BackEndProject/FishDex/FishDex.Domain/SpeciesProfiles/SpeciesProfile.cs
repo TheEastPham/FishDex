@@ -37,9 +37,10 @@ public sealed class SpeciesProfile(FishDexDbContext db, ICommunitySpeciesReposit
             .AsNoTracking()
             .Include(s => s.Genus)
             .Include(s => s.Family)
-            .Include(s => s.CommonNames.Where(c => c.IsVerified))
             .FirstOrDefaultAsync(s => s.SpecCode == specCode, ct);
         if (species == null) return null;
+
+        var names = (await LoadVerifiedNamesAsync([specCode], ct))[specCode];
 
         var images = await db.SystemImages
             .AsNoTracking()
@@ -79,7 +80,7 @@ public sealed class SpeciesProfile(FishDexDbContext db, ICommunitySpeciesReposit
         {
             SpecCode            = species.SpecCode,
             SpeciesName         = species.SpeciesName,
-            PreferredCommonName = SpeciesRules.PickCommonName(species.CommonNames, language),
+            PreferredCommonName = SpeciesRules.PickCommonName(names, language),
             GenusName           = species.Genus?.GenusName,
             FamilyName          = species.Family?.Name,
             WaterType           = species.WaterType.ToString(),
@@ -287,11 +288,11 @@ public sealed class SpeciesProfile(FishDexDbContext db, ICommunitySpeciesReposit
             .AsNoTracking()
             .Include(s => s.Genus)
             .Include(s => s.Family)
-            .Include(s => s.CommonNames.Where(c => c.IsVerified))
             .Where(s =>
                 !hasQuery ||
                 EF.Functions.ILike(s.SpeciesName, $"%{query}%") ||
-                s.CommonNames.Any(c =>
+                db.CommonNames.Any(c =>
+                    c.SpecCode == s.SpecCode &&
                     c.IsVerified &&
                     EF.Functions.ILike(c.ComName, $"%{query}%") &&
                     (language == null || c.Language == language)));
@@ -321,7 +322,6 @@ public sealed class SpeciesProfile(FishDexDbContext db, ICommunitySpeciesReposit
             .AsNoTracking()
             .Include(s => s.Genus)
             .Include(s => s.Family)
-            .Include(s => s.CommonNames.Where(c => c.IsVerified))
             .Where(s => s.SpecCode != specCode);
 
         // Ưu tiên cùng Genus
@@ -353,7 +353,9 @@ public sealed class SpeciesProfile(FishDexDbContext db, ICommunitySpeciesReposit
 
     private async Task<List<SpeciesSearchResultDto>> ToFishBaseCardsAsync(IReadOnlyList<Species> species, string? language, CancellationToken ct)
     {
-        var images = await LoadImagesAsync(species.Select(s => s.SpecCode).ToList(), ct);
+        var codes  = species.Select(s => s.SpecCode).ToList();
+        var images = await LoadImagesAsync(codes, ct);
+        var names  = await LoadVerifiedNamesAsync(codes, ct);
 
         var result = new List<SpeciesSearchResultDto>(species.Count);
         foreach (var s in species)
@@ -363,7 +365,7 @@ public sealed class SpeciesProfile(FishDexDbContext db, ICommunitySpeciesReposit
             {
                 SpecCode            = s.SpecCode,
                 SpeciesName         = s.SpeciesName,
-                PreferredCommonName = SpeciesRules.PickCommonName(s.CommonNames, language),
+                PreferredCommonName = SpeciesRules.PickCommonName(names[s.SpecCode], language),
                 GenusName           = s.Genus?.GenusName,
                 FamilyName          = s.Family?.Name,
                 ImageUrl            = await PresignAsync(thumb, ct),

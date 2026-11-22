@@ -24,6 +24,4 @@ public class CommonName
     public bool IsVerified { get; set; } = true;
     public Guid? ReviewedBy { get; set; }
     public string? RejectionReason { get; set; }
-
-    public virtual Species Species { get; set; } = null!;
 }

@@ -65,6 +65,7 @@ builder.Services.AddFishLoverJwtAuthentication(builder.Configuration);
 // in-memory OpenIddict server (UseLocalServer). Không cần HTTP discovery hay JWKS fetch,
 // tránh hoàn toàn hairpin NAT + transport security requirement issue trên Oracle VM.
 
+builder.Services.AddAuthentication().AddFishLoverInternalApiKey();
 builder.Services.AddFishLoverAuthorization();
 
 // Override DefaultPolicy: accept cả Bearer (HS256 direct-login) lẫn OpenIddict validation (RS256 PKCE)

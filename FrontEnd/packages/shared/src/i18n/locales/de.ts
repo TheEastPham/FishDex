@@ -674,6 +674,7 @@ const de = {
     cancel: 'Abbrechen',
     confirm: 'Veröffentlichen',
     error: 'Veröffentlichen fehlgeschlagen. Bitte versuche es erneut.',
+    errorUnavailable: 'Die Artendaten sind vorübergehend nicht verfügbar, daher ist Vorschau/Veröffentlichung gerade nicht möglich. Dein Aquarium ist sicher; bitte versuche es in ein paar Minuten erneut.',
     successTitle: 'Veröffentlicht!',
     successMessage: 'Dein Becken ist jetzt online 🎉',
     successHint: 'Teile diesen Link mit deinen Freunden',

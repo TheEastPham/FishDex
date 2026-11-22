@@ -754,6 +754,7 @@ const en = {
     cancel: 'Cancel',
     confirm: 'Publish',
     error: 'Could not publish. Please try again.',
+    errorUnavailable: 'Species data is temporarily unavailable, so the tank cannot be previewed or published right now. Your tank is safe; please try again in a few minutes.',
     successTitle: 'Published!',
     successMessage: 'Your tank is now live 🎉',
     successHint: 'Share this link with your friends',

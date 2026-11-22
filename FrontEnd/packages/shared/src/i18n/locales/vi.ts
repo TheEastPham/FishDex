@@ -764,6 +764,7 @@ const vi = {
     cancel: 'Hủy',
     confirm: 'Public bể',
     error: 'Không public được bể. Vui lòng thử lại.',
+    errorUnavailable: 'Chưa lấy được dữ liệu loài lúc này nên chưa thể xem trước/public. Bể của bạn vẫn an toàn, hãy thử lại sau ít phút.',
     successTitle: 'Đã public!',
     successMessage: 'Bể của bạn đã lên sóng 🎉',
     successHint: 'Chia sẻ link này cho bạn bè cùng ngắm nhé',

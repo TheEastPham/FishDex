@@ -659,6 +659,7 @@ const zh = {
     cancel: '取消',
     confirm: '发布',
     error: '发布失败，请重试。',
+    errorUnavailable: '暂时无法获取物种数据，现在无法预览或发布。你的鱼缸数据是安全的，请几分钟后再试。',
     successTitle: '已发布！',
     successMessage: '你的鱼缸已经上线 🎉',
     successHint: '把这个链接分享给朋友',

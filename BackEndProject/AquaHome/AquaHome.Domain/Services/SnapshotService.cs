@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using AquaHome.Domain.DTOs;
 using AquaHome.Domain.Enums;
+using AquaHome.Domain.Exceptions;
 using AquaHome.Domain.Extensions;
 using AquaHome.Domain.Services.Interfaces;
 using AquaHome.Domain.Storage;
@@ -225,7 +226,15 @@ public class SnapshotService(
     private async Task<SnapshotDataDto?> HealSnapshotDataAsync(SnapshotDataDto data, CancellationToken ct)
     {
         var specCodes = data.Fish.Select(f => f.SpecCode).Distinct().ToList();
-        var summaries = (await fishDexClient.GetSpeciesSummariesAsync(specCodes, ct)).ToDictionary(s => s.SpecCode);
+        Dictionary<int, SpeciesSummaryDto> summaries;
+        try
+        {
+            summaries = (await fishDexClient.GetSpeciesSummariesAsync(specCodes, ct)).ToDictionary(s => s.SpecCode);
+        }
+        catch (FishDexUnavailableException)
+        {
+            return null; // đã log ở client; trang xem snapshot vẫn hiện bản cũ chứ không đáng 503
+        }
         if (summaries.Count == 0) return null;
 
         var fish = data.Fish

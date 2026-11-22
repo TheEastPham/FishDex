@@ -27,7 +27,6 @@ public class SnapshotService(
     ILogger<SnapshotService> logger) : ISnapshotService
 {
     private const int MaxSnapshotsPerAquarium = 5;
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     public async Task<SnapshotPreviewDto?> PreviewAsync(Guid aquariumId, CancellationToken ct = default)
     {
@@ -67,7 +66,7 @@ public class SnapshotService(
             target.Style = aquarium.Style ?? 0;
             target.FishSpeciesCount = snapshotData.Fish.Count;
             target.CoverMediaId = request.CoverMediaId;
-            target.SnapshotData = JsonSerializer.Serialize(snapshotData, JsonOptions);
+            target.SnapshotData = SnapshotDataReader.Serialize(snapshotData);
             target.UpdatedAt = now;
 
             await snapshotRepo.SaveChangesAsync(ct);
@@ -100,14 +99,14 @@ public class SnapshotService(
                 LikeCount = 0,
                 FishSpeciesCount = snapshotData.Fish.Count,
                 CoverMediaId = request.CoverMediaId,
-                SnapshotData = JsonSerializer.Serialize(snapshotData, JsonOptions),
+                SnapshotData = SnapshotDataReader.Serialize(snapshotData),
             };
 
             await snapshotRepo.AddAsync(snapshot, ct);
             await snapshotRepo.SaveChangesAsync(ct);
         }
 
-        return await ToDtoAsync(snapshot, snapshotData, likedByMe: false, ct);
+        return ToDto(snapshot, snapshotData, likedByMe: false, await ResolveCoverUrlAsync(snapshot.CoverMediaId, ct));
     }
 
     public async Task<bool> UnpublishAsync(Guid snapshotId, CancellationToken ct = default)
@@ -124,12 +123,14 @@ public class SnapshotService(
     {
         var snapshots = await snapshotRepo.GetActiveByUserAsync(currentUser.UserId, ct);
 
+        var covers = await ResolveCoverUrlsAsync(snapshots.Select(s => s.CoverMediaId), ct);
+
         var result = new List<MySnapshotDto>(snapshots.Count);
         foreach (var s in snapshots)
         {
             // Chỉ cần aquariumName từ JSONB — không trả cả fish list cho trang quản lý / form chọn bể
             var name = TryGetAquariumName(s.SnapshotData) ?? s.Slug;
-            var coverUrl = await ResolveCoverUrlAsync(s.CoverMediaId, ct);
+            var coverUrl = CoverOf(covers, s.CoverMediaId);
 
             result.Add(new MySnapshotDto(
                 s.Id, s.AquariumId, s.Slug, name, (WaterType)s.WaterType, (AquariumStyle)s.Style,
@@ -146,9 +147,11 @@ public class SnapshotService(
     {
         var (items, total) = await snapshotRepo.GetGalleryAsync(waterType, style, contest, sort, page, pageSize, ct);
 
+        var covers = await ResolveCoverUrlsAsync(items.Select(s => s.CoverMediaId), ct);
+
         var dtos = new List<AquariumSnapshotDto>(items.Count);
         foreach (var s in items)
-            dtos.Add(await ToDtoAsync(s, snapshotData: null, likedByMe: false, ct));
+            dtos.Add(ToDto(s, snapshotData: null, likedByMe: false, CoverOf(covers, s.CoverMediaId)));
 
         return new PagedResult<AquariumSnapshotDto>
         {
@@ -164,15 +167,18 @@ public class SnapshotService(
         var snapshot = await snapshotRepo.GetBySlugAsync(slug, ct);
         if (snapshot is null) return null;
 
-        var snapshotData = JsonSerializer.Deserialize<SnapshotDataDto>(snapshot.SnapshotData, JsonOptions);
-        if (snapshotData is not null && NeedsHealing(snapshotData))
+        // Cùng một đường đọc với ContestService: snapshot sai schema → null (trang vẫn mở, không 500).
+        var snapshotData = SnapshotDataReader.TryRead(snapshot.SnapshotData);
+        if (snapshotData is null)
+            logger.LogWarning("Snapshot {SnapshotId} có SnapshotData không đọc được", snapshot.Id);
+        else if (NeedsHealing(snapshotData))
         {
             var healed = await HealSnapshotDataAsync(snapshotData, ct);
             if (healed is not null)
             {
                 // Ghi lại để lần xem sau khỏi gọi FishDex. Không đụng UpdatedAt — nội dung bể không đổi.
                 snapshotData = healed;
-                snapshot.SnapshotData = JsonSerializer.Serialize(healed, JsonOptions);
+                snapshot.SnapshotData = SnapshotDataReader.Serialize(healed);
                 await snapshotRepo.SaveChangesAsync(ct);
             }
         }
@@ -180,7 +186,7 @@ public class SnapshotService(
         var likedByMe = currentUser.IsAuthenticated
             && await likeRepo.ExistsAsync(snapshot.Id, currentUser.UserId, ct);
 
-        return await ToDtoAsync(snapshot, snapshotData, likedByMe, ct);
+        return ToDto(snapshot, snapshotData, likedByMe, await ResolveCoverUrlAsync(snapshot.CoverMediaId, ct));
     }
 
     public async Task<bool> LikeAsync(Guid snapshotId, CancellationToken ct = default)
@@ -205,6 +211,23 @@ public class SnapshotService(
 
         var media = await mediaRepo.GetByIdAsync(coverMediaId.Value, ct);
         return media is null ? null : await storage.GetPresignedUrlAsync(keys.AquariumMedia(media), ct);
+    }
+
+    /// <summary>Batch: 1 query media cho cả trang thay vì 1 query/item. Media đã bị xoá → không có entry (cover = null).</summary>
+    private async Task<IReadOnlyDictionary<Guid, string>> ResolveCoverUrlsAsync(IEnumerable<Guid?> coverMediaIds, CancellationToken ct)
+    {
+        var ids = coverMediaIds.OfType<Guid>().Distinct().ToList();
+        var urls = new Dictionary<Guid, string>(ids.Count);
+        if (ids.Count == 0) return urls;
+
+        foreach (var media in await mediaRepo.GetByIdsAsync(ids, ct))
+            urls[media.Id] = await storage.GetPresignedUrlAsync(keys.AquariumMedia(media), ct);
+        return urls;
+    }
+
+    private static string? CoverOf(IReadOnlyDictionary<Guid, string> covers, Guid? coverMediaId)
+    {
+        return coverMediaId is { } id && covers.TryGetValue(id, out var url) ? url : null;
     }
 
     private const string FallbackSpeciesNamePrefix = "Species #";
@@ -343,9 +366,8 @@ public class SnapshotService(
         return string.IsNullOrEmpty(slug) ? "aquarium" : slug;
     }
 
-    private async Task<AquariumSnapshotDto> ToDtoAsync(AquariumSnapshot s, SnapshotDataDto? snapshotData, bool likedByMe, CancellationToken ct)
+    private static AquariumSnapshotDto ToDto(AquariumSnapshot s, SnapshotDataDto? snapshotData, bool likedByMe, string? coverImageUrl)
     {
-        var coverImageUrl = await ResolveCoverUrlAsync(s.CoverMediaId, ct);
         return new AquariumSnapshotDto(
             s.Id, s.Slug, (WaterType)s.WaterType, (AquariumStyle)s.Style, s.LikeCount, s.FishSpeciesCount,
             s.AwardTierName, s.AwardTierLevel.HasValue ? (PrizeTierLevel)s.AwardTierLevel.Value : null,

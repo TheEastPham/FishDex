@@ -176,6 +176,53 @@ public sealed class S3StorageService : IStorageService
         }
     }
 
+    public async Task<IReadOnlyList<StoredObjectInfo>> ListAsync(string prefix, CancellationToken ct = default)
+    {
+        if (!IsConfigured || string.IsNullOrWhiteSpace(prefix))
+        {
+            return [];
+        }
+
+        var result = new List<StoredObjectInfo>();
+        string? continuationToken = null;
+        do
+        {
+            var listed = await _s3.ListObjectsV2Async(new ListObjectsV2Request
+            {
+                BucketName        = _settings.BucketName,
+                Prefix            = prefix,
+                ContinuationToken = continuationToken,
+            }, ct);
+
+            result.AddRange(listed.S3Objects.Select(o => new StoredObjectInfo(o.Key, SizeOf(o.Size), UtcOf(o.LastModified))));
+            continuationToken = listed.IsTruncated == true ? listed.NextContinuationToken : null;
+        } while (continuationToken is not null);
+
+        return result;
+    }
+
+    // Các bản AWSSDK khác nhau trả Size/LastModified nullable hoặc không — overload để chạy được với cả hai.
+    private static long SizeOf(long size)
+    {
+        return size;
+    }
+
+    private static long SizeOf(long? size)
+    {
+        return size ?? 0;
+    }
+
+    private static DateTimeOffset UtcOf(DateTime modified)
+    {
+        return new DateTimeOffset(modified.ToUniversalTime(), TimeSpan.Zero);
+    }
+
+    private static DateTimeOffset UtcOf(DateTime? modified)
+    {
+        // Không có thời điểm → coi như vừa ghi, để job dọn dẹp không xoá nhầm.
+        return modified is { } value ? UtcOf(value) : DateTimeOffset.UtcNow;
+    }
+
     public async Task DeleteByPrefixAsync(string prefix, CancellationToken ct = default)
     {
         if (!IsConfigured || string.IsNullOrWhiteSpace(prefix))

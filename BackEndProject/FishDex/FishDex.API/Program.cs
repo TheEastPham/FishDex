@@ -1,3 +1,4 @@
+using FishDex.API.BackgroundServices;
 using FishDex.API.Filters;
 using FishDex.Domain.Extensions;
 using FishDex.Domain.Services;
@@ -44,6 +45,7 @@ try
     builder.Services.AddFishDexDatabase(builder.Configuration);
     builder.Services.AddFishDexRepositories();
     builder.Services.AddFishDexServices();
+    builder.Services.AddHostedService<CommunityImageCleanupService>();
     builder.Services.AddMemoryCache(opts => opts.SizeLimit = 3_000);
     builder.Services.Configure<FishDexSettings>(builder.Configuration.GetSection(FishDexSettings.SectionName));
     // Mặc định riêng của FishDex — appsettings / env var Storage__* luôn thắng.
@@ -81,59 +83,8 @@ try
     // OpenTelemetry Configuration
     builder.Services.AddFishLoverTelemetry(builder.Configuration, "fishdex");
 
-    // JWT Authentication — symmetric scheme (direct-login tokens từ UserManagement)
-    builder.Services.AddFishLoverJwtAuthentication(builder.Configuration);
-
-    // OAuth2 PKCE scheme — validate OpenIddict-issued tokens qua JWKS discovery
-    var authServerPublicUrl = builder.Configuration["AuthServer:Url"] ?? "http://localhost:8080";
-    var authServerInternalUrl = builder.Configuration["AuthServer:Authority"] ?? authServerPublicUrl;
-    builder.Services.AddAuthentication()
-        .AddJwtBearer("OpenIddict", options =>
-        {
-            options.MetadataAddress = $"{authServerInternalUrl}/.well-known/openid-configuration";
-            options.RequireHttpsMetadata = false;
-            // Tắt legacy inbound claim mapping — mặc định .NET đổi "role" → URI dài khiến
-            // RoleClaimType="role" không khớp claim thực tế → RequireRole luôn fail (giống fix ở AquaHome).
-            options.MapInboundClaims = false;
-            var issuer = authServerPublicUrl.TrimEnd('/');
-            options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-            {
-                // Accept cả "http://host" lẫn "http://host/" — OpenIddict thêm trailing slash
-                ValidIssuers = [issuer, issuer + "/"],
-                ValidateIssuer = true,
-                ValidateAudience = false,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                // Token OpenIddict để role ở claim "role" — map để RequireRole khớp
-                RoleClaimType = "role",
-                NameClaimType = "name",
-            };
-        });
-
-    builder.Services.AddFishLoverAuthorization();
-    // [Authorize] + policy admin đều phải chấp nhận cả Bearer (direct login) lẫn OpenIddict (OAuth2 PKCE).
-    // Policy shared RequireContentAdmin/RequireSystemAdmin KHÔNG khai scheme → chỉ default → token
-    // OpenIddict bị 401. Đăng ký đè ở đây với cả 2 scheme (giống AquaHome).
-    builder.Services.AddAuthorization(options =>
-    {
-        string[] bothSchemes =
-        [
-            Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme,
-            "OpenIddict",
-        ];
-
-        options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder(bothSchemes)
-            .RequireAuthenticatedUser()
-            .Build();
-
-        options.AddPolicy("RequireSystemAdmin", p => p
-            .AddAuthenticationSchemes(bothSchemes)
-            .RequireRole("SystemAdmin"));
-
-        options.AddPolicy("RequireContentAdmin", p => p
-            .AddAuthenticationSchemes(bothSchemes)
-            .RequireRole("SystemAdmin", "ContentAdmin"));
-    });
+    // Resource server: Bearer (direct login) + OpenIddict (PKCE) + policy admin + khoá nội bộ
+    builder.Services.AddFishLoverResourceServer(builder.Configuration);
 
 
     // ── Controllers + OpenAPI ──────────────────────────────────

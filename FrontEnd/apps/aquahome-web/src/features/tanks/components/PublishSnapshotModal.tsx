@@ -7,6 +7,14 @@ import type { SnapshotPreviewDto, AquariumMediaDto, MySnapshotDto } from '@fishl
 import { Loader2, Globe, Fish, Check, Copy, X, ImageIcon, RefreshCw, Sparkles } from 'lucide-react';
 import SnapshotFishSection from '../../public-tanks/components/SnapshotFishSection';
 
+type PublishError = 'generic' | 'unavailable';
+
+// BE trả 503 { error: 'fishdex_unavailable' } khi FishDex không trả được dữ liệu loài — lỗi tạm thời, thử lại được.
+function classifyError(err: unknown): PublishError {
+  const res = (err as { response?: { status?: number; data?: { error?: string } } })?.response;
+  return res?.status === 503 && res.data?.error === 'fishdex_unavailable' ? 'unavailable' : 'generic';
+}
+
 interface Props {
   aquariumId: string;
   aquariumName: string;
@@ -24,7 +32,7 @@ export default function PublishSnapshotModal({ aquariumId, aquariumName, onClose
   const [targetSnapshotId, setTargetSnapshotId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [publishing, setPublishing] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<PublishError | null>(null);
   const [publishedSlug, setPublishedSlug] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -40,18 +48,18 @@ export default function PublishSnapshotModal({ aquariumId, aquariumName, onClose
         setMedia(mediaList.filter(m => m.url));
         setExisting(mySnapshots.filter(s => s.aquariumId === aquariumId));
       })
-      .catch(() => setError(true))
+      .catch((err: unknown) => setError(classifyError(err)))
       .finally(() => setLoading(false));
   }, [aquariumId]);
 
   const handlePublish = async () => {
     setPublishing(true);
-    setError(false);
+    setError(null);
     try {
       const snapshot = await publishSnapshot(aquariumId, { coverMediaId, targetSnapshotId });
       setPublishedSlug(snapshot.slug);
-    } catch {
-      setError(true);
+    } catch (err: unknown) {
+      setError(classifyError(err));
     } finally {
       setPublishing(false);
     }
@@ -95,7 +103,7 @@ export default function PublishSnapshotModal({ aquariumId, aquariumName, onClose
 
             {!loading && error && !publishedSlug && (
               <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">
-                {t('publish.error')}
+                {error === 'unavailable' ? t('publish.errorUnavailable') : t('publish.error')}
               </div>
             )}
 

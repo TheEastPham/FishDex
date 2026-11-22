@@ -12,6 +12,22 @@ public enum UpdateCommunitySpeciesOutcome
 
 public record UpdateCommunitySpeciesResult(UpdateCommunitySpeciesOutcome Outcome, CommunitySpeciesDto? Dto = null);
 
+public enum SubmitCommunitySpeciesOutcome
+{
+    Created,
+    PendingLimitReached, // user đang giữ quá nhiều loài chưa được duyệt
+}
+
+public record SubmitCommunitySpeciesResult(SubmitCommunitySpeciesOutcome Outcome, CommunitySpeciesDto? Dto = null);
+
+public enum ConfirmCommunityImageOutcome
+{
+    Confirmed,
+    NotFound,    // không có loài, không phải chủ sở hữu, hoặc key không phải ảnh bìa của loài này
+    NotUploaded, // object chưa có trên storage
+    TooLarge,    // vượt FishDexObjectKeys.CommunityCoverMaxBytes — object đã bị xoá
+}
+
 public interface ICommunitySpeciesService
 {
     /// <summary>
@@ -24,8 +40,11 @@ public interface ICommunitySpeciesService
     /// </summary>
     Task<IReadOnlyList<SimilarSpeciesDto>> FindSimilarAsync(string speciesName, CancellationToken ct = default);
 
-    /// <summary>User submit loài mới → tạo SpeciesSnapshot Community, IsVerified=false, chờ duyệt.</summary>
-    Task<CommunitySpeciesDto> SubmitAsync(SubmitCommunitySpeciesRequest request, CancellationToken ct = default);
+    /// <summary>
+    /// User submit loài mới → tạo SpeciesSnapshot Community, IsVerified=false, chờ duyệt. Mỗi user giữ tối đa
+    /// 5 loài chưa duyệt (chờ hoặc bị từ chối) — chặn việc tạo hàng loạt loài để có thêm key upload.
+    /// </summary>
+    Task<SubmitCommunitySpeciesResult> SubmitAsync(SubmitCommunitySpeciesRequest request, CancellationToken ct = default);
 
     /// <summary>Chủ sở hữu sửa lại loài đang chờ duyệt (vd: gõ nhầm, bổ sung thông tin). Chỉ cho sửa khi chưa duyệt/từ chối.</summary>
     Task<UpdateCommunitySpeciesResult> UpdateAsync(int specCode, SubmitCommunitySpeciesRequest request, CancellationToken ct = default);
@@ -49,8 +68,14 @@ public interface ICommunitySpeciesService
     Task<bool> DeleteAsync(int specCode, CancellationToken ct = default);
 
     /// <summary>
-    /// Cấp presigned PUT URL để user tự upload ảnh cho loài community vừa submit (chỉ chủ sở hữu).
-    /// Ghi ObjectKey vào ThumbnailObjectKey ngay — ảnh chỉ hiện public sau khi admin duyệt.
+    /// Cấp presigned PUT URL để user tự upload ảnh cho loài community (chỉ chủ sở hữu). CHƯA gắn ảnh vào loài —
+    /// FE PUT xong phải gọi <see cref="ConfirmImageUploadAsync"/>.
     /// </summary>
     Task<CommunityImageUploadResultDto?> RequestImageUploadAsync(int specCode, string fileName, string contentType, CancellationToken ct = default);
+
+    /// <summary>
+    /// Xác nhận ảnh vừa upload: HEAD để biết dung lượng THẬT (presigned PUT không chặn được), vượt
+    /// <c>FishDexObjectKeys.CommunityCoverMaxBytes</c> thì xoá object. Hợp lệ thì gắn làm ảnh bìa và xoá ảnh bìa cũ.
+    /// </summary>
+    Task<ConfirmCommunityImageOutcome> ConfirmImageUploadAsync(int specCode, string objectKey, CancellationToken ct = default);
 }

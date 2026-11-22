@@ -30,6 +30,29 @@ public sealed class InMemoryStorageServiceTests
     }
 
     [Fact]
+    public async Task List_returns_matching_objects_with_size_and_write_time()
+    {
+        var at = new DateTimeOffset(2026, 11, 21, 8, 0, 0, TimeSpan.Zero);
+        var storage = new InMemoryStorageService(time: new FixedTime(at));
+        await storage.PutObjectAsync("community/1/cover.jpg", [1, 2], "image/jpeg");
+        await storage.PutObjectAsync("100/a.jpg", [1], "image/jpeg");
+
+        var listed = await storage.ListAsync("community/");
+
+        Assert.Equal(new[] { new StoredObjectInfo("community/1/cover.jpg", 2, at) }, listed);
+        Assert.Empty(await storage.ListAsync(""));
+        Assert.Empty(await new InMemoryStorageService(configured: false).ListAsync("community/"));
+    }
+
+    private sealed class FixedTime(DateTimeOffset now) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow()
+        {
+            return now;
+        }
+    }
+
+    [Fact]
     public async Task Presigned_urls_identify_the_key()
     {
         var storage = new InMemoryStorageService();

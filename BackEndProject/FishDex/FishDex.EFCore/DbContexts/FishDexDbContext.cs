@@ -121,12 +121,8 @@ public class FishDexDbContext : DbContext
                 .HasPrincipalKey(e => e.SpecCode)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // CommonName -> Species via SpecCode
-            entity.HasMany(e => e.CommonNames)
-                .WithOne(c => c.Species)
-                .HasForeignKey(c => c.SpecCode)
-                .HasPrincipalKey(e => e.SpecCode)
-                .OnDelete(DeleteBehavior.Restrict);
+            // CommonNames.SpecCode KHÔNG có FK tới Species: loài lai cộng đồng (SpecCode ≥ 500000) chỉ tồn tại
+            // ở SpeciesSnapshots nhưng vẫn được đặt tên bản ngữ. Truy vấn tên qua db.CommonNames theo SpecCode.
         });
 
         // ── Stock ────────────────────────────────────────────────

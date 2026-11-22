@@ -100,3 +100,4 @@ public record CommunitySpeciesDto(
 
 public record CommunityImageUploadResultDto(string UploadUrl, string ObjectKey);
 public record CommunityImageUploadRequest(string FileName, string ContentType);
+public record CommunityImageConfirmRequest(string ObjectKey);

@@ -49,6 +49,12 @@ public interface ICommunitySpeciesRepository
     /// <summary>Loài do 1 user gửi (mọi trạng thái) — cho trang "loài tôi gửi".</summary>
     Task<IReadOnlyList<SpeciesSnapshot>> GetByContributorAsync(Guid userId, CancellationToken ct = default);
 
+    /// <summary>Ảnh bìa đang được loài cộng đồng nào dùng: object key → SpecCode. Cho job dọn object mồ côi trên storage.</summary>
+    Task<IReadOnlyDictionary<string, int>> GetCommunityThumbnailKeysAsync(CancellationToken ct = default);
+
+    /// <summary>Số loài chưa được duyệt (đang chờ hoặc đã bị từ chối) mà user đang giữ — để giới hạn số bài gửi.</summary>
+    Task<int> CountUnverifiedByContributorAsync(Guid userId, CancellationToken ct = default);
+
     /// <summary>Loài community đang chờ duyệt: chưa verified và chưa bị reject.</summary>
     Task<IReadOnlyList<SpeciesSnapshot>> GetPendingAsync(CancellationToken ct = default);
 

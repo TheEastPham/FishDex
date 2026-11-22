@@ -43,7 +43,7 @@ export { TradeStatus, LegalStatus, SizeBand, NameStatusFilter, SpeciesLookupOutc
 export { getMarketCountries, getMarketSpecies, getMarketStats, getSellingCountries, lookupSpecies, addTradedSpecies, removeTradedSpecies } from './lib/api/market';
 export type { MarketCountry } from './lib/countries';
 export { MARKET_COUNTRIES, DEFAULT_MARKET_COUNTRY, getCountryFlag, getStoredCountry, storeCountry, findCountry } from './lib/countries';
-export { submitCommunitySpecies, updateCommunitySpecies, deleteCommunitySpecies, getMyCommunitySpecies, getPendingCommunitySpecies, verifyCommunitySpecies, rejectCommunitySpecies, requestCommunitySpeciesImageUpload, submitCommonName, updateCommonName, deleteCommonName, getMyCommonNames, getPendingCommonNames, verifyCommonName, verifyCommonNamesBatch, rejectCommonName } from './lib/api/community';
+export { submitCommunitySpecies, updateCommunitySpecies, deleteCommunitySpecies, getMyCommunitySpecies, getPendingCommunitySpecies, verifyCommunitySpecies, rejectCommunitySpecies, requestCommunitySpeciesImageUpload, confirmCommunitySpeciesImageUpload, submitCommonName, updateCommonName, deleteCommonName, getMyCommonNames, getPendingCommonNames, verifyCommonName, verifyCommonNamesBatch, rejectCommonName } from './lib/api/community';
 export type { SaveSubscriptionPayload } from './lib/api/push';
 
 
@@ -74,3 +74,4 @@ export { getVisitorId }                             from './lib/visitor';
 export { i18n, setLanguage, useTranslation }       from './i18n';
 export type { AppLanguage }                        from './i18n';
 export { LanguageSwitcher }                        from './components/LanguageSwitcher';
+export { compressImage, UPLOAD_IMAGE_TYPES, UPLOAD_IMAGE_MAX_BYTES } from './lib/image';

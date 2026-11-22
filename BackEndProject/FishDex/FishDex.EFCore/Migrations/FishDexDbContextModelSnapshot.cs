@@ -2453,18 +2453,6 @@ namespace FishDex.EFCore.Migrations
                     b.Navigation("MorphData");
                 });
 
-            modelBuilder.Entity("FishDex.EFCore.Entity.Species.CommonName", b =>
-                {
-                    b.HasOne("FishDex.EFCore.Entity.Species.Species", "Species")
-                        .WithMany("CommonNames")
-                        .HasForeignKey("SpecCode")
-                        .HasPrincipalKey("SpecCode")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Species");
-                });
-
             modelBuilder.Entity("FishDex.EFCore.Entity.Species.Genus", b =>
                 {
                     b.HasOne("FishDex.EFCore.Entity.Species.Family", null)
@@ -2604,8 +2592,6 @@ namespace FishDex.EFCore.Migrations
 
             modelBuilder.Entity("FishDex.EFCore.Entity.Species.Species", b =>
                 {
-                    b.Navigation("CommonNames");
-
                     b.Navigation("Pictures");
 
                     b.Navigation("Stocks");

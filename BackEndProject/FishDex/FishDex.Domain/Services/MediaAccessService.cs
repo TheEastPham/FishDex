@@ -58,17 +58,25 @@ public class MediaAccessService(MediaAccessSigner signer, IStorageService storag
     }
 
     /// <summary>
-    /// Ảnh community chỉ public khi loài đã được admin duyệt VÀ key đúng là ảnh bìa hiện tại của loài đó.
-    /// Ảnh loài chờ duyệt / bị từ chối / ảnh bìa cũ đều bị từ chối. Browser cache 302 nên mỗi ảnh chỉ tốn
-    /// 1 query / ~14 phút.
+    /// Ảnh community chỉ public khi loài đã được admin duyệt VÀ key đúng là ảnh bìa hiện tại của loài đó VÀ object
+    /// thật trên storage không vượt trần dung lượng. Browser cache 302 nên mỗi ảnh chỉ tốn 1 query + 1 HEAD / ~14 phút.
     /// </summary>
+    /// <remarks>
+    /// Check dung lượng ở đây vì presigned PUT dùng lại được tới khi hết hạn: upload ảnh nhỏ, confirm, rồi PUT đè
+    /// file lớn bằng chính URL đó — confirm đã qua nên không bắt được. Redeem là chỗ ảnh được phục vụ công khai.
+    /// </remarks>
     private async Task<bool> IsPublicCommunityImageAsync(int specCode, string objectKey, CancellationToken ct)
     {
         // Service là singleton, repository dùng DbContext scoped → mở scope riêng cho lần tra này.
         await using var scope = scopeFactory.CreateAsyncScope();
         var repo = scope.ServiceProvider.GetRequiredService<ICommunitySpeciesRepository>();
         var species = await repo.GetVerifiedByCodeAsync(specCode, ct);
+        if (species?.ThumbnailObjectKey != objectKey)
+        {
+            return false;
+        }
 
-        return species?.ThumbnailObjectKey == objectKey;
+        var size = await storage.GetObjectSizeAsync(objectKey, ct);
+        return size is not null && size <= FishDexObjectKeys.CommunityCoverMaxBytes;
     }
 }

@@ -1,54 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   getAquariumMedia, requestMediaUpload, uploadToR2, confirmMediaUpload, deleteAquariumMedia, useTranslation,
+  compressImage, UPLOAD_IMAGE_TYPES,
 } from '@fishlover/shared';
 import type { AquariumMediaDto } from '@fishlover/shared';
 import { ImagePlus, Trash2, Loader2, X, ZoomIn } from 'lucide-react';
 
 const MAX_PHOTOS    = 10;
-const MAX_BYTES     = 1 * 1024 * 1024; // 1 MB
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-
-// ── Client-side compression ───────────────────────────────────────────────────
-async function compressImage(file: File): Promise<Blob> {
-  const bitmap = await createImageBitmap(file);
-  const { width, height } = bitmap;
-
-  // Scale down if wider than 1920px
-  const scale    = width > 1920 ? 1920 / width : 1;
-  const canvasW  = Math.round(width * scale);
-  const canvasH  = Math.round(height * scale);
-
-  const canvas   = document.createElement('canvas');
-  canvas.width   = canvasW;
-  canvas.height  = canvasH;
-  const ctx      = canvas.getContext('2d')!;
-  ctx.drawImage(bitmap, 0, 0, canvasW, canvasH);
-
-  // Progressive quality reduction until ≤ 1 MB
-  const mimeType = file.type === 'image/png' ? 'image/png' : file.type === 'image/webp' ? 'image/webp' : 'image/jpeg';
-  if (mimeType === 'image/png') {
-    // PNG is lossless — only resize helps; return as-is if already small
-    return await new Promise<Blob>((res, rej) =>
-      canvas.toBlob(b => b ? res(b) : rej(new Error('canvas.toBlob failed')), 'image/png'),
-    );
-  }
-
-  for (const quality of [0.9, 0.8, 0.7, 0.6, 0.5, 0.4]) {
-    const blob = await new Promise<Blob>((res, rej) =>
-      canvas.toBlob(b => b ? res(b) : rej(new Error('canvas.toBlob failed')), mimeType, quality),
-    );
-    if (blob.size <= MAX_BYTES) return blob;
-  }
-
-  // Last resort: halve dimensions and retry at quality 0.6
-  canvas.width  = Math.round(canvasW / 2);
-  canvas.height = Math.round(canvasH / 2);
-  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  return await new Promise<Blob>((res, rej) =>
-    canvas.toBlob(b => b ? res(b) : rej(new Error('canvas.toBlob failed')), mimeType, 0.6),
-  );
-}
+const ALLOWED_TYPES = UPLOAD_IMAGE_TYPES;
 
 // ── Lightbox ──────────────────────────────────────────────────────────────────
 function Lightbox({ url, onClose }: { url: string; onClose: () => void }) {

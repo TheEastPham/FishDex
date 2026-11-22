@@ -22,6 +22,12 @@ public class AquariumRepository(AquaHomeDbContext context)
         => await _db.Aquariums
             .FirstOrDefaultAsync(a => a.Id == id && a.UserId == userId, ct);
 
+    public async Task<Aquarium?> GetByIdAndUserWithFishAsync(Guid id, Guid userId, CancellationToken ct = default)
+        => await _db.Aquariums
+            .AsNoTracking()
+            .Include(a => a.Fish)
+            .FirstOrDefaultAsync(a => a.Id == id && a.UserId == userId, ct);
+
     public async Task<AquariumFish?> GetFishEntryAsync(Guid aquariumId, int specCode, CancellationToken ct = default)
         => await _db.AquariumFish
             .FirstOrDefaultAsync(f => f.AquariumId == aquariumId && f.SpecCode == specCode, ct);

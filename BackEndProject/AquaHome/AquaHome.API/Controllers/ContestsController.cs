@@ -130,6 +130,14 @@ public class AdminContestsController(IContestService contestService) : Controlle
         return result is null ? BadRequest(new { error = "Không thể tạo upload URL — kiểm tra content-type hoặc hạng giải tồn tại." }) : Ok(result);
     }
 
+    /// <summary>Gọi sau khi PUT ảnh xong: kiểm file thật (≤ 300KB). Quá cỡ / không có file → 422 và ảnh bị gỡ.</summary>
+    [HttpPost("{id:guid}/prize-tiers/{tierId:guid}/image/confirm")]
+    public async Task<IActionResult> ConfirmPrizeTierImageUpload(Guid id, Guid tierId, CancellationToken ct)
+    {
+        var ok = await contestService.ConfirmPrizeTierImageUploadAsync(id, tierId, ct);
+        return ok ? NoContent() : NotFound();
+    }
+
     // ── Sponsors ─────────────────────────────────────────────
     [HttpPost("{id:guid}/sponsors")]
     public async Task<IActionResult> CreateSponsor(Guid id, [FromBody] CreateSponsorRequest request, CancellationToken ct)
@@ -156,6 +164,14 @@ public class AdminContestsController(IContestService contestService) : Controlle
     {
         var result = await contestService.RequestSponsorLogoUploadAsync(id, sponsorId, request.FileName, request.ContentType, ct);
         return result is null ? BadRequest(new { error = "Không thể tạo upload URL — kiểm tra content-type hoặc sponsor tồn tại." }) : Ok(result);
+    }
+
+    /// <summary>Gọi sau khi PUT logo xong: kiểm file thật (≤ 300KB). Quá cỡ / không có file → 422 và logo bị gỡ.</summary>
+    [HttpPost("{id:guid}/sponsors/{sponsorId:guid}/logo/confirm")]
+    public async Task<IActionResult> ConfirmSponsorLogoUpload(Guid id, Guid sponsorId, CancellationToken ct)
+    {
+        var ok = await contestService.ConfirmSponsorLogoUploadAsync(id, sponsorId, ct);
+        return ok ? NoContent() : NotFound();
     }
 }
 

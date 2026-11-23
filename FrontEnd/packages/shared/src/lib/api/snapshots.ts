@@ -152,6 +152,11 @@ export async function requestPrizeTierImageUpload(
   return data;
 }
 
+/** Gọi sau khi PUT ảnh lên R2 — BE kiểm file thật (≤ 300 KB). 422 nếu quá cỡ hoặc không có file (ảnh bị gỡ). */
+export async function confirmPrizeTierImageUpload(contestId: string, tierId: string): Promise<void> {
+  await apiClient.post(`/aquahome/v1/admin/contests/${contestId}/prize-tiers/${tierId}/image/confirm`);
+}
+
 // ── Sponsors (SystemAdmin) ─────────────────────────────────
 
 export async function createSponsor(contestId: string, req: CreateSponsorRequest): Promise<ContestSponsorDto> {
@@ -176,4 +181,9 @@ export async function requestSponsorLogoUpload(
     { fileName, contentType },
   );
   return data;
+}
+
+/** Gọi sau khi PUT logo lên R2 — BE kiểm file thật (≤ 300 KB). 422 nếu quá cỡ hoặc không có file (logo bị gỡ). */
+export async function confirmSponsorLogoUpload(contestId: string, sponsorId: string): Promise<void> {
+  await apiClient.post(`/aquahome/v1/admin/contests/${contestId}/sponsors/${sponsorId}/logo/confirm`);
 }

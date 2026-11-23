@@ -35,7 +35,7 @@ export { getMyAquariums, getAquariumById, createAquarium, updateAquarium, delete
 export type { RecentlyViewedDto } from './types/aquahome';
 export { requestOtp, registerUser, forgotPassword, resetPassword, getMyProfile, updateMyProfile, changePassword } from './lib/api/auth';
 export type { RequestOtpResponse, RegisterRequest, RegisterResponse, ForgotPasswordResponse, ResetPasswordPayload, ResetPasswordResponse, UserProfileDto, UpdateProfilePayload, ChangePasswordPayload } from './lib/api/auth';
-export { previewSnapshot, publishSnapshot, unpublishSnapshot, getMySnapshots, getPublicSnapshots, getPublicSnapshotBySlug, likeSnapshot, unlikeSnapshot, getActiveContests, getContestLeaderboard, submitContestEntry, confirmEntryUpload, getMyContestEntries, getAllContests, createContest, updateContest, getPendingReviewEntries, approveContestEntry, rejectContestEntry, finalizeContest, createPrizeTier, updatePrizeTier, deletePrizeTier, requestPrizeTierImageUpload, createSponsor, updateSponsor, deleteSponsor, requestSponsorLogoUpload } from './lib/api/snapshots';
+export { previewSnapshot, publishSnapshot, unpublishSnapshot, getMySnapshots, getPublicSnapshots, getPublicSnapshotBySlug, likeSnapshot, unlikeSnapshot, getActiveContests, getContestLeaderboard, submitContestEntry, confirmEntryUpload, getMyContestEntries, getAllContests, createContest, updateContest, getPendingReviewEntries, approveContestEntry, rejectContestEntry, finalizeContest, createPrizeTier, updatePrizeTier, deletePrizeTier, requestPrizeTierImageUpload, confirmPrizeTierImageUpload, createSponsor, updateSponsor, deleteSponsor, requestSponsorLogoUpload, confirmSponsorLogoUpload } from './lib/api/snapshots';
 export { getVapidPublicKey, saveSubscription, removeSubscription } from './lib/api/push';
 export { getArticles, getArticleBySlug, getRelatedArticles, recordArticleView, fetchArticleContent, getAdminArticles, getAdminArticle, createArticle, updateArticle, upsertArticleTranslation, deleteArticleTranslation, uploadArticleAsset, deleteArticleAsset, setArticleCover, publishArticle, unpublishArticle, archiveArticle, deleteArticle } from './lib/api/articles';
 export type { MarketCountryDto, MarketSpeciesDto, MarketStatsDto, GetMarketSpeciesParams, SpeciesLookupDto, AddTradedSpeciesRequest } from './types/market';
@@ -74,4 +74,4 @@ export { getVisitorId }                             from './lib/visitor';
 export { i18n, setLanguage, useTranslation }       from './i18n';
 export type { AppLanguage }                        from './i18n';
 export { LanguageSwitcher }                        from './components/LanguageSwitcher';
-export { compressImage, UPLOAD_IMAGE_TYPES, UPLOAD_IMAGE_MAX_BYTES } from './lib/image';
+export { compressImage, prepareLogoImage, UPLOAD_IMAGE_TYPES, UPLOAD_IMAGE_MAX_BYTES, AQUARIUM_IMAGE_MAX_BYTES, LOGO_IMAGE_MAX_BYTES } from './lib/image';

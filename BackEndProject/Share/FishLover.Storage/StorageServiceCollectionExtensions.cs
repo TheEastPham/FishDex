@@ -19,6 +19,7 @@ public static class StorageServiceCollectionExtensions
 
         services.Configure<StorageSettings>(configuration.GetSection(StorageSettings.SectionName));
         services.AddSingleton<IStorageService, S3StorageService>();
+        services.AddSingleton<UploadVerifier>();
         return services;
     }
 }

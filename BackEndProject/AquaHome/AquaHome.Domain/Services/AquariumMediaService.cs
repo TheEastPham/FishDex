@@ -13,20 +13,16 @@ public class AquariumMediaService(
     IAquariumMediaRepository mediaRepo,
     IAquariumRepository      aquariumRepo,
     IStorageService          storage,
+    UploadVerifier           uploadVerifier,
     ICurrentUserSession      currentUser,
     AquaHomeObjectKeys keys,
     ILogger<AquariumMediaService> logger) : IAquariumMediaService
 {
     private const int MaxPhotosPerAquarium = 10;
-    private const long MaxUploadBytes      = 1 * 1024 * 1024; // 1 MB
+    private const long MaxUploadBytes      = 3L * 1024 * 1024 / 2; // 1.5 MB — FE phải nén ảnh dưới mức này
 
     // Đuôi file suy từ content-type (đã ký vào presigned PUT), không lấy theo tên file client gửi.
-    private static readonly Dictionary<string, string> ImageExtensions = new()
-    {
-        ["image/jpeg"] = ".jpg",
-        ["image/png"]  = ".png",
-        ["image/webp"] = ".webp",
-    };
+    private static readonly IReadOnlyDictionary<string, string> ImageExtensions = UploadContentTypes.Images;
 
 
     public async Task<PresignedUploadDto?> RequestUploadAsync(
@@ -84,15 +80,14 @@ public class AquariumMediaService(
         if (aquarium is null)
             return null;
 
-        // Presigned PUT không chặn được dung lượng → kiểm file thật. Không có file hoặc quá 1MB thì bỏ hẳn ảnh
+        // Presigned PUT không chặn được dung lượng → kiểm file thật. Không có file hoặc quá 1.5MB thì bỏ hẳn ảnh
         // (row tạo sẵn lúc xin URL, để lại sẽ chiếm 1 trong 10 suất ảnh của bể).
         var objectKey = keys.AquariumMedia(media);
-        var size = await storage.GetObjectSizeAsync(objectKey, ct);
-        if (size is null or > MaxUploadBytes)
+        var verdict = await uploadVerifier.VerifyAsync(objectKey, new UploadPolicy(MaxUploadBytes), ct);
+        if (!verdict.IsOk)
         {
-            logger.LogWarning("Rejected aquarium photo {MediaId}: R2 size {Size}", mediaId, size);
-            if (size is not null)
-                await storage.DeleteAsync(objectKey, ct);
+            // Quá cỡ thì verifier đã xoá object; còn lại là bỏ dòng DB.
+            logger.LogWarning("Rejected aquarium photo {MediaId}: {Verdict}, R2 size {Size}", mediaId, verdict.Kind, verdict.Size);
             mediaRepo.Remove(media);
             await mediaRepo.SaveChangesAsync(ct);
             return null;

@@ -33,11 +33,17 @@ public interface IContestService
     Task<bool> DeletePrizeTierAsync(Guid contestId, Guid tierId, CancellationToken ct = default);
     Task<PrizeTierImageUploadResultDto?> RequestPrizeTierImageUploadAsync(Guid contestId, Guid tierId, string fileName, string contentType, CancellationToken ct = default);
 
+    /// <summary>Xác minh ảnh hạng giải đã upload (file thật có, ≤ 300KB). Không hợp lệ → gỡ key và ném ContestValidationException (422). False = không tìm thấy hạng giải / chưa xin URL.</summary>
+    Task<bool> ConfirmPrizeTierImageUploadAsync(Guid contestId, Guid tierId, CancellationToken ct = default);
+
     // ── Sponsors ───────────────────────────────────────────
     Task<ContestSponsorDto> CreateSponsorAsync(Guid contestId, CreateSponsorRequest request, CancellationToken ct = default);
     Task<ContestSponsorDto?> UpdateSponsorAsync(Guid contestId, Guid sponsorId, UpdateSponsorRequest request, CancellationToken ct = default);
     Task<bool> DeleteSponsorAsync(Guid contestId, Guid sponsorId, CancellationToken ct = default);
     Task<SponsorLogoUploadResultDto?> RequestSponsorLogoUploadAsync(Guid contestId, Guid sponsorId, string fileName, string contentType, CancellationToken ct = default);
+
+    /// <summary>Xác minh logo sponsor đã upload — cùng quy tắc với ảnh hạng giải. False = không tìm thấy sponsor / chưa xin URL.</summary>
+    Task<bool> ConfirmSponsorLogoUploadAsync(Guid contestId, Guid sponsorId, CancellationToken ct = default);
 
     /// <summary>Admin chốt giải: gán PrizeTierId cho các entry đã Published, denorm xuống Snapshot, set Contest.Status=Ended.
     /// Ném ContestValidationException (422) nếu vượt SlotCount của tier hoặc entry chưa Published.</summary>

@@ -9,7 +9,6 @@ using System.ComponentModel.DataAnnotations;
 namespace UserManagement.API.Controllers.User;
 
 [ApiController]
-[AllowAnonymous]
 [Route("api/[controller]")]
 public class AuthController(IAuthService authService, ICurrentUserSession currentUser, ILogger<AuthController> logger)
     : ControllerBase
@@ -18,6 +17,7 @@ public class AuthController(IAuthService authService, ICurrentUserSession curren
     /// User login
     /// </summary>
     [HttpPost("login")]
+    [AllowAnonymous]
     public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request)
     {
         try
@@ -47,6 +47,7 @@ public class AuthController(IAuthService authService, ICurrentUserSession curren
     /// Refresh access token
     /// </summary>
     [HttpPost("refresh")]
+    [AllowAnonymous]
     public async Task<ActionResult<TokenResponse>> RefreshToken([FromBody] RefreshTokenRequest request)
     {
         try
@@ -94,6 +95,7 @@ public class AuthController(IAuthService authService, ICurrentUserSession curren
     /// User registration
     /// </summary>
     [HttpGet("valid-email/{email}")]
+    [AllowAnonymous]
     public async Task<ActionResult<EmailVerificationResponse>> GetVerificationCode(string email, [FromQuery] string? invitationCode)
     {
         var response = await authService.GetVerificationCode(email, invitationCode);
@@ -110,6 +112,7 @@ public class AuthController(IAuthService authService, ICurrentUserSession curren
     /// Forgot password — sends reset link to email
     /// </summary>
     [HttpPost("forgot-password")]
+    [AllowAnonymous]
     public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
     {
         if (!ModelState.IsValid)
@@ -127,6 +130,7 @@ public class AuthController(IAuthService authService, ICurrentUserSession curren
     /// Reset password with token from email link
     /// </summary>
     [HttpPost("reset-password")]
+    [AllowAnonymous]
     public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
     {
         if (!ModelState.IsValid)
@@ -143,6 +147,7 @@ public class AuthController(IAuthService authService, ICurrentUserSession curren
     /// User registration
     /// </summary>
     [HttpPost("register")]
+    [AllowAnonymous]
     public async Task<ActionResult<RegisterResponse>> Register([FromBody] RegisterRequest request)
     {
         try

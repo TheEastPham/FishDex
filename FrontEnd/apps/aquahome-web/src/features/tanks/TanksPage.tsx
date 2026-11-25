@@ -4,7 +4,7 @@ import type { AquariumDto, CreateAquariumRequest } from '@fishlover/shared';
 import { PlusCircle, Fish } from 'lucide-react';
 import AquariumForm from './components/AquariumForm';
 import AquariumDetail from './components/AquariumDetail';
-import { getTankStyle } from './components/AquariumCard';
+import { getTankStyle } from './components/tankStyle';
 
 export default function TanksPage() {
   const [tanks, setTanks]       = useState<AquariumDto[]>([]);

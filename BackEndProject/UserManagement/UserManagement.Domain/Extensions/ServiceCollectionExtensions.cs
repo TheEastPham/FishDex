@@ -58,7 +58,6 @@ public static class ServiceCollectionExtensions
         // Domain services
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IAuthService, AuthService>();
-        services.AddScoped<IRoleService, RoleService>();
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<IEmailProvider, ResendEmailProvider>();
         services.AddScoped<IWebPushService, WebPushService>();

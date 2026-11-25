@@ -7,24 +7,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### General
 - **Mobile context**: FE được truy cập chủ yếu qua iPhone 12+ (390px). Khi thiết kế API response — tránh payload thừa, pagination hợp lý, error message rõ ràng để FE hiển thị được trên màn hình nhỏ.
 - **Tách commit BE và FE**: KHÔNG gộp code BE (`BackEndProject/`, `Pipeline/`) và FE (`FrontEnd/`) trong cùng 1 commit khi implement feature — tách thành commit riêng cho mỗi bên. **Ngoại lệ**: fix bug thì được gộp BE+FE trong 1 commit.
-- **MinIO object key cho SystemImage**: LUÔN dùng `pic.ObjectKey` (computed property trên entity `SystemImage`) khi gọi `IStorageService.GetPresignedUrlAsync`. KHÔNG tự ghép path thủ công, KHÔNG dùng `pic.Name` trực tiếp. `ObjectKey` trả về `{SpecCode}/{Id}{ext}` — đây là nguồn sự thật duy nhất cho đường dẫn ảnh trên MinIO.
+- **Object key cho SystemImage**: LUÔN dùng `pic.ObjectKey` (computed property trên entity `SystemImage`) khi gọi `IStorageService.GetPresignedUrlAsync`. KHÔNG tự ghép path thủ công, KHÔNG dùng `pic.Name` trực tiếp. `ObjectKey` trả về `{SpecCode}/{Id}{ext}` — đây là nguồn sự thật duy nhất cho đường dẫn ảnh trên storage (Cloudflare R2, bucket `system-image`).
 - **Object key policy**: KHÔNG tự ghép key storage ở service. FishDex: ảnh FishBase dùng `SystemImage.ObjectKey`, key khác dùng `FishDexObjectKeys`. AquaHome: luôn qua `AquaHomeObjectKeys` (inject). Key đã lưu trong DB — test `AquaHome.Tests`/`FishDexObjectKeysTests` khoá từng format, đổi format = mất object cũ.
 - **Upload qua presigned PUT không tự chặn dung lượng**: luồng nào phát URL PUT phải gọi `IStorageService.GetObjectSizeAsync` (HEAD) ở bước confirm.
 
-### v2.0 AI Stack (Groq + VM3)
-- **Groq API key**: `appsettings.Docker.json` chứa `ExternalServices:GroqApi:ApiKey`. Local dev dùng dummy value; Docker prod dùng env var `GROQ_API_KEY` từ docker-compose.
+### v2.0 AI Stack (Groq + VM3) — 🚧 CHƯA XÂY
+Chưa có dòng code nào cho phần này (chưa có `SpeciesChunk`, route `/embeddings`, `/image-search`, cấu hình Groq). Các mục dưới là **ràng buộc thiết kế** phải giữ khi bắt đầu làm R0–R4; nguồn chính là `../docs/roadmap/ai-release-plan.md` — lệch nhau thì theo release plan.
+- **Groq API key**: lấy từ env var `GROQ_API_KEY` (prod) / giá trị dummy khi dev; không commit key.
 - **Rate limit monitoring**: Mỗi LLM request log timestamp + token count tới Grafana. Alert nếu >25 RPM (buffer dưới 30 RPM limit). Groq trả 429 → return 503 Temporarily Unavailable tới FE (không retry tự động).
-- **VM3 embedding service** (:8000): AquaHome BFF gọi qua gateway `/embeddings/embed`. Nếu service down → return 503 (không fallback tới local embedding). Embedding responses cache 1 giờ (key: MD5 của input text).
-- **VM3 image search service** (:8001): FishDex API gọi qua gateway `/image-search/*`. Nếu service down → return 503. CLIP embeddings pre-computed trên species_media; image upload queries live (không cache).
+- **VM3 embedding service** (:8000): AquaHome gọi qua gateway (route sẽ thêm khi làm R0). Nếu service down → return 503 (không fallback tới local embedding). Embedding responses cache 1 giờ (key: MD5 của input text).
+- **VM3 image search service** (:8001): FishDex API gọi qua gateway (route sẽ thêm khi làm R4). Nếu service down → return 503. CLIP embeddings pre-computed trên species media; ảnh upload truy vấn live (không cache).
 - **pgvector constraints**: `SpeciesChunk.Embedding` (384-d, HNSW index) dùng cho RAG. `SpeciesMedia.ClipEmbedding` (512-d, HNSW index) dùng cho image search. Không mix cả hai trong một query — separate code paths.
-- **Fallback strategy**: Nếu Groq API down >5min → log alert, fallback command để switch tới Ollama Gemma 2B (Story 2.3 fallback branch, keep ready). FE shows "Powered by local LLM" message.
+- **Fallback strategy**: LLM đi qua `ILlmProvider` (Groq → Ollama/Gemini) như release plan; Groq lỗi kéo dài thì chuyển provider và FE hiện thông báo đang dùng LLM dự phòng.
 - **Response latency budgets**:
   - RAG (Groq): <1.5s p95 (embedding 50ms + pgvector 100ms + Groq 1000ms + network 200ms)
   - Image search: <700ms p95 (CLIP 200ms + pgvector 100ms + presigned URLs 300ms + network 100ms)
 
 ## Project Overview
 
-FishLover is a microservices-based backend for a fish species management and aquarium tracking platform. It targets .NET 9 / C# 13 and contains three services behind an Ocelot API Gateway.
+FishLover is a microservices-based backend for a fish species management and aquarium tracking platform. It targets .NET 9 / C# 13 and contains three services (UserManagement, FishDex, AquaHome) plus a background worker (AquaHome.Worker) behind an Ocelot API Gateway.
 
 ## Commands
 
@@ -41,15 +42,19 @@ dotnet build FishDex.sln
 ```
 dotnet run --project UserManagement/UserManagement.API/UserManagement.API.csproj
 dotnet run --project FishDex/FishDex.API/FishDex.API.csproj
+dotnet run --project AquaHome/AquaHome.API/AquaHome.API.csproj
+dotnet run --project AquaHome/AquaHome.Worker/AquaHome.Worker.csproj
 dotnet run --project ApiGateway/ApiGateway.csproj
 ```
 
-**Run tests:**
+**Run tests** (`dotnet test FishDex.sln` chạy cả 4):
 ```
 dotnet test Share/FishLover.Storage.Tests/FishLover.Storage.Tests.csproj   # thuần, không cần Docker
+dotnet test Share/FishLover.Shared.Tests/FishLover.Shared.Tests.csproj     # thuần, không cần Docker
 dotnet test AquaHome/AquaHome.Tests/AquaHome.Tests.csproj                 # thuần, không cần Docker
 dotnet test FishDex/FishDex.Tests/FishDex.Tests.csproj                    # cần Docker — Testcontainers dựng Postgres pgvector/pgvector:pg16
 ```
+UserManagement chưa có test project.
 
 **Run with hot reload:**
 ```
@@ -93,12 +98,14 @@ PostgreSQL: UserManagement 5435 · FishDex 5433 · AquaHome 5434. Redis: UserMan
 ### Service Layout
 
 ```
-ApiGateway/          – Ocelot gateway; routes /api/** → downstream services
-UserManagement/      – User auth/management microservice (SQL Server + Redis)
-FishDex/             – Fish species data service (PostgreSQL + pgvector)
-AquaHome/            – Aquarium tracking service (SQL Server + Redis) [in progress]
-Share/               – FishLover.Shared: JWT, OpenTelemetry, CurrentUserSession · FishLover.Storage: IStorageService (S3/R2 + in-memory), media-access signer
-../Pipeline/         – Docker Compose stacks + CI/CD pipeline templates (repo root)
+ApiGateway/          – Ocelot gateway (route: xem "API Gateway Routing" bên dưới)
+UserManagement/      – Identity + OpenIddict (OAuth2/OIDC PKCE), đăng ký OTP, Web Push — PostgreSQL + Redis
+FishDex/             – Tra cứu loài (FishBase + Community species), market layer, media-access — PostgreSQL + pgvector
+AquaHome/            – Bể nuôi, snapshot công khai, contest (YouTube), bài viết, quota — PostgreSQL + Redis
+                       AquaHome.Worker: job nền (contest staging cleanup, sync viewCount, sync market species, nhắc việc)
+Share/               – FishLover.Shared: JWT/resource-server bootstrap, internal API key auth, OpenTelemetry, CurrentUserSession, PagedResult
+                       FishLover.Storage: IStorageService (S3/R2 + in-memory), upload verifier, media-access signer
+../Pipeline/         – Docker Compose local + production (OracleVM) + 4 pipeline Azure DevOps (repo root)
 ```
 
 ### UserManagement Layers
@@ -111,23 +118,36 @@ The service follows a strict three-layer split:
 | `UserManagement.Domain` | Business logic, DTOs, service interfaces, email templates (EN/VI) |
 | `UserManagement.EFCore` | EF Core DbContext, entities, migrations, repository implementations |
 
-DI is wired via **Autofac modules** (`UserManagementModule` in Domain, a matching module in EFCore). Controllers depend only on domain service interfaces; the EFCore module binds the concrete repositories at startup.
+DI dùng container mặc định của ASP.NET Core qua extension method: `AddUserManagementDomain` (Domain), `AddUserManagementEFCore` (EFCore), `AddOpenIddictServer` (API). Controllers depend only on domain service interfaces. FishDex và AquaHome theo cùng kiểu `ServiceCollectionExtensions`.
 
 ### Cross-Cutting Concerns (Share/FishLover.Shared)
 
-- `JwtAuthenticationExtensions` / `AuthorizationExtensions` — shared JWT setup consumed by every API service
+- `AddFishLoverJwtAuthentication` / `AddFishLoverAuthorization` — scheme JWT (`JwtSettings`) cho ApiGateway và UserManagement
+- `AddFishLoverResourceServer` — scheme "OpenIddict" cho FishDex và AquaHome (validate token do UserManagement cấp; chưa validate audience, xem ADR 0004)
+- `AddFishLoverInternalApiKey` — xác thực service-to-service bằng internal API key
+- `AddFishLoverTelemetry` / `AddFishLoverWorkerTracing` — traces + Prometheus metrics; endpoint cấu hình trong `appsettings.json`
 - `CurrentUserSession` / `ICurrentUserSession` — scoped service that exposes the authenticated user's claims to domain services
-- `OpenTelemetryExtensions` — wires traces + Prometheus metrics; export endpoint is configured via `appsettings.json`
 - `PagedResult<T>` — generic pagination wrapper shared across all services
 
-### API Gateway Routing (`ApiGateway/ocelot.json`)
+### API Gateway Routing
 
-- `/api/{everything}` → `user-management:8080`
-- `/storage/{everything}` → `storage:9000` (MinIO or equivalent object store)
+Mỗi môi trường nạp **đúng một** file route: `ocelot.json` (Production), `ocelot.Development.json`, `ocelot.Docker.json`. Không chồng file môi trường lên `ocelot.json` (cấu hình .NET gộp mảng theo vị trí). Thêm route thì thêm vào **cả ba** file.
+
+| Upstream | Downstream (Production) | Ghi chú |
+|---|---|---|
+| `/.well-known/{everything}`, `/connect/{everything}` | `usermanagement:8080` | OIDC; `/connect` giới hạn 20 req/phút |
+| `/user/v1/{everything}` | `usermanagement:8080/api/...` | 30 req/phút |
+| `/fishdex/v1/{everything}` | `fishdex:8081/api/...` | 60 req/phút; `/fishdex/v1/public/media-access` (+ `/sas`) là route riêng `Priority 2`, không giới hạn |
+| `/aquahome/v1/{everything}` | `aquahome:8082/api/...` | 60 req/phút |
+
+`/metrics` được map **trước** `UseOcelot` (Ocelot là middleware terminal); nginx chặn `/metrics` từ internet.
 
 ### Authentication Flow
 
-JWT Bearer tokens; configuration in `appsettings.json` under `JwtSettings` (SecretKey, Issuer, Audience, ExpiryMinutes). Invitation-based registration is gated by `RequireInvitation: true` in config. Token refresh is supported. Email verification and password-reset flows use **Resend** as the email provider; templates live in `UserManagement.Domain/Helper/`.
+- **FE đăng nhập bằng OAuth2 Authorization Code + PKCE** qua OpenIddict ở UserManagement (`/connect/*`, discovery `/.well-known/*`); FishDex và AquaHome nhận token qua scheme "OpenIddict".
+- `JwtSettings` (SecretKey, Issuer, Audience) phục vụ scheme JWT cũ ở ApiGateway/UserManagement; `/api/auth/login|refresh|logout` của `AuthController` thuộc luồng này, FE không dùng.
+- **Đăng ký:** gửi mã OTP qua email rồi `/api/auth/register`; `RequireInvitation` bật/tắt việc bắt buộc mã mời. Quên mật khẩu: `/api/auth/forgot-password` → `reset-password`.
+- Email gửi qua **Resend**; template ở `UserManagement.Domain/Helper/EmailTemplates/{en,vi}/` (VerificationCode, PasswordReset, WelcomeEmail).
 
 ### FishDex Data Model
 
@@ -138,17 +158,17 @@ JWT Bearer tokens; configuration in `appsettings.json` under `JwtSettings` (Secr
 | Concern | Library |
 |---|---|
 | ORM | Entity Framework Core 9 |
-| DB (UserManagement) | SQL Server (EF Core SqlServer provider) |
-| DB (AquaHome) | PostgreSQL 16 (Npgsql EF provider) |
-| DB (FishDex) | PostgreSQL 16 + pgvector (Npgsql EF provider) |
+| DB (cả 3 service) | PostgreSQL 16 (Npgsql EF provider); FishDex có thêm pgvector |
 | Gateway | Ocelot 24 |
-| DI | Autofac 9 |
+| DI | Container mặc định của ASP.NET Core (`IServiceCollection` extensions) |
 | Mapping | Static `ToDto()` extension methods (no AutoMapper) |
-| Validation | FluentValidation 11 |
+| Validation | DataAnnotations trên DTO + kiểm tra trong service (không dùng FluentValidation) |
 | Logging | Serilog (file rotation) |
 | Tracing/Metrics | OpenTelemetry 1.10 + Prometheus |
-| Caching | StackExchange.Redis 2.8 |
-| Auth | ASP.NET Core Identity + JWT Bearer |
+| Caching | Redis (`IDistributedCache`, StackExchange.Redis 2.8) + `IMemoryCache` |
+| Auth | ASP.NET Core Identity + OpenIddict 5 + JWT Bearer |
+| Storage | AWSSDK.S3 tới Cloudflare R2 (`FishLover.Storage`) |
+| Khác | Google.Apis.YouTube.v3 (contest), WebPush (thông báo), Testcontainers.PostgreSql + xUnit (test) |
 
 ## NuGet
 
@@ -162,17 +182,17 @@ Project-level `nuget.config` forces restore từ `nuget.org` only. Không dùng 
 
 ## Pipeline
 
-Xem `../Pipeline/README.md` để biết cách chạy local Docker stacks và CI/CD templates.
+Xem `../Pipeline/README.md` để biết cách chạy local Docker stack và 4 pipeline Azure DevOps (chạy khi push lên `release/v1.1`).
 
 ## Production Deployment Checklist
 
-Các shortcuts được cố ý để lại cho local dev — **phải đổi trước khi lên PROD**:
+Các shortcut còn lại / đã xử lý (giữ nguyên số thứ tự vì code và ADR trỏ tới, ví dụ `TODO(prod #4)`):
 
-| # | File | Vấn đề | Fix |
-|---|------|---------|-----|
-| 1 | `UserManagement.API/Extensions/OpenIddictServerExtensions.cs` | `AddEphemeralEncryptionKey()` + `AddEphemeralSigningKey()` — key mất sau restart, multi-instance sẽ lỗi | Dùng X.509 cert từ Key Vault: `AddEncryptionCertificate()` + `AddSigningCertificate()` |
-| 2 | Same file | `DisableTransportSecurityRequirement()` — cho phép HTTP | Xóa dòng này; PROD phải chạy HTTPS |
-| 3 | `UserManagement.API/Program.cs` | `AutoMigrate:OnStartup` — auto-migrate khi startup, race condition nếu multi-instance | Tắt flag, chạy `dotnet ef database update` như một bước riêng trong CI/CD trước deploy |
-| 4 | `FishDex.API/Program.cs` | `ValidateAudience = false` trong scheme "OpenIddict" | Đăng ký FishDex như resource server trong OpenIddict, validate audience đúng |
-| 5 | `UserManagement.API/appsettings.Docker.json` | `OpenIddict:Issuer = http://localhost:8080` | Đổi thành HTTPS domain thật của production |
-| 6 | Docker Compose | DataProtection Keys không được persist ngoài container | Mount volume hoặc dùng Azure Key Vault / AWS KMS |
+| # | File | Vấn đề | Fix | Trạng thái |
+|---|------|--------|-----|------------|
+| 1 | `UserManagement.API/Extensions/OpenIddictServerExtensions.cs` | Ký/mã hoá token bằng cert self-signed tự tạo (`GetOrCreateDevCert`), lưu ở `OpenIddict:KeyDir` (prod: volume `openiddict_keys`) — sống qua restart nhưng không phải cert thật | Dùng X.509 cert thật (Key Vault…) cho `AddSigningCertificate()` / `AddEncryptionCertificate()` | Còn mở |
+| 2 | Same file | `DisableTransportSecurityRequirement()` cho phép HTTP | Chỉ gọi khi không phải Production | ✅ Đã xử lý |
+| 3 | `Program.cs` của UserManagement.API, FishDex.API, AquaHome.API, AquaHome.Worker | `AutoMigrate:OnStartup` — auto-migrate khi startup, race condition nếu multi-instance | Tắt flag ở prod, chạy `dotnet ef database update` như một bước riêng trước deploy | Còn mở |
+| 4 | `Share/FishLover.Shared/Extensions/ResourceServerExtensions.cs` | `ValidateAudience = false` trong scheme "OpenIddict" (FishDex + AquaHome) — ADR 0004 | Đăng ký FishDex/AquaHome như resource server trong OpenIddict, bật validate audience ở đúng chỗ này | Còn mở |
+| 5 | `UserManagement.API/appsettings.Docker.json` | `OpenIddict:Issuer = http://localhost:8080` | Prod chạy môi trường `Production` và đặt `OpenIddict__Issuer=${OIDC_ISSUER}` (VM1 compose); file Docker chỉ dùng cho local | ✅ Đã xử lý |
+| 6 | Docker Compose | DataProtection keys không được persist ngoài container | Mount volume hoặc dùng Key Vault / KMS | Còn mở |

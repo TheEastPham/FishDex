@@ -44,7 +44,7 @@ services:
   usermanagement-api:
     build:
       context: ../../BackEndProject
-      dockerfile: ../Pipeline/local/UserManagement/Dockerfile.api
+      dockerfile: UserManagement/UserManagement.API/Dockerfile
     image: usermanagement-api:local
     container_name: usermanagement_api
     restart: unless-stopped
@@ -125,7 +125,7 @@ services:
   fishdex-api:
     build:
       context: ../../BackEndProject
-      dockerfile: ../Pipeline/local/FishDex/Dockerfile.api
+      dockerfile: FishDex/FishDex.API/Dockerfile
     image: fishdex-api:local
     container_name: fishdex_api
     restart: unless-stopped
@@ -202,7 +202,7 @@ services:
   aquahome-api:
     build:
       context: ../../BackEndProject
-      dockerfile: ../Pipeline/local/AquaHome/Dockerfile.api
+      dockerfile: AquaHome/AquaHome.API/Dockerfile
     image: aquahome-api:local
     container_name: aquahome_api
     restart: unless-stopped
@@ -249,7 +249,7 @@ services:
   aquahome-worker:
     build:
       context: ../../BackEndProject
-      dockerfile: ../Pipeline/local/AquaHome/Dockerfile.worker
+      dockerfile: AquaHome/AquaHome.Worker/Dockerfile
     image: aquahome-worker:local
     container_name: aquahome_worker
     restart: unless-stopped
@@ -287,7 +287,7 @@ services:
   apigateway:
     build:
       context: ../../BackEndProject
-      dockerfile: ../Pipeline/local/ApiGateway/Dockerfile.api
+      dockerfile: ApiGateway/Dockerfile
     image: apigateway:local
     container_name: apigateway
     restart: unless-stopped

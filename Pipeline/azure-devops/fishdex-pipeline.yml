@@ -40,7 +40,7 @@ stages:
         docker buildx build \
           --platform linux/arm64 \
           --push \
-          -f Pipeline/local/FishDex/Dockerfile.api \
+          -f BackEndProject/FishDex/FishDex.API/Dockerfile \
           -t $(IMAGE):$(Build.BuildId) \
           -t $(IMAGE):latest \
           BackEndProject/

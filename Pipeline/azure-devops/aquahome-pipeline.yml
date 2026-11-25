@@ -41,7 +41,7 @@ stages:
         docker buildx build \
           --platform linux/arm64 \
           --push \
-          -f Pipeline/local/AquaHome/Dockerfile.api \
+          -f BackEndProject/AquaHome/AquaHome.API/Dockerfile \
           -t $(IMAGE):$(Build.BuildId) \
           -t $(IMAGE):latest \
           BackEndProject/
@@ -51,7 +51,7 @@ stages:
         docker buildx build \
           --platform linux/arm64 \
           --push \
-          -f Pipeline/local/AquaHome/Dockerfile.worker \
+          -f BackEndProject/AquaHome/AquaHome.Worker/Dockerfile \
           -t $(WORKER_IMAGE):$(Build.BuildId) \
           -t $(WORKER_IMAGE):latest \
           BackEndProject/

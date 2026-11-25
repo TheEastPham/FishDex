@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FishLover — C4 Level 1: System Context</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0d1117;
+    color: #e6edf3;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    padding: 32px 24px 64px;
+    min-height: 100vh;
+  }
+  h1 { font-size: 1.5rem; font-weight: 700; color: #58a6ff; margin-bottom: 4px; }
+  .subtitle { color: #8b949e; font-size: 0.85rem; margin-bottom: 32px; }
+  .diagram-wrap {
+    background: #161b22;
+    border: 1px solid #21262d;
+    border-radius: 12px;
+    padding: 24px;
+    overflow-x: auto;
+    margin-bottom: 28px;
+  }
+  .mermaid svg { max-width: 100%; }
+  h2 { font-size: 1.05rem; color: #e6edf3; margin: 28px 0 10px; }
+  table { border-collapse: collapse; width: 100%; margin-bottom: 8px; }
+  th, td { text-align: left; padding: 8px 10px; font-size: 0.85rem; border-bottom: 1px solid #21262d; }
+  th { color: #8b949e; font-weight: 600; }
+  td { color: #c9d1d9; }
+  ul { margin: 8px 0 8px 20px; font-size: 0.85rem; color: #c9d1d9; line-height: 1.7; }
+  code { background: #21262d; padding: 1px 5px; border-radius: 4px; font-size: 0.82em; }
+  .note {
+    margin-top: 8px;
+    background: #0d2137;
+    border: 1px solid #1f3a5f;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 0.8rem;
+    color: #79c0ff;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<p style="margin-bottom:12px"><a href="00-overview.html" style="font-size:0.85rem;color:#79c0ff;text-decoration:none">← Về danh sách (00)</a></p>
+<h1>FishLover — C4 Level 1: System Context</h1>
+<p class="subtitle">Cập nhật: 2026-09-29 · Kiến trúc v2.0 (ApiGateway + AquaHome + FishDex + UserManagement)</p>
+
+<div class="diagram-wrap">
+  <div class="mermaid">
+graph TB
+    User(["👤 Người chơi cá cảnh<br/>(Web · Mobile browser)"])
+    Admin(["🛡️ Admin / Content Manager<br/>(cùng web app, quyền cao hơn)"])
+
+    subgraph FishLover ["🐟 FishLover Platform"]
+        PLATFORM["AquaHome · FishDex · UserManagement<br/>Quản lý hồ cá · Tra cứu loài cá (FishDex)<br/>Bài viết · Market · Contest · AI Q&amp;A"]
+    end
+
+    EXT_GROQ(["☁️ Groq API<br/>(LLM inference)"])
+    EXT_R2(["🗄️ Cloudflare R2<br/>(Object storage - ảnh, media)"])
+    EXT_YT(["▶️ YouTube<br/>(Video hosting - contest entries)"])
+    EXT_RESEND(["✉️ Resend<br/>(Email - xác thực, reset mật khẩu)"])
+    EXT_FB(["📦 FishBase Dataset<br/>(Seed data loài cá, offline)"])
+
+    User -->|"HTTPS"| PLATFORM
+    Admin -->|"HTTPS"| PLATFORM
+    PLATFORM -->|"LLM Q&amp;A / RAG"| EXT_GROQ
+    PLATFORM -->|"Upload / lấy ảnh, media"| EXT_R2
+    PLATFORM -->|"Upload video contest"| EXT_YT
+    PLATFORM -->|"Gửi email"| EXT_RESEND
+    EXT_FB -->|"Seed dữ liệu loài cá (1 lần)"| PLATFORM
+
+    style PLATFORM fill:#1a3320,stroke:#3fb950,color:#e6edf3
+    style User fill:#1f3a5f,stroke:#58a6ff,color:#e6edf3
+    style Admin fill:#1f3a5f,stroke:#58a6ff,color:#e6edf3
+    style EXT_GROQ fill:#161b22,stroke:#f0883e,color:#e6edf3
+    style EXT_R2 fill:#161b22,stroke:#e3b341,color:#e6edf3
+    style EXT_YT fill:#161b22,stroke:#f85149,color:#e6edf3
+    style EXT_RESEND fill:#161b22,stroke:#79c0ff,color:#e6edf3
+    style EXT_FB fill:#161b22,stroke:#6e7681,color:#e6edf3
+  </div>
+</div>
+
+<h2>Actors</h2>
+<table>
+  <tr><th>Actor</th><th>Mô tả</th></tr>
+  <tr><td>Người chơi cá cảnh</td><td>End user chính, dùng qua web app (mobile-first, iPhone 12+) — quản lý hồ cá, tra loài cá, đọc bài viết, tham gia contest, hỏi đáp AI</td></tr>
+  <tr><td>Admin / Content Manager</td><td>Cùng web app, quyền cao hơn — duyệt bài viết (<code>AdminArticlesController</code>), quản lý contest/sponsor</td></tr>
+</table>
+
+<h2>External Systems</h2>
+<table>
+  <tr><th>System</th><th>Vai trò</th><th>Dùng bởi (nội bộ)</th></tr>
+  <tr><td>Groq API</td><td>LLM inference cho AI Q&amp;A/RAG. Rate limit 30 RPM, fallback nội bộ sang Ollama Gemma 2B (self-hosted trên VM3) khi Groq down &gt;5 phút</td><td>AquaHome BFF → VM3 embedding service</td></tr>
+  <tr><td>Cloudflare R2</td><td>Object storage (S3-compatible) — ảnh species, ảnh hồ cá, snapshot, media contest</td><td>AquaHome, FishDex (<code>S3StorageService</code>)</td></tr>
+  <tr><td>YouTube</td><td>Lưu trữ &amp; phát video contest entries</td><td>AquaHome (<code>YouTubeUploadService</code>)</td></tr>
+  <tr><td>Resend</td><td>Email provider — xác thực tài khoản, reset mật khẩu</td><td>UserManagement (<code>ResendEmailProvider</code>)</td></tr>
+  <tr><td>FishBase Dataset</td><td>Nguồn dữ liệu gốc (Parquet) để seed database loài cá — chỉ 1 lần / khi cập nhật data, không phải runtime dependency</td><td>FishDex (<code>FishBaseFlattener</code>)</td></tr>
+</table>
+
+<h2>Ghi chú phạm vi (không vẽ ở Level 1)</h2>
+<ul>
+  <li><strong>Hạ tầng deploy</strong> (Cloudflare Pages cho FE, Oracle VM1/VM2/VM3, Docker) — thuộc Deployment/Container view, không phải Context.</li>
+  <li><strong>Monitoring stack</strong> (Prometheus/Loki/Grafana trên VM2) — internal ops tooling, không phải actor hay external system mà user tương tác.</li>
+  <li><strong>Ollama (self-hosted)</strong> — fallback nội bộ của AI stack (chạy trên VM3), không phải third-party bên ngoài nên gộp vào box "FishLover Platform".</li>
+  <li><strong>Notion</strong> — công cụ quản lý task nội bộ team, không phải runtime dependency của hệ thống đang chạy.</li>
+</ul>
+
+<div class="note">
+  💡 Chi tiết bên trong "FishLover Platform" (SPA, API Gateway, 3 service BE, database, cache, AI services) nằm ở <a href="02-container.html" style="color:#79c0ff">Level 2 — Container</a>. Container nào chạy trên máy chủ nào xem <a href="deployment.html" style="color:#79c0ff">Deployment</a>.
+</div>
+
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+</body>
+</html>

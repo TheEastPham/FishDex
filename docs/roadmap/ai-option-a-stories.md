@@ -1,5 +1,7 @@
 # Option A — Story & Task Breakdown
 
+> Chi tiết task gốc lập 19/06/2026. Thứ tự phát hành và tiêu chí hoàn thành hiện hành nằm ở [`ai-release-plan.md`](ai-release-plan.md); kiến trúc ở [`../architecture/ai-option-a.md`](../architecture/ai-option-a.md).
+
 ## Overview
 
 **Epic 2 (RAG Q&A)** + **Epic 4 (Image Search)** split into 10 stories.

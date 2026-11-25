@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FishLover — Deployment Diagram</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0d1117; color: #e6edf3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 32px 24px 64px; min-height: 100vh; }
+  h1 { font-size: 1.5rem; font-weight: 700; color: #58a6ff; margin-bottom: 4px; }
+  .subtitle { color: #8b949e; font-size: 0.85rem; margin-bottom: 20px; line-height: 1.6; }
+  .nav { font-size: 0.85rem; margin-bottom: 12px; }
+  .nav a { color: #79c0ff; text-decoration: none; margin-right: 16px; }
+  .nav a:hover { text-decoration: underline; }
+  .diagram-wrap { background: #161b22; border: 1px solid #21262d; border-radius: 12px; padding: 24px; overflow: auto; margin-bottom: 8px; max-height: 78vh; resize: vertical; }
+  .mermaid svg { max-width: none !important; display: block; }
+  .hint { font-size: 0.75rem; color: #6e7681; margin-bottom: 24px; }
+  h2 { font-size: 1.05rem; color: #e6edf3; margin: 28px 0 10px; }
+  table { border-collapse: collapse; width: 100%; margin-bottom: 8px; }
+  th, td { text-align: left; padding: 8px 10px; font-size: 0.82rem; border-bottom: 1px solid #21262d; vertical-align: top; }
+  th { color: #8b949e; font-weight: 600; }
+  td { color: #c9d1d9; }
+  code { background: #21262d; padding: 1px 5px; border-radius: 4px; font-size: 0.82em; }
+  ul { margin: 8px 0 8px 20px; font-size: 0.85rem; color: #c9d1d9; line-height: 1.8; }
+  .note { margin-top: 8px; background: #0d2137; border: 1px solid #1f3a5f; border-radius: 8px; padding: 12px 16px; font-size: 0.8rem; color: #79c0ff; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<p class="nav"><a href="00-overview.html">← Về danh sách (00)</a><a href="02-container.html">← L2 Container</a></p>
+<h1>FishLover — Deployment Diagram</h1>
+<p class="subtitle">Cập nhật: 2026-10-01 · Các container ở Level 2 thực sự chạy ở đâu.<br/>
+<strong>Deployment nằm trong C4, nhưng không phải một "level"</strong> — C4 có 4 level cốt lõi (Context → Container → Component → Code) cộng các diagram bổ sung: System Landscape, Dynamic và Deployment. File này vì thế cố ý <strong>không đánh số</strong>, dãy <code>01/02/03/04</code> chỉ dành cho 4 level.</p>
+
+<div class="diagram-wrap">
+  <div class="mermaid">
+%%{init: {"flowchart": {"curve": "basis", "nodeSpacing": 50, "rankSpacing": 90}}}%%
+graph LR
+    BROWSER(["👤 Trình duyệt người dùng"])
+
+    subgraph CF ["☁️ Cloudflare"]
+        direction TB
+        PAGES["Cloudflare Pages<br/>[Static hosting]<br/>SPA · fishlover.org"]
+        R2["Cloudflare R2<br/>[Object storage]"]
+    end
+
+    subgraph VM1 ["🖥️ VM1 — Oracle ARM Ubuntu 24.04 · 10.0.0.64 · 12GB RAM"]
+        direction TB
+        NGINX["nginx<br/>[Docker] :80/:443<br/>TLS termination"]
+        GW_C["gateway<br/>[Docker · .NET 9] :5000"]
+        UM_C["usermanagement<br/>[Docker · .NET 9] :8080"]
+        FD_C["fishdex<br/>[Docker · .NET 9] :8081"]
+        AQ_C["aquahome<br/>[Docker · .NET 9] :8082"]
+        WK_C["aquahome-worker<br/>[Docker · .NET 9]"]
+        PG_C[("postgres<br/>[Docker · pgvector/pg16]<br/>3 database: usermanagement · fishdex · aquahome")]
+        RD_C[("redis<br/>[Docker · redis:7-alpine]")]
+        AGENTS["promtail · node-exporter · cadvisor<br/>[Docker]<br/>bind private IP, không hở public"]
+    end
+
+    subgraph VM2 ["📊 VM2 — Monitoring · 10.0.0.94"]
+        direction TB
+        PROM["prometheus"]
+        LOKI["loki"]
+        TEMPO["tempo<br/>OTLP :4317"]
+        GRAF["grafana<br/>dashboard + alert"]
+    end
+
+    subgraph VM3 ["🤖 VM3 — AI Services 🚧 chưa deploy · 6GB RAM"]
+        direction TB
+        EMB_C["embedding_service<br/>[Python · FastAPI] :8000"]
+        IMG_C["image_search_service<br/>[Python · FastAPI] :8001"]
+    end
+
+    BROWSER -->|"HTTPS"| PAGES
+    BROWSER -->|"HTTPS · api.fishlover.org"| NGINX
+    BROWSER -->|"presigned PUT/GET [HTTPS]"| R2
+
+    NGINX --> GW_C
+    GW_C --> UM_C
+    GW_C --> FD_C
+    GW_C --> AQ_C
+    UM_C --> PG_C
+    FD_C --> PG_C
+    AQ_C --> PG_C
+    WK_C --> PG_C
+    UM_C --> RD_C
+    FD_C --> RD_C
+    AQ_C --> RD_C
+    FD_C -->|"S3 API"| R2
+    AQ_C -->|"S3 API"| R2
+
+    GW_C -.->|"OTLP trace"| TEMPO
+    UM_C -.->|"OTLP trace"| TEMPO
+    FD_C -.->|"OTLP trace"| TEMPO
+    AQ_C -.->|"OTLP trace"| TEMPO
+    AGENTS -.->|"log push"| LOKI
+    PROM -.->|"scrape :9100 / :9200 / :9080"| AGENTS
+    GRAF --> PROM
+    GRAF --> LOKI
+    GRAF --> TEMPO
+
+    AQ_C -.->|"🚧"| EMB_C
+    FD_C -.->|"🚧"| IMG_C
+
+    classDef app fill:#17212b,stroke:#58a6ff,color:#e6edf3
+    classDef store fill:#13251a,stroke:#3fb950,color:#e6edf3
+    classDef obs fill:#111a24,stroke:#79c0ff,color:#e6edf3
+    classDef ext fill:#161b22,stroke:#8b949e,color:#e6edf3
+    classDef planned fill:#2a1505,stroke:#fb923c,color:#e6edf3,stroke-dasharray: 5 4
+    class NGINX,GW_C,UM_C,FD_C,AQ_C,WK_C app
+    class PG_C,RD_C store
+    class AGENTS,PROM,LOKI,TEMPO,GRAF obs
+    class BROWSER,PAGES,R2 ext
+    class EMB_C,IMG_C planned
+    style VM1 fill:#0c1a12,stroke:#3fb950,color:#e6edf3
+    style VM2 fill:#0c1620,stroke:#79c0ff,color:#e6edf3
+    style VM3 fill:#1f1405,stroke:#fb923c,color:#e6edf3
+    style CF fill:#1c1710,stroke:#e3b341,color:#e6edf3
+  </div>
+</div>
+<p class="hint">Diagram hiển thị ở kích thước gốc — kéo cuộn trong khung để xem, Ctrl + cuộn chuột để zoom, kéo mép dưới khung để chỉnh chiều cao.</p>
+
+<h2>Node</h2>
+<table>
+  <tr><th>Node</th><th>Chạy gì</th><th>Ghi chú</th></tr>
+  <tr><td><strong>VM1</strong> — Oracle ARM, 10.0.0.64</td><td>nginx, gateway, usermanagement, fishdex, aquahome, aquahome-worker, postgres, redis, promtail, node-exporter, cadvisor</td><td>Tất cả trên Docker network <code>fishlover_prod</code>. Chịu toàn bộ traffic người dùng</td></tr>
+  <tr><td><strong>VM2</strong> — 10.0.0.94</td><td>prometheus, loki, tempo, grafana</td><td>Chỉ nhận telemetry từ VM1 qua subnet private, không phục vụ người dùng</td></tr>
+  <tr><td><strong>VM3</strong> 🚧</td><td>embedding_service, image_search_service</td><td>Mới có scaffold thư mục, chưa có <code>main.py</code>/Dockerfile</td></tr>
+  <tr><td><strong>Cloudflare Pages</strong></td><td>SPA tĩnh đã build</td><td>Deploy tự động khi push, không qua Azure DevOps</td></tr>
+  <tr><td><strong>Cloudflare R2</strong></td><td>Ảnh loài, ảnh hồ, snapshot, video dự thi</td><td>Trình duyệt đọc/ghi trực tiếp bằng presigned URL</td></tr>
+</table>
+
+<h2>Điểm khác biệt quan trọng so với Level 2</h2>
+<div class="note">
+  Level 2 vẽ <strong>ba database tách rời</strong> theo service. Thực tế triển khai hiện nay chỉ có <strong>một container <code>postgres</code></strong> chứa ba database, và <strong>một container <code>redis</code></strong> dùng chung. Chúng tách được bất cứ lúc nào mà không phải đổi code, nhưng ở thời điểm này nếu đếm container đang chạy thì là <strong>một</strong>, không phải ba.
+</div>
+
+<h2>Ghi chú phạm vi — không vẽ ở đây</h2>
+<ul>
+  <li>Quy trình CI/CD (Azure DevOps pipeline cho 4 service, Cloudflare Pages tự build từ Git).</li>
+  <li>Backup database, gia hạn chứng chỉ TLS, quản lý secret (<code>.env</code> trên VM + Azure DevOps Library).</li>
+  <li>Tiến độ sprint/epic — thuộc Notion, không thuộc tài liệu kiến trúc.</li>
+</ul>
+
+<script>
+mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
+
+async function renderAll() {
+  let i = 0;
+  for (const el of document.querySelectorAll('.mermaid:not([data-rendered])')) {
+    const src = el.innerHTML
+      .replace(/<br\s*\/?>/gi, '\u0001')
+      .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+      .replace(/&#0?39;/g, "'").replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&')
+      .replace(/\u0001/g, '<br/>')
+      .trim();
+    try {
+      const { svg } = await mermaid.render('mg' + (i++), src);
+      el.innerHTML = svg;
+      const node = el.querySelector('svg');
+      const vb = node && node.viewBox && node.viewBox.baseVal;
+      if (vb && vb.width) {
+        node.style.width = vb.width + 'px';
+        node.style.height = vb.height + 'px';
+        node.removeAttribute('width');
+      }
+      el.setAttribute('data-rendered', '1');
+    } catch (e) {
+      el.innerHTML = '<pre style="color:#f85149;padding:8px;font-size:0.75rem">' + e.message + '</pre>';
+      el.setAttribute('data-rendered', 'err');
+    }
+  }
+}
+
+document.addEventListener('DOMContentLoaded', renderAll);
+</script>
+</body>
+</html>

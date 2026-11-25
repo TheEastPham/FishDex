@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FishLover — C4 Model Overview</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0d1117; color: #e6edf3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 32px 24px 64px; min-height: 100vh; }
+  h1 { font-size: 1.6rem; font-weight: 700; color: #58a6ff; margin-bottom: 4px; }
+  .subtitle { color: #8b949e; font-size: 0.85rem; margin-bottom: 28px; }
+  h2 { font-size: 0.95rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.05em; margin: 28px 0 10px; }
+
+  .list { display: flex; flex-direction: column; border: 1px solid #21262d; border-radius: 12px; overflow: hidden; }
+  .row {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 18px; background: #161b22; border-bottom: 1px solid #21262d;
+  }
+  .row:last-child { border-bottom: none; }
+  .row.pending { opacity: 0.55; }
+  .level-badge {
+    flex-shrink: 0; width: 52px; height: 32px; display: flex; align-items: center; justify-content: center;
+    border-radius: 6px; font-size: 0.78rem; font-weight: 700; color: #79c0ff; border: 1px solid #1f3a5f; background: #0d2137;
+  }
+  .row.pending .level-badge { color: #6e7681; border-color: #30363d; background: transparent; }
+  .row-main { flex: 1; min-width: 0; }
+  .row-main h3 { font-size: 0.95rem; color: #e6edf3; margin-bottom: 2px; }
+  .row-main p { font-size: 0.78rem; color: #8b949e; line-height: 1.5; }
+  .row-links { flex-shrink: 0; display: flex; gap: 8px; }
+  .row-links a {
+    font-size: 0.78rem; color: #58a6ff; text-decoration: none; padding: 5px 12px;
+    border: 1px solid #30363d; border-radius: 6px; white-space: nowrap;
+  }
+  .row-links a:hover { background: #1f6feb; border-color: #1f6feb; color: #fff; }
+  .row-links .src { color: #8b949e; }
+
+  .note { margin-top: 20px; background: #0d2137; border: 1px solid #1f3a5f; border-radius: 8px; padding: 12px 16px; font-size: 0.8rem; color: #79c0ff; line-height: 1.6; }
+  code { background: #21262d; padding: 1px 5px; border-radius: 4px; font-size: 0.82em; }
+</style>
+</head>
+<body>
+
+<h1>FishLover — C4 Model Overview</h1>
+<p class="subtitle">Mục lục các diagram C4 của dự án · Cập nhật: 2026-10-01</p>
+
+<h2>4 level cốt lõi</h2>
+<div class="list">
+  <div class="row">
+    <div class="level-badge">L1</div>
+    <div class="row-main">
+      <h3>System Context</h3>
+      <p>Actors, "FishLover Platform" như 1 box, external systems (Groq, R2, YouTube, Resend, FishBase)</p>
+    </div>
+    <div class="row-links">
+      <a href="01-system-context.html">Xem</a>
+      <a class="src" href="01-system-context.md">.md (git)</a>
+    </div>
+  </div>
+  <div class="row">
+    <div class="level-badge">L2</div>
+    <div class="row-main">
+      <h3>Container</h3>
+      <p>Các container bên trong FishLover Platform — SPA, Gateway, 3 service BE, Worker, database, cache, AI services 🚧. Kèm technology + giao thức</p>
+    </div>
+    <div class="row-links">
+      <a href="02-container.html">Xem</a>
+      <a class="src" href="02-container.md">.md (git)</a>
+    </div>
+  </div>
+  <div class="row pending">
+    <div class="level-badge">L3</div>
+    <div class="row-main">
+      <h3>Component — chưa vẽ</h3>
+      <p>Chỉ vẽ khi cần đào sâu 1 container cụ thể (vd: bóc tách AquaHome API thành các layer/module) — không cần cho review toàn hệ thống</p>
+    </div>
+  </div>
+  <div class="row pending">
+    <div class="level-badge">L4</div>
+    <div class="row-main">
+      <h3>Code — chưa vẽ</h3>
+      <p>Gần như không vẽ tay, chỉ generate từ IDE khi cần — ngoài phạm vi review kiến trúc này</p>
+    </div>
+  </div>
+</div>
+
+<h2>Diagram bổ sung (không phải level)</h2>
+<div class="list">
+  <div class="row">
+    <div class="level-badge">DEP</div>
+    <div class="row-main">
+      <h3>Deployment</h3>
+      <p>Container chạy ở đâu — VM1 (Backend, PROD), VM2 (Monitoring), VM3 (AI 🚧), Cloudflare Pages + R2</p>
+    </div>
+    <div class="row-links">
+      <a href="deployment.html">Xem</a>
+      <a class="src" href="deployment.md">.md (git)</a>
+    </div>
+  </div>
+  <div class="row pending">
+    <div class="level-badge">LAND</div>
+    <div class="row-main">
+      <h3>System Landscape — chưa vẽ</h3>
+      <p>Bản đồ nhiều hệ thống trong cùng một tổ chức — FishLover chỉ có một hệ thống nên chưa cần</p>
+    </div>
+  </div>
+  <div class="row pending">
+    <div class="level-badge">DYN</div>
+    <div class="row-main">
+      <h3>Dynamic — chưa vẽ</h3>
+      <p>Mô tả trình tự một luồng cụ thể (vd: nộp bài dự thi, đăng nhập OAuth) — vẽ khi cần giải thích một luồng khó</p>
+    </div>
+  </div>
+</div>
+
+<div class="note">
+  💡 Link <strong>"Xem"</strong> mở bản <code>.html</code> đã render sẵn (dùng để đọc). Link <strong>".md (git)"</strong> mở file nguồn thô — chỉ nên mở trong VSCode/GitHub (nơi có engine render markdown + mermaid); mở thẳng bằng trình duyệt sẽ chỉ thấy text thô, không phải lỗi.
+</div>
+
+</body>
+</html>

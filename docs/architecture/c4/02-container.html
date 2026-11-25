@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FishLover — C4 Level 2: Container</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0d1117; color: #e6edf3; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 32px 24px 64px; min-height: 100vh; }
+  h1 { font-size: 1.5rem; font-weight: 700; color: #58a6ff; margin-bottom: 4px; }
+  .subtitle { color: #8b949e; font-size: 0.85rem; margin-bottom: 20px; line-height: 1.6; }
+  .nav { font-size: 0.85rem; margin-bottom: 12px; }
+  .nav a { color: #79c0ff; text-decoration: none; margin-right: 16px; }
+  .nav a:hover { text-decoration: underline; }
+  .diagram-wrap { background: #161b22; border: 1px solid #21262d; border-radius: 12px; padding: 24px; overflow: auto; margin-bottom: 8px; max-height: 78vh; resize: vertical; }
+  .mermaid svg { max-width: none !important; display: block; }
+  .hint { font-size: 0.75rem; color: #6e7681; margin-bottom: 24px; }
+  h2 { font-size: 1.05rem; color: #e6edf3; margin: 28px 0 10px; }
+  table { border-collapse: collapse; width: 100%; margin-bottom: 8px; }
+  th, td { text-align: left; padding: 8px 10px; font-size: 0.82rem; border-bottom: 1px solid #21262d; vertical-align: top; }
+  th { color: #8b949e; font-weight: 600; }
+  td { color: #c9d1d9; }
+  code { background: #21262d; padding: 1px 5px; border-radius: 4px; font-size: 0.82em; }
+  ul { margin: 8px 0 8px 20px; font-size: 0.85rem; color: #c9d1d9; line-height: 1.8; }
+  p.body-text { font-size: 0.85rem; color: #c9d1d9; line-height: 1.7; margin-bottom: 8px; }
+  .note { margin-top: 8px; background: #0d2137; border: 1px solid #1f3a5f; border-radius: 8px; padding: 12px 16px; font-size: 0.8rem; color: #79c0ff; line-height: 1.6; }
+  .warn { margin-top: 8px; background: #2a1505; border: 1px solid #5a3a1f; border-radius: 8px; padding: 12px 16px; font-size: 0.8rem; color: #fb923c; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<p class="nav"><a href="00-overview.html">← Về danh sách (00)</a><a href="01-system-context.html">← L1 System Context</a><a href="deployment.html">→ Deployment</a></p>
+<h1>FishLover — C4 Level 2: Container</h1>
+<p class="subtitle">Cập nhật: 2026-10-01 · Bóc tách box "FishLover Platform" ở Level 1.<br/>
+Boundary ở đây là <strong>hệ thống phần mềm</strong>, không phải máy chủ — container nào chạy trên VM nào xem trang Deployment.</p>
+
+<div class="diagram-wrap">
+  <div class="mermaid">
+%%{init: {"flowchart": {"curve": "basis", "nodeSpacing": 50, "rankSpacing": 90}}}%%
+graph LR
+    USER(["👤 Người chơi cá cảnh<br/>[Person]"])
+    ADMIN(["🛡️ Admin / Content Manager<br/>[Person]"])
+
+    subgraph SYS ["🐟 FishLover Platform"]
+        direction TB
+        SPA["Single-Page App<br/>[React 19 · Vite 6 · TypeScript]<br/>Giao diện web, mobile-first"]
+        GW["API Gateway<br/>[.NET 9 · Ocelot 24]<br/>Routing + rate limit"]
+        CACHE[("Cache / session<br/>[Redis 7]")]
+
+        subgraph G_UM ["UserManagement"]
+            direction TB
+            UM["API<br/>[.NET 9 · ASP.NET Core · OpenIddict]<br/>Đăng nhập, JWT, web push"]
+            UM_DB[("db: usermanagement<br/>[PostgreSQL 16]")]
+        end
+
+        subgraph G_FD ["FishDex"]
+            direction TB
+            FD["API<br/>[.NET 9 · ASP.NET Core]<br/>Loài cá, Market, tra cứu"]
+            FD_DB[("db: fishdex<br/>[PostgreSQL 16 + pgvector]")]
+        end
+
+        subgraph G_AQ ["AquaHome"]
+            direction TB
+            AQ["API (BFF)<br/>[.NET 9 · ASP.NET Core]<br/>Hồ cá, snapshot, contest, bài viết"]
+            WK["Worker<br/>[.NET 9 Worker Service]<br/>Nhắc lịch, sync market, sync view count"]
+            AQ_DB[("db: aquahome<br/>[PostgreSQL 16]")]
+        end
+
+        subgraph G_AI ["AI Services 🚧 chưa triển khai"]
+            direction TB
+            EMB["Embedding Service<br/>[Python · FastAPI · MiniLM-L6-v2]"]
+            IMG["Image Search Service<br/>[Python · FastAPI · CLIP ViT-B/32]"]
+            OLLAMA["Ollama<br/>[Gemma 2B — LLM dự phòng]"]
+        end
+    end
+
+    R2(["🗄️ Cloudflare R2<br/>[Object storage · S3 API]"])
+    YT(["▶️ YouTube<br/>[Data API v3]"])
+    RESEND(["✉️ Resend<br/>[Email API]"])
+    GROQ(["☁️ Groq API<br/>[LLM inference]"])
+    FB(["📦 FishBase Dataset<br/>[Parquet]"])
+
+    USER -->|"tra cứu, quản lý hồ, dự thi<br/>[HTTPS]"| SPA
+    ADMIN -->|"duyệt bài viết, quản lý contest<br/>[HTTPS]"| SPA
+    SPA -->|"REST + JWT Bearer<br/>[HTTPS/JSON]"| GW
+    SPA -->|"upload ảnh/video: presigned PUT<br/>tải ảnh: presigned GET<br/>[HTTPS]"| R2
+
+    GW -->|"/user/v1 · /connect<br/>[HTTP/JSON]"| UM
+    GW -->|"/fishdex/v1<br/>[HTTP/JSON]"| FD
+    GW -->|"/aquahome/v1<br/>[HTTP/JSON]"| AQ
+
+    AQ -->|"gửi web push<br/>[HTTP + internal key]"| UM
+    AQ -->|"species summary cho snapshot<br/>[HTTP + internal key]"| FD
+    WK -->|"POST /api/push/send<br/>[HTTP + internal key]"| UM
+    WK -->|"POST /api/market/ingest · 8h<br/>[HTTP + internal key]"| FD
+
+    UM -->|"[Npgsql · 5432]"| UM_DB
+    FD -->|"[Npgsql · 5432]"| FD_DB
+    AQ -->|"[Npgsql · 5432]"| AQ_DB
+    WK -->|"[Npgsql · 5432]"| AQ_DB
+    UM -->|"session<br/>[RESP · 6379]"| CACHE
+    FD -->|"hạn mức khách<br/>[RESP]"| CACHE
+    AQ -->|"cache<br/>[RESP]"| CACHE
+
+    UM -->|"email xác thực, reset mật khẩu<br/>[HTTPS REST]"| RESEND
+    FD -->|"ký presigned URL ảnh loài<br/>[S3 API]"| R2
+    AQ -->|"ký presigned URL · tải video<br/>[S3 API]"| R2
+    AQ -->|"upload video dự thi<br/>[Data API v3]"| YT
+    WK -->|"đồng bộ lượt xem · 6h<br/>[Data API v3]"| YT
+    FB -->|"nạp dữ liệu loài — offline, 1 lần<br/>[Parquet import]"| FD
+
+    AQ -.->|"embed câu hỏi cho RAG<br/>[HTTP/JSON]"| EMB
+    FD -.->|"embed ảnh để tìm loài<br/>[HTTP/JSON]"| IMG
+    EMB -.->|"sinh câu trả lời<br/>[HTTPS REST]"| GROQ
+    EMB -.->|"dự phòng khi Groq lỗi >5 phút<br/>[HTTP]"| OLLAMA
+
+    classDef person fill:#1f3a5f,stroke:#58a6ff,color:#e6edf3
+    classDef app fill:#17212b,stroke:#58a6ff,color:#e6edf3
+    classDef store fill:#13251a,stroke:#3fb950,color:#e6edf3
+    classDef ext fill:#161b22,stroke:#8b949e,color:#e6edf3
+    classDef planned fill:#2a1505,stroke:#fb923c,color:#e6edf3,stroke-dasharray: 5 4
+    class USER,ADMIN person
+    class SPA,GW,UM,FD,AQ,WK app
+    class UM_DB,FD_DB,AQ_DB,CACHE store
+    class R2,YT,RESEND,GROQ,FB ext
+    class EMB,IMG,OLLAMA planned
+    style SYS fill:#0c1a12,stroke:#3fb950,color:#e6edf3
+    style G_UM fill:#161b22,stroke:#a78bfa,color:#e6edf3
+    style G_FD fill:#161b22,stroke:#7ee787,color:#e6edf3
+    style G_AQ fill:#161b22,stroke:#58a6ff,color:#e6edf3
+    style G_AI fill:#1f1405,stroke:#fb923c,color:#e6edf3
+  </div>
+</div>
+<p class="hint">Diagram hiển thị ở kích thước gốc — kéo cuộn trong khung để xem, Ctrl + cuộn chuột để zoom, kéo mép dưới khung để chỉnh chiều cao.</p>
+
+<h2>Legend</h2>
+<table>
+  <tr><th>Ký hiệu</th><th>Nghĩa</th></tr>
+  <tr><td>Nét liền</td><td>Quan hệ <strong>đang chạy thật</strong> trên production</td></tr>
+  <tr><td>Nét đứt + 🚧 (khung cam)</td><td><strong>Chưa triển khai</strong> — kiến trúc đích, chưa có code chạy</td></tr>
+  <tr><td><code>[...]</code> trong nhãn</td><td>Technology / giao thức</td></tr>
+  <tr><td>Hình trụ (viền xanh lá)</td><td>Data store</td></tr>
+  <tr><td>Hình bo tròn ngoài khung</td><td>Person hoặc external system (ngoài tầm kiểm soát của dự án)</td></tr>
+</table>
+<p class="body-text">Chỉ có <strong>hai</strong> kiểu đường: liền = live, đứt = planned. Quan hệ nạp dữ liệu FishBase tuy chạy offline một lần vẫn vẽ nét liền vì nó đã thực sự chạy — tính chất "một lần" ghi trong nhãn chứ không mã hoá bằng kiểu nét.</p>
+
+<h2>Container catalog</h2>
+<table>
+  <tr><th>Container</th><th>Technology</th><th>Trách nhiệm</th></tr>
+  <tr><td>Single-Page App</td><td>React 19 · Vite 6 · TypeScript 5.6</td><td>Toàn bộ giao diện (mobile-first, iPhone 12+). Upload/tải media trực tiếp với R2 qua presigned URL</td></tr>
+  <tr><td>API Gateway</td><td>.NET 9 · Ocelot 24</td><td>Điểm vào duy nhất của API. Route <code>/user/v1</code>, <code>/fishdex/v1</code>, <code>/aquahome/v1</code> + rate limit 20–60 req/phút tuỳ route</td></tr>
+  <tr><td>UserManagement API</td><td>.NET 9 · ASP.NET Core · OpenIddict · Identity</td><td>OAuth2/OIDC, JWT, đăng ký theo lời mời, web push (VAPID)</td></tr>
+  <tr><td>FishDex API</td><td>.NET 9 · ASP.NET Core</td><td>Dữ liệu loài cá, Market theo quốc gia, tên gọi cộng đồng, hạn mức tra cứu cho khách chưa đăng nhập</td></tr>
+  <tr><td>AquaHome API (BFF)</td><td>.NET 9 · ASP.NET Core</td><td>Hồ cá, snapshot, contest, bài viết. Điều phối gọi sang FishDex/UserManagement</td></tr>
+  <tr><td>AquaHome Worker</td><td>.NET 9 Worker Service</td><td>Job nền: nhắc lịch chăm hồ, đẩy market species sang FishDex (8h), đồng bộ lượt xem YouTube (6h)</td></tr>
+  <tr><td>db: usermanagement</td><td>PostgreSQL 16</td><td>Tài khoản, token, subscription push</td></tr>
+  <tr><td>db: fishdex</td><td>PostgreSQL 16 + pgvector</td><td>Loài cá, media, market listing. Extension pgvector đã bật, <strong>chưa có bảng vector nào</strong></td></tr>
+  <tr><td>db: aquahome</td><td>PostgreSQL 16</td><td>Hồ cá, snapshot, contest, bài viết</td></tr>
+  <tr><td>Cache / session</td><td>Redis 7</td><td>Session (UserManagement), cache (AquaHome), hạn mức khách vãng lai (FishDex)</td></tr>
+  <tr><td>Embedding Service 🚧</td><td>Python · FastAPI · all-MiniLM-L6-v2</td><td>Sinh embedding câu hỏi cho RAG, gọi LLM sinh câu trả lời</td></tr>
+  <tr><td>Image Search Service 🚧</td><td>Python · FastAPI · CLIP ViT-B/32</td><td>Sinh embedding ảnh người dùng upload để tìm loài tương tự</td></tr>
+  <tr><td>Ollama 🚧</td><td>Gemma 2B</td><td>LLM chạy nội bộ, dự phòng khi Groq lỗi</td></tr>
+</table>
+
+<h2>External systems</h2>
+<table>
+  <tr><th>System</th><th>Container gọi nó</th><th>Giao thức</th><th>Mục đích</th></tr>
+  <tr><td>Cloudflare R2</td><td>SPA, FishDex API, AquaHome API</td><td>HTTPS / S3 API</td><td>Backend <strong>ký</strong> presigned URL; <strong>SPA mới là bên thực sự</strong> PUT/GET dữ liệu. AquaHome tải lại video từ R2 để đẩy lên YouTube</td></tr>
+  <tr><td>YouTube</td><td>AquaHome API, AquaHome Worker</td><td>YouTube Data API v3</td><td>Upload video dự thi; đồng bộ lượt xem mỗi 6h</td></tr>
+  <tr><td>Resend</td><td>UserManagement API</td><td>HTTPS REST</td><td>Email xác thực tài khoản, reset mật khẩu</td></tr>
+  <tr><td>Groq API</td><td>Embedding Service 🚧</td><td>HTTPS REST</td><td>Sinh câu trả lời. Giới hạn 30 RPM, lỗi 429 → trả 503 về FE, không tự retry</td></tr>
+  <tr><td>FishBase Dataset</td><td>FishDex API</td><td>Parquet import</td><td>Nạp dữ liệu loài gốc — offline, chạy một lần</td></tr>
+</table>
+
+<h2>Quyết định thiết kế đáng chú ý</h2>
+<ul>
+  <li><strong>Ba database vẽ tách rời nhau</strong> dù hiện chạy trên cùng một PostgreSQL container: mỗi service chỉ chạm database của mình, migration riêng, không có foreign key xuyên service — tách vật lý được mà không đổi code. Số container đang chạy thật xem ở <a href="deployment.html" style="color:#79c0ff">Deployment</a>.</li>
+  <li><strong>Redis vẽ chung một node</strong> vì đây đúng là một keyspace dùng chung, không phải ba store độc lập.</li>
+  <li><strong>Worker của AquaHome ghi dữ liệu market sang FishDex qua HTTP API</strong> (<code>POST /api/market/ingest</code>, idempotent theo khoá), <strong>không</strong> ghi thẳng vào database của FishDex — boundary dữ liệu vẫn do FishDex giữ. Endpoint này đòi internal API key; thiếu key thì tự trả 503 chứ không mở toang.</li>
+  <li><strong>Redis chết thì hạn mức tra cứu của FishDex fail-open</strong> (cho xem tiếp) — ưu tiên không chặn người dùng hơn là siết chính xác hạn mức.</li>
+  <li><strong>Upload/tải media không đi qua backend</strong>: backend chỉ ký URL, dữ liệu đi thẳng giữa trình duyệt và R2 — tiết kiệm băng thông VM, nhưng nghĩa là R2 phải cấu hình CORS đúng cho domain FE.</li>
+</ul>
+
+<h2>Chưa chốt</h2>
+<div class="warn">
+  <strong>Ai ghi embedding vào database FishDex?</strong> Thiết kế v2.0 nói <code>SpeciesChunk.Embedding</code> (384-d) và <code>SpeciesMedia.ClipEmbedding</code> (512-d) nằm trong db <code>fishdex</code>, nhưng <strong>trong code chưa có entity nào như vậy</strong> và cũng chưa có service nào sinh/ghi chúng. Diagram vì thế không vẽ mũi tên ghi vector — cần chốt trước khi làm Story 2.1 / 4.1. Image Search Service hiện cũng chỉ có chiều FishDex gọi sang; chiều đọc vector phụ thuộc câu hỏi này.
+</div>
+
+<h2>Ghi chú phạm vi — không vẽ ở Level 2</h2>
+<ul>
+  <li><strong>Hạ tầng triển khai</strong> (VM1/VM2/VM3, Nginx reverse proxy, Cloudflare Pages, Docker network, IP private) → trang <a href="deployment.html" style="color:#79c0ff">Deployment</a>.</li>
+  <li><strong>Monitoring/observability</strong> (Prometheus, Loki, Tempo, Grafana, Promtail, node-exporter, cAdvisor) → cũng thuộc deployment view; chúng không phục vụ người dùng cuối nên không phải container của hệ thống phần mềm.</li>
+  <li><strong>CI/CD, backup, gia hạn chứng chỉ, quản lý secret</strong> — cố ý không vẽ: thuộc quy trình vận hành, không phải cấu trúc phần mềm.</li>
+</ul>
+
+<h2>Known drift (repo lệch thực tế)</h2>
+<table>
+  <tr><th>Chỗ lệch</th><th>Chi tiết</th></tr>
+  <tr><td><code>ApiGateway/ocelot.Docker.json</code></td><td>Vẫn còn route <code>/storage</code> trỏ tới <code>minio</code>. Production không chạy container <code>minio</code> nào — storage thật là R2, gọi trực tiếp từ FishDex/AquaHome. Nên xoá route này</td></tr>
+  <tr><td>Route AI chưa có</td><td>Thiết kế nói AquaHome/FishDex gọi AI service "qua gateway" (<code>/embeddings/*</code>, <code>/image-search/*</code>) nhưng ocelot chưa khai báo route nào như vậy</td></tr>
+</table>
+
+<script>
+mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
+
+async function renderAll() {
+  let i = 0;
+  for (const el of document.querySelectorAll('.mermaid:not([data-rendered])')) {
+    // Trình duyệt đã parse <br/> thành thẻ thật nên textContent sẽ nuốt mất chúng
+    // (nhãn dính liền 1 dòng); còn innerHTML thì escape "-->" thành "--&gt;" làm mermaid
+    // parse lỗi. Nên: lấy innerHTML, giữ <br/>, rồi giải mã lại entity.
+    const src = el.innerHTML
+      .replace(/<br\s*\/?>/gi, '\u0001')
+      .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+      .replace(/&#0?39;/g, "'").replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&')
+      .replace(/\u0001/g, '<br/>')
+      .trim();
+    try {
+      const { svg } = await mermaid.render('mg' + (i++), src);
+      el.innerHTML = svg;
+      const node = el.querySelector('svg');
+      const vb = node && node.viewBox && node.viewBox.baseVal;
+      if (vb && vb.width) {
+        node.style.width = vb.width + 'px';
+        node.style.height = vb.height + 'px';
+        node.removeAttribute('width');
+      }
+      el.setAttribute('data-rendered', '1');
+    } catch (e) {
+      el.innerHTML = '<pre style="color:#f85149;padding:8px;font-size:0.75rem">' + e.message + '</pre>';
+      el.setAttribute('data-rendered', 'err');
+    }
+  }
+}
+
+document.addEventListener('DOMContentLoaded', renderAll);
+</script>
+</body>
+</html>

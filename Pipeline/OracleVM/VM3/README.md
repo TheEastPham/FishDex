@@ -79,7 +79,7 @@ docker network ls | grep fishlover_prod
 - **Story 2.1**: Implement embedding service (FastAPI + sentence-transformers)
 - **Story 4.1**: Implement image search service (FastAPI + OpenCLIP)
 
-See `R&D/option_a_story_breakdown.md` for detailed tasks.
+See `docs/roadmap/ai-option-a-stories.md` for detailed tasks and `docs/roadmap/ai-release-plan.md` for the release order.
 
 ## Monitoring
 

@@ -554,7 +554,8 @@ Chi tiết đầy đủ đọc trực tiếp `Pipeline/local/FishDex/etl/ETL_STR
 ## 5.2 Repository Layout
 
 ```
-D:\Workspace\Practice\FishDex\
+D:\Workspace\FishLover\FishDex\    # repo root
+├── docs\                     # tài liệu cấp hệ thống: architecture, roadmap, guides, design, brand
 ├── BackEndProject\           # .NET solution root — FishDex.sln
 │   ├── ApiGateway\           # Ocelot gateway
 │   ├── UserManagement\       # UserManagement.API / .Domain / .EFCore
@@ -568,11 +569,11 @@ D:\Workspace\Practice\FishDex\
 │   ├── local\UserManagement\
 │   ├── local\AquaHome\
 │   └── OracleVM\VM3\         # embedding_service, image_search_service (Python, v2.0 AI)
-├── R&D\                      # Nghiên cứu/thử nghiệm
-└── WikiPage\                 # Static showcase site (Astro) — giới thiệu The FishLover là gì
 ```
 
-**Lưu ý quan trọng:** Đây **là monorepo** (BE + FE + Pipeline + WikiPage cùng 1 repo) nhưng .NET solution chỉ nằm trong `BackEndProject/` — build/run luôn thực hiện từ thư mục này, còn lệnh Docker Compose chạy từ repo root vì `Pipeline/` nằm ngang hàng `BackEndProject/`.
+`WikiPage\` nằm **ngoài** repo này, ở `D:\Workspace\FishLover\WikiPage\` (xem `README.md` của workspace).
+
+**Lưu ý quan trọng:** Đây **là monorepo** (BE + FE + Pipeline cùng 1 repo) nhưng .NET solution chỉ nằm trong `BackEndProject/` — build/run luôn thực hiện từ thư mục này, còn lệnh Docker Compose chạy từ repo root vì `Pipeline/` nằm ngang hàng `BackEndProject/`.
 
 **`WikiPage/` không phải tài liệu kỹ thuật** — đây là một dự án con riêng biệt: static showcase site (Astro + vanilla CSS, deploy Azure Static Web Apps) giới thiệu **The FishLover là gì** cho 2 nhóm đối tượng: (1) aquarist muốn tìm hiểu sản phẩm, (2) developer muốn *đóng góp* cho dự án (không phải người tiêu thụ API thương mại — API doc thật nằm ở Swagger, WikiPage không liệt kê endpoint). Hoàn toàn độc lập, không import từ `FrontEnd/` hay `BackEndProject/`, chỉ nên commit riêng trong `WikiPage/`. Đọc `WikiPage/CLAUDE.md` nếu cần chỉnh sửa nội dung site này — có quy tắc rõ về tone/voice (mộc mạc, không buzzword) vì đây là personal project của owner, không phải startup.
 

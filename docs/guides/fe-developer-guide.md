@@ -62,7 +62,7 @@ flowchart LR
     GW --> UM["UserManagement.API\n(/connect/* OIDC endpoints)"]
 ```
 
-Xem chi tiết BE ở tài liệu [BE Developer Guide](fishdex-be-developer-guide.md) — file này giả định bạn đã đọc phần Section 2 (System Architecture) và Section 3.5 (Community Contribution Pattern) của tài liệu đó.
+Xem chi tiết BE ở tài liệu [BE Developer Guide](be-developer-guide.md) — file này giả định bạn đã đọc phần Section 2 (System Architecture) và Section 3.5 (Community Contribution Pattern) của tài liệu đó.
 
 ## 1.3 Roles & route access
 
@@ -269,7 +269,7 @@ README nêu rõ nguyên tắc kiến trúc: **"Frontend duy nhất giao tiếp v
 
 ## 5.2 Community contribution (submit + admin verify)
 
-Khớp với pattern BE ở [Section 3.5 của BE guide](fishdex-be-developer-guide.md#35-community-contribution-pattern):
+Khớp với pattern BE ở [Section 3.5 của BE guide](be-developer-guide.md#35-community-contribution-pattern):
 
 - **`community/SubmitCommunitySpeciesModal.tsx`** — form submit loài mới chưa có trong FishDex (tên, water type, family/genus, khoảng nhiệt độ/pH, kích thước, min tank liters, care level). **Chưa có upload ảnh trong modal này** — submit species hiện tại chỉ có metadata.
 - **`community/AddLocalNameModal.tsx`** — submit tên gọi địa phương cho loài đã có sẵn.
@@ -370,7 +370,7 @@ cp .env.example .env.local
 npm run dev        # Vite dev server, port 5173
 ```
 
-**Yêu cầu BE chạy sẵn:** ApiGateway (`:5000`) + UserManagement (OIDC) + FishDex — xem [BE guide, Section 5.3](fishdex-be-developer-guide.md#53-chạy-local) để khởi động backend trước.
+**Yêu cầu BE chạy sẵn:** ApiGateway (`:5000`) + UserManagement (OIDC) + FishDex — xem [BE guide, Section 5.3](be-developer-guide.md#53-chạy-local) để khởi động backend trước.
 
 ## 7.3 Common Development Tasks
 
@@ -389,7 +389,7 @@ npm run dev        # Vite dev server, port 5173
 
 **Chưa có test framework nào được cấu hình** — không Vitest/Jest/Cypress/Playwright/@testing-library trong `package.json`, không có file `*.test.*`/`*.spec.*` nào trong repo. Không có script `lint` ở level app, cũng chưa thấy ESLint config.
 
-Đây là gap giống hệt phía BE ([BE guide, Section 5.5](fishdex-be-developer-guide.md#55-testing-gap-hiện-tại)) — hiện mọi tính năng mới đều test thủ công qua UI trước khi merge. Nên cân nhắc thiết lập Vitest + React Testing Library khi độ phức tạp UI tăng lên, đặc biệt các luồng auth/upload/community moderation.
+Đây là gap giống hệt phía BE ([BE guide, Section 5.5](be-developer-guide.md#55-testing-gap-hiện-tại)) — hiện mọi tính năng mới đều test thủ công qua UI trước khi merge. Nên cân nhắc thiết lập Vitest + React Testing Library khi độ phức tạp UI tăng lên, đặc biệt các luồng auth/upload/community moderation.
 
 ## 7.5 Deployment & Workflow
 

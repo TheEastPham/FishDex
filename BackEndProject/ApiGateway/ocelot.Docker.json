@@ -76,18 +76,6 @@
       ],
       "UpstreamPathTemplate": "/aquahome/v1/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS" ]
-    },
-    {
-      "UpstreamPathTemplate": "/storage/{everything}",
-      "UpstreamHttpMethod": [ "GET", "PUT", "POST", "DELETE" ],
-      "DownstreamPathTemplate": "/{everything}",
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "minio",
-          "Port": 9000
-        }
-      ]
     }
   ],
   "GlobalConfiguration": {

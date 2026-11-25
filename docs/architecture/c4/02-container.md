@@ -154,5 +154,4 @@ Chỉ có **hai** kiểu đường: liền = live, đứt = planned. Quan hệ n
 
 | Chỗ lệch | Chi tiết |
 |---|---|
-| `ApiGateway/ocelot.Docker.json` | Vẫn còn route `/storage` trỏ tới `minio`. Production không chạy container `minio` nào — storage thật là R2, gọi trực tiếp từ FishDex/AquaHome. Nên xoá route này |
 | Route AI chưa có | Thiết kế nói AquaHome/FishDex gọi AI service "qua gateway" (`/embeddings/*`, `/image-search/*`) nhưng ocelot chưa khai báo route nào như vậy |

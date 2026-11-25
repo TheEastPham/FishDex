@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────
 # FishLover Local Full Stack
-# Tương đương docker-compose.prod.yml nhưng dùng local builds + MinIO
+# Tương đương compose production (OracleVM/VM1) nhưng build image từ code local; storage là Cloudflare R2 (biến *_STORAGE_* trong .env)
 # Cần .env cùng thư mục (copy từ .env.example)
 # ────────────────────────────────────────────────────────────────
 

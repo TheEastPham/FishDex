@@ -15,9 +15,10 @@ Pipeline/
     ApiGateway/          Local Docker stack cho ApiGateway
     FrontEnd/            Local Docker stack cho FrontEnd
   OracleVM/              Production Docker Compose cho Oracle VM
-  github-actions/        CI/CD templates cho GitHub Actions
-  azure-devops/          CI/CD templates cho Azure DevOps
+  azure-devops/          4 pipeline CI/CD đang chạy (Azure DevOps)
 ```
+
+Lưu ý: image **production** cũng được build từ các `Dockerfile.*` trong `local/<Service>/` (4 pipeline Azure trỏ vào đó).
 
 ---
 
@@ -61,29 +62,15 @@ docker compose up -d
 
 ---
 
-## CI/CD Templates
+## CI/CD — Azure DevOps
 
-Chưa chốt platform (GitHub Actions vs Azure DevOps). Templates có sẵn cho cả hai.
+4 pipeline trong `azure-devops/` (`apigateway`, `usermanagement`, `fishdex`, `aquahome`), đã tạo trên Azure DevOps ("Existing Azure Pipelines YAML file"). Mỗi pipeline build image từ `local/<Service>/Dockerfile.*` rồi push lên GHCR; VM chỉ pull về chạy (xem `OracleVM/shared/DEPLOY_CHECKLIST.md`).
 
-### GitHub Actions
+| Khi nào chạy | Điều kiện |
+|---|---|
+| Push lên `release/v1.1` | Có thay đổi trong `BackEndProject/<Service>/**` (3 service kèm `BackEndProject/Share/**`), trừ file `.md` |
+| Pull request | Không chạy |
 
-Files ở `github-actions/*.yml` là templates — **không tự trigger**. Khi chốt platform:
+Khi đổi nhánh phát hành (ví dụ sang `release/v1.2`), sửa `trigger.branches.include` ở **cả 4 file**.
 
-```
-cp Pipeline/github-actions/fishdex.yml          .github/workflows/fishdex.yml
-cp Pipeline/github-actions/usermanagement.yml   .github/workflows/usermanagement.yml
-cp Pipeline/github-actions/aquahome.yml         .github/workflows/aquahome.yml
-```
-
-### Azure DevOps
-
-Files ở `azure-devops/*-pipeline.yml`. Trong Azure DevOps portal: tạo pipeline → chọn "Existing Azure Pipelines YAML file" → trỏ vào file tương ứng.
-
-### Trigger logic (cả hai platform)
-
-| Branch    | Hành động                              |
-|-----------|----------------------------------------|
-| `develop` | build → test → docker → deploy **dev** |
-| `main`    | build → test → docker → deploy **prod**|
-
-Pipeline chỉ chạy khi có thay đổi trong folder của service đó hoặc `Share/`.
+FE (`aquahome-web`) không đi qua Azure DevOps: Cloudflare Pages tự build khi push, xem `cloudflare-pages-setup.md`.

@@ -10,9 +10,8 @@ namespace FishDex.Tests.Infrastructure;
 /// </summary>
 public sealed class PostgresFixture : IAsyncLifetime
 {
-    // Cùng image với Pipeline/local/FishDex — migration có bật extension (pg_trgm, vector).
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder()
-        .WithImage("pgvector/pgvector:pg16")
+    // Cùng image với stack local (Pipeline/local/docker-compose.local.yml) — migration có bật extension (pg_trgm, vector).
+    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("pgvector/pgvector:pg16")
         .Build();
 
     public async Task InitializeAsync()

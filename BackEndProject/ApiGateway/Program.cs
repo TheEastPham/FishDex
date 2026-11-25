@@ -4,10 +4,13 @@ using Ocelot.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add Ocelot configuration
-builder.Configuration
-    .AddJsonFile("ocelot.json", optional: false, reloadOnChange: true)
-    .AddJsonFile($"ocelot.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
+// Mỗi môi trường nạp ĐÚNG MỘT file route hoàn chỉnh: ocelot.{Env}.json nếu có, không thì ocelot.json (Production).
+// KHÔNG chồng file môi trường lên ocelot.json: cấu hình .NET gộp mảng "Routes" theo vị trí, nên hai file
+// khác số/thứ tự route sẽ trộn thuộc tính của nhau (từng làm gateway Dev/Docker không khởi động được:
+// "route /aquahome/v1/{everything} has duplicate").
+var envOcelotFile = $"ocelot.{builder.Environment.EnvironmentName}.json";
+var ocelotFile = File.Exists(Path.Combine(builder.Environment.ContentRootPath, envOcelotFile)) ? envOcelotFile : "ocelot.json";
+builder.Configuration.AddJsonFile(ocelotFile, optional: false, reloadOnChange: true);
 
 // Add services to the container.
 builder.Services.AddOcelot();

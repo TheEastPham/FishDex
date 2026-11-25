@@ -16,12 +16,10 @@ public interface IFishBaseSpeciesIndexRepository
     /// Tìm theo tên khoa học, không phân biệt hoa thường, khớp một phần.
     /// Sắp loài đã nạp lên trước vì đó là thứ người dùng chọn được ngay.
     /// </summary>
-    Task<IReadOnlyList<FishBaseSpeciesIndex>> SearchAsync(
-        string query, int limit = 20, CancellationToken ct = default);
+    Task<IReadOnlyList<FishBaseSpeciesIndex>> SearchAsync(string query, int limit = 20, CancellationToken ct = default);
 
     Task<FishBaseSpeciesIndex?> GetAsync(int specCode, CancellationToken ct = default);
 
     /// <summary>Các loài đã tra thấy trong FishBase nhưng chưa nạp vào FishDex — hàng đợi UC2.</summary>
-    Task<IReadOnlyList<FishBaseSpeciesIndex>> GetNotLoadedAsync(
-        IReadOnlyCollection<int> specCodes, CancellationToken ct = default);
+    Task<IReadOnlyList<FishBaseSpeciesIndex>> GetNotLoadedAsync(IReadOnlyCollection<int> specCodes, CancellationToken ct = default);
 }

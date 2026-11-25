@@ -66,14 +66,18 @@ public static class MarketCountries
         _all.Where(c => c.IsEnabled).OrderBy(c => c.DisplayOrder).ToArray();
 
     /// <summary>Tra theo C_Code (giá trị trong DB).</summary>
-    public static MarketCountry? ByCode(string? code) =>
-        string.IsNullOrWhiteSpace(code) ? null
+    public static MarketCountry? ByCode(string? code)
+    {
+        return string.IsNullOrWhiteSpace(code) ? null
             : _byCode.TryGetValue(code.Trim(), out var c) ? c : null;
+    }
 
     /// <summary>Tra theo alpha-2 (giá trị từ API/URL). Không phân biệt chữ hoa thường.</summary>
-    public static MarketCountry? ByAlpha2(string? alpha2) =>
-        string.IsNullOrWhiteSpace(alpha2) ? null
+    public static MarketCountry? ByAlpha2(string? alpha2)
+    {
+        return string.IsNullOrWhiteSpace(alpha2) ? null
             : _byAlpha2.TryGetValue(alpha2.Trim(), out var c) ? c : null;
+    }
 
     /// <summary>
     /// Đổi alpha-2 từ API sang C_Code để query DB. Trả về null nếu không phải nước có market

@@ -10,8 +10,7 @@ namespace FishDex.EFCore.Repository;
 public class TradedSpeciesRepository(FishDexDbContext db) : ITradedSpeciesRepository
 {
 
-    public async Task<(IReadOnlyList<TradedSpeciesRow> Items, int TotalCount)> QueryAsync(
-        TradedSpeciesQuery query, CancellationToken ct = default)
+    public async Task<(IReadOnlyList<TradedSpeciesRow> Items, int TotalCount)> QueryAsync(TradedSpeciesQuery query, CancellationToken ct = default)
     {
         var filtered = BuildFilteredQuery(query);
 
@@ -76,8 +75,7 @@ public class TradedSpeciesRepository(FishDexDbContext db) : ITradedSpeciesReposi
             .FirstOrDefaultAsync(ct);
     }
 
-    public async Task<IReadOnlyList<string>> GetCountriesSellingAsync(
-        int specCode, CancellationToken ct = default)
+    public async Task<IReadOnlyList<string>> GetCountriesSellingAsync(int specCode, CancellationToken ct = default)
     {
         var selling = db.TradedSpecies.AsNoTracking();
         selling = selling.Where(t => t.SpecCode == specCode);
@@ -99,8 +97,7 @@ public class TradedSpeciesRepository(FishDexDbContext db) : ITradedSpeciesReposi
         db.TradedSpecies.Remove(entity);
     }
 
-    public async Task<int> UpsertTankDerivedAsync(
-        string countryCode, IReadOnlyCollection<int> specCodes, CancellationToken ct = default)
+    public async Task<int> UpsertTankDerivedAsync(string countryCode, IReadOnlyCollection<int> specCodes, CancellationToken ct = default)
     {
         if (specCodes.Count == 0)
         {

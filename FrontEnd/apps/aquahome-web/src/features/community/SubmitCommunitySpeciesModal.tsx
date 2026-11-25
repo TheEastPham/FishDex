@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
-  submitCommunitySpecies, updateCommunitySpecies, requestCommunitySpeciesImageUpload, uploadToR2, getFamilies,
+  submitCommunitySpecies, updateCommunitySpecies, requestCommunitySpeciesImageUpload, confirmCommunitySpeciesImageUpload, uploadToR2, getFamilies,
+  compressImage, UPLOAD_IMAGE_TYPES, UPLOAD_IMAGE_MAX_BYTES,
   useTranslation, WaterType, CommunityCareLevel, CommunitySpeciesKind,
 } from '@fishlover/shared';
 import type { SubmitCommunitySpeciesRequest, CommunitySpeciesDto, Family } from '@fishlover/shared';
@@ -19,6 +20,13 @@ const inputCls =
   'w-full rounded-xl bg-[#0F172A] border border-slate-700 px-4 py-3 text-base text-slate-200 ' +
   'placeholder:text-slate-500 focus:outline-none focus:border-sky-500 min-h-[44px]';
 const labelCls = 'block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5';
+
+/** BE trả 409 + code này khi user đã giữ đủ số loài chờ duyệt. */
+const PENDING_LIMIT_CODE = 'PENDING_LIMIT';
+
+function errorCode(err: unknown): string | undefined {
+  return (err as { response?: { data?: { code?: string } } })?.response?.data?.code;
+}
 
 /** '' → undefined; số hợp lệ → number. */
 function num(v: string): number | undefined {
@@ -45,10 +53,14 @@ export default function SubmitCommunitySpeciesModal({ onClose, initialName = '',
   const [minTankLiters, setMinTankLiters] = useState(editing?.minTankLiters?.toString() ?? '');
   const [careLevel, setCareLevel] = useState<CommunityCareLevel | ''>(editing?.careLevel ?? '');
   const [imageFile, setImageFile] = useState<File | null>(null);
+  // Ảnh đã nén ≤ 1 MB — thứ thật sự được upload. BE vẫn kiểm tra lại, đây chỉ để user không chạm lỗi.
+  const [imageBlob, setImageBlob] = useState<Blob | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const [preparingImage, setPreparingImage] = useState(false);
 
   const [families, setFamilies] = useState<Family[]>([]);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [imageWarning, setImageWarning] = useState(false);
   const [done, setDone] = useState(false);
 
@@ -56,7 +68,34 @@ export default function SubmitCommunitySpeciesModal({ onClose, initialName = '',
     getFamilies().then(setFamilies).catch(() => {});
   }, []);
 
-  const canSave = speciesName.trim().length > 0 && !saving;
+  const canSave = speciesName.trim().length > 0 && !saving && !preparingImage;
+
+  const handlePickImage = async (file: File | null) => {
+    setImageError(null);
+    setImageFile(null);
+    setImageBlob(null);
+    if (!file) return;
+
+    if (!UPLOAD_IMAGE_TYPES.includes(file.type)) {
+      setImageError(t('contribute.imageInvalidType'));
+      return;
+    }
+
+    setPreparingImage(true);
+    try {
+      const blob = await compressImage(file);
+      if (blob.size > UPLOAD_IMAGE_MAX_BYTES) {
+        setImageError(t('contribute.imageTooLarge'));
+        return;
+      }
+      setImageFile(file);
+      setImageBlob(blob);
+    } catch {
+      setImageError(t('contribute.imageInvalidType'));
+    } finally {
+      setPreparingImage(false);
+    }
+  };
 
   if (done) {
     return (
@@ -71,7 +110,7 @@ export default function SubmitCommunitySpeciesModal({ onClose, initialName = '',
   const handleSubmit = async () => {
     if (!canSave) return;
     setSaving(true);
-    setError(false);
+    setError(null);
     setImageWarning(false);
     try {
       const req: SubmitCommunitySpeciesRequest = {
@@ -93,17 +132,20 @@ export default function SubmitCommunitySpeciesModal({ onClose, initialName = '',
         : await submitCommunitySpecies(req);
 
       // Ảnh là phụ — nếu upload lỗi vẫn coi là thành công (loài đã lưu), chỉ cảnh báo riêng.
-      if (imageFile) {
+      if (imageFile && imageBlob) {
         try {
-          const { uploadUrl } = await requestCommunitySpeciesImageUpload(saved.specCode, imageFile.name, imageFile.type);
-          await uploadToR2(uploadUrl, imageFile, imageFile.type);
+          const contentType = imageBlob.type || imageFile.type;
+          const { uploadUrl, objectKey } = await requestCommunitySpeciesImageUpload(saved.specCode, imageFile.name, contentType);
+          await uploadToR2(uploadUrl, imageBlob, contentType);
+          // BE HEAD dung lượng thật rồi mới gắn ảnh vào loài — không confirm thì ảnh không được dùng.
+          await confirmCommunitySpeciesImageUpload(saved.specCode, objectKey);
         } catch {
           setImageWarning(true);
         }
       }
       setDone(true);
-    } catch {
-      setError(true);
+    } catch (err) {
+      setError(errorCode(err) === PENDING_LIMIT_CODE ? t('contribute.pendingLimit') : t('contribute.error'));
     } finally {
       setSaving(false);
     }
@@ -131,7 +173,7 @@ export default function SubmitCommunitySpeciesModal({ onClose, initialName = '',
             <p className="text-sm text-slate-400 mb-4">{t(isEditing ? 'contribute.editSpeciesHint' : 'contribute.addSpeciesHint')}</p>
             {error && (
               <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400 mb-4">
-                {t('contribute.error')}
+                {error}
               </div>
             )}
 
@@ -182,10 +224,14 @@ export default function SubmitCommunitySpeciesModal({ onClose, initialName = '',
                     <label className={labelCls}>{t('contribute.imageLabel')}</label>
                     <label className="flex items-center gap-2 rounded-xl bg-[#0F172A] border border-slate-700 px-4 py-3 text-sm text-slate-300 cursor-pointer hover:border-sky-500 min-h-[44px]">
                       <ImagePlus className="w-4 h-4 text-sky-400 shrink-0" />
+                      {preparingImage && <Loader2 className="w-4 h-4 animate-spin text-slate-400 shrink-0" />}
                       <span className="truncate">{imageFile ? imageFile.name : t('contribute.imagePick')}</span>
-                      <input type="file" accept="image/*" className="hidden"
-                        onChange={(e) => setImageFile(e.target.files?.[0] ?? null)} />
+                      <input type="file" accept={UPLOAD_IMAGE_TYPES.join(',')} className="hidden"
+                        onChange={(e) => handlePickImage(e.target.files?.[0] ?? null)} />
                     </label>
+                    {imageError
+                      ? <p className="mt-1.5 text-xs text-red-400">{imageError}</p>
+                      : <p className="mt-1.5 text-xs text-slate-500">{t('contribute.imageHint')}</p>}
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">

@@ -21,7 +21,7 @@ public class AquariumService(
 
     public async Task<AquariumDto?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
-        var aquarium = await aquariumRepo.GetByIdAndUserAsync(id, currentUser.UserId, ct);
+        var aquarium = await aquariumRepo.GetByIdAndUserWithFishAsync(id, currentUser.UserId, ct);
         return aquarium is null ? null : ToDto(aquarium);
     }
 
@@ -65,6 +65,9 @@ public class AquariumService(
         if (request.CountryCode is not null) entity.CountryCode = request.CountryCode;
 
         await aquariumRepo.UpdateAsync(entity);
+
+        // entity nạp không kèm Fish (UpdateAsync sẽ đánh dấu cả đồ thị là Modified) → lấy số cá bằng 1 query riêng.
+        entity.Fish = (await aquariumRepo.GetFishListAsync(id, ct)).ToList();
         return ToDto(entity);
     }
 

@@ -41,7 +41,4 @@ public class Article
 
     public ICollection<ArticleTranslation> Translations { get; set; } = [];
     public ICollection<ArticleAsset> Assets { get; set; } = [];
-
-    /// <summary>Folder gốc của bài trên R2. Xóa bài = xóa cả prefix này.</summary>
-    public string ObjectKeyPrefix(string env) => $"aquahome/{env}/articles/{Id}";
 }

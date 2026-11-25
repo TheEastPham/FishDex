@@ -1,5 +1,3 @@
-using System.IO;
-
 namespace AquaHome.EFCore.Entity;
 
 public class AquariumMedia
@@ -11,8 +9,4 @@ public class AquariumMedia
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public Aquarium Aquarium { get; set; } = null!;
-
-    /// <summary>Relative path within the bucket: aquahome/{env}/aquaria/{aquariumId}/{id}{ext}</summary>
-    public string ObjectKey(string env) =>
-        $"aquahome/{env}/aquaria/{AquariumId}/{Id}{Path.GetExtension(FileName)}";
 }

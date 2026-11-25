@@ -21,12 +21,13 @@ public class MarketService(
     ILogger<MarketService> logger) : IMarketService
 {
     public IReadOnlyList<MarketCountryDto> GetCountries()
-        => MarketCountries.All
+    {
+        return MarketCountries.All
             .Select(c => new MarketCountryDto(c.Alpha2, c.NameEn, c.Languages, c.IsEnabled))
             .ToList();
+    }
 
-    public async Task<PagedResult<MarketSpeciesDto>?> GetSpeciesAsync(
-        string alpha2, MarketSpeciesQuery query, CancellationToken ct = default)
+    public async Task<PagedResult<MarketSpeciesDto>?> GetSpeciesAsync(string alpha2, MarketSpeciesQuery query, CancellationToken ct = default)
     {
         var country = MarketCountries.ByAlpha2(alpha2);
         if (country is not { IsEnabled: true }) return null;
@@ -73,8 +74,7 @@ public class MarketService(
         return new MarketStatsDto(total, withName, total - withName);
     }
 
-    public async Task<IReadOnlyList<string>> GetSellingCountriesAsync(
-        int specCode, CancellationToken ct = default)
+    public async Task<IReadOnlyList<string>> GetSellingCountriesAsync(int specCode, CancellationToken ct = default)
     {
         var codes = await repo.GetCountriesSellingAsync(specCode, ct);
 
@@ -85,8 +85,7 @@ public class MarketService(
             .ToList();
     }
 
-    public async Task<IReadOnlyList<SpeciesLookupDto>> LookupAsync(
-        string query, int limit = 20, CancellationToken ct = default)
+    public async Task<IReadOnlyList<SpeciesLookupDto>> LookupAsync(string query, int limit = 20, CancellationToken ct = default)
     {
         var hits = await indexRepo.SearchAsync(query, limit, ct);
         return hits
@@ -100,8 +99,7 @@ public class MarketService(
 
     // ── Admin ─────────────────────────────────────────────────────
 
-    public async Task<MarketMutationOutcome> AddAsync(
-        string alpha2, AddTradedSpeciesRequest request, CancellationToken ct = default)
+    public async Task<MarketMutationOutcome> AddAsync(string alpha2, AddTradedSpeciesRequest request, CancellationToken ct = default)
     {
         var country = MarketCountries.ByAlpha2(alpha2);
         if (country is null) return MarketMutationOutcome.CountryNotFound;
@@ -131,9 +129,7 @@ public class MarketService(
         }, ct);
         await repo.SaveChangesAsync(ct);
 
-        logger.LogInformation(
-            "Market: admin {UserId} thêm SpecCode {SpecCode} vào {Country}",
-            currentUser.UserId, request.SpecCode, country.Alpha2);
+        logger.LogInformation("Market: admin {UserId} thêm SpecCode {SpecCode} vào {Country}", currentUser.UserId, request.SpecCode, country.Alpha2);
 
         return MarketMutationOutcome.Ok;
     }
@@ -160,8 +156,7 @@ public class MarketService(
         return MarketMutationOutcome.Ok;
     }
 
-    public async Task<MarketMutationOutcome> RemoveAsync(
-        string alpha2, int specCode, CancellationToken ct = default)
+    public async Task<MarketMutationOutcome> RemoveAsync(string alpha2, int specCode, CancellationToken ct = default)
     {
         var country = MarketCountries.ByAlpha2(alpha2);
         if (country is null) return MarketMutationOutcome.CountryNotFound;
@@ -172,17 +167,14 @@ public class MarketService(
         repo.Remove(row);
         await repo.SaveChangesAsync(ct);
 
-        logger.LogInformation(
-            "Market: admin {UserId} gỡ SpecCode {SpecCode} khỏi {Country}",
-            currentUser.UserId, specCode, country.Alpha2);
+        logger.LogInformation("Market: admin {UserId} gỡ SpecCode {SpecCode} khỏi {Country}", currentUser.UserId, specCode, country.Alpha2);
 
         return MarketMutationOutcome.Ok;
     }
 
     // ── Ingest ────────────────────────────────────────────────────
 
-    public async Task<IngestResultDto?> IngestAsync(
-        IngestTankSpeciesRequest request, CancellationToken ct = default)
+    public async Task<IngestResultDto?> IngestAsync(IngestTankSpeciesRequest request, CancellationToken ct = default)
     {
         var country = MarketCountries.ByAlpha2(request.CountryAlpha2);
         // Ingest chấp nhận cả nước chưa bật: dữ liệu cứ gom trước, bật trang sau.
@@ -195,9 +187,7 @@ public class MarketService(
         await repo.SaveChangesAsync(ct);
 
         if (added > 0)
-            logger.LogInformation(
-                "Market ingest {Country}: nhận {Received} loài, thêm mới {Added}",
-                country.Alpha2, codes.Count, added);
+            logger.LogInformation("Market ingest {Country}: nhận {Received} loài, thêm mới {Added}", country.Alpha2, codes.Count, added);
 
         return new IngestResultDto(codes.Count, added);
     }
@@ -208,8 +198,7 @@ public class MarketService(
     /// Đổi hàng repository thành DTO. Tên khoa học và ảnh lấy từ Species Profile — cùng rule
     /// ảnh với trang detail/search — cho cả trang một lượt.
     /// </summary>
-    private async Task<List<MarketSpeciesDto>> HydrateAsync(
-        IReadOnlyList<TradedSpeciesRow> rows, CancellationToken ct)
+    private async Task<List<MarketSpeciesDto>> HydrateAsync(IReadOnlyList<TradedSpeciesRow> rows, CancellationToken ct)
     {
         if (rows.Count == 0) return [];
 
@@ -240,14 +229,19 @@ public class MarketService(
 
     /// <summary>Restricted hoặc Banned mà không có nguồn là đoán — tôn chỉ dự án không cho phép.</summary>
     private static bool RequiresLegalSource(LegalStatus status, string? sourceUrl)
-        => status != LegalStatus.Legal && string.IsNullOrWhiteSpace(sourceUrl);
-
-    private static (decimal? Min, decimal? Max) ToLengthRange(SizeBand? band) => band switch
     {
-        SizeBand.Under5     => (null, 5m),
-        SizeBand.From5To10  => (5m,   10m),
-        SizeBand.From10To20 => (10m,  20m),
-        SizeBand.Over20     => (20m,  null),
-        _                   => (null, null),
-    };
+        return status != LegalStatus.Legal && string.IsNullOrWhiteSpace(sourceUrl);
+    }
+
+    private static (decimal? Min, decimal? Max) ToLengthRange(SizeBand? band)
+    {
+        return band switch
+        {
+            SizeBand.Under5 => (null, 5m),
+            SizeBand.From5To10 => (5m, 10m),
+            SizeBand.From10To20 => (10m, 20m),
+            SizeBand.Over20 => (20m, null),
+            _ => (null, null),
+        };
+    }
 }

@@ -1,8 +1,10 @@
 using FishDex.Domain.DTOs.Species;
 using FishDex.Domain.Services.Interfaces;
+using FishDex.Domain.Storage;
 using FishDex.EFCore.Entity.Cache;
 using FishDex.EFCore.Repository.Interface;
 using FishLover.Shared.Services;
+using FishLover.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -16,18 +18,16 @@ namespace FishDex.Domain.Services;
 public class CommunitySpeciesService(
     ICommunitySpeciesRepository repo,
     IStorageService storage,
+    UploadVerifier uploadVerifier,
     ICurrentUserSession currentUser,
     ILogger<CommunitySpeciesService> logger) : ICommunitySpeciesService
 {
     private const int MaxAllocationRetries = 3;
-    private const long MaxImageUploadBytes = 5 * 1024 * 1024;
+
+    /// <summary>Số loài chưa duyệt (chờ + bị từ chối) mỗi user được giữ cùng lúc.</summary>
+    private const int MaxUnverifiedPerUser = 5;
     // Đuôi file suy từ content-type (đã ký vào presigned PUT), không lấy theo tên file client gửi.
-    private static readonly Dictionary<string, string> ImageExtensions = new()
-    {
-        ["image/jpeg"] = ".jpg",
-        ["image/png"] = ".png",
-        ["image/webp"] = ".webp",
-    };
+    private static readonly IReadOnlyDictionary<string, string> ImageExtensions = UploadContentTypes.Images;
 
     /// <summary>
     /// Ngưỡng 0.4 chọn theo phép thử thực tế: "Betta splendens" so với "Beta splenden"
@@ -36,8 +36,7 @@ public class CommunitySpeciesService(
     /// </summary>
     private const double SimilarityThreshold = 0.4;
 
-    public async Task<IReadOnlyList<SimilarSpeciesDto>> FindSimilarAsync(
-        string speciesName, CancellationToken ct = default)
+    public async Task<IReadOnlyList<SimilarSpeciesDto>> FindSimilarAsync(string speciesName, CancellationToken ct = default)
     {
         var matches = await repo.FindSimilarNamesAsync(speciesName, SimilarityThreshold, limit: 5, ct);
 
@@ -55,8 +54,14 @@ public class CommunitySpeciesService(
             .ToList();
     }
 
-    public async Task<CommunitySpeciesDto> SubmitAsync(SubmitCommunitySpeciesRequest request, CancellationToken ct = default)
+    public async Task<SubmitCommunitySpeciesResult> SubmitAsync(SubmitCommunitySpeciesRequest request, CancellationToken ct = default)
     {
+        // Mỗi loài = 1 key upload ảnh. Không có trần thì 1 tài khoản tạo hàng trăm loài nháp để chứa file trên R2.
+        if (await repo.CountUnverifiedByContributorAsync(currentUser.UserId, ct) >= MaxUnverifiedPerUser)
+        {
+            return new SubmitCommunitySpeciesResult(SubmitCommunitySpeciesOutcome.PendingLimitReached);
+        }
+
         // Cấp SpecCode + insert, retry nếu 2 submit đồng thời trùng code (unique PK conflict).
         for (var attempt = 1; ; attempt++)
         {
@@ -68,7 +73,7 @@ public class CommunitySpeciesService(
             {
                 await repo.SaveChangesAsync(ct);
                 logger.LogInformation("Community species submitted: SpecCode {SpecCode} by {UserId}", specCode, currentUser.UserId);
-                return await ToDtoAsync(snapshot, ct);
+                return new SubmitCommunitySpeciesResult(SubmitCommunitySpeciesOutcome.Created, await ToDtoAsync(snapshot, ct));
             }
             catch (DbUpdateException) when (attempt < MaxAllocationRetries)
             {
@@ -141,8 +146,8 @@ public class CommunitySpeciesService(
         // Đã verified = đang public (search/detail đã đọc snapshot này) — không cho tự xoá, chỉ admin mới xử lý được.
         if (snapshot.IsVerified) return false;
 
-        if (!string.IsNullOrEmpty(snapshot.ThumbnailObjectKey))
-            await storage.DeleteAsync(snapshot.ThumbnailObjectKey, ct);
+        // Cả folder: ảnh bìa hiện tại + bản upload chưa confirm (nếu có).
+        await storage.DeleteByPrefixAsync(FishDexObjectKeys.CommunityFolder(specCode), ct);
 
         repo.Remove(snapshot);
         await repo.SaveChangesAsync(ct);
@@ -158,19 +163,68 @@ public class CommunitySpeciesService(
         var snapshot = await repo.GetCommunityByCodeAsync(specCode, ct);
         if (snapshot is null || snapshot.ContributedBy != currentUser.UserId) return null;
 
-        var objectKey = $"community/{specCode}/cover{ext}";
+        var objectKey = FishDexObjectKeys.CommunityCover(specCode, ext);
 
-        var uploadUrl = await storage.GeneratePresignedPutUrlAsync(objectKey, contentType, MaxImageUploadBytes, ct);
+        var uploadUrl = await storage.GeneratePresignedPutUrlAsync(objectKey, contentType, ct);
         if (uploadUrl is null) return null;
 
-        // Đổi định dạng ảnh (.png → .jpg) là đổi key → ảnh cũ thành rác trên R2 nếu không xoá. Cùng key thì PUT ghi đè.
+        // Dọn các bản upload chưa confirm ở định dạng khác — mỗi loài chỉ giữ tối đa ảnh bìa hiện tại + 1 bản đang upload.
+        // KHÔNG đụng ảnh bìa hiện tại: nó chỉ được thay ở bước confirm, khi ảnh mới đã qua kiểm tra dung lượng.
+        foreach (var otherExt in ImageExtensions.Values.Where(e => e != ext))
+        {
+            var staleKey = FishDexObjectKeys.CommunityCover(specCode, otherExt);
+            if (staleKey != snapshot.ThumbnailObjectKey)
+            {
+                await storage.DeleteAsync(staleKey, ct);
+            }
+        }
+
+        return new CommunityImageUploadResultDto(uploadUrl, objectKey);
+    }
+
+    public async Task<ConfirmCommunityImageOutcome> ConfirmImageUploadAsync(int specCode, string objectKey, CancellationToken ct = default)
+    {
+        var snapshot = await repo.GetCommunityByCodeAsync(specCode, ct);
+        if (snapshot is null || snapshot.ContributedBy != currentUser.UserId || !IsCoverKeyOf(specCode, objectKey))
+        {
+            return ConfirmCommunityImageOutcome.NotFound;
+        }
+
+        // Dung lượng THẬT trên storage — presigned PUT không chặn được, client gửi bao nhiêu R2 nhận bấy nhiêu.
+        // Quá cỡ thì verifier đã xoá object; ở đây chỉ còn phần phản ứng của nghiệp vụ.
+        var verdict = await uploadVerifier.VerifyAsync(objectKey, new UploadPolicy(FishDexObjectKeys.CommunityCoverMaxBytes), ct);
+        if (verdict.Kind == UploadVerdictKind.NotUploaded)
+        {
+            return ConfirmCommunityImageOutcome.NotUploaded;
+        }
+
+        if (!verdict.IsOk)
+        {
+            if (snapshot.ThumbnailObjectKey == objectKey)
+            {
+                // Cùng định dạng = cùng key: file quá cỡ đã ghi đè ảnh bìa cũ, gỡ luôn để không trỏ vào object đã xoá.
+                snapshot.ThumbnailObjectKey = null;
+                await repo.SaveChangesAsync(ct);
+            }
+
+            logger.LogWarning("Community image {Key} rejected: {Bytes} bytes > {Max} (user {UserId})", objectKey, verdict.Size, FishDexObjectKeys.CommunityCoverMaxBytes, currentUser.UserId);
+            return ConfirmCommunityImageOutcome.TooLarge;
+        }
+
         if (!string.IsNullOrEmpty(snapshot.ThumbnailObjectKey) && snapshot.ThumbnailObjectKey != objectKey)
+        {
             await storage.DeleteAsync(snapshot.ThumbnailObjectKey, ct);
+        }
 
         snapshot.ThumbnailObjectKey = objectKey;
         await repo.SaveChangesAsync(ct);
+        return ConfirmCommunityImageOutcome.Confirmed;
+    }
 
-        return new CommunityImageUploadResultDto(uploadUrl, objectKey);
+    /// <summary>Key đúng là ảnh bìa của loài này ở một định dạng được phép — client không confirm được key tuỳ ý.</summary>
+    private static bool IsCoverKeyOf(int specCode, string objectKey)
+    {
+        return ImageExtensions.Values.Any(ext => FishDexObjectKeys.CommunityCover(specCode, ext) == objectKey);
     }
 
     // ─────────────────────────────────────────────────────────────────────────

@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+      Object storage dùng chung cho FishDex và AquaHome (R2 / MinIO / S3).
+      Tách khỏi FishLover.Shared để ApiGateway không phải kéo AWSSDK theo.
+    -->
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="AWSSDK.S3" Version="3.7.417.5" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.4" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.4" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.4" />
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.4" />
+    </ItemGroup>
+
+</Project>

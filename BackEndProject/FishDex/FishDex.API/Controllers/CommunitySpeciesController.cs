@@ -36,8 +36,13 @@ public class CommunitySpeciesController(ICommunitySpeciesService service) : Cont
         if (string.IsNullOrWhiteSpace(request.SpeciesName))
             return BadRequest("SpeciesName là bắt buộc.");
 
-        var created = await service.SubmitAsync(request, ct);
-        return CreatedAtAction(nameof(GetMine), new { }, created);
+        var result = await service.SubmitAsync(request, ct);
+        if (result.Outcome == SubmitCommunitySpeciesOutcome.PendingLimitReached)
+        {
+            return Conflict(new { code = "PENDING_LIMIT", message = "Bạn đang có quá nhiều loài chờ duyệt. Đợi duyệt hoặc xoá bớt rồi gửi tiếp." });
+        }
+
+        return CreatedAtAction(nameof(GetMine), new { }, result.Dto);
     }
 
     /// <summary>Chủ sở hữu sửa lại loài đang chờ duyệt (vd: gõ nhầm). Chỉ cho sửa khi chưa duyệt/từ chối.</summary>
@@ -60,19 +65,25 @@ public class CommunitySpeciesController(ICommunitySpeciesService service) : Cont
     /// <summary>Danh sách loài community do user hiện tại gửi (mọi trạng thái).</summary>
     [HttpGet("mine")]
     public Task<IReadOnlyList<CommunitySpeciesDto>> GetMine(CancellationToken ct)
-        => service.GetMineAsync(ct);
+    {
+        return service.GetMineAsync(ct);
+    }
 
     /// <summary>Danh sách chờ duyệt — admin.</summary>
     [HttpGet("pending")]
     [Authorize(Policy = "RequireContentAdmin")]
     public Task<IReadOnlyList<CommunitySpeciesDto>> GetPending(CancellationToken ct)
-        => service.GetPendingAsync(ct);
+    {
+        return service.GetPendingAsync(ct);
+    }
 
     /// <summary>Admin duyệt → loài xuất hiện ở search/detail. Body optional để xác nhận lại Kind.</summary>
     [HttpPatch("{specCode:int}/verify")]
     [Authorize(Policy = "RequireContentAdmin")]
     public async Task<IActionResult> Verify(int specCode, [FromBody] VerifyCommunitySpeciesRequest? request, CancellationToken ct)
-        => await service.VerifyAsync(specCode, request?.Kind, ct) ? NoContent() : NotFound();
+    {
+        return await service.VerifyAsync(specCode, request?.Kind, ct) ? NoContent() : NotFound();
+    }
 
     /// <summary>Admin từ chối (kèm lý do).</summary>
     [HttpPatch("{specCode:int}/reject")]
@@ -88,7 +99,9 @@ public class CommunitySpeciesController(ICommunitySpeciesService service) : Cont
     /// <summary>Chủ sở hữu tự xoá hẳn loài mình đã gửi (chưa được duyệt — kể cả đã bị admin từ chối).</summary>
     [HttpDelete("{specCode:int}")]
     public async Task<IActionResult> Delete(int specCode, CancellationToken ct)
-        => await service.DeleteAsync(specCode, ct) ? NoContent() : NotFound();
+    {
+        return await service.DeleteAsync(specCode, ct) ? NoContent() : NotFound();
+    }
 
     /// <summary>Chủ sở hữu (người submit) xin presigned URL để upload ảnh cho loài vừa gửi.</summary>
     [HttpPost("{specCode:int}/image/presign")]
@@ -97,5 +110,21 @@ public class CommunitySpeciesController(ICommunitySpeciesService service) : Cont
     {
         var result = await service.RequestImageUploadAsync(specCode, request.FileName, request.ContentType, ct);
         return result is null ? BadRequest("Không thể tạo upload URL — kiểm tra định dạng ảnh hoặc quyền sở hữu.") : Ok(result);
+    }
+
+    /// <summary>Gọi sau khi PUT ảnh lên R2: BE kiểm tra dung lượng thật rồi mới gắn ảnh vào loài.</summary>
+    /// <response code="204">Đã gắn ảnh.</response>
+    /// <response code="400">IMAGE_NOT_UPLOADED hoặc IMAGE_TOO_LARGE (file đã bị xoá).</response>
+    [HttpPost("{specCode:int}/image/confirm")]
+    public async Task<IActionResult> ConfirmImageUpload(int specCode, [FromBody] CommunityImageConfirmRequest request, CancellationToken ct)
+    {
+        var outcome = await service.ConfirmImageUploadAsync(specCode, request.ObjectKey, ct);
+        return outcome switch
+        {
+            ConfirmCommunityImageOutcome.Confirmed   => NoContent(),
+            ConfirmCommunityImageOutcome.NotUploaded => BadRequest(new { code = "IMAGE_NOT_UPLOADED", message = "Chưa thấy ảnh trên máy chủ, vui lòng thử lại." }),
+            ConfirmCommunityImageOutcome.TooLarge    => BadRequest(new { code = "IMAGE_TOO_LARGE", message = "Ảnh vượt quá 1 MB." }),
+            _                                        => NotFound(),
+        };
     }
 }

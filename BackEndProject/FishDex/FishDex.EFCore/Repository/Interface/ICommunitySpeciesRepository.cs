@@ -14,11 +14,7 @@ public enum SimilarNameSource
 }
 
 /// <param name="Score">Độ giống trigram 0..1. Càng gần 1 càng nhiều khả năng là cùng một loài.</param>
-public sealed record SimilarSpeciesName(
-    int SpecCode,
-    string SpeciesName,
-    SimilarNameSource Source,
-    double Score);
+public sealed record SimilarSpeciesName(int SpecCode, string SpeciesName, SimilarNameSource Source, double Score);
 
 /// <summary>
 /// Truy cập SpeciesSnapshot cho luồng community (loài lai tạo do user submit).
@@ -52,6 +48,12 @@ public interface ICommunitySpeciesRepository
 
     /// <summary>Loài do 1 user gửi (mọi trạng thái) — cho trang "loài tôi gửi".</summary>
     Task<IReadOnlyList<SpeciesSnapshot>> GetByContributorAsync(Guid userId, CancellationToken ct = default);
+
+    /// <summary>Ảnh bìa đang được loài cộng đồng nào dùng: object key → SpecCode. Cho job dọn object mồ côi trên storage.</summary>
+    Task<IReadOnlyDictionary<string, int>> GetCommunityThumbnailKeysAsync(CancellationToken ct = default);
+
+    /// <summary>Số loài chưa được duyệt (đang chờ hoặc đã bị từ chối) mà user đang giữ — để giới hạn số bài gửi.</summary>
+    Task<int> CountUnverifiedByContributorAsync(Guid userId, CancellationToken ct = default);
 
     /// <summary>Loài community đang chờ duyệt: chưa verified và chưa bị reject.</summary>
     Task<IReadOnlyList<SpeciesSnapshot>> GetPendingAsync(CancellationToken ct = default);

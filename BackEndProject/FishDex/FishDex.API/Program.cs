@@ -1,3 +1,4 @@
+using FishDex.API.BackgroundServices;
 using FishDex.API.Filters;
 using FishDex.Domain.Extensions;
 using FishDex.Domain.Services;
@@ -6,6 +7,8 @@ using FishDex.Domain.Settings;
 using FishDex.EFCore.DbContexts;
 using FishDex.EFCore.Extensions;
 using FishLover.Shared.Extensions;
+using FishLover.Storage;
+using FishLover.Storage.MediaAccess;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Events;
@@ -42,19 +45,22 @@ try
     builder.Services.AddFishDexDatabase(builder.Configuration);
     builder.Services.AddFishDexRepositories();
     builder.Services.AddFishDexServices();
+    builder.Services.AddHostedService<CommunityImageCleanupService>();
     builder.Services.AddMemoryCache(opts => opts.SizeLimit = 3_000);
-    builder.Services.Configure<FishDexSettings>(
-        builder.Configuration.GetSection(FishDexSettings.SectionName));
-    builder.Services.Configure<StorageSettings>(
-        builder.Configuration.GetSection(StorageSettings.SectionName));
-    builder.Services.Configure<MediaAccessSettings>(
-        builder.Configuration.GetSection(MediaAccessSettings.SectionName));
+    builder.Services.Configure<FishDexSettings>(builder.Configuration.GetSection(FishDexSettings.SectionName));
+    // Mặc định riêng của FishDex — appsettings / env var Storage__* luôn thắng.
+    builder.Services.AddObjectStorage(builder.Configuration, defaults: s =>
+    {
+        s.Provider = "minio";
+        s.BucketName = "fish-images";
+        s.PresignedPutUrlExpiryMinutes = 15;
+    });
+    builder.Services.Configure<MediaAccessSettings>(builder.Configuration.GetSection(MediaAccessSettings.SectionName));
 
     // ── Hạn mức xem loài cho khách chưa đăng nhập ─────────────
     // Redis dùng chung với UserManagement/AquaHome trên VM1. Không cấu hình chuỗi kết nối
     // (local dev) thì AnonQuotaService tự cho qua tất cả — không phải dựng Redis mới chạy được API.
-    builder.Services.Configure<AnonQuotaSettings>(
-        builder.Configuration.GetSection(AnonQuotaSettings.SectionName));
+    builder.Services.Configure<AnonQuotaSettings>(builder.Configuration.GetSection(AnonQuotaSettings.SectionName));
 
     var redisConnection = builder.Configuration.GetConnectionString("Redis");
     if (!string.IsNullOrWhiteSpace(redisConnection))
@@ -77,59 +83,8 @@ try
     // OpenTelemetry Configuration
     builder.Services.AddFishLoverTelemetry(builder.Configuration, "fishdex");
 
-    // JWT Authentication — symmetric scheme (direct-login tokens từ UserManagement)
-    builder.Services.AddFishLoverJwtAuthentication(builder.Configuration);
-
-    // OAuth2 PKCE scheme — validate OpenIddict-issued tokens qua JWKS discovery
-    var authServerPublicUrl = builder.Configuration["AuthServer:Url"] ?? "http://localhost:8080";
-    var authServerInternalUrl = builder.Configuration["AuthServer:Authority"] ?? authServerPublicUrl;
-    builder.Services.AddAuthentication()
-        .AddJwtBearer("OpenIddict", options =>
-        {
-            options.MetadataAddress = $"{authServerInternalUrl}/.well-known/openid-configuration";
-            options.RequireHttpsMetadata = false;
-            // Tắt legacy inbound claim mapping — mặc định .NET đổi "role" → URI dài khiến
-            // RoleClaimType="role" không khớp claim thực tế → RequireRole luôn fail (giống fix ở AquaHome).
-            options.MapInboundClaims = false;
-            var issuer = authServerPublicUrl.TrimEnd('/');
-            options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-            {
-                // Accept cả "http://host" lẫn "http://host/" — OpenIddict thêm trailing slash
-                ValidIssuers = [issuer, issuer + "/"],
-                ValidateIssuer = true,
-                ValidateAudience = false,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                // Token OpenIddict để role ở claim "role" — map để RequireRole khớp
-                RoleClaimType = "role",
-                NameClaimType = "name",
-            };
-        });
-
-    builder.Services.AddFishLoverAuthorization();
-    // [Authorize] + policy admin đều phải chấp nhận cả Bearer (direct login) lẫn OpenIddict (OAuth2 PKCE).
-    // Policy shared RequireContentAdmin/RequireSystemAdmin KHÔNG khai scheme → chỉ default → token
-    // OpenIddict bị 401. Đăng ký đè ở đây với cả 2 scheme (giống AquaHome).
-    builder.Services.AddAuthorization(options =>
-    {
-        string[] bothSchemes =
-        [
-            Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme,
-            "OpenIddict",
-        ];
-
-        options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder(bothSchemes)
-            .RequireAuthenticatedUser()
-            .Build();
-
-        options.AddPolicy("RequireSystemAdmin", p => p
-            .AddAuthenticationSchemes(bothSchemes)
-            .RequireRole("SystemAdmin"));
-
-        options.AddPolicy("RequireContentAdmin", p => p
-            .AddAuthenticationSchemes(bothSchemes)
-            .RequireRole("SystemAdmin", "ContentAdmin"));
-    });
+    // Resource server: Bearer (direct login) + OpenIddict (PKCE) + policy admin + khoá nội bộ
+    builder.Services.AddFishLoverResourceServer(builder.Configuration);
 
 
     // ── Controllers + OpenAPI ──────────────────────────────────
@@ -214,10 +169,7 @@ try
 
     // ── HealthChecks ──────────────────────────────────────────
     builder.Services.AddHealthChecks()
-        .AddNpgSql(
-            builder.Configuration.GetConnectionString("FishDexDb")!,
-            name: "fishdex-db",
-            tags: ["db", "postgres"]);
+        .AddNpgSql(builder.Configuration.GetConnectionString("FishDexDb")!, name: "fishdex-db", tags: ["db", "postgres"]);
 
     var app = builder.Build();
 

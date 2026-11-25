@@ -15,8 +15,7 @@ public interface IMarketService
     /// <summary>Chỉ các nước đã bật, để FE đổ vào dropdown.</summary>
     IReadOnlyList<MarketCountryDto> GetCountries();
 
-    Task<PagedResult<MarketSpeciesDto>?> GetSpeciesAsync(
-        string alpha2, MarketSpeciesQuery query, CancellationToken ct = default);
+    Task<PagedResult<MarketSpeciesDto>?> GetSpeciesAsync(string alpha2, MarketSpeciesQuery query, CancellationToken ct = default);
 
     Task<MarketStatsDto?> GetStatsAsync(string alpha2, CancellationToken ct = default);
 
@@ -31,22 +30,17 @@ public interface IMarketService
     /// Tra tên khoa học trên index toàn bộ FishBase để phân luồng UC1/UC2.
     /// Không trả loài lai — loài không có trong FishBase thì đi luồng community species.
     /// </summary>
-    Task<IReadOnlyList<SpeciesLookupDto>> LookupAsync(
-        string query, int limit = 20, CancellationToken ct = default);
+    Task<IReadOnlyList<SpeciesLookupDto>> LookupAsync(string query, int limit = 20, CancellationToken ct = default);
 
     // ── Admin ─────────────────────────────────────────────────────
-    Task<MarketMutationOutcome> AddAsync(
-        string alpha2, AddTradedSpeciesRequest request, CancellationToken ct = default);
+    Task<MarketMutationOutcome> AddAsync(string alpha2, AddTradedSpeciesRequest request, CancellationToken ct = default);
 
-    Task<MarketMutationOutcome> UpdateAsync(
-        string alpha2, int specCode, UpdateTradedSpeciesRequest request, CancellationToken ct = default);
+    Task<MarketMutationOutcome> UpdateAsync(string alpha2, int specCode, UpdateTradedSpeciesRequest request, CancellationToken ct = default);
 
-    Task<MarketMutationOutcome> RemoveAsync(
-        string alpha2, int specCode, CancellationToken ct = default);
+    Task<MarketMutationOutcome> RemoveAsync(string alpha2, int specCode, CancellationToken ct = default);
 
     // ── Ingest từ AquaHome ────────────────────────────────────────
-    Task<IngestResultDto?> IngestAsync(
-        IngestTankSpeciesRequest request, CancellationToken ct = default);
+    Task<IngestResultDto?> IngestAsync(IngestTankSpeciesRequest request, CancellationToken ct = default);
 }
 
 public enum MarketMutationOutcome

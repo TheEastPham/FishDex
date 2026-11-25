@@ -20,43 +20,63 @@ public class SpeciesController(
 {
     [HttpGet("families")]
     public Task<IReadOnlyList<FamilyDto>> GetFamilies(CancellationToken ct)
-        => speciesService.GetFamiliesAsync(ct);
+    {
+        return speciesService.GetFamiliesAsync(ct);
+    }
 
     [HttpGet("families/{famId:guid}/genera")]
     public Task<IReadOnlyList<GenusDto>> GetGenera(Guid famId, CancellationToken ct)
-        => speciesService.GetGenusByFamilyAsync(famId, ct);
+    {
+        return speciesService.GetGenusByFamilyAsync(famId, ct);
+    }
 
     [HttpGet("search")]
     public Task<PagedResult<SpeciesSearchResultDto>> Search([FromQuery] GetSpeciesSearchRequest request, CancellationToken ct)
-        => speciesProfile.SearchAsync(request, ct);
+    {
+        return speciesProfile.SearchAsync(request, ct);
+    }
 
     [HttpGet("languages")]
     public Task<IReadOnlyList<LanguageCountDto>> GetTopLanguages(CancellationToken ct)
-        => speciesService.GetTopLanguagesAsync(ct);
+    {
+        return speciesService.GetTopLanguagesAsync(ct);
+    }
 
     [HttpGet("{specCode:int}/detail")]
     public Task<SpeciesDetailDto?> GetDetail(int specCode, [FromQuery] string? language, CancellationToken ct)
-        => speciesProfile.GetDetailAsync(specCode, language, ct);
+    {
+        return speciesProfile.GetDetailAsync(specCode, language, ct);
+    }
 
     [HttpGet("{specCode:int}/media")]
     public Task<IReadOnlyList<SystemImageDto>> GetMedia(int specCode, CancellationToken ct)
-        => mediaService.GetBySpecCodeAsync(specCode, ct);
+    {
+        return mediaService.GetBySpecCodeAsync(specCode, ct);
+    }
 
     [HttpGet("{specCode:int}/occurrences")]
     public Task<IReadOnlyList<OccurrenceDto>> GetOccurrences(int specCode, [FromQuery] int limit = 500, CancellationToken ct = default)
-        => occurrenceService.GetBySpecCodeAsync(specCode, limit, ct);
+    {
+        return occurrenceService.GetBySpecCodeAsync(specCode, limit, ct);
+    }
 
     [HttpGet("{specCode:int}/related")]
     public Task<IReadOnlyList<SpeciesSearchResultDto>> GetRelated(int specCode, [FromQuery] int limit = 6, [FromQuery] string? language = null, CancellationToken ct = default)
-        => speciesProfile.GetRelatedAsync(specCode, limit, language, ct);
+    {
+        return speciesProfile.GetRelatedAsync(specCode, limit, language, ct);
+    }
 
     [HttpGet("{specCode:int}/countries")]
     public Task<IReadOnlyList<CountryDto>> GetCountries(int specCode, CancellationToken ct)
-        => occurrenceService.GetCountriesAsync(specCode, ct);
+    {
+        return occurrenceService.GetCountriesAsync(specCode, ct);
+    }
 
     [HttpGet("{specCode:int}/distribution")]
     public Task<SpeciesDistributionDto> GetDistribution(int specCode, CancellationToken ct)
-        => occurrenceService.GetDistributionAsync(specCode, ct);
+    {
+        return occurrenceService.GetDistributionAsync(specCode, ct);
+    }
 
     [HttpGet("summaries")]
     public async Task<IReadOnlyList<SpeciesSummaryDto>> GetSummaries([FromQuery] string codes, [FromQuery] string? language, CancellationToken ct)

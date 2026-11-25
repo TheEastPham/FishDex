@@ -1,6 +1,8 @@
 using AquaHome.Domain.Services;
 using AquaHome.Domain.Services.Interfaces;
 using AquaHome.Domain.Settings;
+using AquaHome.Domain.Storage;
+using FishLover.Storage;
 using AquaHome.EFCore.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -63,8 +65,14 @@ public static class AquaHomeServiceExtensions
     public static IServiceCollection AddAquaHomeStorage(
         this IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<StorageSettings>(configuration.GetSection(StorageSettings.SectionName));
-        services.AddSingleton<IStorageService, S3StorageService>();
+        // Mặc định riêng của AquaHome — appsettings / env var Storage__* luôn thắng.
+        services.AddObjectStorage(configuration, defaults: s =>
+        {
+            s.Provider = "r2";
+            s.BucketName = "aquahome";
+            s.PresignedPutUrlExpiryMinutes = 5;
+        });
+        services.AddSingleton<AquaHomeObjectKeys>();
         return services;
     }
 }

@@ -1,5 +1,6 @@
 using FishDex.Domain.DTOs.Species;
 using FishDex.Tests.Infrastructure;
+using FishLover.Storage;
 
 namespace FishDex.Tests.SpeciesProfiles;
 
@@ -124,6 +125,6 @@ public sealed class SearchTests(PostgresFixture pg) : SpeciesProfileTestBase(pg)
         Assert.Equal("Adrianichthyidae", card.FamilyName);
         Assert.Equal("Japanese rice fish", card.PreferredCommonName);
         Assert.Equal(img.ObjectKey, card.ImageKey);
-        Assert.Equal(FakeStorage.Url(img.ObjectKey), card.ImageUrl);
+        Assert.Equal(InMemoryStorageService.UrlFor(img.ObjectKey), card.ImageUrl);
     }
 }

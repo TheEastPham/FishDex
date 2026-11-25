@@ -74,11 +74,7 @@ public record AddTradedSpeciesRequest(
     string? LegalNote = null,
     string? LegalSourceUrl = null);
 
-public record UpdateTradedSpeciesRequest(
-    TradeStatus? TradeStatus,
-    LegalStatus LegalStatus,
-    string? LegalNote,
-    string? LegalSourceUrl);
+public record UpdateTradedSpeciesRequest(TradeStatus? TradeStatus, LegalStatus LegalStatus, string? LegalNote, string? LegalSourceUrl);
 
 // ── Ingest từ AquaHome ────────────────────────────────────────────
 /// <summary>
@@ -98,8 +94,4 @@ public enum SpeciesLookupOutcome
     NeedsMigration = 1,
 }
 
-public record SpeciesLookupDto(
-    int SpecCode,
-    string ScientificName,
-    string? Genus,
-    SpeciesLookupOutcome Outcome);
+public record SpeciesLookupDto(int SpecCode, string ScientificName, string? Genus, SpeciesLookupOutcome Outcome);

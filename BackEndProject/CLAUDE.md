@@ -8,6 +8,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Mobile context**: FE được truy cập chủ yếu qua iPhone 12+ (390px). Khi thiết kế API response — tránh payload thừa, pagination hợp lý, error message rõ ràng để FE hiển thị được trên màn hình nhỏ.
 - **Tách commit BE và FE**: KHÔNG gộp code BE (`BackEndProject/`, `Pipeline/`) và FE (`FrontEnd/`) trong cùng 1 commit khi implement feature — tách thành commit riêng cho mỗi bên. **Ngoại lệ**: fix bug thì được gộp BE+FE trong 1 commit.
 - **MinIO object key cho SystemImage**: LUÔN dùng `pic.ObjectKey` (computed property trên entity `SystemImage`) khi gọi `IStorageService.GetPresignedUrlAsync`. KHÔNG tự ghép path thủ công, KHÔNG dùng `pic.Name` trực tiếp. `ObjectKey` trả về `{SpecCode}/{Id}{ext}` — đây là nguồn sự thật duy nhất cho đường dẫn ảnh trên MinIO.
+- **Object key policy**: KHÔNG tự ghép key storage ở service. FishDex: ảnh FishBase dùng `SystemImage.ObjectKey`, key khác dùng `FishDexObjectKeys`. AquaHome: luôn qua `AquaHomeObjectKeys` (inject). Key đã lưu trong DB — test `AquaHome.Tests`/`FishDexObjectKeysTests` khoá từng format, đổi format = mất object cũ.
+- **Upload qua presigned PUT không tự chặn dung lượng**: luồng nào phát URL PUT phải gọi `IStorageService.GetObjectSizeAsync` (HEAD) ở bước confirm.
 
 ### v2.0 AI Stack (Groq + VM3)
 - **Groq API key**: `appsettings.Docker.json` chứa `ExternalServices:GroqApi:ApiKey`. Local dev dùng dummy value; Docker prod dùng env var `GROQ_API_KEY` từ docker-compose.
@@ -27,7 +29,8 @@ FishLover is a microservices-based backend for a fish species management and aqu
 ## Commands
 
 Run .NET commands from `BackEndProject/` (solution root).
-Run Docker commands from repo root `D:\Workspace\Practice\FishDex\` — Pipeline/ đã được chuyển ra ngang hàng với BackEndProject/.
+Run Docker commands from repo root `D:\Workspace\FishLover\FishDex\` — Pipeline/ nằm ngang hàng với BackEndProject/.
+Tài liệu cấp hệ thống (C4, roadmap AI, FE guide; mục lục ở `../docs/README.md`) nằm ở `../docs/`; ADR và GLOSSARY riêng của BE nằm trong `docs/adr/` và `GLOSSARY.md` của thư mục này.
 
 **Build the solution:**
 ```
@@ -41,9 +44,11 @@ dotnet run --project FishDex/FishDex.API/FishDex.API.csproj
 dotnet run --project ApiGateway/ApiGateway.csproj
 ```
 
-**Run tests** (cần Docker — Testcontainers tự dựng Postgres `pgvector/pgvector:pg16`):
+**Run tests:**
 ```
-dotnet test FishDex/FishDex.Tests/FishDex.Tests.csproj
+dotnet test Share/FishLover.Storage.Tests/FishLover.Storage.Tests.csproj   # thuần, không cần Docker
+dotnet test AquaHome/AquaHome.Tests/AquaHome.Tests.csproj                 # thuần, không cần Docker
+dotnet test FishDex/FishDex.Tests/FishDex.Tests.csproj                    # cần Docker — Testcontainers dựng Postgres pgvector/pgvector:pg16
 ```
 
 **Run with hot reload:**
@@ -90,7 +95,7 @@ ApiGateway/          – Ocelot gateway; routes /api/** → downstream services
 UserManagement/      – User auth/management microservice (SQL Server + Redis)
 FishDex/             – Fish species data service (PostgreSQL + pgvector)
 AquaHome/            – Aquarium tracking service (SQL Server + Redis) [in progress]
-Share/               – Cross-service shared library (JWT, OpenTelemetry, CurrentUserSession)
+Share/               – FishLover.Shared: JWT, OpenTelemetry, CurrentUserSession · FishLover.Storage: IStorageService (S3/R2 + in-memory), media-access signer
 ../Pipeline/         – Docker Compose stacks + CI/CD pipeline templates (repo root)
 ```
 

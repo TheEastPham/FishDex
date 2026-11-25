@@ -83,8 +83,7 @@ internal static class SpeciesRules
     /// Ảnh đực/cái: cờ trên ảnh (PicPreferredMale/Fem) trước; không ảnh nào có cờ thì khớp tên
     /// file với Species.PicPreferredNameM/F. Không có thì null — không đoán.
     /// </summary>
-    public static SpeciesImages PickImages(
-        IReadOnlyCollection<SystemImage> images, string? picNameMale, string? picNameFemale)
+    public static SpeciesImages PickImages(IReadOnlyCollection<SystemImage> images, string? picNameMale, string? picNameFemale)
     {
         var male = images.FirstOrDefault(i => i.PicPreferredMale == true)
                    ?? (picNameMale is null ? null : images.FirstOrDefault(i => i.Name == picNameMale));

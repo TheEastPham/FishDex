@@ -1,4 +1,5 @@
 using FishDex.Tests.Infrastructure;
+using FishLover.Storage;
 
 namespace FishDex.Tests.SpeciesProfiles;
 
@@ -202,8 +203,7 @@ public sealed class DetailTests(PostgresFixture pg) : SpeciesProfileTestBase(pg)
     }
 
     /// <summary>
-    /// Loài cộng đồng không thể có dòng trong CommonNames (FK_CommonNames_Species_SpecCode trỏ vào
-    /// bảng Species) — tên của chúng là tên người gửi nhập lúc submit, ở mọi ngôn ngữ.
+    /// Tên của loài cộng đồng là tên người gửi nhập lúc submit, ở mọi ngôn ngữ.
     /// </summary>
     [Fact]
     public async Task Community_species_use_the_name_entered_at_submission()
@@ -232,7 +232,7 @@ public sealed class DetailTests(PostgresFixture pg) : SpeciesProfileTestBase(pg)
 
         Assert.Equal(18, rich!.Environment!.TempMin);
         Assert.True(rich.Ecology!.Schooling);
-        Assert.Equal(FakeStorage.Url("community/500001/t.jpg"), rich.PreferredImageUrl);
+        Assert.Equal(InMemoryStorageService.UrlFor("community/500001/t.jpg"), rich.PreferredImageUrl);
         Assert.Null(bare!.Environment);
         Assert.Null(bare.Ecology);
     }

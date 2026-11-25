@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  createPrizeTier, updatePrizeTier, deletePrizeTier, requestPrizeTierImageUpload,
-  createSponsor, deleteSponsor, requestSponsorLogoUpload,
-  uploadToR2, getContestLeaderboard, finalizeContest,
+  createPrizeTier, updatePrizeTier, deletePrizeTier, requestPrizeTierImageUpload, confirmPrizeTierImageUpload,
+  createSponsor, deleteSponsor, requestSponsorLogoUpload, confirmSponsorLogoUpload,
+  uploadToR2, prepareLogoImage, LOGO_IMAGE_MAX_BYTES, getContestLeaderboard, finalizeContest,
   PrizeTierLevel, SponsorTier, ContestStatus, useTranslation,
 } from '@fishlover/shared';
 import type {
@@ -28,6 +28,28 @@ const SPONSOR_TIER_KEYS: Record<SponsorTier, string> = {
   [SponsorTier.Bronze]: 'adminContests.sponsorTierBronze',
   [SponsorTier.Partner]: 'adminContests.sponsorTierPartner',
 };
+
+/**
+ * Nén ảnh rồi PUT lên R2 và confirm với BE (BE kiểm file thật ≤ 300 KB). Ném Error với message hiển thị được:
+ * quá cỡ sau khi nén thì báo ngay, khỏi tải lên rồi mới bị từ chối.
+ */
+async function uploadContestImage(
+  file: File, t: T,
+  request: () => Promise<{ uploadUrl: string }>,
+  confirm: () => Promise<void>,
+): Promise<void> {
+  const blob = await prepareLogoImage(file);
+  if (blob.size > LOGO_IMAGE_MAX_BYTES) throw new Error(t('adminContests.imageTooLarge'));
+  const { uploadUrl } = await request();
+  await uploadToR2(uploadUrl, blob, file.type);
+  await confirm();
+}
+
+/** Lỗi upload ảnh: giữ message của lỗi tự ném (quá cỡ), còn lại (mạng/BE) dùng câu chung. */
+function imageErrorMessage(err: unknown, t: T): string {
+  const tooLarge = t('adminContests.imageTooLarge');
+  return err instanceof Error && err.message === tooLarge ? tooLarge : t('adminContests.imageUploadFailed');
+}
 
 const inputCls = 'w-full bg-[#0F172A] border border-slate-700 rounded-lg px-2.5 py-2 text-sm text-white min-h-[40px] placeholder:text-slate-600';
 
@@ -59,12 +81,16 @@ function PrizeTierRow({ contest, tier, onRemove, onChanged, t }: {
     if (!file) return;
     setUploading(true);
     try {
-      const { uploadUrl } = await requestPrizeTierImageUpload(contest.id, tier.id, file.name, file.type);
-      await uploadToR2(uploadUrl, file, file.type);
-      onChanged();
+      await uploadContestImage(
+        file, t,
+        () => requestPrizeTierImageUpload(contest.id, tier.id, file.name, file.type),
+        () => confirmPrizeTierImageUpload(contest.id, tier.id),
+      );
     } catch (err) {
       console.error(err);
+      window.alert(imageErrorMessage(err, t));
     } finally {
+      onChanged(); // BE gỡ ảnh khi confirm bị từ chối nên luôn tải lại danh sách
       setUploading(false);
     }
   };
@@ -124,9 +150,18 @@ function PrizeTiersSection({ contest, tiers, onChanged, t }: {
       const created = await createPrizeTier(contest.id, req);
 
       // Ảnh chọn sẵn trong form — upload luôn sau khi tier đã có id, không bắt user thao tác thêm lần 2
+      // Ảnh lỗi (quá cỡ, mạng) không được làm mất hạng giải vừa tạo: báo lỗi, admin tải lại ảnh từ hàng giải.
       if (imageFile) {
-        const { uploadUrl } = await requestPrizeTierImageUpload(contest.id, created.id, imageFile.name, imageFile.type);
-        await uploadToR2(uploadUrl, imageFile, imageFile.type);
+        try {
+          await uploadContestImage(
+            imageFile, t,
+            () => requestPrizeTierImageUpload(contest.id, created.id, imageFile.name, imageFile.type),
+            () => confirmPrizeTierImageUpload(contest.id, created.id),
+          );
+        } catch (err) {
+          console.error(err);
+          window.alert(imageErrorMessage(err, t));
+        }
       }
 
       setName(''); setSlotCount(1); setLevel(PrizeTierLevel.Custom); setDescription(''); setImageFile(null); setAdding(false);
@@ -225,12 +260,16 @@ function SponsorRow({ contest, sponsor, onChanged, t }: {
     if (!file) return;
     setUploading(true);
     try {
-      const { uploadUrl } = await requestSponsorLogoUpload(contest.id, sponsor.id, file.name, file.type);
-      await uploadToR2(uploadUrl, file, file.type);
-      onChanged();
+      await uploadContestImage(
+        file, t,
+        () => requestSponsorLogoUpload(contest.id, sponsor.id, file.name, file.type),
+        () => confirmSponsorLogoUpload(contest.id, sponsor.id),
+      );
     } catch (err) {
       console.error(err);
+      window.alert(imageErrorMessage(err, t));
     } finally {
+      onChanged(); // BE gỡ logo khi confirm bị từ chối nên luôn tải lại danh sách
       setUploading(false);
     }
   };
@@ -293,9 +332,18 @@ function SponsorsSection({ contest, sponsors, onChanged, t }: {
       const sponsor = await createSponsor(contest.id, req);
 
       // Logo chọn sẵn trong form tạo — upload luôn sau khi sponsor đã có id, không bắt user thao tác thêm lần 2
+      // Logo lỗi (quá cỡ, mạng) không được làm mất sponsor vừa tạo: báo lỗi, admin tải lại logo từ hàng sponsor.
       if (logoFile) {
-        const { uploadUrl } = await requestSponsorLogoUpload(contest.id, sponsor.id, logoFile.name, logoFile.type);
-        await uploadToR2(uploadUrl, logoFile, logoFile.type);
+        try {
+          await uploadContestImage(
+            logoFile, t,
+            () => requestSponsorLogoUpload(contest.id, sponsor.id, logoFile.name, logoFile.type),
+            () => confirmSponsorLogoUpload(contest.id, sponsor.id),
+          );
+        } catch (err) {
+          console.error(err);
+          window.alert(imageErrorMessage(err, t));
+        }
       }
 
       setName(''); setWebsite(''); setAddress(''); setTier(SponsorTier.Partner); setLogoFile(null); setAdding(false);

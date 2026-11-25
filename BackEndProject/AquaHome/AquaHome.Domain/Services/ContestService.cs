@@ -5,9 +5,11 @@ using AquaHome.Domain.Exceptions;
 using AquaHome.Domain.Extensions;
 using AquaHome.Domain.Services.Interfaces;
 using AquaHome.Domain.Settings;
+using AquaHome.Domain.Storage;
 using AquaHome.EFCore.Entity;
 using AquaHome.EFCore.Repository.Interface;
 using FishLover.Shared.Services;
+using FishLover.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -20,10 +22,11 @@ public class ContestService(
     IContestSponsorRepository sponsorRepo,
     IAquariumSnapshotRepository snapshotRepo,
     IStorageService storage,
+    UploadVerifier uploadVerifier,
     IYouTubeUploadService youTube,
     IQuotaRepository quotaRepo,
     ICurrentUserSession currentUser,
-    IOptions<StorageSettings> storageOptions,
+    AquaHomeObjectKeys keys,
     IOptions<YouTubeSettings> youTubeOptions,
     ILogger<ContestService> logger) : IContestService
 {
@@ -32,7 +35,8 @@ public class ContestService(
     private const long MaxVideoUploadBytes = 500L * 1024 * 1024; // 500MB — đủ cho video 2-5 phút 1080p
     private const int MaxTitleLength = 100;       // trùng giới hạn title của YouTube
     private const int MaxDescriptionLength = 100; // chốt với user — mô tả ngắn gọn
-    private const long MaxLogoUploadBytes = 2L * 1024 * 1024;    // 2MB — logo sponsor
+    private const long MaxLogoUploadBytes = 300L * 1024;         // 300KB — logo sponsor và ảnh hạng giải (FE nén về ~200KB)
+    private static readonly UploadPolicy LogoPolicy = new(MaxLogoUploadBytes);
 
     // Mỗi bể vẫn chỉ nộp 1 lần/contest; trần này chặn 1 account nhiều bể chiếm hết lượt upload YouTube.
     private const int MaxEntriesPerUserPerContest = 3;
@@ -50,12 +54,7 @@ public class ContestService(
     private static readonly TimeZoneInfo YouTubeQuotaTimeZone = ResolvePacificTimeZone();
 
     // Đuôi file suy từ content-type (đã ký vào presigned PUT), không lấy theo tên file client gửi.
-    private static readonly Dictionary<string, string> VideoExtensions = new()
-    {
-        ["video/mp4"] = ".mp4",
-        ["video/quicktime"] = ".mov",
-        ["video/webm"] = ".webm",
-    };
+    private static readonly IReadOnlyDictionary<string, string> VideoExtensions = UploadContentTypes.Videos;
 
     // Bài mới submit chưa confirm vẫn được tính vào trần staging trong khoảng này (đang upload dở). Quá thì không
     // tính nữa — khai 500MB rồi không upload gì không giữ chỗ được mãi.
@@ -63,9 +62,7 @@ public class ContestService(
 
     private const string VideoNotFoundReason = "Không tìm thấy video đã tải lên. Bạn hãy nộp lại bài.";
     private const string VideoSizeMismatchReason = "Video tải lên không khớp dung lượng đã khai. Bạn hãy nộp lại bài.";
-    private static readonly HashSet<string> AllowedLogoContentTypes = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"];
 
-    private string Env => storageOptions.Value.Environment;
 
     public async Task<IReadOnlyList<ContestDto>> GetAllAsync(CancellationToken ct = default)
     {
@@ -186,9 +183,9 @@ public class ContestService(
         }
 
         var entryId = Guid.NewGuid();
-        var objectKey = $"aquahome/{Env}/contests/{contestId}/{entryId}{ext}";
+        var objectKey = keys.ContestEntryVideo(contestId, entryId, ext);
 
-        var uploadUrl = await storage.GeneratePresignedPutUrlAsync(objectKey, request.ContentType, MaxVideoUploadBytes, ct)
+        var uploadUrl = await storage.GeneratePresignedPutUrlAsync(objectKey, request.ContentType, ct)
             ?? throw new ContestValidationException("Không thể tạo upload URL, vui lòng thử lại.");
 
         var entry = new ContestEntry
@@ -232,10 +229,12 @@ public class ContestService(
 
         // Presigned PUT không chặn được dung lượng → tin file thật trên R2 chứ không tin số client khai. Làm TRƯỚC
         // khi giữ lượt YouTube: bài bỏ dở (chưa có file) bấm "Xác nhận lại" không tốn lượt.
-        long? actualSize;
+        // Dung lượng khai thiếu (null) vẫn bị coi là lệch như trước đây: -1 không bao giờ bằng dung lượng thật.
+        var policy = new UploadPolicy(MaxVideoUploadBytes, entry.VideoSizeBytes ?? -1);
+        UploadVerdict verdict;
         try
         {
-            actualSize = await storage.GetObjectSizeAsync(entry.VideoR2Key, ct);
+            verdict = await uploadVerifier.VerifyAsync(entry.VideoR2Key, policy, ct);
         }
         catch
         {
@@ -245,16 +244,14 @@ public class ContestService(
             throw;
         }
 
-        if (actualSize is null || actualSize > MaxVideoUploadBytes || actualSize != entry.VideoSizeBytes)
+        if (!verdict.IsOk)
         {
-            if (actualSize is not null)
-                await storage.DeleteAsync(entry.VideoR2Key, ct);
-
-            logger.LogWarning("Contest entry {EntryId} rejected: R2 size {Actual} vs declared {Declared}",
-                entry.Id, actualSize, entry.VideoSizeBytes);
+            // Quá cỡ / lệch dung lượng thì verifier đã xoá object; quá cỡ và lệch dùng chung một lý do.
+            logger.LogWarning("Contest entry {EntryId} rejected: {Verdict}, R2 size {Actual} vs declared {Declared}",
+                entry.Id, verdict.Kind, verdict.Size, entry.VideoSizeBytes);
             entry.VideoR2Key = null;
             entry.Status = (int)ContestEntryStatus.Rejected;
-            entry.RejectionReason = actualSize is null ? VideoNotFoundReason : VideoSizeMismatchReason;
+            entry.RejectionReason = verdict.Kind == UploadVerdictKind.NotUploaded ? VideoNotFoundReason : VideoSizeMismatchReason;
             await entryRepo.SaveChangesAsync(ct);
             return false;
         }
@@ -449,21 +446,40 @@ public class ContestService(
     public async Task<PrizeTierImageUploadResultDto?> RequestPrizeTierImageUploadAsync(
         Guid contestId, Guid tierId, string fileName, string contentType, CancellationToken ct = default)
     {
-        if (!AllowedLogoContentTypes.Contains(contentType)) return null;
+        // Đuôi suy từ content-type (đã ký vào presigned PUT), không lấy theo tên file client gửi.
+        if (!UploadContentTypes.Logos.TryGetValue(contentType, out var ext)) return null;
 
         var tier = await prizeTierRepo.GetByIdAsync(tierId, ct);
         if (tier is null || tier.ContestId != contestId) return null;
 
-        var ext = Path.GetExtension(fileName);
-        var objectKey = $"aquahome/{Env}/contests/{contestId}/prize-tiers/{tierId}{ext}";
+        var objectKey = keys.ContestPrizeTierLogo(contestId, tierId, ext);
 
-        var uploadUrl = await storage.GeneratePresignedPutUrlAsync(objectKey, contentType, MaxLogoUploadBytes, ct);
+        var uploadUrl = await storage.GeneratePresignedPutUrlAsync(objectKey, contentType, ct);
         if (uploadUrl is null) return null;
 
         tier.ImageObjectKey = objectKey;
         await prizeTierRepo.SaveChangesAsync(ct);
 
         return new PrizeTierImageUploadResultDto(uploadUrl, objectKey);
+    }
+
+    /// <summary>
+    /// Xác minh ảnh hạng giải đã upload: file thật phải có và không quá <see cref="MaxLogoUploadBytes"/>. Không thì gỡ key
+    /// khỏi hạng giải (verifier đã xoá object quá cỡ) và ném <see cref="ContestValidationException"/>.
+    /// False nếu hạng giải không tồn tại hoặc chưa xin URL upload.
+    /// </summary>
+    public async Task<bool> ConfirmPrizeTierImageUploadAsync(Guid contestId, Guid tierId, CancellationToken ct = default)
+    {
+        var tier = await prizeTierRepo.GetByIdAsync(tierId, ct);
+        if (tier is null || tier.ContestId != contestId || string.IsNullOrEmpty(tier.ImageObjectKey)) return false;
+
+        var verdict = await uploadVerifier.VerifyAsync(tier.ImageObjectKey, LogoPolicy, ct);
+        if (verdict.IsOk) return true;
+
+        logger.LogWarning("Prize tier image {Key} rejected: {Verdict}, R2 size {Size}", tier.ImageObjectKey, verdict.Kind, verdict.Size);
+        tier.ImageObjectKey = null;
+        await prizeTierRepo.SaveChangesAsync(ct);
+        throw LogoRejected(verdict.Kind);
     }
 
     // ── Sponsors ─────────────────────────────────────────────────
@@ -519,21 +535,45 @@ public class ContestService(
     public async Task<SponsorLogoUploadResultDto?> RequestSponsorLogoUploadAsync(
         Guid contestId, Guid sponsorId, string fileName, string contentType, CancellationToken ct = default)
     {
-        if (!AllowedLogoContentTypes.Contains(contentType)) return null;
+        // Đuôi suy từ content-type (đã ký vào presigned PUT), không lấy theo tên file client gửi.
+        if (!UploadContentTypes.Logos.TryGetValue(contentType, out var ext)) return null;
 
         var sponsor = await sponsorRepo.GetByIdAsync(sponsorId, ct);
         if (sponsor is null || sponsor.ContestId != contestId) return null;
 
-        var ext = Path.GetExtension(fileName);
-        var objectKey = $"aquahome/{Env}/contests/{contestId}/sponsors/{sponsorId}{ext}";
+        var objectKey = keys.ContestSponsorLogo(contestId, sponsorId, ext);
 
-        var uploadUrl = await storage.GeneratePresignedPutUrlAsync(objectKey, contentType, MaxLogoUploadBytes, ct);
+        var uploadUrl = await storage.GeneratePresignedPutUrlAsync(objectKey, contentType, ct);
         if (uploadUrl is null) return null;
 
         sponsor.LogoObjectKey = objectKey;
         await sponsorRepo.SaveChangesAsync(ct);
 
         return new SponsorLogoUploadResultDto(uploadUrl, objectKey);
+    }
+
+    /// <summary>
+    /// Xác minh logo sponsor đã upload — cùng quy tắc với ảnh hạng giải. False nếu sponsor không tồn tại hoặc chưa xin URL.
+    /// </summary>
+    public async Task<bool> ConfirmSponsorLogoUploadAsync(Guid contestId, Guid sponsorId, CancellationToken ct = default)
+    {
+        var sponsor = await sponsorRepo.GetByIdAsync(sponsorId, ct);
+        if (sponsor is null || sponsor.ContestId != contestId || string.IsNullOrEmpty(sponsor.LogoObjectKey)) return false;
+
+        var verdict = await uploadVerifier.VerifyAsync(sponsor.LogoObjectKey, LogoPolicy, ct);
+        if (verdict.IsOk) return true;
+
+        logger.LogWarning("Sponsor logo {Key} rejected: {Verdict}, R2 size {Size}", sponsor.LogoObjectKey, verdict.Kind, verdict.Size);
+        sponsor.LogoObjectKey = null;
+        await sponsorRepo.SaveChangesAsync(ct);
+        throw LogoRejected(verdict.Kind);
+    }
+
+    private static ContestValidationException LogoRejected(UploadVerdictKind kind)
+    {
+        return new ContestValidationException(kind == UploadVerdictKind.NotUploaded
+            ? "Không tìm thấy ảnh đã tải lên. Bạn hãy tải lại."
+            : $"Ảnh vượt quá dung lượng tối đa {MaxLogoUploadBytes / 1024}KB.");
     }
 
     // ── Finalize ─────────────────────────────────────────────────

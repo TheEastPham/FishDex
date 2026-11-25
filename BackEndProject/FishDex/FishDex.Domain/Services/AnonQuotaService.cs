@@ -42,8 +42,7 @@ public class AnonQuotaService(
 
     private readonly AnonQuotaSettings _settings = options.Value;
 
-    public async Task<AnonQuotaResult> TryConsumeAsync(
-        string visitorId, string clientIp, int specCode, CancellationToken ct = default)
+    public async Task<AnonQuotaResult> TryConsumeAsync(string visitorId, string clientIp, int specCode, CancellationToken ct = default)
     {
         var limit = _settings.DailySpeciesLimit;
         var resetsIn = SecondsUntilReset();
@@ -92,7 +91,10 @@ public class AnonQuotaService(
         return (pair[0] == 1, (int)pair[1]);
     }
 
-    private DateTime LocalNow() => DateTime.UtcNow.AddHours(_settings.ResetOffsetHours);
+    private DateTime LocalNow()
+    {
+        return DateTime.UtcNow.AddHours(_settings.ResetOffsetHours);
+    }
 
     private int SecondsUntilReset()
     {

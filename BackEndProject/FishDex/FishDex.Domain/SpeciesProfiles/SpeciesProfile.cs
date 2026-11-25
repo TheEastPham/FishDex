@@ -6,6 +6,7 @@ using FishDex.EFCore.Entity.Cache;
 using FishDex.EFCore.Entity.Media;
 using FishDex.EFCore.Entity.Species;
 using FishDex.EFCore.Repository.Interface;
+using FishLover.Storage;
 using FishLover.Shared.Common;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,15 +17,11 @@ namespace FishDex.Domain.SpeciesProfiles;
 /// và đọc loài cộng đồng từ <c>SpeciesSnapshots</c>. Không có cache tầng DB: không ghi trong GET,
 /// không có chuyện snapshot cũ. Rule chọn ảnh/tên/ecology ở <see cref="SpeciesRules"/>.
 /// </summary>
-public sealed class SpeciesProfile(
-    FishDexDbContext db,
-    ICommunitySpeciesRepository communityRepo,
-    IStorageService storage) : ISpeciesProfile
+public sealed class SpeciesProfile(FishDexDbContext db, ICommunitySpeciesRepository communityRepo, IStorageService storage) : ISpeciesProfile
 {
     // ── Detail ───────────────────────────────────────────────────────────────
 
-    public async Task<SpeciesDetailDto?> GetDetailAsync(
-        int specCode, string? language = null, CancellationToken ct = default)
+    public async Task<SpeciesDetailDto?> GetDetailAsync(int specCode, string? language = null, CancellationToken ct = default)
     {
         language = SpeciesRules.NormalizeLanguage(language);
 
@@ -40,9 +37,10 @@ public sealed class SpeciesProfile(
             .AsNoTracking()
             .Include(s => s.Genus)
             .Include(s => s.Family)
-            .Include(s => s.CommonNames.Where(c => c.IsVerified))
             .FirstOrDefaultAsync(s => s.SpecCode == specCode, ct);
         if (species == null) return null;
+
+        var names = (await LoadVerifiedNamesAsync([specCode], ct))[specCode];
 
         var images = await db.SystemImages
             .AsNoTracking()
@@ -82,7 +80,7 @@ public sealed class SpeciesProfile(
         {
             SpecCode            = species.SpecCode,
             SpeciesName         = species.SpeciesName,
-            PreferredCommonName = SpeciesRules.PickCommonName(species.CommonNames, language),
+            PreferredCommonName = SpeciesRules.PickCommonName(names, language),
             GenusName           = species.Genus?.GenusName,
             FamilyName          = species.Family?.Name,
             WaterType           = species.WaterType.ToString(),
@@ -243,8 +241,7 @@ public sealed class SpeciesProfile(
 
     // ── Search ───────────────────────────────────────────────────────────────
 
-    public async Task<PagedResult<SpeciesSearchResultDto>> SearchAsync(
-        GetSpeciesSearchRequest request, CancellationToken ct = default)
+    public async Task<PagedResult<SpeciesSearchResultDto>> SearchAsync(GetSpeciesSearchRequest request, CancellationToken ct = default)
     {
         var language = SpeciesRules.NormalizeLanguage(request.Language);
         var skip = (request.Page - 1) * request.PageSize;
@@ -291,11 +288,11 @@ public sealed class SpeciesProfile(
             .AsNoTracking()
             .Include(s => s.Genus)
             .Include(s => s.Family)
-            .Include(s => s.CommonNames.Where(c => c.IsVerified))
             .Where(s =>
                 !hasQuery ||
                 EF.Functions.ILike(s.SpeciesName, $"%{query}%") ||
-                s.CommonNames.Any(c =>
+                db.CommonNames.Any(c =>
+                    c.SpecCode == s.SpecCode &&
                     c.IsVerified &&
                     EF.Functions.ILike(c.ComName, $"%{query}%") &&
                     (language == null || c.Language == language)));
@@ -325,7 +322,6 @@ public sealed class SpeciesProfile(
             .AsNoTracking()
             .Include(s => s.Genus)
             .Include(s => s.Family)
-            .Include(s => s.CommonNames.Where(c => c.IsVerified))
             .Where(s => s.SpecCode != specCode);
 
         // Ưu tiên cùng Genus
@@ -355,10 +351,11 @@ public sealed class SpeciesProfile(
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private async Task<List<SpeciesSearchResultDto>> ToFishBaseCardsAsync(
-        IReadOnlyList<Species> species, string? language, CancellationToken ct)
+    private async Task<List<SpeciesSearchResultDto>> ToFishBaseCardsAsync(IReadOnlyList<Species> species, string? language, CancellationToken ct)
     {
-        var images = await LoadImagesAsync(species.Select(s => s.SpecCode).ToList(), ct);
+        var codes  = species.Select(s => s.SpecCode).ToList();
+        var images = await LoadImagesAsync(codes, ct);
+        var names  = await LoadVerifiedNamesAsync(codes, ct);
 
         var result = new List<SpeciesSearchResultDto>(species.Count);
         foreach (var s in species)
@@ -368,7 +365,7 @@ public sealed class SpeciesProfile(
             {
                 SpecCode            = s.SpecCode,
                 SpeciesName         = s.SpeciesName,
-                PreferredCommonName = SpeciesRules.PickCommonName(s.CommonNames, language),
+                PreferredCommonName = SpeciesRules.PickCommonName(names[s.SpecCode], language),
                 GenusName           = s.Genus?.GenusName,
                 FamilyName          = s.Family?.Name,
                 ImageUrl            = await PresignAsync(thumb, ct),
@@ -378,8 +375,7 @@ public sealed class SpeciesProfile(
         return result;
     }
 
-    private async Task<List<SpeciesSearchResultDto>> ToCommunityCardsAsync(
-        IReadOnlyList<SpeciesSnapshot> items, CancellationToken ct)
+    private async Task<List<SpeciesSearchResultDto>> ToCommunityCardsAsync(IReadOnlyList<SpeciesSnapshot> items, CancellationToken ct)
     {
         var result = new List<SpeciesSearchResultDto>(items.Count);
         foreach (var s in items)

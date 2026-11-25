@@ -6,7 +6,10 @@ namespace AquaHome.EFCore.Repository.Interface;
 public interface IAquariumRepository : IGenericRepository<Aquarium>
 {
     Task<IReadOnlyList<Aquarium>> GetByUserAsync(Guid userId, CancellationToken ct = default);
+    /// <summary>Không nạp <c>Fish</c> — dùng cho thao tác ghi. Cần đếm cá (DTO) thì dùng <see cref="GetByIdAndUserWithFishAsync"/>.</summary>
     Task<Aquarium?> GetByIdAndUserAsync(Guid id, Guid userId, CancellationToken ct = default);
+    /// <summary>Kèm <c>Fish</c>, không tracked — chỉ để ĐỌC (dựng DTO). Đừng truyền vào UpdateAsync/DeleteAsync.</summary>
+    Task<Aquarium?> GetByIdAndUserWithFishAsync(Guid id, Guid userId, CancellationToken ct = default);
 
     Task<AquariumFish?> GetFishEntryAsync(Guid aquariumId, int specCode, CancellationToken ct = default);
     Task AddFishAsync(AquariumFish fish, CancellationToken ct = default);

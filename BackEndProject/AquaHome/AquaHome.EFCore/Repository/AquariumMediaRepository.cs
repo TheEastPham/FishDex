@@ -19,6 +19,11 @@ public class AquariumMediaRepository(AquaHomeDbContext db) : IAquariumMediaRepos
     public Task<AquariumMedia?> GetByIdAsync(Guid id, CancellationToken ct = default)
         => db.AquariumMedia.FirstOrDefaultAsync(m => m.Id == id, ct);
 
+    public async Task<IReadOnlyList<AquariumMedia>> GetByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken ct = default)
+    {
+        return await db.AquariumMedia.AsNoTracking().Where(m => ids.Contains(m.Id)).ToListAsync(ct);
+    }
+
     public async Task AddAsync(AquariumMedia media, CancellationToken ct = default)
         => await db.AquariumMedia.AddAsync(media, ct);
 

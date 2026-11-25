@@ -32,10 +32,8 @@ public static class OpenTelemetryExtensions
                         !httpContext.Request.Path.StartsWithSegments("/metrics");
                 })
                 .AddHttpClientInstrumentation()
-                .AddEntityFrameworkCoreInstrumentation(options =>
-                {
-                    options.SetDbStatementForText = true;
-                })
+                // Từ bản 1.11+ không còn option SetDbStatementForText; thư viện tự quyết việc ghi câu SQL.
+                .AddEntityFrameworkCoreInstrumentation()
                 .AddRedisInstrumentation()
                 .AddSource(serviceName)
                 // Export ra OTLP thay vì Console để sau này dùng Grafana
@@ -73,7 +71,7 @@ public static class OpenTelemetryExtensions
             .WithTracing(tracing => tracing
                 .AddSource(serviceName)
                 .AddHttpClientInstrumentation()
-                .AddEntityFrameworkCoreInstrumentation(options => options.SetDbStatementForText = true)
+                .AddEntityFrameworkCoreInstrumentation()
                 .AddOtlpExporter(opt =>
                 {
                     opt.Endpoint = new Uri(configuration["OpenTelemetry:ExportEndpoint"] ?? "http://localhost:4317");

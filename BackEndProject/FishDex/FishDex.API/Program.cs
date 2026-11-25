@@ -9,7 +9,6 @@ using FishDex.EFCore.Extensions;
 using FishLover.Shared.Extensions;
 using FishLover.Storage;
 using FishLover.Storage.MediaAccess;
-using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Events;
 using StackExchange.Redis;
@@ -174,13 +173,7 @@ try
     var app = builder.Build();
 
     // ── Auto-migrate — chỉ chạy khi AutoMigrate:OnStartup=true (Docker/Dev) ──
-    if (app.Configuration.GetValue<bool>("AutoMigrate:OnStartup"))
-    {
-        using var scope = app.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<FishDexDbContext>();
-        await db.Database.MigrateAsync();
-        Log.Information("FishDex database migration completed");
-    }
+    await app.MigrateDatabaseIfEnabledAsync<FishDexDbContext>();
 
     // ── Middleware pipeline ────────────────────────────────────
     app.UseSwagger();

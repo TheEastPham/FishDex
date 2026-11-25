@@ -5,7 +5,6 @@ using UserManagement.API.Extensions;
 using UserManagement.API.Services;
 using FishLover.Shared.Extensions;
 using UserManagement.EFCore.Data;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -121,14 +120,7 @@ builder.Services.AddHealthChecks()
 var app = builder.Build();
 
 // Auto-migrate: chỉ chạy khi AutoMigrate:OnStartup=true (local/Docker dev)
-// Production nên chạy migration qua CI/CD pipeline thay vì khi startup
-if (app.Configuration.GetValue<bool>("AutoMigrate:OnStartup"))
-{
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<UserManagementDbContext>();
-    await db.Database.MigrateAsync();
-    Log.Information("Database migration completed");
-}
+await app.MigrateDatabaseIfEnabledAsync<UserManagementDbContext>();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsProduction())

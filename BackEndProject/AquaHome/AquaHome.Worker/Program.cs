@@ -3,7 +3,6 @@ using AquaHome.EFCore.Data;
 using AquaHome.EFCore.Extensions;
 using AquaHome.Worker.Services;
 using FishLover.Shared.Extensions;
-using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 var builder = Host.CreateApplicationBuilder(args);
@@ -28,13 +27,7 @@ builder.Services.AddHostedService<CleanupContestStagingBackgroundService>();
 
 var host = builder.Build();
 
-if (builder.Configuration.GetValue<bool>("AutoMigrate:OnStartup"))
-{
-    using var scope = host.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<AquaHomeDbContext>();
-    await db.Database.MigrateAsync();
-    Log.Information("Database migration completed");
-}
+await host.MigrateDatabaseIfEnabledAsync<AquaHomeDbContext>();
 
 try
 {

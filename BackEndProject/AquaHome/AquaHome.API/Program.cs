@@ -2,7 +2,6 @@ using AquaHome.Domain.Extensions;
 using AquaHome.EFCore.Data;
 using AquaHome.EFCore.Extensions;
 using FishLover.Shared.Extensions;
-using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -67,13 +66,7 @@ builder.Services.AddHealthChecks()
 
 var app = builder.Build();
 
-if (app.Configuration.GetValue<bool>("AutoMigrate:OnStartup"))
-{
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<AquaHomeDbContext>();
-    await db.Database.MigrateAsync();
-    Log.Information("Database migration completed");
-}
+await app.MigrateDatabaseIfEnabledAsync<AquaHomeDbContext>();
 
 if (!app.Environment.IsProduction())
 {

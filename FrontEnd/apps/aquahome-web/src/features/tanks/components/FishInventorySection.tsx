@@ -326,7 +326,7 @@ export default function FishInventorySection({ aquariumId: _aquariumId, fishList
                   <button
                     onClick={e => { e.stopPropagation(); onNavigateFish(f.specCode); }}
                     className="p-1 rounded hover:bg-white/10 text-slate-600 hover:text-sky-400 transition-colors shrink-0"
-                    title="Xem hồ sơ loài"
+                    title={t('aquarium.viewSpeciesProfile')}
                   >
                     <ExternalLink className="w-3 h-3" />
                   </button>

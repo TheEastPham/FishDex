@@ -95,7 +95,7 @@ Phía BE xem [`BackEndProject/CLAUDE.md`](../../BackEndProject/CLAUDE.md) (kiế
 | Routing | React Router v7 (`createBrowserRouter`, nested route qua `<Outlet/>`) |
 | HTTP client | Axios (1 instance dùng chung, `packages/shared/src/lib/api/client.ts`) |
 | Maps | Leaflet + react-leaflet (hiển thị occurrence map của loài cá) |
-| i18n | i18next + react-i18next (vi/en) |
+| i18n | i18next + react-i18next (vi, en, de, zh; fallback `en`) |
 | Form | **Không có** react-hook-form/Formik — controlled input thủ công bằng `useState` |
 | Validation | **Không có** zod/yup — validate inline bằng hàm helper (`num()`, `canSave` boolean) |
 
@@ -122,7 +122,7 @@ packages/shared/src/
 │   ├── cache.ts, utils.ts
 ├── store/authStore.ts
 ├── hooks/             # useAuthRestore, useDebounce, useFishProfile, useLogout, useMyAquariums, useMyFavorites, usePushNotification, useSpeciesSummaries
-├── i18n/              # index.ts, locales/vi.ts, locales/en.ts
+├── i18n/              # index.ts, locales/{vi,en,de,zh}.ts
 ├── types/             # aquahome.ts, auth.ts, common.ts, community.ts, snapshot.ts, species.ts
 └── components/LanguageSwitcher.tsx
 ```
@@ -326,7 +326,7 @@ Code thực tế phản ánh quy tắc này: input trong `SubmitCommunitySpecies
 
 ## 6.3 i18n
 
-Bắt buộc: **mọi string hiển thị cho user phải đi qua `useTranslation()`** — không hardcode text tiếng Việt/Anh trực tiếp trong JSX. Khi thêm string mới, phải thêm key vào **cả** `packages/shared/src/i18n/locales/vi.ts` **và** `en.ts` cùng lúc — thiếu 1 trong 2 sẽ bị flag khi review.
+Bắt buộc: **mọi string hiển thị cho user phải đi qua `useTranslation()`** — không hardcode text tiếng Việt/Anh trực tiếp trong JSX. Khi thêm string mới, phải thêm key vào **cả 4 file** `packages/shared/src/i18n/locales/{vi,en,de,zh}.ts` cùng lúc; kiểm bằng `npm run i18n:check -w @fishlover/shared` (thiếu/thừa key → exit 1).
 
 ## 6.4 Upload ảnh/video (presigned R2)
 
@@ -380,7 +380,7 @@ npm run dev        # Vite dev server, port 5173
 1. Tạo folder trong `apps/aquahome-web/src/features/{ten-feature}/`, page chính + `components/` con nếu cần.
 2. Thêm route vào `router.tsx` — bọc `AuthGuard` nếu cần login, `RoleGuard(['...'])` nếu cần role cụ thể.
 3. Nếu cần gọi API mới, thêm function vào module tương ứng trong `packages/shared/src/lib/api/` (không gọi axios trực tiếp trong component).
-4. Mọi string hiển thị dùng `useTranslation()`, thêm key vào cả `vi.ts` và `en.ts`.
+4. Mọi string hiển thị dùng `useTranslation()`, thêm key vào cả 4 file locale (`vi`, `en`, `de`, `zh`) rồi chạy `npm run i18n:check -w @fishlover/shared`.
 5. Kiểm tra layout ở 390px trước khi coi là xong (xem [6.1](#61-mobile-first--quy-tắc-390px)).
 
 **Thêm API call liên quan community contribution:** tham khảo `community.ts` hiện có (submit/verify/reject/verify-batch) — khớp 1:1 với endpoint BE ở `CommunitySpeciesController`/`CommunityCommonNamesController`.

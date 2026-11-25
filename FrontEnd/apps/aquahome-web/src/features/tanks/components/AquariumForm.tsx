@@ -104,9 +104,9 @@ export default function AquariumForm({ isOpen, onClose, onSave, editing }: Props
             </div>
             <div>
               <h2 className="text-white font-bold text-lg">
-                {editing ? 'Chỉnh sửa hồ cá' : 'Thêm hồ cá mới'}
+                {editing ? t('tanks.formTitleEdit') : t('tanks.formTitleCreate')}
               </h2>
-              <p className="text-slate-500 text-xs">Điền thông tin bên dưới</p>
+              <p className="text-slate-500 text-xs">{t('tanks.formSubtitle')}</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-xl transition-colors">
@@ -120,12 +120,12 @@ export default function AquariumForm({ isOpen, onClose, onSave, editing }: Props
           {/* Name */}
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
-              Tên hồ cá <span className="text-red-400">*</span>
+              {t('tanks.formName')} <span className="text-red-400">*</span>
             </label>
             <input
               value={name}
               onChange={e => setName(e.target.value)}
-              placeholder="Ví dụ: Hồ Amazon của tôi..."
+              placeholder={t('tanks.formNamePlaceholder')}
               required
               className="w-full bg-[#0F172A] border border-slate-700/60 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/30 transition-all"
             />
@@ -153,7 +153,7 @@ export default function AquariumForm({ isOpen, onClose, onSave, editing }: Props
           {/* Water Type */}
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
-              Loại hồ
+              {t('tanks.formWaterType')}
             </label>
             <select
               value={waterType}
@@ -170,7 +170,7 @@ export default function AquariumForm({ isOpen, onClose, onSave, editing }: Props
           {/* Style */}
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
-              Phong cách
+              {t('tanks.formStyle')}
             </label>
             <select
               value={style}
@@ -187,13 +187,13 @@ export default function AquariumForm({ isOpen, onClose, onSave, editing }: Props
           {/* Dimensions + Live Volume */}
           <div>
             <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
-              Kích thước (cm)
+              {t('tanks.formDimensions')}
             </label>
             <div className="grid grid-cols-3 gap-2">
               {[
-                { label: 'Dài', val: length, set: setLength },
-                { label: 'Rộng', val: width, set: setWidth },
-                { label: 'Cao', val: height, set: setHeight },
+                { label: t('tanks.formLength'), val: length, set: setLength },
+                { label: t('tanks.formWidth'), val: width, set: setWidth },
+                { label: t('tanks.formHeight'), val: height, set: setHeight },
               ].map(({ label, val, set }) => (
                 <div key={label}>
                   <p className="text-xs text-slate-500 mb-1.5 text-center">{label}</p>
@@ -217,9 +217,9 @@ export default function AquariumForm({ isOpen, onClose, onSave, editing }: Props
             )}>
               <FlaskConical className={cn('w-5 h-5 shrink-0', volume != null ? 'text-emerald-400' : 'text-slate-600')} />
               <div>
-                <p className="text-xs text-slate-500">Thể tích tính toán</p>
+                <p className="text-xs text-slate-500">{t('tanks.formVolume')}</p>
                 <p className={cn('text-lg font-black transition-all', volume != null ? 'text-emerald-300' : 'text-slate-600')}>
-                  {volume != null ? `${volume.toFixed(2)} Lít` : '— Lít'}
+                  {volume != null ? `${volume.toFixed(2)} ${t('tanks.formLiters')}` : `— ${t('tanks.formLiters')}`}
                 </p>
               </div>
             </div>
@@ -227,11 +227,11 @@ export default function AquariumForm({ isOpen, onClose, onSave, editing }: Props
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Mô tả</label>
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">{t('tanks.formDescription')}</label>
             <textarea
               value={description}
               onChange={e => setDescription(e.target.value)}
-              placeholder="Ghi chú về hồ cá..."
+              placeholder={t('tanks.formDescriptionPlaceholder')}
               rows={3}
               className="w-full bg-[#0F172A] border border-slate-700/60 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/30 transition-all resize-none"
             />
@@ -245,7 +245,7 @@ export default function AquariumForm({ isOpen, onClose, onSave, editing }: Props
             onClick={onClose}
             className="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 font-bold transition-colors"
           >
-            Huỷ
+            {t('tanks.cancel')}
           </button>
           <button
             onClick={() => handleSubmit()}
@@ -253,7 +253,7 @@ export default function AquariumForm({ isOpen, onClose, onSave, editing }: Props
             className="flex-1 py-3 rounded-xl bg-sky-500 hover:bg-sky-400 disabled:opacity-50 text-white font-bold transition-colors flex items-center justify-center gap-2"
           >
             {saving ? <Loader className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {editing ? 'Lưu thay đổi' : 'Tạo hồ cá'}
+            {editing ? t('tanks.formSave') : t('tanks.formCreate')}
           </button>
         </div>
       </div>

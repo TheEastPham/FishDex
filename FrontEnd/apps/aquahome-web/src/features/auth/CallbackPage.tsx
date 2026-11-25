@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore, exchangeCode } from '@fishlover/shared';
+import { useAuthStore, exchangeCode, useTranslation } from '@fishlover/shared';
 
 export default function CallbackPage() {
   const { setTokens } = useAuthStore();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const handled = useRef(false);
 
@@ -45,7 +46,7 @@ export default function CallbackPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
-      <p className="text-slate-400 text-sm animate-pulse">Đang xử lý đăng nhập…</p>
+      <p className="text-slate-400 text-sm animate-pulse">{t('login.processing')}</p>
     </div>
   );
 }

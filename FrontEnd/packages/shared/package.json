@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
+  "scripts": {
+    "i18n:check": "node scripts/check-i18n.mjs"
+  },
   "main": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",

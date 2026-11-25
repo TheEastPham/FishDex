@@ -31,7 +31,7 @@ Khi thêm mới hoặc sửa UI, luôn tự hỏi:
 
 Mọi string hiển thị cho user phải đi qua `useTranslation()` — không hardcode text tiếng Việt hay tiếng Anh trực tiếp vào JSX.
 
-Thêm key mới vào cả `vi.ts` và `en.ts` cùng lúc.
+Thêm key mới vào **cả 4 file** `vi.ts`, `en.ts`, `de.ts`, `zh.ts` cùng lúc (menu chọn ngôn ngữ có cả 4). Kiểm tra đủ key: `npm run i18n:check -w @fishlover/shared` (thiếu/thừa → exit 1).
 
 ## Commits
 

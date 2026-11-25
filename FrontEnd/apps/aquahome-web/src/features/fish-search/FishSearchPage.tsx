@@ -160,7 +160,7 @@ export default function FishSearchPage() {
         <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-5 py-4 text-sm text-amber-300 shadow-sm flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <LogIn className="w-4 h-4 shrink-0" />
-            <span>Vui lòng đăng nhập để sử dụng tính năng tìm kiếm.</span>
+            <span>{t('fish.searchLoginRequired')}</span>
           </div>
           <button
             onClick={() => navigate('/login')}

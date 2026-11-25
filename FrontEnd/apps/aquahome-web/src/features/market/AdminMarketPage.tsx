@@ -123,14 +123,14 @@ export default function AdminMarketPage() {
         {pendingCodes.length > 0 && (
           <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2.5">
             <p className="text-xs text-amber-300 leading-snug">
-              {pendingCodes.length} loài chưa có trong FishDex — dán mã vào <code className="font-mono">new_spec_codes.txt</code> rồi chạy lại ETL.
+              {t('market.adminPendingBefore', { count: pendingCodes.length })} <code className="font-mono">new_spec_codes.txt</code> {t('market.adminPendingAfter')}
             </p>
             <button
               onClick={copyCodes}
               className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-amber-500/40 bg-amber-500/20 px-3 min-h-[36px] text-xs font-medium text-amber-200 hover:bg-amber-500/30 transition-colors"
             >
               {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-              {copied ? 'Đã copy' : 'Copy mã'}
+              {copied ? t('market.adminCopied') : t('market.adminCopyCodes')}
             </button>
           </div>
         )}
@@ -149,10 +149,10 @@ export default function AdminMarketPage() {
                 {needsMigration ? (
                   <span className="inline-flex items-center gap-1 text-[11px] text-amber-400 shrink-0">
                     <AlertCircle className="w-3.5 h-3.5" />
-                    chưa nạp
+                    {t('market.adminNotLoaded')}
                   </span>
                 ) : already ? (
-                  <span className="text-[11px] text-emerald-400 shrink-0">đã có</span>
+                  <span className="text-[11px] text-emerald-400 shrink-0">{t('market.adminAlreadyListed')}</span>
                 ) : (
                   <button
                     onClick={() => add(h.specCode)}
@@ -160,7 +160,7 @@ export default function AdminMarketPage() {
                     className="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-primary/15 border border-primary/35 px-3 min-h-[36px] text-xs font-medium text-sky-300 hover:bg-primary/25 transition-colors disabled:opacity-50"
                   >
                     {busyCode === h.specCode ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-                    Thêm
+                    {t('market.adminAdd')}
                   </button>
                 )}
               </div>
@@ -172,7 +172,7 @@ export default function AdminMarketPage() {
       {/* Danh sách hiện tại */}
       <section>
         <p className="text-sm text-slate-400 mb-2">
-          <span className="text-white font-semibold tabular-nums">{list.length}</span> loài trong danh sách
+          <span className="text-white font-semibold tabular-nums">{list.length}</span> {t('market.adminListCount')}
         </p>
 
         {loading ? (

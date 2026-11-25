@@ -1,6 +1,5 @@
 ﻿using UserManagement.Domain.Extensions;
 using Serilog;
-using System.Diagnostics;
 using UserManagement.API.Middleware;
 using UserManagement.API.Extensions;
 using UserManagement.API.Services;
@@ -142,12 +141,11 @@ if (!app.Environment.IsProduction())
     });
 }
 
+// Performance logging bọc ngoài cùng (đo cả OpenIddictExceptionMiddleware). Chỉ đăng ký MỘT lần —
+// trước đây gọi hai lần nên mỗi request bị log và tạo span hai lần.
 app.UseMiddleware<PerformanceLoggingMiddleware>();
 app.UseMiddleware<OpenIddictExceptionMiddleware>();
 app.UseHttpsRedirection();
-
-// Performance logging middleware
-app.UseMiddleware<PerformanceLoggingMiddleware>();
 
 app.UseCors("AllowSpecificOrigins");
 
@@ -160,9 +158,6 @@ app.MapHealthChecks("/health");
 
 // Prometheus metrics endpoint
 app.MapPrometheusScrapingEndpoint();
-
-// Custom Activity Source for manual instrumentation
-using var activitySource = new ActivitySource(serviceName);
 
 try
 {

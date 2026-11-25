@@ -1,5 +1,7 @@
+import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { useAuthStore } from '@fishlover/shared';
+// Đường đăng nhập + khung app tải ngay (nhỏ, cần cho lần vẽ đầu tiên).
 import LoginPage from '@/features/auth/LoginPage';
 import CallbackPage from '@/features/auth/CallbackPage';
 import RegisterPage from '@/features/auth/RegisterPage';
@@ -7,32 +9,35 @@ import ForgotPasswordPage from '@/features/auth/ForgotPasswordPage';
 import ResetPasswordPage from '@/features/auth/ResetPasswordPage';
 import AuthGuard from '@/components/AuthGuard';
 import RoleGuard from '@/components/RoleGuard';
+import PageLoader from '@/components/common/PageLoader';
 import AppShell from '@/layouts/AppShell';
 
-import FishSearchPage from '@/features/fish-search/FishSearchPage';
-import MarketPage from '@/features/market/MarketPage';
-import AdminMarketPage from '@/features/market/AdminMarketPage';
-import FishProfilePage from '@/features/fish-profile/FishProfilePage';
-import PlaceholderPage from '@/features/common/PlaceholderPage';
-import DashboardPage from '@/features/dashboard/DashboardPage';
-import TanksPage from '@/features/tanks/TanksPage';
-import FavoritesPage from '@/features/favorites/FavoritesPage';
-import ProfilePage from '@/features/profile/ProfilePage';
-import HistoryPage from '@/features/history/HistoryPage';
-import ReleasePage from '@/features/articles/ReleasePage';
-import ArticlesListPage from '@/features/articles/ArticlesListPage';
-import ArticleDetailPage from '@/features/articles/ArticleDetailPage';
-import TasksPage from '@/features/tasks/TasksPage';
-import PublicTanksPage from '@/features/public-tanks/PublicTanksPage';
-import PublicTankDetailPage from '@/features/public-tanks/PublicTankDetailPage';
-import ContestsPage from '@/features/contests/ContestsPage';
-import AdminContestsPage from '@/features/admin-contests/AdminContestsPage';
-import MyPublishedTanksPage from '@/features/my-published-tanks/MyPublishedTanksPage';
-import MyContributionsPage from '@/features/community/MyContributionsPage';
-import SubmitSpeciesPage from '@/features/community/SubmitSpeciesPage';
-import AdminCommunityPage from '@/features/admin-community/AdminCommunityPage';
-import AdminArticlesPage from '@/features/admin-articles/AdminArticlesPage';
-import LegalPage from '@/features/legal/LegalPage';
+// Mọi page còn lại tải lazy theo route: mỗi page một chunk riêng, bundle đầu không phải mang
+// Leaflet, trình soạn bài viết, trang admin... Suspense cho page trong AppShell nằm quanh <Outlet />.
+const FishSearchPage = lazy(() => import('@/features/fish-search/FishSearchPage'));
+const MarketPage = lazy(() => import('@/features/market/MarketPage'));
+const AdminMarketPage = lazy(() => import('@/features/market/AdminMarketPage'));
+const FishProfilePage = lazy(() => import('@/features/fish-profile/FishProfilePage'));
+const PlaceholderPage = lazy(() => import('@/features/common/PlaceholderPage'));
+const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage'));
+const TanksPage = lazy(() => import('@/features/tanks/TanksPage'));
+const FavoritesPage = lazy(() => import('@/features/favorites/FavoritesPage'));
+const ProfilePage = lazy(() => import('@/features/profile/ProfilePage'));
+const HistoryPage = lazy(() => import('@/features/history/HistoryPage'));
+const ReleasePage = lazy(() => import('@/features/articles/ReleasePage'));
+const ArticlesListPage = lazy(() => import('@/features/articles/ArticlesListPage'));
+const ArticleDetailPage = lazy(() => import('@/features/articles/ArticleDetailPage'));
+const TasksPage = lazy(() => import('@/features/tasks/TasksPage'));
+const PublicTanksPage = lazy(() => import('@/features/public-tanks/PublicTanksPage'));
+const PublicTankDetailPage = lazy(() => import('@/features/public-tanks/PublicTankDetailPage'));
+const ContestsPage = lazy(() => import('@/features/contests/ContestsPage'));
+const AdminContestsPage = lazy(() => import('@/features/admin-contests/AdminContestsPage'));
+const MyPublishedTanksPage = lazy(() => import('@/features/my-published-tanks/MyPublishedTanksPage'));
+const MyContributionsPage = lazy(() => import('@/features/community/MyContributionsPage'));
+const SubmitSpeciesPage = lazy(() => import('@/features/community/SubmitSpeciesPage'));
+const AdminCommunityPage = lazy(() => import('@/features/admin-community/AdminCommunityPage'));
+const AdminArticlesPage = lazy(() => import('@/features/admin-articles/AdminArticlesPage'));
+const LegalPage = lazy(() => import('@/features/legal/LegalPage'));
 
 // Redirect "/" theo trạng thái đăng nhập.
 // Khách chưa đăng nhập vào /market chứ không phải /fish: trang tra cứu không có gì để xem cho
@@ -51,8 +56,8 @@ export const router = createBrowserRouter([
   { path: '/callback',        element: <CallbackPage /> },
   // Ngoài AppShell và ngoài AuthGuard — Google phải đọc được hai URL này để duyệt
   // OAuth consent screen, nên chúng mở cho cả khách chưa đăng nhập.
-  { path: '/privacy',         element: <LegalPage doc="privacy" /> },
-  { path: '/terms',           element: <LegalPage doc="terms" /> },
+  { path: '/privacy',         element: <Suspense fallback={<PageLoader />}><LegalPage doc="privacy" /></Suspense> },
+  { path: '/terms',           element: <Suspense fallback={<PageLoader />}><LegalPage doc="terms" /></Suspense> },
   {
     element: <AppShell />,
     children: [

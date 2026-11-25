@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, Suspense } from 'react';
 import { NavLink, Link, Outlet, useLocation } from 'react-router-dom';
+import PageLoader from '@/components/common/PageLoader';
 import {
   LayoutDashboard, Search, MessageCircle, Camera, Fish, LogOut, ChevronRight,
   Droplets, TestTube, Calendar, Heart, History, BookOpen, ChevronDown,
@@ -460,7 +461,10 @@ export default function AppShell() {
 
         <main className="flex-1 overflow-auto min-w-0">
           <div className="w-full h-full">
-            <Outlet />
+            {/* Page trong AppShell được tải lazy theo route — sidebar vẫn hiện trong lúc chờ chunk */}
+            <Suspense fallback={<PageLoader />}>
+              <Outlet />
+            </Suspense>
           </div>
         </main>
       </div>

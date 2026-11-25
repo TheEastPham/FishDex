@@ -14,6 +14,10 @@ __pycache__/
 # IDEs
 .idea/
 .vscode/
+.vs/
+
+# Output sinh lại được từ parquet bằng Pipeline/Preprocessor/preprocess.py (~5MB)
+Pipeline/Preprocessor/output/
 
 # VM3 AI service models (too large, download at runtime)
 Pipeline/OracleVM/VM3/embedding_service/models/

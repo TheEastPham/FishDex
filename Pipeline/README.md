@@ -9,45 +9,44 @@ Thư mục này chứa toàn bộ pipeline config cho 3 BE services: **FishDex**
 ```
 Pipeline/
   local/
-    FishDex/             Local Docker stack cho FishDex
-    UserManagement/      Local Docker stack cho UserManagement
-    AquaHome/            Local Docker stack cho AquaHome
-    ApiGateway/          Local Docker stack cho ApiGateway
-    FrontEnd/            Local Docker stack cho FrontEnd
+    docker-compose.local.yml   Toàn bộ stack backend local (nguồn duy nhất); biến lấy từ local/.env
+    FishDex/             Script ETL FishBase, seed, init.sql cho DB FishDex
+    FrontEnd/            Docker stack cho FE (aquahome-web), chạy riêng
   OracleVM/              Production Docker Compose cho Oracle VM
   azure-devops/          4 pipeline CI/CD đang chạy (Azure DevOps)
 ```
 
-Lưu ý: image **production** cũng được build từ các `Dockerfile.*` trong `local/<Service>/` (4 pipeline Azure trỏ vào đó).
+Dockerfile của từng service nằm cạnh project trong `BackEndProject/` (`ApiGateway/Dockerfile`, `UserManagement/UserManagement.API/Dockerfile`, `FishDex/FishDex.API/Dockerfile`, `AquaHome/AquaHome.API/Dockerfile`, `AquaHome/AquaHome.Worker/Dockerfile`), build context là `BackEndProject/`. Cả compose local lẫn pipeline production đều dùng chung các file này.
 
 ---
 
 ## Local Docker
 
-Mỗi service có docker-compose riêng trong `local/`. Chạy từ thư mục tương ứng:
+Một file duy nhất: `local/docker-compose.local.yml`, biến môi trường đọc từ `local/.env` (tạo từ `local/.env.example`).
 
 ```bash
-# FishDex (PostgreSQL 16 + pgAdmin)
-cd Pipeline/local/FishDex
-docker compose up -d
+cd Pipeline/local
+cp .env.example .env          # lần đầu, rồi điền giá trị
 
-# UserManagement (PostgreSQL 16 + Redis 7)
-cd Pipeline/local/UserManagement
-docker compose up -d
+# Toàn bộ stack: DB, Redis, 3 API, worker, gateway
+docker compose -f docker-compose.local.yml up -d
 
-# AquaHome (PostgreSQL 16 + Redis 7)
-cd Pipeline/local/AquaHome
-docker compose up -d
+# Chỉ hạ tầng, khi chạy API bằng `dotnet run` / `dotnet watch` trên máy
+docker compose -f docker-compose.local.yml up -d usermanagement-db usermanagement-redis fishdex-db aquahome-db aquahome-redis
 ```
 
 ### Port mapping
 
 | Service           | Component   | Host Port |
 |-------------------|-------------|-----------|
-| FishDex           | PostgreSQL  | 5433      |
-| FishDex           | pgAdmin     | 5050      |
+| ApiGateway        | API         | 5000      |
+| UserManagement    | API         | 8080      |
 | UserManagement    | PostgreSQL  | 5435      |
 | UserManagement    | Redis       | 6379      |
+| FishDex           | API         | 8081      |
+| FishDex           | PostgreSQL  | 5433      |
+| FishDex           | pgAdmin     | 5050      |
+| AquaHome          | API         | 8082      |
 | AquaHome          | PostgreSQL  | 5434      |
 | AquaHome          | Redis       | 6380      |
 
@@ -64,7 +63,7 @@ docker compose up -d
 
 ## CI/CD — Azure DevOps
 
-4 pipeline trong `azure-devops/` (`apigateway`, `usermanagement`, `fishdex`, `aquahome`), đã tạo trên Azure DevOps ("Existing Azure Pipelines YAML file"). Mỗi pipeline build image từ `local/<Service>/Dockerfile.*` rồi push lên GHCR; VM chỉ pull về chạy (xem `OracleVM/shared/DEPLOY_CHECKLIST.md`).
+4 pipeline trong `azure-devops/` (`apigateway`, `usermanagement`, `fishdex`, `aquahome`), đã tạo trên Azure DevOps ("Existing Azure Pipelines YAML file"). Mỗi pipeline build image (linux/arm64) từ Dockerfile cạnh project rồi push lên GHCR; sửa Dockerfile cũng kích hoạt build vì nó nằm trong `BackEndProject/<Service>/**`; VM chỉ pull về chạy (xem `OracleVM/shared/DEPLOY_CHECKLIST.md`).
 
 | Khi nào chạy | Điều kiện |
 |---|---|

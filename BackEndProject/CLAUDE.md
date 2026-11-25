@@ -74,17 +74,19 @@ dotnet ef migrations add <MigrationName> --project FishDex/FishDex.EFCore --star
 dotnet ef database update --project FishDex/FishDex.EFCore --startup-project FishDex/FishDex.API
 ```
 
-**Local dev — start infrastructure via Docker:**
+**Local dev — Docker (một file duy nhất: `Pipeline/local/docker-compose.local.yml`, biến trong `Pipeline/local/.env`):**
 ```
-cd Pipeline/local/FishDex        && docker compose up -d   # PostgreSQL 5433
-cd Pipeline/local/UserManagement && docker compose up -d   # PostgreSQL 5435, Redis 6379
-cd Pipeline/local/AquaHome       && docker compose up -d   # PostgreSQL 5434, Redis 6380
+cd Pipeline/local
+docker compose -f docker-compose.local.yml up -d     # toàn bộ stack
+docker compose -f docker-compose.local.yml up -d usermanagement-db usermanagement-redis fishdex-db aquahome-db aquahome-redis   # chỉ hạ tầng
 ```
+PostgreSQL: UserManagement 5435 · FishDex 5433 · AquaHome 5434. Redis: UserManagement 6379 · AquaHome 6380.
 
 **Default service ports:**
 - ApiGateway → `5000`
 - UserManagement.API → `8080`
-- FishDex.API → (TBD)
+- FishDex.API → `8081`
+- AquaHome.API → `8082`
 
 ## Architecture
 

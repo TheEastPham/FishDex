@@ -12,5 +12,5 @@ public class Genus
     public string GenusName { get; set; } = string.Empty;  // The genus name
     
     // Navigation property
-    public virtual ICollection<Species> Species { get; set; }
+    public virtual ICollection<Species> Species { get; set; } = null!;
 }

@@ -22,5 +22,5 @@ public class StockConservation
     public string? CITES_Remarks { get; set; }
     [MaxLength(50)] public string? CMS { get; set; }
 
-    public virtual Stock Stock { get; set; }
+    public virtual Stock Stock { get; set; } = null!;
 }

@@ -32,5 +32,5 @@ public class MorphMetrics
     public string? OtherRef2 { get; set; }
     public string? AddChars { get; set; }
 
-    public virtual MorphData MorphData { get; set; }
+    public virtual MorphData MorphData { get; set; } = null!;
 }

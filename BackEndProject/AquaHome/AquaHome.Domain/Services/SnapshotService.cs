@@ -221,7 +221,8 @@ public class SnapshotService(
         if (ids.Count == 0) return urls;
 
         foreach (var media in await mediaRepo.GetByIdsAsync(ids, ct))
-            urls[media.Id] = await storage.GetPresignedUrlAsync(keys.AquariumMedia(media), ct);
+            if (await storage.GetPresignedUrlAsync(keys.AquariumMedia(media), ct) is { } url)
+                urls[media.Id] = url;
         return urls;
     }
 

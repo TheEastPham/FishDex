@@ -43,5 +43,5 @@ public class SpecialHabitat
     public bool OnExoskeleton { get; set; }
     public bool InterstitialSpaces { get; set; }
 
-    public Ecology Ecology { get; set; }
+    public Ecology Ecology { get; set; } = null!;
 }

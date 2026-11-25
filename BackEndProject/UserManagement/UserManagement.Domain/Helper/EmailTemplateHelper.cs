@@ -300,17 +300,4 @@ public class EmailTemplateHelper
         }
     }
 
-    /// <summary>
-    /// Get list of available templates for a language
-    /// </summary>
-    public async Task<List<string>> GetAvailableTemplatesAsync(string language)
-    {
-        var langPath = Path.Combine(_templateBasePath, language);
-        
-        if (!Directory.Exists(langPath))
-            return new List<string>();
-
-        var files = Directory.GetFiles(langPath, "*.html");
-        return files.Select(f => Path.GetFileNameWithoutExtension(f)).ToList();
-    }
 }

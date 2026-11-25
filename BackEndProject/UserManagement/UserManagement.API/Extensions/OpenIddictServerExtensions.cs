@@ -72,7 +72,7 @@ public static class OpenIddictServerExtensions
         var pfxPath = Path.Combine(keyDir, "openiddict-dev.pfx");
 
         if (File.Exists(pfxPath))
-            return new X509Certificate2(pfxPath, (string?)null, X509KeyStorageFlags.PersistKeySet);
+            return X509CertificateLoader.LoadPkcs12FromFile(pfxPath, (string?)null, X509KeyStorageFlags.PersistKeySet);
 
         using var rsa = RSA.Create(2048);
         var req  = new CertificateRequest("CN=OpenIddict Dev", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);

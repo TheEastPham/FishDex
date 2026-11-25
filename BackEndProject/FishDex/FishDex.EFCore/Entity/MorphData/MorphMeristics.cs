@@ -42,5 +42,5 @@ public class MorphMeristics
     public int? VertebraeTotalMin { get; set; }
     public int? VertebraeTotalMax { get; set; }
 
-    public virtual MorphData MorphData { get; set; }
+    public virtual MorphData MorphData { get; set; } = null!;
 }

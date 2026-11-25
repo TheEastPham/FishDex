@@ -15,6 +15,6 @@ public class Family
     public string? SwimMode { get; set; }
     public string? ReproductiveGuild { get; set; }
 
-    public virtual ICollection<Genus> Genuses { get; set; }
-    public virtual ICollection<Species> Species { get; set; }
+    public virtual ICollection<Genus> Genuses { get; set; } = null!;
+    public virtual ICollection<Species> Species { get; set; } = null!;
 }

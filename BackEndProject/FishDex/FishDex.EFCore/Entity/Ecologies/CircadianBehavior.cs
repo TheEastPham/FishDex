@@ -17,5 +17,5 @@ public class CircadianBehavior
     public string? CircadianRef { get; set; }
     public string? CircadianAlsoRef { get; set; }
 
-    public Ecology Ecology { get; set; }
+    public Ecology Ecology { get; set; } = null!;
 }

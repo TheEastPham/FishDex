@@ -29,5 +29,5 @@ public class Associations
     public bool InsideHost { get; set; }
     public string? IHRemarks { get; set; }
 
-    public Ecology Ecology { get; set; }
+    public Ecology Ecology { get; set; } = null!;
 }

@@ -39,7 +39,7 @@ public class Species
     public string? PicPreferredNameF { get; set; }
 
     public virtual Genus? Genus { get; set; }
-    public virtual Family Family { get; set; }
+    public virtual Family Family { get; set; } = null!;
     public ICollection<Stock> Stocks { get; set; } = [];
-    public ICollection<SystemImage> Pictures { get; set; }
+    public ICollection<SystemImage> Pictures { get; set; } = null!;
 }

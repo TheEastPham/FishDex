@@ -37,5 +37,5 @@ public class StockEnvironment
     public ResilienceLevel? Resilience { get; set; }
     public string? ResilienceRemark { get; set; }
 
-    public virtual Stock Stock { get; set; }
+    public virtual Stock Stock { get; set; } = null!;
 }

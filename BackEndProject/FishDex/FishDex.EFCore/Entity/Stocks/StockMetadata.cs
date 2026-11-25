@@ -23,5 +23,5 @@ public class StockMetadata
     
     public DateTime? TS { get; set; } // Timestamp
 
-    public virtual Stock Stock { get; set; }
+    public virtual Stock Stock { get; set; } = null!;
 }

@@ -26,5 +26,5 @@ public class MorphPigmentation
     public string? SpotsTTII { get; set; }
     public string? SpotsTTIII { get; set; }
 
-    public virtual MorphData MorphData { get; set; }
+    public virtual MorphData MorphData { get; set; } = null!;
 }

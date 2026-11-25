@@ -32,5 +32,5 @@ public class StockExternalRef
     [MaxLength(50)] public string? FishSounds_ID { get; set; }
     [MaxLength(50)] public string? StocksRefNo { get; set; }
 
-    public virtual Stock Stock { get; set; }
+    public virtual Stock Stock { get; set; } = null!;
 }

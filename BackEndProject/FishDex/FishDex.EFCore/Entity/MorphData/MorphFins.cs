@@ -43,5 +43,5 @@ public class MorphFins
     public string? CShape { get; set; }
     public string? Attributes { get; set; }
 
-    public virtual MorphData MorphData { get; set; }
+    public virtual MorphData MorphData { get; set; } = null!;
 }

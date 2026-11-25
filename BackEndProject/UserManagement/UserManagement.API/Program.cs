@@ -17,7 +17,6 @@ if (builder.Environment.IsDevelopment())
 
 // Service Information
 const string serviceName = "usermanagement";
-const string serviceVersion = "1.0.0";
 
 // Serilog Configuration
 Log.Logger = new LoggerConfiguration()

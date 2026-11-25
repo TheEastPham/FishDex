@@ -39,5 +39,5 @@ public class MorphTeeth
     public string? DermalTeeth { get; set; }
     public string? CommentonTeeth { get; set; }
 
-    public virtual MorphData MorphData { get; set; }
+    public virtual MorphData MorphData { get; set; } = null!;
 }

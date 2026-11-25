@@ -59,7 +59,10 @@ app.UseCors();
 // /metrics là một request cần route xuống downstream và trả UnableToFindDownstreamRouteError.
 // Endpoint này KHÔNG được ra internet — nginx chặn /metrics, Prometheus VM2 scrape trực tiếp
 // qua private IP 10.0.0.64:5000.
+// ASP0014 gợi ý map top-level, nhưng endpoint top-level chạy SAU UseOcelot (terminal) → /metrics sẽ mất.
+#pragma warning disable ASP0014
 app.UseEndpoints(endpoints => endpoints.MapPrometheusScrapingEndpoint());
+#pragma warning restore ASP0014
 
 // Use Ocelot middleware
 await app.UseOcelot();

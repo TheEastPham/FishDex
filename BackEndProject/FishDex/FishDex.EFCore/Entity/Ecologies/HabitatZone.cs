@@ -28,5 +28,5 @@ public class HabitatZone
     public bool Cave { get; set; }
     public bool Cave2 { get; set; }
 
-    public Ecology Ecology { get; set; }
+    public Ecology Ecology { get; set; } = null!;
 }

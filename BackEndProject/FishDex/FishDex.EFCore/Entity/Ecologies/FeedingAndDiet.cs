@@ -23,5 +23,5 @@ public class FeedingAndDiet
     public string? FoodRef { get; set; }
     public string? AddRems { get; set; }
 
-    public Ecology Ecology { get; set; }
+    public Ecology Ecology { get; set; } = null!;
 }

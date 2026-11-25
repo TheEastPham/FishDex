@@ -30,5 +30,5 @@ public class Substrate
     public bool Rubble { get; set; }
     public bool Gravel { get; set; }
 
-    public Ecology Ecology { get; set; }
+    public Ecology Ecology { get; set; } = null!;
 }

@@ -9,7 +9,7 @@ Mỗi bản vá cho ra hai file, tách thư mục:
     csv/<tên>.csv   để mắt người soi trước khi chạy
     sql/<tên>.sql   các câu UPDATE rời rạc để nạp vào DB
 
-Đích mặc định: D:\\Workspace\\FishLover\\Data\\exports_01082026\\FixIsssueETL_NULL_DATA
+Đích mặc định: D:\\Workspace\\FishLover\\data\\exports\\2026-08-15_fix-etl-null-data
 Đổi bằng `--out <thư_mục>`.
 
 Nguyên tắc thiết kế
@@ -38,7 +38,7 @@ Chạy
 ────
     cd Pipeline/local/FishDex
     PYTHONIOENCODING=utf-8 PYTHONPATH=. ./.venv/Scripts/python.exe build_delta.py \\
-        "D:/Workspace/FishLover/Data/exports_01082026/UpdateFish_15082026/spec_codes.txt"
+        "D:/Workspace/FishLover/data/exports/2026-08-15_update-fish/spec_codes.txt"
 
 Phạm vi mặc định là bộ lọc Aquarium (2.043 loài) — CHƯA gồm lô bổ sung 2.149 loài
 đã nạp bằng run_scoped.py. Truyền thêm file mã của các lô đó vào (nhiều file cũng
@@ -65,10 +65,10 @@ from etl.filter import compute_spec_codes
 from etl.loaders.stocks import resilience_code
 from etl.sources import age_by_spec, first_positive, troph_by_spec, weight_by_spec
 
-# Đích mặc định nằm NGOÀI repo, cạnh README mô tả sự cố và cạnh lô UpdateFish_15082026.
+# Đích mặc định nằm NGOÀI repo, cạnh README mô tả sự cố và cạnh lô 2026-08-15_update-fish.
 # Delta là tài liệu vận hành dùng một lần cho mỗi lô, không phải mã nguồn — để trong
 # repo thì lẫn với code và thêm ~7MB mỗi lần sinh. Đổi bằng --out <thư_mục>.
-OUT_DIR = Path(r"D:\Workspace\FishLover\Data\exports_01082026\FixIsssueETL_NULL_DATA")
+OUT_DIR = Path(r"D:\Workspace\FishLover\data\exports\2026-08-15_fix-etl-null-data")
 
 # Trần số câu mỗi file .sql. DataGrip không mở nổi file vài MB — dán vào console là
 # treo, mà Run-from-file cũng ì. Vượt trần thì cắt thành <tên>_1.sql, _2, _3 ... với

@@ -33,7 +33,7 @@ public sealed class CommunityImageUploadTests(PostgresFixture pg) : IAsyncLifeti
     {
         await pg.ResetAsync();
         _db = pg.CreateDb();
-        _service = new CommunitySpeciesService(new CommunitySpeciesRepository(_db), _storage, _user, NullLogger<CommunitySpeciesService>.Instance);
+        _service = new CommunitySpeciesService(new CommunitySpeciesRepository(_db), _storage, new UploadVerifier(_storage), _user, NullLogger<CommunitySpeciesService>.Instance);
     }
 
     public async Task DisposeAsync()

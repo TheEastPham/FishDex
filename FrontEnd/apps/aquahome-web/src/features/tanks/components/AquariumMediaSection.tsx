@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   getAquariumMedia, requestMediaUpload, uploadToR2, confirmMediaUpload, deleteAquariumMedia, useTranslation,
-  compressImage, UPLOAD_IMAGE_TYPES,
+  compressImage, UPLOAD_IMAGE_TYPES, AQUARIUM_IMAGE_MAX_BYTES,
 } from '@fishlover/shared';
 import type { AquariumMediaDto } from '@fishlover/shared';
 import { ImagePlus, Trash2, Loader2, X, ZoomIn } from 'lucide-react';
@@ -84,7 +84,9 @@ export default function AquariumMediaSection({ aquariumId }: Props) {
     for (const upload of newUploads) {
       try {
         // 1. Compress
-        const compressed = await compressImage(upload.file);
+        const compressed = await compressImage(upload.file, AQUARIUM_IMAGE_MAX_BYTES);
+        // PNG chỉ resize được nên có thể vẫn vượt trần — báo ngay, khỏi tải lên rồi mới bị BE từ chối.
+        if (compressed.size > AQUARIUM_IMAGE_MAX_BYTES) throw new Error(t('tanks_detail.photoTooLarge'));
         setProgress(upload, 10);
 
         // 2. Request presigned PUT URL from BE

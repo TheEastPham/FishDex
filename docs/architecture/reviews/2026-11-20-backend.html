@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Architecture review — FishLover BackEnd</title>
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose", flowchart: { curve: "basis" } });
+  </script>
+  <style>
+    .seam { stroke-dasharray: 4 4; }
+    .leak { stroke: #dc2626; }
+    .deep { background: linear-gradient(135deg, #0f172a, #1e293b); }
+    .lbl { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
+    pre.mermaid { background: transparent; display: flex; justify-content: center; }
+    .diagram { min-height: 300px; }
+  </style>
+</head>
+<body class="bg-stone-50 text-slate-900 font-sans">
+<main class="overflow-x-hidden max-w-5xl mx-auto px-4 sm:px-6 py-10 space-y-12">
+
+  <!-- HEADER -->
+  <header class="space-y-4">
+    <div class="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 space-y-2">
+      <p><b>Trạng thái (kiểm lại 25/11/2026): đã làm xong toàn bộ.</b> Trang này giờ là tài liệu lịch sử, giải thích vì sao code có hình dạng hiện tại. Đừng dùng nó để mô tả code hiện tại; số liệu ở dưới là của ngày 20/11 (nay sln có 4 test project, chỉ còn 1 <span class="font-mono">S3StorageService</span> trong <span class="font-mono">Share/FishLover.Storage</span>).</p>
+      <ul class="list-disc pl-5 space-y-0.5">
+        <li>Bug cache size <span class="font-mono">ccd175c</span> · snapshot đọc qua reader <span class="font-mono">5c1c8f9</span> · FishCount <span class="font-mono">7a67c50</span> · <span class="font-mono">FishBaseFlattener</span> bị gỡ khi gom Species Profile <span class="font-mono">7b1682e</span> · internal API key <span class="font-mono">2a7f99b</span></li>
+        <li>Ứng viên 1 Species profile <span class="font-mono">7b1682e</span> · 2 ObjectStorage <span class="font-mono">a938747</span> · 3 resource-server bootstrap <span class="font-mono">2a7f99b</span> · 4 FishDex gateway error modes <span class="font-mono">ca4030f</span> · 5 snapshot JSONB <span class="font-mono">5c1c8f9</span> · 6 persistence Aquarium: quyết định giữ Generic Repository, ghi ở ADR 0003 <span class="font-mono">fd9196b</span></li>
+      </ul>
+    </div>
+    <p class="text-xs uppercase tracking-wider text-slate-500">Architecture review · 20/11/2026 · branch <span class="font-mono">chore/architecture-review</span></p>
+    <h1 class="font-serif text-4xl">FishLover BackEnd <span class="text-slate-400">— deepening opportunities</span></h1>
+    <div class="flex flex-wrap gap-x-6 gap-y-2 text-xs text-slate-600">
+      <span class="flex items-center gap-2"><span class="inline-block w-5 h-4 border border-slate-500 bg-white"></span>module</span>
+      <span class="flex items-center gap-2"><svg width="28" height="6"><line x1="0" y1="3" x2="28" y2="3" stroke="#64748b" stroke-width="2" class="seam"/></svg>seam</span>
+      <span class="flex items-center gap-2"><svg width="28" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke-width="2" class="leak"/><path d="M22 0 L28 4 L22 8z" fill="#dc2626"/></svg>leakage</span>
+      <span class="flex items-center gap-2"><span class="inline-block w-5 h-4 deep border-2 border-slate-900"></span>deep module</span>
+    </div>
+    <div class="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+      Chạy <b>không có</b> <span class="font-mono">GLOSSARY.md</span> và <span class="font-mono">docs/adr/</span>: tên module dùng tên class/nghiệp vụ suy ra từ code; chưa có quyết định nào được "khoá", nên vài ứng viên có thể đụng quy ước team bạn muốn giữ.
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+      <div class="rounded-md bg-white border border-slate-200 p-3"><div class="text-2xl font-serif">0</div><div class="text-xs text-slate-500">.NET test project trong FishDex.sln</div></div>
+      <div class="rounded-md bg-white border border-slate-200 p-3"><div class="text-2xl font-serif">25</div><div class="text-xs text-slate-500">lần sửa SpeciesService.cs / 6 tháng</div></div>
+      <div class="rounded-md bg-white border border-slate-200 p-3"><div class="text-2xl font-serif">~17</div><div class="text-xs text-slate-500">round-trip DB cho 1 species detail (cache miss)</div></div>
+      <div class="rounded-md bg-white border border-slate-200 p-3"><div class="text-2xl font-serif">2</div><div class="text-xs text-slate-500">bản copy S3StorageService</div></div>
+    </div>
+  </header>
+
+  <!-- QUICK WINS -->
+  <section class="rounded-lg border border-red-200 bg-white p-5 space-y-3">
+    <h2 class="font-serif text-2xl">Bug sửa ngay, không cần refactor</h2>
+    <ul class="text-sm space-y-2">
+      <li class="flex gap-3"><span class="text-red-600 font-semibold shrink-0">Đã đọc code</span><span><span class="font-mono">SpeciesService.cs:357</span> gọi <span class="font-mono">cache.Set(...)</span> không có size, trong khi <span class="font-mono">FishDex.API/Program.cs:45</span> đặt <span class="font-mono">SizeLimit = 3_000</span> → MemoryCache ném <span class="font-mono">InvalidOperationException</span>. <span class="font-mono">GET /api/species/languages</span> lỗi mỗi lần cache miss. Fix: thêm <span class="font-mono">.SetSize(1)</span> như EcologyService.</span></li>
+      <li class="flex gap-3"><span class="text-red-600 font-semibold shrink-0">Đã đọc code</span><span><span class="font-mono">SnapshotService.GetBySlugAsync</span> gọi thẳng <span class="font-mono">JsonSerializer.Deserialize</span>, bỏ qua <span class="font-mono">SnapshotDataReader.TryRead</span> → trang snapshot public ném lỗi đúng với snapshot schema cũ mà reader được viết ra để xử lý.</span></li>
+      <li class="flex gap-3"><span class="text-red-600 font-semibold shrink-0">Đã đọc code</span><span><span class="font-mono">AquariumRepository.GetByIdAndUserAsync</span> không <span class="font-mono">Include(a =&gt; a.Fish)</span> → GetById/Update gần như chắc trả <span class="font-mono">FishCount = 0</span>.</span></li>
+      <li class="flex gap-3"><span class="text-red-600 font-semibold shrink-0">Đã đọc code</span><span><span class="font-mono">FishBaseFlattener</span> tự ghép key (<span class="font-mono">BuildKey</span>) thay vì <span class="font-mono">pic.ObjectKey</span> — vi phạm rule trong CLAUDE.md; và lấy Ecology bằng <span class="font-mono">FirstOrDefault</span> thay vì ưu tiên <span class="font-mono">EcologyId == autoctr</span> như EcologyService.</span></li>
+      <li class="flex gap-3"><span class="text-amber-600 font-semibold shrink-0">Suy luận</span><span>Internal API key ở <span class="font-mono">PushController</span> chỉ so sánh <span class="font-mono">!=</span>: nếu config rỗng và header rỗng thì lọt.</span></li>
+    </ul>
+  </section>
+
+  <section id="candidates" class="space-y-10">
+
+    <!-- 1 -->
+    <article id="c1" class="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 space-y-5">
+      <div class="space-y-2">
+        <h2 class="font-serif text-2xl">1 · Gom Species profile thành một deep module</h2>
+        <div class="flex flex-wrap gap-2 text-xs">
+          <span class="rounded-full bg-emerald-100 text-emerald-800 px-2.5 py-0.5 font-semibold">Strong</span>
+          <span class="rounded-full bg-slate-100 text-slate-700 px-2.5 py-0.5">in-process + local-substitutable</span>
+          <span class="rounded-full bg-slate-100 text-slate-700 px-2.5 py-0.5">FishDex</span>
+        </div>
+      </div>
+      <ul class="font-mono text-sm text-slate-600 grid sm:grid-cols-2 gap-x-6 break-all">
+        <li>FishDex.Domain/Services/SpeciesService.cs (392 dòng)</li>
+        <li>Services/EcologyService.cs, StockService.cs</li>
+        <li>Services/MediaService.cs, MarketService.cs</li>
+        <li>FishDex.EFCore/Cache/FishBaseFlattener.cs, DbSpeciesCache.cs</li>
+        <li>FishDex.EFCore/Repository/* (~24 cặp IXRepo/XRepo 10–12 dòng)</li>
+        <li>FishDex.API/Program.cs:45</li>
+      </ul>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="diagram rounded-lg border border-slate-200 p-3">
+          <div class="lbl text-slate-500 mb-2">Before · ~12 module cho một khái niệm</div>
+          <pre class="mermaid">
+flowchart TD
+  C[SpeciesController] --> S[SpeciesService]
+  S --> K[DbSpeciesCache]
+  K --> F[FishBaseFlattener<br/>7 queries]
+  F -. kết quả bị bỏ .-> X((∅))
+  S --> R[ISpeciesRepository]
+  S --> E[EcologyService]
+  E --> E1[5 repo 1 method]
+  S --> T[StockService]
+  T --> T1[3 repo]
+  S --> ST[IStorageService ×8 chỗ]
+  F -. rule ảnh/ecology riêng .-> ST
+  classDef leak stroke:#dc2626,stroke-width:2px,color:#991b1b;
+  class F,X leak
+          </pre>
+        </div>
+        <div class="diagram rounded-lg border border-slate-200 p-3 flex flex-col">
+          <div class="lbl text-slate-500 mb-2">After · một interface nhỏ</div>
+          <div class="flex-1 flex flex-col items-center justify-center gap-3">
+            <div class="text-xs font-mono text-slate-500">Controllers · MarketService · MediaService</div>
+            <div class="text-slate-400">↓</div>
+            <div class="deep text-white rounded-lg border-2 border-slate-900 w-full max-w-sm p-4 space-y-3">
+              <div class="lbl text-emerald-300">SpeciesProfile (deep)</div>
+              <div class="text-xs font-mono text-slate-200">Detail(specCode, lang) · Summary · SearchCard</div>
+              <div class="border-t border-dashed border-slate-600 pt-3 grid grid-cols-2 gap-2 text-[11px] text-slate-400">
+                <div class="rounded border border-slate-700 px-2 py-1 opacity-70">FishBase rules</div>
+                <div class="rounded border border-slate-700 px-2 py-1 opacity-70">Image roles + ObjectKey</div>
+                <div class="rounded border border-slate-700 px-2 py-1 opacity-70">Snapshot cache policy</div>
+                <div class="rounded border border-slate-700 px-2 py-1 opacity-70">Community vs FishBase</div>
+              </div>
+            </div>
+            <svg width="200" height="18"><line x1="0" y1="9" x2="200" y2="9" stroke="#64748b" stroke-width="2" class="seam"/></svg>
+            <div class="flex gap-2 text-xs"><span class="border border-slate-400 rounded px-2 py-1">FishDexDbContext</span><span class="border border-slate-400 rounded px-2 py-1">IStorageService</span></div>
+            <div class="text-[11px] text-slate-400 line-through">EcologyService · StockService · MorphDataService · EcosystemService · ~24 repo pairs</div>
+          </div>
+        </div>
+      </div>
+      <p class="text-sm"><b>Problem.</b> Rule FishBase có 2 bản và đã lệch nhau (chọn ecology row, ảnh đực/cái, thumbnail fallback, object key); flattener chạy 7 query rồi bỏ kết quả.</p>
+      <p class="text-sm"><b>Solution.</b> Một module SpeciesProfile sở hữu toàn bộ rule đọc species; Ecology/Stock gộp vào, xoá repo/service không ai gọi.</p>
+      <ul class="text-sm list-disc pl-5 space-y-0.5">
+        <li>Locality: rule FishBase ở một chỗ</li>
+        <li>Depth: 3 method giấu ~17 query</li>
+        <li>Leverage: Market, Media dùng chung rule ảnh</li>
+        <li>Test qua interface với Postgres seed</li>
+        <li>Xoá ~30 file shallow</li>
+      </ul>
+      <div class="rounded-md bg-slate-50 border border-slate-200 px-3 py-2 text-xs text-slate-700"><b>.NET risk:</b> DbContext scoped, không thread-safe (từng lỗi ở 7816d90, 7952906) · DbSpeciesCache ghi DB trong GET và gọi <span class="font-mono">ChangeTracker.Clear()</span> · giữ nguyên shape <span class="font-mono">SpeciesDetailDto</span>/<span class="font-mono">SpeciesSummaryDto</span> (AquaHome mirror) · thống nhất rule ảnh là thay đổi hành vi thấy được.</div>
+    </article>
+
+    <!-- 2 -->
+    <article id="c2" class="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 space-y-5">
+      <div class="space-y-2">
+        <h2 class="font-serif text-2xl">2 · Một ObjectStorage module, có key policy và adapter thứ hai</h2>
+        <div class="flex flex-wrap gap-2 text-xs">
+          <span class="rounded-full bg-emerald-100 text-emerald-800 px-2.5 py-0.5 font-semibold">Strong</span>
+          <span class="rounded-full bg-slate-100 text-slate-700 px-2.5 py-0.5">ports &amp; adapters</span>
+          <span class="rounded-full bg-slate-100 text-slate-700 px-2.5 py-0.5">FishDex + AquaHome + Share</span>
+        </div>
+      </div>
+      <ul class="font-mono text-sm text-slate-600 grid sm:grid-cols-2 gap-x-6 break-all">
+        <li>FishDex.Domain/Services/S3StorageService.cs (119)</li>
+        <li>AquaHome.Domain/Services/S3StorageService.cs (190)</li>
+        <li>ContestService.cs, ArticleService.cs (ghép key tay)</li>
+        <li>AquariumMediaService.cs, SnapshotService.cs</li>
+        <li>FishBaseFlattener.cs:87</li>
+        <li>*/Interfaces/IStorageService.cs</li>
+      </ul>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="diagram rounded-lg border border-slate-200 p-3">
+          <div class="lbl text-slate-500 mb-2">Before · 2 bản copy, key rò ra caller</div>
+          <pre class="mermaid">
+flowchart TD
+  FS[FishDex services] --> FI[FishDex.IStorageService]
+  FI --> FA[S3StorageService copy A]
+  AS[AquaHome services ×4] -- "aquahome/{Env}/contests/…" --> AI[AquaHome.IStorageService]
+  AS -. "IOptions StorageSettings.Env" .-> AI
+  AI --> AA[S3StorageService copy B]
+  FL[FishBaseFlattener] -- BuildKey --> FA
+  classDef leak stroke:#dc2626,stroke-width:2px,color:#991b1b;
+  class AS,FL leak
+          </pre>
+        </div>
+        <div class="diagram rounded-lg border border-slate-200 p-3">
+          <div class="lbl text-slate-500 mb-2">After · seam thật: 2 adapter</div>
+          <pre class="mermaid">
+flowchart TD
+  SV[FishDex + AquaHome services] --> OS[Shared.ObjectStorage<br/>key theo asset kind · sign GET/PUT · put · delete-prefix]
+  OS -.seam.-> R2[R2/S3 adapter · prod]
+  OS -.seam.-> MEM[InMemory adapter · tests]
+  classDef deep fill:#0f172a,color:#fff,stroke:#0f172a,stroke-width:3px;
+  class OS deep
+          </pre>
+        </div>
+      </div>
+      <p class="text-sm"><b>Problem.</b> Hai adapter copy-paste cùng quirk R2; tham số <span class="font-mono">maxBytes</span> trên interface không implementation nào dùng; mỗi bên chỉ 1 adapter nên không test được khi thiếu R2.</p>
+      <p class="text-sm"><b>Solution.</b> Một module storage trong một sub-library của Share sở hữu config R2, signing và namespace key; thêm adapter in-memory.</p>
+      <ul class="text-sm list-disc pl-5 space-y-0.5">
+        <li>Leverage: quirk R2 sửa một lần</li>
+        <li>Locality: format key một chỗ</li>
+        <li>Interface trung thực, bỏ maxBytes giả</li>
+        <li>Mở đường test cho #1, #4, #5</li>
+      </ul>
+      <div class="rounded-md bg-slate-50 border border-slate-200 px-3 py-2 text-xs text-slate-700"><b>.NET risk:</b> key đầy đủ đã lưu trong DB (<span class="font-mono">VideoR2Key</span>, <span class="font-mono">ImageObjectKey</span>, <span class="font-mono">CoverObjectKey</span>…) — policy phải sinh đúng chuỗi cũ · giữ singleton · đừng để ApiGateway kéo AWSSDK qua Share.</div>
+    </article>
+
+    <!-- 3 -->
+    <article id="c3" class="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 space-y-5">
+      <div class="space-y-2">
+        <h2 class="font-serif text-2xl">3 · Resource-server bootstrap và internal-key auth nằm trong Share</h2>
+        <div class="flex flex-wrap gap-2 text-xs">
+          <span class="rounded-full bg-emerald-100 text-emerald-800 px-2.5 py-0.5 font-semibold">Strong</span>
+          <span class="rounded-full bg-slate-100 text-slate-700 px-2.5 py-0.5">in-process</span>
+          <span class="rounded-full bg-slate-100 text-slate-700 px-2.5 py-0.5">3 API + Share</span>
+        </div>
+      </div>
+      <ul class="font-mono text-sm text-slate-600 grid sm:grid-cols-2 gap-x-6 break-all">
+        <li>FishDex.API/Program.cs (268 dòng, auth ~82–130)</li>
+        <li>AquaHome.API/Program.cs (52–100)</li>
+        <li>UserManagement.API/Program.cs (62–78)</li>
+        <li>Share/.../AuthorizationExtensions.cs</li>
+        <li>MarketIngestController.cs, PushController.cs</li>
+      </ul>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="diagram rounded-lg border border-slate-200 p-3">
+          <div class="lbl text-slate-500 mb-3">Before · cross-section mỗi Program.cs</div>
+          <div class="grid grid-cols-3 gap-2 text-[11px]">
+            <div class="space-y-1"><div class="lbl text-slate-500">FishDex</div>
+              <div class="h-7 border-l-4 border-slate-400 bg-slate-50 px-1 flex items-center">Serilog</div>
+              <div class="h-7 border-l-4 border-red-500 bg-red-50 px-1 flex items-center">JwtBearer OpenIddict</div>
+              <div class="h-7 border-l-4 border-red-500 bg-red-50 px-1 flex items-center">override policies</div>
+              <div class="h-7 border-l-4 border-slate-400 bg-slate-50 px-1 flex items-center">AutoMigrate</div>
+              <div class="h-7 border-l-4 border-slate-400 bg-slate-50 px-1 flex items-center">Swagger · Health</div>
+              <div class="h-7 border-l-4 border-amber-500 bg-amber-50 px-1 flex items-center">key: 503 nếu rỗng</div></div>
+            <div class="space-y-1"><div class="lbl text-slate-500">AquaHome</div>
+              <div class="h-7 border-l-4 border-slate-400 bg-slate-50 px-1 flex items-center">Serilog (kiểu 2)</div>
+              <div class="h-7 border-l-4 border-red-500 bg-red-50 px-1 flex items-center">JwtBearer OpenIddict</div>
+              <div class="h-7 border-l-4 border-red-500 bg-red-50 px-1 flex items-center">override policies</div>
+              <div class="h-7 border-l-4 border-slate-400 bg-slate-50 px-1 flex items-center">AutoMigrate</div>
+              <div class="h-7 border-l-4 border-slate-400 bg-slate-50 px-1 flex items-center">Swagger · Health</div></div>
+            <div class="space-y-1"><div class="lbl text-slate-500">UserMgmt</div>
+              <div class="h-7 border-l-4 border-slate-400 bg-slate-50 px-1 flex items-center">Serilog (kiểu 3)</div>
+              <div class="h-7 border-l-4 border-red-500 bg-red-50 px-1 flex items-center">chỉ DefaultPolicy</div>
+              <div class="h-7 border-l-4 border-slate-400 bg-slate-50 px-1 flex items-center">AutoMigrate</div>
+              <div class="h-7 border-l-4 border-slate-400 bg-slate-50 px-1 flex items-center">Swagger · Health</div>
+              <div class="h-7 border-l-4 border-amber-500 bg-amber-50 px-1 flex items-center">key: so sánh !=</div></div>
+          </div>
+          <p class="mt-3 text-[11px] text-slate-500">Policy của Share bị ghi đè ở 2/3 caller → deletion test: tệ hơn cả shallow.</p>
+        </div>
+        <div class="diagram rounded-lg border border-slate-200 p-3 flex flex-col">
+          <div class="lbl text-slate-500 mb-3">After · một band dày</div>
+          <div class="flex-1 flex flex-col justify-center gap-2">
+            <div class="grid grid-cols-3 gap-2 text-[11px] text-center">
+              <div class="border border-slate-300 rounded py-1">FishDex wiring riêng</div>
+              <div class="border border-slate-300 rounded py-1">AquaHome wiring riêng</div>
+              <div class="border border-slate-300 rounded py-1">UserMgmt wiring riêng</div>
+            </div>
+            <div class="deep text-white rounded-lg border-2 border-slate-900 h-28 px-4 flex flex-col justify-center">
+              <div class="lbl text-emerald-300">Share · AddFishLoverResourceServer</div>
+              <div class="text-xs text-slate-300 mt-1">2 scheme · policy chuẩn · claim mapping · host basics · migrate hook</div>
+            </div>
+            <div class="rounded-lg border-2 border-slate-900 bg-slate-800 text-white h-12 px-4 flex items-center text-xs"><span class="lbl text-emerald-300 mr-2">Share</span>[InternalOnly] + InternalKeyHandler</div>
+          </div>
+        </div>
+      </div>
+      <p class="text-sm"><b>Problem.</b> Khối auth ~50 dòng lặp ở FishDex và AquaHome; UserManagement không override admin policy nên (suy luận) admin endpoint từ chối token OpenIddict PKCE; internal key có 2 error mode khác nhau.</p>
+      <p class="text-sm"><b>Solution.</b> Share sở hữu toàn bộ đăng ký resource server và internal-key auth; Program.cs chỉ còn phần riêng của service.</p>
+      <ul class="text-sm list-disc pl-5 space-y-0.5">
+        <li>Leverage: fix auth một lần, 3 nơi hưởng</li>
+        <li>Locality: nghĩa của policy một chỗ</li>
+        <li>Một test ma trận scheme × role × policy</li>
+      </ul>
+      <div class="rounded-md bg-slate-50 border border-slate-200 px-3 py-2 text-xs text-slate-700"><b>.NET risk:</b> giữ tên policy trong <span class="font-mono">[Authorize(Policy=…)]</span> · thứ tự Cors → Authentication → Authorization · CORS AquaHome hard-code localhost + AllowCredentials, đừng gộp mù · liên quan mục #4 trong Production Checklist (<span class="font-mono">ValidateAudience = false</span>).</div>
+    </article>
+
+    <!-- 4 -->
+    <article id="c4" class="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 space-y-5">
+      <div class="space-y-2">
+        <h2 class="font-serif text-2xl">4 · FishDex gateway trong AquaHome với error mode rõ ràng</h2>
+        <div class="flex flex-wrap gap-2 text-xs">
+          <span class="rounded-full bg-emerald-100 text-emerald-800 px-2.5 py-0.5 font-semibold">Strong</span>
+          <span class="rounded-full bg-amber-100 text-amber-800 px-2.5 py-0.5">/ Worth exploring</span>
+          <span class="rounded-full bg-slate-100 text-slate-700 px-2.5 py-0.5">ports &amp; adapters</span>
+        </div>
+      </div>
+      <ul class="font-mono text-sm text-slate-600 grid sm:grid-cols-2 gap-x-6 break-all">
+        <li>AquaHome.Domain/Services/FishDexClient.cs (87)</li>
+        <li>AquaHome.Worker/.../SyncMarketSpeciesBackgroundService.cs</li>
+        <li>AquaHome.Domain/Extensions/AquaHomeServiceExtensions.cs</li>
+        <li>SnapshotService.cs:211,233</li>
+      </ul>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="diagram rounded-lg border border-slate-200 p-3">
+          <div class="lbl text-slate-500 mb-2">Before · FishDex down</div>
+          <pre class="mermaid">
+sequenceDiagram
+  participant S as SnapshotService
+  participant C as FishDexClient
+  participant F as FishDex
+  S->>C: GetSummaries(codes)
+  C->>F: GET /summaries
+  F--xC: lỗi / timeout
+  C-->>S: [] (nuốt exception)
+  S->>S: lưu "Species #123" vào DB
+  Note over S: RefreshFishImagesAsync vá lại khi đọc
+          </pre>
+        </div>
+        <div class="diagram rounded-lg border border-slate-200 p-3">
+          <div class="lbl text-slate-500 mb-2">After · Unavailable ≠ Empty</div>
+          <pre class="mermaid">
+sequenceDiagram
+  participant S as SnapshotService / Worker
+  participant G as FishDexGateway
+  participant F as FishDex
+  S->>G: Summaries / Distributions / Ingest
+  G->>F: HTTP + internal key
+  F--xG: lỗi
+  G-->>S: Unavailable
+  S->>S: quyết định: fail 503 hoặc retry
+          </pre>
+        </div>
+      </div>
+      <p class="text-sm"><b>Problem.</b> Hợp đồng HTTP với FishDex chia đôi (client + Worker tự POST ingest); client nuốt lỗi nên caller lưu placeholder vĩnh viễn; forward JWT cho endpoint AllowAnonymous là vô ích.</p>
+      <p class="text-sm"><b>Solution.</b> Một gateway module cho summaries, distributions, ingest; error mode "Unavailable" tách khỏi "rỗng"; thêm adapter in-memory.</p>
+      <ul class="text-sm list-disc pl-5 space-y-0.5">
+        <li>Locality: hợp đồng liên service một chỗ</li>
+        <li>Seam thật: HTTP + in-memory</li>
+        <li>Chính sách 503 có một nhà</li>
+      </ul>
+      <div class="rounded-md bg-slate-50 border border-slate-200 px-3 py-2 text-xs text-slate-700"><b>.NET risk:</b> đổi "nuốt lỗi" sang fail là quyết định sản phẩm · (suy luận) Worker không đăng ký <span class="font-mono">IHttpContextAccessor</span>/<span class="font-mono">ICurrentUserSession</span>, resolve FishDexClient trong Worker có thể ném.</div>
+    </article>
+
+    <!-- 5 -->
+    <article id="c5" class="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 space-y-5">
+      <div class="space-y-2">
+        <h2 class="font-serif text-2xl">5 · Aquarium snapshot sở hữu JSONB document của nó</h2>
+        <div class="flex flex-wrap gap-2 text-xs">
+          <span class="rounded-full bg-amber-100 text-amber-800 px-2.5 py-0.5 font-semibold">Worth exploring</span>
+          <span class="rounded-full bg-slate-100 text-slate-700 px-2.5 py-0.5">in-process + local-substitutable</span>
+          <span class="rounded-full bg-slate-100 text-slate-700 px-2.5 py-0.5">AquaHome</span>
+        </div>
+      </div>
+      <ul class="font-mono text-sm text-slate-600 grid sm:grid-cols-2 gap-x-6 break-all">
+        <li>AquaHome.Domain/Services/SnapshotService.cs (318)</li>
+        <li>AquaHome.Domain/Extensions/SnapshotDataReader.cs</li>
+        <li>ContestService.cs:187,537</li>
+        <li>AquaHome.EFCore/Repository/AquariumSnapshotRepository.cs</li>
+      </ul>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="diagram rounded-lg border border-slate-200 p-4">
+          <div class="lbl text-slate-500 mb-3">Before · mass diagram: interface vs implementation</div>
+          <div class="flex items-end justify-center gap-10 h-56">
+            <div class="flex flex-col items-center gap-1"><div class="w-24 h-40 border-2 border-slate-500 bg-slate-100 flex items-center justify-center text-[10px] text-center px-1">9 deps + schema JSON lộ ra ContestService</div><div class="w-24 h-12 border border-slate-400 bg-white text-[10px] flex items-center justify-center">impl</div><div class="lbl text-slate-500">SnapshotService</div></div>
+            <div class="flex flex-col items-center gap-1"><div class="w-24 h-10 border-2 border-red-400 bg-red-50 text-[10px] flex items-center justify-center">TryRead</div><div class="w-24 h-8 border border-slate-400 bg-white text-[10px] flex items-center justify-center">impl</div><div class="lbl text-slate-500">Reader (static)</div></div>
+          </div>
+          <p class="text-[11px] text-red-600 mt-2">GetBySlug ném · ContestService nuốt — cùng document, 2 error mode</p>
+        </div>
+        <div class="diagram rounded-lg border border-slate-200 p-4">
+          <div class="lbl text-slate-500 mb-3">After</div>
+          <div class="flex items-end justify-center gap-10 h-56">
+            <div class="flex flex-col items-center gap-1"><div class="w-28 h-10 border-2 border-slate-900 bg-white text-[10px] flex items-center justify-center">Publish · Read · Gallery</div><div class="deep w-28 h-40 border-2 border-slate-900 text-white text-[10px] flex flex-col items-center justify-center gap-1 px-2 text-center"><span class="text-emerald-300 lbl">AquariumSnapshot</span><span class="text-slate-300">tolerant read · cap 5 · slug unique · batch cover</span></div><div class="lbl text-slate-500">deep</div></div>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-2">ContestService đọc typed qua module</p>
+        </div>
+      </div>
+      <p class="text-sm"><b>Problem.</b> Hiểu biết về schema <span class="font-mono">SnapshotData</span> rải rác, error mode lệch nhau; Gallery N+1 (mỗi item 1 query media + 1 presign).</p>
+      <p class="text-sm"><b>Solution.</b> Một module sở hữu document: build, serialise, đọc tolerant, invariant publish và resolve cover theo batch.</p>
+      <ul class="text-sm list-disc pl-5 space-y-0.5">
+        <li>Locality: schema và versioning một chỗ</li>
+        <li>Một đường đọc, không throw/swallow lệch</li>
+        <li>Ít query hơn cho Gallery</li>
+      </ul>
+      <div class="rounded-md bg-slate-50 border border-slate-200 px-3 py-2 text-xs text-slate-700"><b>.NET risk:</b> JSONB đã lưu phải đọc được · archive + insert giữ trong một <span class="font-mono">SaveChangesAsync</span> · (suy luận) check slug rồi insert có thể race nếu DB thiếu unique index.</div>
+    </article>
+
+    <!-- 6 -->
+    <article id="c6" class="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 space-y-5">
+      <div class="space-y-2">
+        <h2 class="font-serif text-2xl">6 · Một quy ước persistence cho aggregate Aquarium</h2>
+        <div class="flex flex-wrap gap-2 text-xs">
+          <span class="rounded-full bg-slate-200 text-slate-700 px-2.5 py-0.5 font-semibold">Speculative</span>
+          <span class="rounded-full bg-slate-100 text-slate-700 px-2.5 py-0.5">local-substitutable</span>
+          <span class="rounded-full bg-slate-100 text-slate-700 px-2.5 py-0.5">AquaHome</span>
+        </div>
+      </div>
+      <ul class="font-mono text-sm text-slate-600 grid sm:grid-cols-2 gap-x-6 break-all">
+        <li>AquaHome.EFCore/Repository/Base/GenericRepository.cs</li>
+        <li>Repository/AquariumRepository.cs</li>
+        <li>AquaHome.Domain/Services/AquariumService.cs (134)</li>
+      </ul>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="diagram rounded-lg border border-slate-200 p-3">
+          <div class="lbl text-slate-500 mb-2">Before · ai commit?</div>
+          <pre class="mermaid">
+flowchart TD
+  A[AquariumService.AddFishAsync] --> F[sửa AquariumFish tracked]
+  A --> U["aquariumRepo.UpdateAsync(aquarium)<br/>// triggers SaveChanges"]
+  U --> G[GenericRepository: save mỗi call]
+  A --> O["GetByIdAndUserAsync(id, userId)<br/>lặp ở mọi method, không Include Fish"]
+  classDef leak stroke:#dc2626,stroke-width:2px,color:#991b1b;
+  class U,O leak
+          </pre>
+        </div>
+        <div class="diagram rounded-lg border border-slate-200 p-3">
+          <div class="lbl text-slate-500 mb-2">After</div>
+          <pre class="mermaid">
+flowchart TD
+  A[AquariumService · thin] --> S[AquariumStore<br/>LoadOwned incl. Fish · Commit]
+  S -.seam.-> DB[(Postgres)]
+  classDef deep fill:#0f172a,color:#fff,stroke:#0f172a,stroke-width:3px;
+  class S deep
+          </pre>
+        </div>
+      </div>
+      <p class="text-sm"><b>Problem.</b> Hai quy ước transaction cùng tồn tại; caller phải biết repo nào tự commit; kiểm tra ownership lặp ở mọi method.</p>
+      <p class="text-sm"><b>Solution.</b> Một aggregate store (load theo owner kèm Fish, mutate, commit một lần) thay generic repo save-per-call.</p>
+      <ul class="text-sm list-disc pl-5 space-y-0.5">
+        <li>Quy tắc commit rời khỏi interface</li>
+        <li>Invariant ownership một chỗ</li>
+        <li>Lớp bug FishCount = 0 biến mất</li>
+      </ul>
+      <div class="rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-900"><b>Nếu có ADR:</b> đây là ứng viên dễ đụng quy ước "Generic Repository" của team nhất. Nếu team muốn giữ pattern này, nên ghi ADR để lần review sau không đề xuất lại.</div>
+    </article>
+  </section>
+
+  <!-- TOP RECOMMENDATION -->
+  <section id="top-recommendation" class="rounded-xl deep text-white p-6 sm:p-8 space-y-3">
+    <div class="lbl text-emerald-300">Top recommendation</div>
+    <h2 class="font-serif text-3xl"><a href="#c1" class="underline decoration-emerald-400 underline-offset-4">1 · Species profile module</a></h2>
+    <p class="text-slate-300 text-sm max-w-2xl">Vùng nóng nhất (25 lần sửa, nhiều commit "fix" lặp lại), đã có 3 chỗ rule lệch nhau và 1 lỗi crash gần như chắc chắn; phần lớn việc là xoá file shallow. Làm trước một lát của #2 (adapter in-memory cho <span class="font-mono">IStorageService</span>) để có test. Bước thứ hai: <a href="#c3" class="underline">#3 auth bootstrap</a> — rủi ro thấp, leverage cao.</p>
+  </section>
+
+  <footer class="text-xs text-slate-400 pb-6">Ghi chú: CLAUDE.md đang lệch code ở 2 chỗ — DI thực tế dùng IServiceCollection extension (không phải Autofac module); UserManagement theo C4 là PostgreSQL (không phải SQL Server).</footer>
+</main>
+</body>
+</html>

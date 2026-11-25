@@ -509,7 +509,8 @@ const de = {
     photos: 'Beckenfotos',
     addPhoto: 'Foto hinzufügen',
     noPhoto: 'Noch keine Fotos',
-    photoHint: 'JPG, PNG, WebP · max. 1 MB nach Komprimierung',
+    photoHint: 'JPG, PNG, WebP · max. 1,5 MB nach Komprimierung',
+    photoTooLarge: 'Das Foto ist nach der Komprimierung immer noch größer als 1,5 MB. Versuche ein kleineres Foto oder JPG statt PNG.',
     colSpecies: 'Art',
     colQty: 'Anz.',
     colOrigin: 'Herkunft',
@@ -811,6 +812,8 @@ const de = {
     uploadLogo: 'Logo hochladen',
     uploadingLogo: 'Wird hochgeladen …',
     deleteSponsorConfirm: 'Diesen Sponsor löschen?',
+    imageTooLarge: 'Das Bild ist nach der Komprimierung immer noch größer als 300 KB. Verwende ein kleineres Bild oder JPG/WebP statt PNG.',
+    imageUploadFailed: 'Das Bild konnte nicht hochgeladen werden. Bitte versuche es erneut.',
     finalizeTitle: 'Preise festlegen',
     finalizeHint:
       'Wähle für jeden veröffentlichten Beitrag eine Preisstufe. Leer = kein Preis.',

@@ -18,6 +18,7 @@ namespace FishDex.Domain.Services;
 public class CommunitySpeciesService(
     ICommunitySpeciesRepository repo,
     IStorageService storage,
+    UploadVerifier uploadVerifier,
     ICurrentUserSession currentUser,
     ILogger<CommunitySpeciesService> logger) : ICommunitySpeciesService
 {
@@ -26,12 +27,7 @@ public class CommunitySpeciesService(
     /// <summary>Số loài chưa duyệt (chờ + bị từ chối) mỗi user được giữ cùng lúc.</summary>
     private const int MaxUnverifiedPerUser = 5;
     // Đuôi file suy từ content-type (đã ký vào presigned PUT), không lấy theo tên file client gửi.
-    private static readonly Dictionary<string, string> ImageExtensions = new()
-    {
-        ["image/jpeg"] = ".jpg",
-        ["image/png"] = ".png",
-        ["image/webp"] = ".webp",
-    };
+    private static readonly IReadOnlyDictionary<string, string> ImageExtensions = UploadContentTypes.Images;
 
     /// <summary>
     /// Ngưỡng 0.4 chọn theo phép thử thực tế: "Betta splendens" so với "Beta splenden"
@@ -195,15 +191,15 @@ public class CommunitySpeciesService(
         }
 
         // Dung lượng THẬT trên storage — presigned PUT không chặn được, client gửi bao nhiêu R2 nhận bấy nhiêu.
-        var size = await storage.GetObjectSizeAsync(objectKey, ct);
-        if (size is null)
+        // Quá cỡ thì verifier đã xoá object; ở đây chỉ còn phần phản ứng của nghiệp vụ.
+        var verdict = await uploadVerifier.VerifyAsync(objectKey, new UploadPolicy(FishDexObjectKeys.CommunityCoverMaxBytes), ct);
+        if (verdict.Kind == UploadVerdictKind.NotUploaded)
         {
             return ConfirmCommunityImageOutcome.NotUploaded;
         }
 
-        if (size > FishDexObjectKeys.CommunityCoverMaxBytes)
+        if (!verdict.IsOk)
         {
-            await storage.DeleteAsync(objectKey, ct);
             if (snapshot.ThumbnailObjectKey == objectKey)
             {
                 // Cùng định dạng = cùng key: file quá cỡ đã ghi đè ảnh bìa cũ, gỡ luôn để không trỏ vào object đã xoá.
@@ -211,7 +207,7 @@ public class CommunitySpeciesService(
                 await repo.SaveChangesAsync(ct);
             }
 
-            logger.LogWarning("Community image {Key} rejected: {Bytes} bytes > {Max} (user {UserId})", objectKey, size, FishDexObjectKeys.CommunityCoverMaxBytes, currentUser.UserId);
+            logger.LogWarning("Community image {Key} rejected: {Bytes} bytes > {Max} (user {UserId})", objectKey, verdict.Size, FishDexObjectKeys.CommunityCoverMaxBytes, currentUser.UserId);
             return ConfirmCommunityImageOutcome.TooLarge;
         }
 

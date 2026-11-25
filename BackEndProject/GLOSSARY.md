@@ -27,3 +27,9 @@ _Avoid_: preferred image, best image
 **Common name**:
 Tên thường gọi của loài theo một ngôn ngữ. Có thể đến từ FishBase hoặc do người dùng đóng góp; chỉ tên đã duyệt mới được hiển thị.
 _Avoid_: local name (đó là tên trong danh sách market), vernacular
+
+## Upload
+
+**Upload verification**:
+Bước tin file thật sau khi người dùng tải thẳng lên storage. Link tải lên không chặn được dung lượng, nên hệ thống phải kiểm file thực tế trước khi nhận: chưa có file, quá cỡ, hoặc lệch với dung lượng người dùng đã khai thì bị từ chối, và file quá cỡ không bao giờ được để lại trên storage. Mỗi nghiệp vụ tự quy định giới hạn của mình và tự quyết định phản ứng khi bị từ chối.
+_Avoid_: scan upload, validate upload

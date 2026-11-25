@@ -89,7 +89,7 @@ Phía BE xem [`BackEndProject/CLAUDE.md`](../../BackEndProject/CLAUDE.md) (kiế
 | Ngôn ngữ | TypeScript 5.6 (strict, project references) |
 | Bundler | Vite 6 (`@vitejs/plugin-react` + `@cloudflare/vite-plugin`) |
 | Package manager | npm (workspaces, `package-lock.json` — không dùng yarn/pnpm) |
-| UI / design system | Tailwind CSS 3.4; icon `lucide-react`. shadcn/ui mới được cấu hình (`components.json`, style "default") nhưng **chưa sinh component nào** (chưa có `src/components/ui/`) |
+| UI / design system | Tailwind CSS 3.4; icon `lucide-react`; gộp class bằng `cn()` (clsx + tailwind-merge) trong `@fishlover/shared`. Không dùng thư viện component (shadcn đã gỡ 11/2026) |
 | State management | **Zustand** (1 store toàn cục `useAuthStore`) — **không Redux, không React Query** |
 | Data fetching | `useEffect` + `useState` + axios call thủ công mỗi page — chưa dùng cache/query library |
 | Routing | React Router v7 (`createBrowserRouter`, nested route qua `<Outlet/>`) |
@@ -320,7 +320,7 @@ Code thực tế phản ánh quy tắc này: input trong `SubmitCommunitySpecies
 - **Không có validation library** (không zod/yup) — validate inline bằng helper nhỏ (ví dụ `num()` parse string→number|undefined, biến `canSave` boolean check điều kiện).
 - Class Tailwind thường gom vào hằng số ở đầu file (`inputCls`, `labelCls`) thay vì tách component riêng.
 - Loading/empty/error state theo pattern thủ công nhất quán: `Loader2` (lucide) khi loading, khối `<p>` viền nét đứt khi rỗng, banner viền đỏ khi lỗi.
-- Component dùng chung: `apps/aquahome-web/src/components/` (`AuthGuard`, `RoleGuard`, `common/ResultModal` — local cho app này); chưa có shadcn primitive nào; `packages/shared/src/components/LanguageSwitcher.tsx` là component chung duy nhất giữa các app hiện tại.
+- Component dùng chung: `apps/aquahome-web/src/components/` (`AuthGuard`, `RoleGuard`, `common/ResultModal` — local cho app này); `packages/shared/src/components/LanguageSwitcher.tsx` là component chung duy nhất giữa các app hiện tại.
 
 **Khi thêm feature mới:** theo đúng pattern hiện có (controlled input + `useState`, không tự ý đưa react-hook-form/zod vào một page lẻ) trừ khi cả team quyết định đổi chuẩn.
 

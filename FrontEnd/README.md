@@ -12,9 +12,8 @@ Frontend duy nhất của hệ thống FishLover — giao tiếp **chỉ với A
 | Routing | React Router v7 | Standard cho React SPA |
 | State | Zustand | Nhẹ hơn Redux, đủ cho scale hiện tại |
 | HTTP | Axios | Interceptor dễ xử lý token refresh |
-| Charts | Recharts | Story 5.2 — water parameter chart |
 | Styling | Tailwind CSS | Utility-first, không cần setup nhiều |
-| Components | shadcn/ui | Copy-paste components, Tailwind-based, không vendor lock-in |
+| Components | Tự viết bằng Tailwind | Không dùng thư viện component; gộp class bằng `cn()` (clsx + tailwind-merge) trong `@fishlover/shared` |
 | Map | react-leaflet + OpenStreetMap | Free, không API key, hỗ trợ lat/lng pin cho fish occurrence data |
 
 ## Folder Structure
@@ -132,11 +131,11 @@ AquaHome FE là SPA thuần — không cần SSR/SSG. Next.js thêm complexity (
 **Layout: App Shell với sidebar**
 Toàn bộ protected routes (`/dashboard`, `/fish`, `/ai-chat`, `/image-search`) được bọc trong `AppShell` — sidebar cố định bên trái, content area bên phải. Login/Callback là standalone full-screen (không có sidebar). 4 feature sections ngang nhau về tầm quan trọng nên sidebar phù hợp hơn top navbar.
 
-**Tại sao shadcn/ui?**
-Tích hợp trực tiếp với Tailwind đã có sẵn. Copy-paste components (không bundle toàn bộ library), dễ customize, không vendor lock-in. Chuẩn thực tế cho React 2024-2026.
+**Component: tự viết bằng Tailwind**
+Ban đầu định dùng shadcn/ui nhưng chưa sinh component nào; khung cấu hình (`components.json`, `@radix-ui/react-slot`, `class-variance-authority`) đã gỡ 11/2026. Cần lại thì `npx shadcn init`.
 
 **Design reference: kaiadmin-lite**
-Layout, màu sắc, card style lấy cảm hứng từ [kaiadmin-lite](https://themewagon.github.io/kaiadmin-lite/) nhưng implement bằng shadcn/ui + Tailwind (không dùng Bootstrap của template gốc để tránh conflict).
+Layout, màu sắc, card style lấy cảm hứng từ [kaiadmin-lite](https://themewagon.github.io/kaiadmin-lite/) nhưng implement bằng Tailwind (không dùng Bootstrap của template gốc để tránh conflict).
 
 **Tại sao react-leaflet thay vì Google Maps / jsvectormap?**
 - Google Maps: cần API key, có thể mất phí

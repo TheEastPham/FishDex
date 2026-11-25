@@ -25,7 +25,7 @@ Khi thêm mới hoặc sửa UI, luôn tự hỏi:
 ## Package Structure
 
 - `packages/shared` — types, API clients, hooks, i18n, store. Dùng chung cho mọi app.
-- `apps/aquahome-web` — React 19 + Vite + TypeScript, Tailwind CSS, shadcn/ui.
+- `apps/aquahome-web` — React 19 + Vite + TypeScript, Tailwind CSS, icon `lucide-react`. Không dùng thư viện component (shadcn đã gỡ 11/2026); gộp class bằng `cn()` của `@fishlover/shared` (clsx + tailwind-merge).
 
 ## i18n
 

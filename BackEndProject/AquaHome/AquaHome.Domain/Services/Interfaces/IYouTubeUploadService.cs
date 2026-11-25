@@ -14,9 +14,6 @@ public interface IYouTubeUploadService
     /// <summary>Admin reject — xóa video khỏi YouTube.</summary>
     Task DeleteVideoAsync(string youTubeVideoId, CancellationToken ct = default);
 
-    /// <summary>Lấy toàn bộ videoId trong 1 playlist contest.</summary>
-    Task<IReadOnlyList<string>> GetPlaylistVideoIdsAsync(string playlistId, CancellationToken ct = default);
-
     /// <summary>Batch lấy viewCount hiện tại cho danh sách videoId (dùng cho leaderboard sync).</summary>
     Task<IReadOnlyDictionary<string, long>> GetViewCountsAsync(IReadOnlyList<string> videoIds, CancellationToken ct = default);
 }

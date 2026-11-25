@@ -34,19 +34,4 @@ public class FishBaseSpeciesIndexRepository(FishDexDbContext db) : IFishBaseSpec
             .FirstOrDefaultAsync(ct);
     }
 
-    public async Task<IReadOnlyList<FishBaseSpeciesIndex>> GetNotLoadedAsync(IReadOnlyCollection<int> specCodes, CancellationToken ct = default)
-    {
-        if (specCodes.Count == 0)
-        {
-            return [];
-        }
-
-        var pending = db.FishBaseSpeciesIndex.AsNoTracking()
-            .Where(i => specCodes.Contains(i.SpecCode))
-            .Where(i => !i.IsLoaded);
-
-        return await pending
-            .OrderBy(i => i.SpeciesName)
-            .ToListAsync(ct);
-    }
 }

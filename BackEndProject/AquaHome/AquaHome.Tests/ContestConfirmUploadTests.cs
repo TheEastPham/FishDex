@@ -436,7 +436,6 @@ public sealed class ContestConfirmUploadTests
 
         public Task SetPublicAsync(string youTubeVideoId, string? playlistId, CancellationToken ct = default) => throw new NotSupportedException();
         public Task DeleteVideoAsync(string youTubeVideoId, CancellationToken ct = default) => throw new NotSupportedException();
-        public Task<IReadOnlyList<string>> GetPlaylistVideoIdsAsync(string playlistId, CancellationToken ct = default) => throw new NotSupportedException();
         public Task<IReadOnlyDictionary<string, long>> GetViewCountsAsync(IReadOnlyList<string> videoIds, CancellationToken ct = default) => throw new NotSupportedException();
     }
 }

@@ -20,6 +20,4 @@ public interface IFishBaseSpeciesIndexRepository
 
     Task<FishBaseSpeciesIndex?> GetAsync(int specCode, CancellationToken ct = default);
 
-    /// <summary>Các loài đã tra thấy trong FishBase nhưng chưa nạp vào FishDex — hàng đợi UC2.</summary>
-    Task<IReadOnlyList<FishBaseSpeciesIndex>> GetNotLoadedAsync(IReadOnlyCollection<int> specCodes, CancellationToken ct = default);
 }

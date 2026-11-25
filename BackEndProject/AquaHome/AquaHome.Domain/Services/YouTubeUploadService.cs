@@ -150,27 +150,6 @@ public class YouTubeUploadService(
         await youtube.Videos.Delete(youTubeVideoId).ExecuteAsync(ct);
     }
 
-    public async Task<IReadOnlyList<string>> GetPlaylistVideoIdsAsync(string playlistId, CancellationToken ct = default)
-    {
-        var youtube = BuildClient();
-        var videoIds = new List<string>();
-        string? pageToken = null;
-
-        do
-        {
-            var request = youtube.PlaylistItems.List("contentDetails");
-            request.PlaylistId = playlistId;
-            request.MaxResults = 50;
-            request.PageToken = pageToken;
-
-            var response = await request.ExecuteAsync(ct);
-            videoIds.AddRange(response.Items.Select(i => i.ContentDetails.VideoId));
-            pageToken = response.NextPageToken;
-        } while (!string.IsNullOrEmpty(pageToken));
-
-        return videoIds;
-    }
-
     public async Task<IReadOnlyDictionary<string, long>> GetViewCountsAsync(IReadOnlyList<string> videoIds, CancellationToken ct = default)
     {
         var result = new Dictionary<string, long>();

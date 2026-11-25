@@ -28,9 +28,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Helper\EmailTemplates\en\EmailVerification.html">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="Helper\EmailTemplates\en\PasswordReset.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -41,9 +38,6 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Helper\EmailTemplates\en\WelcomeEmail.html">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Helper\EmailTemplates\vi\EmailVerification.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Helper\EmailTemplates\vi\PasswordReset.html">

@@ -14,13 +14,6 @@ public class UserRepository(UserManagementDbContext context) : IUserRepository
             .FirstOrDefaultAsync(u => u.Id == id);
     }
 
-    public async Task<UserEntity?> GetByEmailAsync(string email)
-    {
-        return await context.Users
-            .Include(u => u.Profile)
-            .FirstOrDefaultAsync(u => u.Email == email);
-    }
-
     public async Task<IEnumerable<UserEntity>> GetAllAsync(int page = 1, int pageSize = 20, string? role = null)
     {
         var query = context.Users

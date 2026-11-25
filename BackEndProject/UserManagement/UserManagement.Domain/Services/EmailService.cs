@@ -14,35 +14,6 @@ public class EmailService(
 {
     private readonly IEmailProvider _emailProvider = emailProvider;
 
-    public async Task<bool> SendEmailVerificationAsync(string email, string firstName, string verificationToken)
-    {
-        try
-        {
-            var baseUrl = configuration["AppSettings:BaseUrl"] ?? "http://localhost:5000";
-            var verificationUrl = $"{baseUrl}/api/auth/verify-email?token={verificationToken}&email={Uri.EscapeDataString(email)}";
-
-            var language = configuration["AppSettings:DefaultLanguage"] ?? "vi";
-
-            var replacements = new Dictionary<string, string>
-            {
-                { "FirstName", firstName },
-                { "VerificationUrl", verificationUrl },
-                { "VerificationCode", verificationToken },
-                { "Year", DateTime.Now.Year.ToString() }
-            };
-
-            var subject = await templateHelper.GetSubjectAsync("EmailVerification", language);
-            var body = await templateHelper.GetTemplateAsync("EmailVerification", language, replacements);
-
-            return await _emailProvider.SendEmailAsync(email, subject, body);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error sending email verification to {Email}", email);
-            return false;
-        }
-    }
-
     public async Task<bool> SendPasswordResetAsync(string email, string firstName, string resetUrl, string? language = null)
     {
         try

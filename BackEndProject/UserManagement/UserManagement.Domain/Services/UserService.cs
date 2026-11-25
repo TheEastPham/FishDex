@@ -74,23 +74,6 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<UserDto?> GetUserByEmailAsync(string email)
-    {
-        try
-        {
-            var userEntity = await _userRepository.GetByEmailAsync(email);
-            if (userEntity == null) return null;
-
-            var roles = await _userManager.GetRolesAsync(userEntity);
-            return userEntity.ToUser(roles).ToDto();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving user by email {Email}", email);
-            throw;
-        }
-    }
-
     public async Task<UserDto> CreateUserAsync(CreateUserRequest request)
     {
         ValidateArgument(request);

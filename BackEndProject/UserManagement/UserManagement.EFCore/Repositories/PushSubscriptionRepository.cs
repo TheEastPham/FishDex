@@ -27,10 +27,4 @@ public class PushSubscriptionRepository(UserManagementDbContext context) : IPush
         await context.SaveChangesAsync();
     }
 
-    public async Task DeleteByUserIdAsync(Guid userId)
-    {
-        var subs = await context.PushSubscriptions.Where(s => s.UserId == userId).ToListAsync();
-        context.PushSubscriptions.RemoveRange(subs);
-        await context.SaveChangesAsync();
-    }
 }

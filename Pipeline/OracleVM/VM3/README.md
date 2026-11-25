@@ -79,7 +79,7 @@ docker network ls | grep fishlover_prod
 - **Story 2.1**: Implement embedding service (FastAPI + sentence-transformers)
 - **Story 4.1**: Implement image search service (FastAPI + OpenCLIP)
 
-See `docs/roadmap/ai-option-a-stories.md` for detailed tasks and `docs/roadmap/ai-release-plan.md` for the release order.
+See `docs/roadmap/ai-release-plan.md` for the release order and the "VM3" section (what to install, ARM build notes). Story details live in Notion (Epic 2 / Epic 4).
 
 ## Monitoring
 

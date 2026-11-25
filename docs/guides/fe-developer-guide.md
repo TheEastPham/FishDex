@@ -1,5 +1,7 @@
 # The FishLover — Hướng dẫn Onboarding cho FE Developer
 
+> Viết 21/07/2026, kiểm lại với code ngày 25/11/2026 (stack, cấu trúc feature, component dùng chung, testing). Phía BE xem `BackEndProject/CLAUDE.md`; BE guide cũ đã lỗi thời và được gỡ.
+
 ## Mục lục
 
 - [1. Tổng quan (Business Context)](#1-tổng-quan-business-context)
@@ -62,7 +64,7 @@ flowchart LR
     GW --> UM["UserManagement.API\n(/connect/* OIDC endpoints)"]
 ```
 
-Xem chi tiết BE ở tài liệu [BE Developer Guide](be-developer-guide.md) — file này giả định bạn đã đọc phần Section 2 (System Architecture) và Section 3.5 (Community Contribution Pattern) của tài liệu đó.
+Phía BE xem [`BackEndProject/CLAUDE.md`](../../BackEndProject/CLAUDE.md) (kiến trúc, lệnh build/run) và [`GLOSSARY.md`](../../BackEndProject/GLOSSARY.md) (thuật ngữ, gồm *Community species* và *Common name*); sơ đồ tổng thể ở [C4 Container](../architecture/c4/02-container.md).
 
 ## 1.3 Roles & route access
 
@@ -87,7 +89,7 @@ Xem chi tiết BE ở tài liệu [BE Developer Guide](be-developer-guide.md) �
 | Ngôn ngữ | TypeScript 5.6 (strict, project references) |
 | Bundler | Vite 6 (`@vitejs/plugin-react` + `@cloudflare/vite-plugin`) |
 | Package manager | npm (workspaces, `package-lock.json` — không dùng yarn/pnpm) |
-| UI / design system | Tailwind CSS 3.4 + shadcn/ui (`components.json`, style "default", icon: `lucide-react`) |
+| UI / design system | Tailwind CSS 3.4; icon `lucide-react`. shadcn/ui mới được cấu hình (`components.json`, style "default") nhưng **chưa sinh component nào** (chưa có `src/components/ui/`) |
 | State management | **Zustand** (1 store toàn cục `useAuthStore`) — **không Redux, không React Query** |
 | Data fetching | `useEffect` + `useState` + axios call thủ công mỗi page — chưa dùng cache/query library |
 | Routing | React Router v7 (`createBrowserRouter`, nested route qua `<Outlet/>`) |
@@ -263,13 +265,13 @@ README nêu rõ nguyên tắc kiến trúc: **"Frontend duy nhất giao tiếp v
 ## 5.1 Public — tra cứu loài & gallery
 
 - **`fish-search/FishSearchPage.tsx`** (`/fish`) — tìm/browse loài công khai, dùng `useSpeciesSummaries` + `useDebounce` cho search. Có `FamilySelect`, `SpeciesCard`, `SpeciesCardSkeleton` (loading state).
-- **`fish-profile/FishProfilePage.tsx`** (`/fish/:specCode`) — trang chi tiết loài (page lớn nhất, 647 dòng): taxonomy, habitat, occurrence map (Leaflet), thông số chăm sóc, common name (bao gồm local name do cộng đồng đóng góp). Dùng `useFishProfile` hook.
+- **`fish-profile/FishProfilePage.tsx`** (`/fish/:specCode`) — trang chi tiết loài (page lớn nhất, ~710 dòng): taxonomy, habitat, occurrence map (Leaflet), thông số chăm sóc, common name (bao gồm local name do cộng đồng đóng góp). Dùng `useFishProfile` hook.
 - **`public-tanks/`** — `PublicTanksPage.tsx` (gallery hồ cá công khai), `PublicTankDetailPage.tsx` (`/public/tanks/:slug`) + `SnapshotFishSection.tsx`.
-- **`articles/`** — `ArticlesPage`, `ReleasePage` (release notes/changelog sản phẩm).
+- **`articles/`** — `ArticlesListPage`, `ArticleDetailPage`, `ReleasePage` (release notes/changelog sản phẩm).
 
 ## 5.2 Community contribution (submit + admin verify)
 
-Khớp với pattern BE ở [Section 3.5 của BE guide](be-developer-guide.md#35-community-contribution-pattern):
+Khớp với BE: thuật ngữ ở [`GLOSSARY.md`](../../BackEndProject/GLOSSARY.md), endpoint ở `CommunitySpeciesController` / `CommunityCommonNamesController` (FishDex API):
 
 - **`community/SubmitCommunitySpeciesModal.tsx`** — form submit loài mới chưa có trong FishDex (tên, water type, family/genus, khoảng nhiệt độ/pH, kích thước, min tank liters, care level). **Chưa có upload ảnh trong modal này** — submit species hiện tại chỉ có metadata.
 - **`community/AddLocalNameModal.tsx`** — submit tên gọi địa phương cho loài đã có sẵn.
@@ -318,7 +320,7 @@ Code thực tế phản ánh quy tắc này: input trong `SubmitCommunitySpecies
 - **Không có validation library** (không zod/yup) — validate inline bằng helper nhỏ (ví dụ `num()` parse string→number|undefined, biến `canSave` boolean check điều kiện).
 - Class Tailwind thường gom vào hằng số ở đầu file (`inputCls`, `labelCls`) thay vì tách component riêng.
 - Loading/empty/error state theo pattern thủ công nhất quán: `Loader2` (lucide) khi loading, khối `<p>` viền nét đứt khi rỗng, banner viền đỏ khi lỗi.
-- Component dùng chung: `apps/aquahome-web/src/components/` (chỉ có `AuthGuard`/`RoleGuard` — local cho app này); shadcn primitive kỳ vọng ở `src/components/ui/`; `packages/shared/src/components/LanguageSwitcher.tsx` là component chung duy nhất giữa các app hiện tại.
+- Component dùng chung: `apps/aquahome-web/src/components/` (`AuthGuard`, `RoleGuard`, `common/ResultModal` — local cho app này); chưa có shadcn primitive nào; `packages/shared/src/components/LanguageSwitcher.tsx` là component chung duy nhất giữa các app hiện tại.
 
 **Khi thêm feature mới:** theo đúng pattern hiện có (controlled input + `useState`, không tự ý đưa react-hook-form/zod vào một page lẻ) trừ khi cả team quyết định đổi chuẩn.
 
@@ -370,7 +372,7 @@ cp .env.example .env.local
 npm run dev        # Vite dev server, port 5173
 ```
 
-**Yêu cầu BE chạy sẵn:** ApiGateway (`:5000`) + UserManagement (OIDC) + FishDex — xem [BE guide, Section 5.3](be-developer-guide.md#53-chạy-local) để khởi động backend trước.
+**Yêu cầu BE chạy sẵn:** ApiGateway (`:5000`) + UserManagement (OIDC) + FishDex — xem mục *Local Docker* trong [`Pipeline/README.md`](../../Pipeline/README.md) để khởi động backend trước.
 
 ## 7.3 Common Development Tasks
 
@@ -389,7 +391,7 @@ npm run dev        # Vite dev server, port 5173
 
 **Chưa có test framework nào được cấu hình** — không Vitest/Jest/Cypress/Playwright/@testing-library trong `package.json`, không có file `*.test.*`/`*.spec.*` nào trong repo. Không có script `lint` ở level app, cũng chưa thấy ESLint config.
 
-Đây là gap giống hệt phía BE ([BE guide, Section 5.5](be-developer-guide.md#55-testing-gap-hiện-tại)) — hiện mọi tính năng mới đều test thủ công qua UI trước khi merge. Nên cân nhắc thiết lập Vitest + React Testing Library khi độ phức tạp UI tăng lên, đặc biệt các luồng auth/upload/community moderation.
+Phía BE đã có 4 test project xUnit trong `FishDex.sln` (FishDex, AquaHome, FishLover.Shared, FishLover.Storage); phía FE thì mọi tính năng mới vẫn test thủ công qua UI trước khi merge. Nên cân nhắc thiết lập Vitest + React Testing Library khi độ phức tạp UI tăng lên, đặc biệt các luồng auth/upload/community moderation.
 
 ## 7.5 Deployment & Workflow
 

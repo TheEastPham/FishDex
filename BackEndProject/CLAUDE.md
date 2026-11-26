@@ -47,14 +47,14 @@ dotnet run --project AquaHome/AquaHome.Worker/AquaHome.Worker.csproj
 dotnet run --project ApiGateway/ApiGateway.csproj
 ```
 
-**Run tests** (`dotnet test FishDex.sln` chạy cả 4):
+**Run tests** (`dotnet test FishDex.sln` chạy cả 5):
 ```
 dotnet test Share/FishLover.Storage.Tests/FishLover.Storage.Tests.csproj   # thuần, không cần Docker
 dotnet test Share/FishLover.Shared.Tests/FishLover.Shared.Tests.csproj     # thuần, không cần Docker
 dotnet test AquaHome/AquaHome.Tests/AquaHome.Tests.csproj                 # thuần, không cần Docker
 dotnet test FishDex/FishDex.Tests/FishDex.Tests.csproj                    # cần Docker — Testcontainers dựng Postgres pgvector/pgvector:pg16
+dotnet test UserManagement/UserManagement.Tests/UserManagement.Tests.csproj # cần Docker — dựng cả API (WebApplicationFactory) trên Postgres thật, email giả
 ```
-UserManagement chưa có test project.
 
 **Run with hot reload:**
 ```

@@ -120,3 +120,4 @@ Câu trả lời vẫn được LLM sinh bằng tiếng Việt từ chunk tiến
 - Ngưỡng chất lượng cụ thể cho R1 (tỷ lệ đúng và từ chối đúng trên bộ chuẩn) và nguồn ngưỡng độc tố cho R2.
 - Role nào được dùng R2/R3/R6, và quota đi theo `RoleQuota` hiện có hay loại mới.
 - Số đo nước lưu ở service nào (AquaHome gần nhất) và giữ bao lâu.
+- **Sau v2.0 (ghi ngày 26/11/2026, chưa lên lịch):** mô hình AI nhỏ chạy ngay trên app mobile (~1 tỷ tham số, nén 4-bit, tải về khi bật tính năng) và kho ảnh/video trên máy dùng được khi không có mạng. Ràng buộc và nơi làm: mục "Hướng sau này" của `BackEndProject/docs/adr/0006-mobile-expo-chung-repo-ai-tach-repo.md`.

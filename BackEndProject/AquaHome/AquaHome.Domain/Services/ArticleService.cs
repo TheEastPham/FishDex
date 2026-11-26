@@ -1,5 +1,3 @@
-using System.Globalization;
-using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -9,6 +7,7 @@ using AquaHome.Domain.Enums;
 using AquaHome.Domain.Exceptions;
 using AquaHome.Domain.Extensions;
 using AquaHome.Domain.Services.Interfaces;
+using AquaHome.Domain.Slugs;
 using AquaHome.Domain.Storage;
 using AquaHome.EFCore.Entity;
 using AquaHome.EFCore.Repository.Interface;
@@ -224,7 +223,7 @@ public class ArticleService(
         // Slug đổi thì link cũ chết — chỉ đổi khi admin chủ động gửi giá trị khác.
         if (!string.IsNullOrWhiteSpace(request.Slug))
         {
-            var slug = Slugify(request.Slug);
+            var slug = Slug.From(request.Slug);
             if (slug != article.Slug)
                 article.Slug = await GenerateUniqueSlugAsync(slug, article.Id, ct);
         }
@@ -524,48 +523,17 @@ public class ArticleService(
 
     private static string? NormalizeTag(string? tag)
     {
-        var slug = Slugify(tag ?? string.Empty);
+        var slug = Slug.From(tag);
         if (string.IsNullOrEmpty(slug)) return null;
         return slug.Length > MaxTagChars ? slug[..MaxTagChars] : slug;
     }
 
-    private async Task<string> GenerateUniqueSlugAsync(string source, Guid? excludeId, CancellationToken ct)
+    private Task<string> GenerateUniqueSlugAsync(string source, Guid? excludeId, CancellationToken ct)
     {
-        var baseSlug = Slugify(source);
+        var baseSlug = Slug.From(source);
         if (string.IsNullOrEmpty(baseSlug)) baseSlug = "bai-viet";
 
-        if (!await articleRepo.SlugExistsAsync(baseSlug, excludeId, ct)) return baseSlug;
-
-        var suffix = 2;
-        string candidate;
-        do
-        {
-            candidate = $"{baseSlug}-{suffix++}";
-        } while (await articleRepo.SlugExistsAsync(candidate, excludeId, ct));
-
-        return candidate;
-    }
-
-    /// <summary>Bỏ dấu tiếng Việt, chữ thường, ký tự lạ thành gạch ngang.</summary>
-    private static string Slugify(string value)
-    {
-        var normalized = value.Trim().ToLowerInvariant().Normalize(NormalizationForm.FormD);
-        var sb = new StringBuilder(normalized.Length);
-
-        foreach (var c in normalized)
-        {
-            if (CharUnicodeInfo.GetUnicodeCategory(c) == UnicodeCategory.NonSpacingMark) continue;
-            // FormD không tách được đ/Đ — map tay, không thì slug lọt ký tự phải percent-encode.
-            if (c is 'đ') sb.Append('d');
-            else if (char.IsLetterOrDigit(c)) sb.Append(c);
-            else if (c is ' ' or '-' or '_' or '.' or '/') sb.Append('-');
-        }
-
-        var slug = sb.ToString().Normalize(NormalizationForm.FormC);
-        while (slug.Contains("--")) slug = slug.Replace("--", "-");
-        slug = slug.Trim('-');
-
-        return slug.Length > 150 ? slug[..150].Trim('-') : slug;
+        return Slug.MakeUniqueAsync(baseSlug, slug => articleRepo.SlugExistsAsync(slug, excludeId, ct));
     }
 
     private static string? Truncate(string? value, int maxChars)

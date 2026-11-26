@@ -1,10 +1,10 @@
-using System.Text;
 using System.Text.Json;
 using AquaHome.Domain.DTOs;
 using AquaHome.Domain.Enums;
 using AquaHome.Domain.Exceptions;
 using AquaHome.Domain.Extensions;
 using AquaHome.Domain.Services.Interfaces;
+using AquaHome.Domain.Slugs;
 using AquaHome.Domain.Storage;
 using AquaHome.EFCore.Entity;
 using AquaHome.EFCore.Repository.Interface;
@@ -314,57 +314,16 @@ public class SnapshotService(
             aquarium.VolumeLiters, aquarium.Description, fish, ResolveVersion(fish, fallback: 0));
     }
 
-    /// <summary>Slug rõ ràng: {tên bể}-{nickname user}. Trùng (vd 2 bể cùng tên) thì thêm hậu tố số.</summary>
-    private async Task<string> GenerateUniqueSlugAsync(string aquariumName, CancellationToken ct)
+    /// <summary>Slug rõ ràng: {tên bể}-{tên người đăng}. Trùng (vd 2 bể cùng tên) thì thêm hậu tố số.</summary>
+    private Task<string> GenerateUniqueSlugAsync(string aquariumName, CancellationToken ct)
     {
-        var baseSlug = Slugify(aquariumName);
-        var nicknameSlug = Slugify(currentUser.UserName ?? string.Empty);
+        var baseSlug = Slug.From(aquariumName);
+        if (string.IsNullOrEmpty(baseSlug)) baseSlug = "aquarium";
+
+        var nicknameSlug = Slug.From(currentUser.UserName);
         var candidate = string.IsNullOrEmpty(nicknameSlug) ? baseSlug : $"{baseSlug}-{nicknameSlug}";
 
-        if (!await snapshotRepo.SlugExistsAsync(candidate, ct))
-            return candidate;
-
-        var suffix = 2;
-        string slug;
-        do
-        {
-            slug = $"{candidate}-{suffix}";
-            suffix++;
-        } while (await snapshotRepo.SlugExistsAsync(slug, ct));
-
-        return slug;
-    }
-
-    private static string Slugify(string name)
-    {
-        var normalized = name.Normalize(NormalizationForm.FormD);
-        var sb = new StringBuilder();
-        foreach (var c in normalized)
-        {
-            var category = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c);
-            if (category != System.Globalization.UnicodeCategory.NonSpacingMark)
-                sb.Append(c);
-        }
-
-        var ascii = sb.ToString().Normalize(NormalizationForm.FormC);
-        var result = new StringBuilder();
-        var lastWasDash = false;
-        foreach (var c in ascii.ToLowerInvariant())
-        {
-            if (char.IsLetterOrDigit(c) && c < 128)
-            {
-                result.Append(c);
-                lastWasDash = false;
-            }
-            else if (!lastWasDash && result.Length > 0)
-            {
-                result.Append('-');
-                lastWasDash = true;
-            }
-        }
-
-        var slug = result.ToString().Trim('-');
-        return string.IsNullOrEmpty(slug) ? "aquarium" : slug;
+        return Slug.MakeUniqueAsync(candidate, slug => snapshotRepo.SlugExistsAsync(slug, ct));
     }
 
     private static AquariumSnapshotDto ToDto(AquariumSnapshot s, SnapshotDataDto? snapshotData, bool likedByMe, string? coverImageUrl)

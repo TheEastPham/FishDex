@@ -122,7 +122,7 @@ Chỉ có **hai** kiểu đường: liền = live, đứt = planned. Quan hệ n
 | AquaHome API (BFF) | .NET 9 · ASP.NET Core | Hồ cá, snapshot, contest, bài viết. Điều phối gọi sang FishDex/UserManagement. Xác nhận bài dự thi chỉ kiểm file trên R2 rồi đưa vào hàng chờ; công khai/xoá video YouTube khi admin duyệt/từ chối |
 | AquaHome Worker | .NET 9 Worker Service | Job nền: **đăng video dự thi trong hàng chờ lên YouTube (2 phút, giữ lượt đăng theo ngày giờ Pacific — ADR 0005)**, dọn video staging quá hạn (6h), nhắc lịch chăm hồ, đẩy market species sang FishDex (8h), đồng bộ lượt xem YouTube (6h). **Chỉ chạy một instance** |
 | db: usermanagement | PostgreSQL 16 | Tài khoản, token, subscription push |
-| db: fishdex | PostgreSQL 16 + pgvector | Loài cá, media, market listing. Extension pgvector đã bật, **chưa có bảng vector nào** |
+| db: fishdex | PostgreSQL 16 + pgvector | Loài cá, media, market listing. Extension pgvector bật bằng script khởi tạo DB. Code chưa có entity vector, nhưng DB có thể còn bảng `SpeciesChunks` rỗng từ migration cũ đã bị gỡ khỏi code (xem kế hoạch AI, mục Bối cảnh) |
 | db: aquahome | PostgreSQL 16 | Hồ cá, snapshot, contest, bài viết |
 | Cache / session | Redis 7 | Session (UserManagement), cache (AquaHome), hạn mức khách vãng lai (FishDex) |
 | Embedding Service 🚧 | Python · FastAPI · all-MiniLM-L6-v2 · code ở repo `FishLover-AI` (ADR 0006) | Sinh embedding câu hỏi cho RAG, gọi LLM sinh câu trả lời |

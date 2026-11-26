@@ -8,7 +8,7 @@ Repo này **public**: không đưa vào đây secret, kết quả audit bảo m�
 |---|---|---|---|
 | [architecture/c4/](architecture/c4/README.md) | C4 L1 System Context, L2 Container, Deployment | Khớp code; phần 🚧 (mobile, AI) là kiến trúc đích theo ADR 0006 | 26/11/2026 |
 | [architecture/reviews/2026-11-20-backend.html](architecture/reviews/2026-11-20-backend.html) | Architecture review backend 20/11 | **Lịch sử**: mọi mục đã làm xong, ô đầu trang ghi commit tương ứng. Không mô tả code hiện tại | 25/11/2026 |
-| [roadmap/ai-release-plan.md](roadmap/ai-release-plan.md) | Kế hoạch phát hành AI v2.0 (R0–R7), ràng buộc, rủi ro, việc mở | Kế hoạch hiện hành; nhiều thứ trong đó chưa xây | 26/11/2026 |
+| [roadmap/ai-release-plan.md](roadmap/ai-release-plan.md) | Kế hoạch phát hành AI v2.0 (R0–R7), ràng buộc, rủi ro, việc mở | Kế hoạch hiện hành, tự đủ để lập kế hoạch chi tiết (có bối cảnh, mô tả dữ liệu, bảng mã) | 27/11/2026 |
 | [roadmap/r0-data-analysis.md](roadmap/r0-data-analysis.md) | Phân tích độ phủ dữ liệu FishBase v24.07 làm nền cho R0 | Số liệu đo trên `data/fishbase-v24.07` của workspace | 24/11/2026 |
 | [guides/be-developer-guide.md](guides/be-developer-guide.md) | Hướng dẫn BE: các service, module chính, xác thực giữa các phần, quy ước, test, trình tự thêm tính năng | Viết lại từ code ngày 26/11; lệnh và quy tắc bắt buộc xem `BackEndProject/CLAUDE.md` | 26/11/2026 |
 | [guides/fe-developer-guide.md](guides/fe-developer-guide.md) | Onboarding FE: stack, cấu trúc feature, auth, upload, quy ước | Đã sửa các chỗ lệch; chi tiết từng page có thể cũ dần | 26/11/2026 |

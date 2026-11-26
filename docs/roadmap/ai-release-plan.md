@@ -1,10 +1,82 @@
 # Kế hoạch phát hành AI v2.0 — hợp nhất roadmap học tập với cách làm hiện tại
 
-> Nguồn: Notion "AI Learning Roadmap — Unified" (cây Root → Nhánh 1/2/3) và "Epic 2: AI Q&A Service".
-> Tài liệu này KHÔNG thay roadmap học; nó thêm lớp **phát hành** (thứ tự, tiêu chí hoàn thành, mobile) lên trên.
-> Kế hoạch này sống trong repo (`docs/roadmap/`), không đồng bộ lên Notion theo quyết định của chủ dự án.
-> Quyết định đã chốt với chủ dự án: Q1 Nhánh 1 trước · Q2 số đo nước nhập tay trước · Q3 bể 3D tách track riêng · Q4 PWA trước, Capacitor khi có lý do · Q5 (24/11/2026) câu hỏi được quy về tiếng Anh trước khi embed bằng MiniLM, chunk giữ tiếng Anh, tên Việt đi qua bảng alias.
-> Số liệu dữ liệu làm cơ sở cho các điều chỉnh bên dưới: [`r0-data-analysis.md`](r0-data-analysis.md).
+> Nguồn gốc: roadmap học "AI Learning Roadmap — Unified" (cây Root → Nhánh 1/2/3) và "Epic 2: AI Q&A Service" trên Notion. **File này tự đủ để lập kế hoạch, không cần Notion**: các mã Root/Nhánh/Story được giải nghĩa ở mục [Bảng mã](#bảng-mã).
+> Tài liệu này KHÔNG thay roadmap học; nó thêm lớp **phát hành** (thứ tự, tiêu chí hoàn thành, mobile) lên trên. Kế hoạch sống trong repo, không đồng bộ lên Notion theo quyết định của chủ dự án.
+> Quyết định đã chốt với chủ dự án: Q1 Nhánh 1 trước · Q2 số đo nước nhập tay trước · Q3 bể 3D tách track riêng · ~~Q4 PWA trước, Capacitor khi có lý do~~ → **thay bằng ADR 0006 (26/11/2026): app mobile native bằng Expo** · Q5 (24/11/2026) câu hỏi được quy về tiếng Anh trước khi embed bằng MiniLM, chunk giữ tiếng Anh, tên Việt đi qua bảng alias · Q6 (26/11/2026) dịch vụ ML Python ở repo riêng `FishLover-AI`, phần tích hợp .NET ở repo này (ADR 0006).
+> Số liệu dữ liệu làm cơ sở cho các điều chỉnh bên dưới: [`r0-data-analysis.md`](r0-data-analysis.md). Cập nhật lần cuối: 27/11/2026.
+
+## Bối cảnh cho người lập kế hoạch (đọc trước)
+
+Dành cho người (hoặc AI) lần đầu lập kế hoạch chi tiết từ file này.
+
+**Hiện trạng (27/11/2026):** **chưa có dòng code AI nào chạy**. Production đang chạy `release/v1.2`. Những thứ đã có sẵn để dựa vào:
+- FishDex: extension `vector` (pgvector 0.8) được bật bằng script khởi tạo DB (`Pipeline/local/FishDex/init.sql`, `Pipeline/OracleVM/VM1/services/init-db.sh`), **không** bằng EF migration. Code hiện **không có entity vector nào**.
+- **Phải kiểm trước R0:** DB FishDex local có sẵn bảng `SpeciesChunks` (`Id`, `SpecCode`, `ChunkIndex`, `Embedding vector`, `ChunkText`, 0 dòng) do migration `20260527151440_AddSpeciesChunks` tạo — migration này vẫn nằm trong `__EFMigrationsHistory` nhưng **không còn trong code**. Kiểm PROD có bảng này không; entity `SpeciesChunk` mới phải tái dùng hoặc bỏ bảng cũ một cách có chủ đích (migration mới), không được tạo trùng tên.
+- AquaHome: `QuotaType.AiQaPerDay`, `ImageSearchPerDay`, `SearchPerDay` và `IQuotaService.ConsumeDailyAsync` (đếm theo ngày) đã có bảng, repo, seed — chưa nơi nào gọi.
+- `Pipeline/Preprocessor/preprocess.py` (Python + DuckDB): bản chunk v1.0 từ parquet ra `output/species_chunks.jsonl` (bị gitignore). Nó đọc parquet ở `Pipeline/local/FishDex/parquetData/` (bản copy cục bộ, gitignore); R0 phải dựng lại chunk theo chủ đề (xem `r0-data-analysis.md`).
+- `Pipeline/OracleVM/VM3/`: README + hai thư mục `embedding_service/`, `image_search_service/` còn rỗng.
+
+**Đọc trước khi lập kế hoạch** (theo thứ tự):
+1. `BackEndProject/CLAUDE.md` — lệnh, quy ước, mục "v2.0 AI Stack" (ràng buộc thiết kế chưa xây).
+2. `BackEndProject/docs/adr/0004` (validate audience đang tắt), `0005` (Worker đăng video, một instance), `0006` (mobile Expo, repo AI riêng, hướng sau này).
+3. `docs/architecture/c4/` — L2 Container và Deployment, phần 🚧 là kiến trúc đích.
+4. `BackEndProject/GLOSSARY.md` — thuật ngữ; thêm từ mới theo skill `domain-modeling`.
+5. [`r0-data-analysis.md`](r0-data-analysis.md) — độ phủ dữ liệu, lý do các điều chỉnh R0–R3.
+6. `docs/guides/be-developer-guide.md`, `FrontEnd/CLAUDE.md` — cách thêm tính năng, test BE/FE.
+
+**Code nằm ở đâu (ADR 0006):**
+
+| Phần | Repo | Ghi chú |
+|---|---|---|
+| Dịch vụ ML Python (`/embed`, image search), script tạo chunk, notebook đánh giá, huấn luyện/thu gọn model | `FishLover-AI` (**chưa tạo**) | Khi tạo: chuyển `Pipeline/Preprocessor` và scaffold `Pipeline/OracleVM/VM3/*_service` sang; đường dẫn parquet đọc từ biến môi trường, không hard-code |
+| `ILlmProvider`, `QueryNormalizer`, endpoint RAG, entity `SpeciesChunk` / `SpeciesAlias` / `ClipEmbedding` + migration, quota | FishDex (repo này) | Đi theo service sở hữu dữ liệu (FishDex) hoặc BFF (AquaHome) — xem "Việc mở" |
+| UI chat, tìm ảnh, số đo nước | FishDex/FrontEnd (web), `FrontEnd/apps/mobile` (app 🚧) | Dùng chung `@fishlover/shared` |
+
+**Quy tắc khi lập kế hoạch:**
+- Mục [Việc mở](#việc-mở-cần-quyết-ở-vòng-hỏi-tiếp-theo) là câu **phải hỏi chủ dự án**, không tự chốt.
+- Mỗi bản phát hành phải có tiêu chí hoàn thành đo được (bảng dưới); kế hoạch chi tiết chia thành lát mỏng có test, BE và FE tách commit.
+- Phase nghiên cứu (R0, phần thử nghiệm của R1/R4) **chạy trên laptop cá nhân** của chủ dự án; VM3 chỉ bật khi cần cho PROD (mục VM3).
+
+## Dữ liệu FishBase (không nằm trong repo)
+
+Repo FishDex là public và **không chứa dữ liệu FishBase**; repo `FishLover-AI` cũng sẽ không chứa. Dữ liệu nằm trên laptop của chủ dự án, nơi chạy phase nghiên cứu.
+
+| Thứ | Ở đâu | Là gì |
+|---|---|---|
+| `fishbase-v24.07/` | `D:\Workspace\FishLover\data\` (workspace, ngoài git; bản backup ở `D:\Workspace\_backups\`) | Bản phát hành FishBase v24.07 dạng **214 file parquet, ~214 MB**, mỗi file một bảng FishBase. Đọc bằng DuckDB hoặc pandas, chỉ đọc |
+| `ExplainColumn.json` | cùng thư mục `data\` | Từ điển cột FishBase v24.07 (bản 16/10/2026) |
+| `fishdex_public_Species.csv` | cùng thư mục `data\` | Phạm vi loài của FishDex, mỗi dòng một `SpecCode` |
+| `exports/` | cùng thư mục `data\` | Các lô dữ liệu đã nạp lên PROD, mỗi lô có README |
+
+- **Bảng hay dùng cho AI:** `species` (thông tin loài, `SpecCode`), `families`, `comnames` (tên thường gọi theo ngôn ngữ — tên Việt chỉ có ở 6,6% loài cá cảnh), `stocks` (khoảng nhiệt độ, pH, độ cứng; một loài có thể nhiều stock), `ecology`, `waterquality`. Danh sách đầy đủ cột và độ phủ: `r0-data-analysis.md`.
+- **Phạm vi:** 3.751 loài cá cảnh là phạm vi làm trước (định nghĩa trong `r0-data-analysis.md`).
+- **Nguồn tải:** chưa được ghi lại trong workspace. Cần tải lại thì hỏi chủ dự án; khi biết, ghi nguồn và giấy phép sử dụng của FishBase vào đây.
+- **Ảnh loài** (cho CLIP, R4): không nằm trong parquet; ảnh đang ở bucket R2 `system-image` (key `{SpecCode}/{Id}{ext}`, xem `SystemImage.ObjectKey`). Batch embed ~70k ảnh chạy trên laptop.
+
+## Bảng mã
+
+Các mã trong cột "Học trước" và tên Story đến từ Notion; nghĩa của chúng:
+
+| Mã | Nghĩa |
+|---|---|
+| Root·W | Khởi động Python cho dev .NET: môi trường, đọc parquet bằng pandas, gọi model có sẵn |
+| Root·0 | Khái niệm AI đủ dùng: embedding, tìm theo nghĩa, RAG, CLIP, vì sao chia chunk |
+| Root·E | Bộ đo dùng chung: bộ loài lõi, bộ câu hỏi chuẩn, `eval.py` |
+| Root·D | Dữ liệu đúng phạm vi cá cảnh: định nghĩa phạm vi, đo độ phủ, chunk theo nhóm câu hỏi, bảng tên gọi |
+| Root·1 | Embedding và vector: MiniLM, embed toàn bộ trên laptop, nạp pgvector, service `/embed` |
+| Root·2 | LLM core: gọi Groq, đổi sang Ollama cùng code, system prompt tiếng Việt |
+| Nhánh 1.1 | RAG lõi: hỏi thẳng LLM làm mốc → tra hồ sơ + LLM → retrieval pgvector → chuyển sang .NET → cache, UI, quota (1.2 = nâng chất lượng) |
+| Nhánh 2.1 | Tìm loài bằng ảnh: CLIP trên ảnh mẫu → batch ~70k ảnh vào pgvector → API + UI (fine-tune để sau) |
+| 3.0 | Analyzer bằng luật: case viết cứng, chưa cần LLM |
+| 3.1 | Trích xuất trait bù chỗ FishBase thiếu (LLM, có kiểm duyệt), lưu trait linh hoạt (JSONB) |
+| 3.2 | Explanation Layer: LLM chỉ diễn giải kết quả của luật |
+| 3.4 | Time-series: dự đoán từ lịch sử số đo |
+| Story 2.0 | Ingest chunk từ parquet vào pgvector, chạy lại không trùng |
+| Story 2.1 | Embedding service `/embed` (FastAPI, MiniLM 384-d) |
+| Story 2.2–2.6 | Pipeline RAG, `ILlmProvider` (Groq/Ollama), cache, chat FE + SSE + trích dẫn, quota `aiQaPerDay` |
+| Story 4.1–4.4 | CLIP service, index ảnh pgvector (512-d), API tìm ảnh ở FishDex, UI tìm ảnh |
+
+Nội dung khoá học tương ứng (bài, số đo) ở `research/ai-course/` của workspace; bản tách Story cũ (06/2026, một phần đã lỗi thời) ở `_archive/fishdex-ai-option-a-2026-06/ai-option-a-stories.md`. Khi hai nơi đó mâu thuẫn với file này, **file này thắng**.
 
 ## Nguyên tắc
 
@@ -12,18 +84,18 @@
 2. **Quy tắc trước, LLM sau.** Case có công thức hoặc luật rõ (độc tố, tương thích) chạy bằng rule; LLM chỉ diễn giải kết quả (Explanation Layer, 3.2). Không ép AI vào chỗ rule đã đủ.
 3. **Mọi đầu ra AI có độ chắc chắn.** Dữ liệu FishBase nhiều cột null → trả `Score + Explanation + Confidence`, thiếu dữ liệu thì nói thiếu.
 4. **Cổng chất lượng theo bản phát hành**, không theo ngày: mỗi bản có tiêu chí hoàn thành đo được (bên dưới).
-5. **Ba làn song song, độc lập**: A (Q&A → Analyzer), B (Image Search), C (giao sản phẩm/mobile).
+5. **Ba làn song song, độc lập**: A (Q&A → Analyzer), B (Image Search), C (giao sản phẩm/mobile — app Expo, ADR 0006).
 
 ## Các bản phát hành
 
-| # | Bản | Nội dung | Học trước (Notion) | Tiêu chí hoàn thành |
+| # | Bản | Nội dung | Học trước (xem Bảng mã) | Tiêu chí hoàn thành |
 |---|---|---|---|---|
 | **R0** | Nền dữ liệu + embedding + chuẩn hóa câu hỏi | Story 2.0 (ingest chunk từ parquet, upsert chạy lại được; **dựng lại chunk theo chủ đề**, 3.751 loài cá cảnh trước), 2.1 (FastAPI `/embed` trên VM3, cache 1h, VM3 down → 503), **bảng `SpeciesAlias` (Việt/Anh/khoa học → SpecCode) + `QueryNormalizer` chạy bằng luật** (xem mục "Chuẩn hóa câu hỏi") | Root·W (tùy chọn), Root·0, Root·1 | Script re-run không trùng; `/embed` đạt ngân sách; có **bộ câu hỏi chuẩn ~30 câu tiếng Việt** kèm loài đúng; đo được **từng tầng** (độ chính xác alias → hit@k retrieval → đúng/từ chối đúng) chứ không chỉ điểm cuối |
 | **R1** | AI Q&A | Story 2.2–2.6: pipeline chuẩn hóa → lọc theo SpecCode/chunkType → vector → LLM sinh câu trả lời tiếng Việt; `ILlmProvider` (Groq/Ollama/Gemini), cache Redis, chat FE + SSE + trích dẫn, quota `aiQaPerDay`. LLM dịch chỉ là fallback có cache; tên mơ hồ → hỏi lại người dùng | Root·2, Nhánh 1.1 | p95 < 1,5s; Groq 429 → 503; **tỷ lệ trả lời đúng/trích dẫn đúng trên bộ chuẩn** đạt ngưỡng đã chốt; **từ chối đúng** nhóm câu thiếu dữ liệu; tỷ lệ gọi LLM dịch đo được và nằm trong ngân sách RPM; metric RPM lên Grafana |
 | **R2** | Số đo nước + cảnh báo độc tố | Entity số đo nước (NH₃/NO₂/NO₃/pH/nhiệt độ, **nhập tay**), luật ngưỡng chung + xu hướng (ngưỡng lấy từ nguồn nuôi cá có trích dẫn — FishBase không có ngưỡng nitơ theo loài, xem `r0-data-analysis.md` mục 3), nhắc thay nước qua Web Push/Worker, gate theo role/quota | 3.0 (bản nhẹ), Root·0 | Cảnh báo kích hoạt đúng với bộ ca thử; luôn hiện "tham khảo, không thay thế xét nghiệm"; không cần LLM để chạy (LLM chỉ giải thích, tùy chọn) |
 | **R3** | Mô phỏng thả thêm cá | Schema trait (EAV/JSONB), trích xuất bù chỗ FishBase thiếu (3.1), `IAquariumAnalyzer` + case tương thích: nhiệt độ/pH/dH chồng lấn, kích thước trưởng thành vs thể tích, kiểu ăn. **Hung dữ và nhóm tối thiểu cần nguồn bổ sung** (đóng góp cộng đồng hoặc trích xuất có kiểm duyệt, 3.0/3.1) vì FishBase không có tính cách và cờ sống bầy chỉ dương tính ở 2,3% loài cá cảnh | 3.0, 3.1, 3.2 | Báo cáo độ phủ trait; chỉ chấm điểm khi đủ dữ liệu (hiện ~26% loài cá cảnh đủ nhiệt độ + pH); mọi kết quả có Confidence; contract test cho analyzer; thêm case mới không sửa foundation |
 | **R4** | Image Search (làn B) | Epic 4: CLIP trên VM3, `ClipEmbedding` 512-d, tìm ảnh | Root·1, Nhánh 2.1 | p95 < 700ms; VM3 down → 503. Làm song song, chèn khi rảnh tay, không chặn R1–R3 |
-| **R5** | Mobile (làn C) | Cứng hóa PWA: cài đặt, Web Push iOS, trải nghiệm 390px; **cổng quyết định Capacitor** | — | Checklist iPhone 12+ đạt; chỉ đóng gói store nếu PWA thiếu tính năng cụ thể đã ghi nhận |
+| **R5** | Mobile (làn C) | App iOS + Android bằng **Expo** ở `FrontEnd/apps/mobile` (ADR 0006). Trước tiên 5 việc chuẩn bị trong ADR 0006: validate audience, sửa discovery OIDC, client OAuth cho mobile, tách phần chỉ web khỏi `@fishlover/shared`, chọn kênh push. Sau đó làm các luồng chính của web, rồi chat AI/tìm ảnh khi R1/R4 xong | — | Build qua EAS cho cả hai nền tảng; đăng nhập PKCE bằng client riêng, token trong SecureStore; checklist iPhone 12+ đạt; qua duyệt App Store và Google Play; API giữ tương thích `/v1` |
 | **R6** | Bể 3D | Hiển thị 1 bể (hộp bể + cá theo kích thước thật, nhóm đàn), gate theo role | — | Chạy mượt trên iPhone 12; bản đơn giản trước, không đua đồ họa |
 | **R7** | Time-series (gated) | Dự đoán tần suất thay nước, nguy cơ bệnh | 3.4 | Chỉ mở khi đủ lịch sử số đo + nhãn thật từ người dùng |
 
@@ -67,6 +139,8 @@ Câu trả lời vẫn được LLM sinh bằng tiếng Việt từ chunk tiến
 
 **Hiện trạng:** VM3 là Ubuntu **ARM (aarch64)**, 6GB RAM (Oracle Always Free), do chủ dự án xác nhận. README ở `Pipeline/OracleVM/VM3/` vẫn ghi *Specs: TBD*, trạng thái đang phát triển, hai thư mục `embedding_service/` và `image_search_service/` còn rỗng. Chưa xác nhận: phiên bản Ubuntu, số OCPU, IP.
 
+**Code ở đâu:** code của hai dịch vụ viết trong repo `FishLover-AI` (ADR 0006), build ra image `linux/arm64`. `Pipeline/OracleVM/VM3/` trong repo này chỉ còn giữ phần hạ tầng (compose, README) nếu muốn; hai thư mục scaffold rỗng chuyển đi khi tạo repo AI.
+
 **Hệ quả của ARM cho thiết kế:**
 - Image phải là `linux/arm64`. Laptop dev là x86 Windows, nên dựng image cho VM3 bằng `docker buildx build --platform linux/arm64` (QEMU, chậm) hoặc build ngay trên VM3 / trong CI chạy ARM. Dev local vẫn chạy x86 bình thường vì code Python giống nhau.
 - Chọn base image đa kiến trúc (ví dụ `python:3.12-slim`), tránh wheel chỉ có cho x86. Trước khi chốt `requirements.txt`, kiểm tra `torch`, `sentence-transformers`, `open_clip_torch`, `pillow`, `numpy` có bản aarch64 (dùng bản PyTorch CPU).
@@ -96,7 +170,8 @@ Câu trả lời vẫn được LLM sinh bằng tiếng Việt từ chunk tiến
 - VM3 (6GB): embedding + CLIP ≈ 3,5GB; không expose public; down → 503, không fallback embedding local.
 - pgvector: `SpeciesChunk.Embedding` (384) và `SpeciesMedia.ClipEmbedding` (512) không trộn trong một truy vấn.
 - Ngân sách: RAG p95 < 1,5s; Image search p95 < 700ms.
-- BE và FE tách commit khi làm feature; mobile 390px là mặc định; mọi chuỗi qua i18n.
+- BE và FE tách commit khi làm feature; mobile 390px là mặc định; mọi chuỗi qua i18n (4 ngôn ngữ vi/en/de/zh).
+- API thêm cho AI phải dùng được cho cả web lẫn app mobile và giữ tương thích ngược trong `/v1` (app đã cài không cập nhật cùng lúc).
 - Mọi object key qua `FishDexObjectKeys` / `AquaHomeObjectKeys`; không tự ghép.
 
 ## Rủi ro và cách chặn

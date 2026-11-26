@@ -33,6 +33,10 @@ Mọi string hiển thị cho user phải đi qua `useTranslation()` — không 
 
 Thêm key mới vào **cả 4 file** `vi.ts`, `en.ts`, `de.ts`, `zh.ts` cùng lúc (menu chọn ngôn ngữ có cả 4). Kiểm tra đủ key: `npm run i18n:check -w @fishlover/shared` (thiếu/thừa → exit 1).
 
+## Test
+
+`npm test` ở `FrontEnd/` (Vitest, cấu hình `vitest.config.ts`). File `*.test.ts(x)` đặt cạnh code; mặc định chạy trong Node, test cần DOM thì thêm dòng đầu `// @vitest-environment jsdom` và render bằng `@testing-library/react`. Logic trong `packages/shared` (API client, auth, cache) phải có test — app mobile sau này dùng lại phần này.
+
 ## Commits
 
 KHÔNG gộp code BE (`BackEndProject/`, `Pipeline/`) và FE (`FrontEnd/`) trong cùng 1 commit khi implement feature — tách commit riêng cho mỗi bên. **Ngoại lệ**: fix bug thì được gộp BE+FE trong 1 commit.

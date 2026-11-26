@@ -53,11 +53,14 @@ apiClient.interceptors.response.use(
     }
 
     try {
-      refreshing ??= refreshAccessToken(rt).then((tokens) => {
-        setTokens(tokens.access_token, tokens.refresh_token);
-        refreshing = null;
-        return tokens.access_token;
-      });
+      // Dọn ở finally: trước đây chỉ dọn khi thành công, nên một lần refresh lỗi (rớt mạng, token hết hạn) để lại
+      // promise đã reject — mọi 401 sau đó, kể cả sau khi đăng nhập lại, dùng lại nó và bị đăng xuất ngay.
+      refreshing ??= refreshAccessToken(rt)
+        .then((tokens) => {
+          setTokens(tokens.access_token, tokens.refresh_token);
+          return tokens.access_token;
+        })
+        .finally(() => { refreshing = null; });
 
       const newToken = await refreshing;
       original.headers.Authorization = `Bearer ${newToken}`;

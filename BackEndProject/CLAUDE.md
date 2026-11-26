@@ -182,7 +182,7 @@ Project-level `nuget.config` forces restore từ `nuget.org` only. Không dùng 
 
 ## Pipeline
 
-Xem `../Pipeline/README.md` để biết cách chạy local Docker stack và 4 pipeline Azure DevOps (chạy khi push lên `release/v1.1`).
+Xem `../Pipeline/README.md` để biết cách chạy local Docker stack và 4 pipeline Azure DevOps (chạy khi push lên `release/v1.2`).
 
 ## Production Deployment Checklist
 

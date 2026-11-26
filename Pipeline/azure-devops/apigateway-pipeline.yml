@@ -4,7 +4,7 @@
 trigger:
   branches:
     include:
-      - release/v1.1
+      - release/v1.2
   paths:
     include:
       - BackEndProject/ApiGateway/**

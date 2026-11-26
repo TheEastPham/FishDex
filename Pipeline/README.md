@@ -67,7 +67,7 @@ docker compose -f docker-compose.local.yml up -d usermanagement-db usermanagemen
 
 | Khi nào chạy | Điều kiện |
 |---|---|
-| Push lên `release/v1.1` | Có thay đổi trong `BackEndProject/<Service>/**` (3 service kèm `BackEndProject/Share/**`), trừ file `.md` |
+| Push lên `release/v1.2` | Có thay đổi trong `BackEndProject/<Service>/**` (3 service kèm `BackEndProject/Share/**`), trừ file `.md` |
 | Pull request | Không chạy |
 
 Khi đổi nhánh phát hành (ví dụ sang `release/v1.2`), sửa `trigger.branches.include` ở **cả 4 file**.

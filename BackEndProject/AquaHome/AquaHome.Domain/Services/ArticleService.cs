@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AquaHome.Domain.Articles;
 using AquaHome.Domain.DTOs;
 using AquaHome.Domain.Enums;
 using AquaHome.Domain.Exceptions;
@@ -28,6 +29,7 @@ public class ArticleService(
     IStorageService storage,
     AquaHomeObjectKeys keys,
     ICurrentUserSession currentUser,
+    PublicArticleView publicView,
     ILogger<ArticleService> logger) : IArticleService
 {
     /// <summary>
@@ -41,12 +43,6 @@ public class ArticleService(
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
-    /// <summary>Khớp locale của FE. Ngôn ngữ ngoài danh sách này bị từ chối.</summary>
-    private static readonly string[] SupportedLanguages = ["vi", "en", "de", "zh"];
-
-    /// <summary>Thiếu bản dịch đang xem thì lùi theo thứ tự này (chốt cùng FE).</summary>
-    private static readonly string[] FallbackLanguages = ["en", "vi"];
-
     private static readonly string[] AllowedImageTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
     private const long MaxCoverBytes = 3 * 1024 * 1024;
@@ -57,13 +53,7 @@ public class ArticleService(
 
 
     // ── Công khai ────────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Bài Beginner mở cho tất cả; từ Intermediate trở lên phải đăng nhập mới đọc được nội dung.
-    /// Metadata thì vẫn trả cho khách — họ phải thấy bài hay thì mới có lý do đăng ký tài khoản.
-    /// </summary>
-    private static bool NeedsAuth(Article article)
-        => (ReadingLevel)article.ReadingLevel != ReadingLevel.Beginner;
+    // Phần trình bày (chọn bản dịch, khoá bài, phát URL) nằm ở PublicArticleView; ở đây chỉ truy vấn.
 
     public async Task<PagedResult<ArticleListItemDto>> GetPublishedAsync(
         string? language, ArticleType? type, ReadingLevel? readingLevel,
@@ -77,32 +67,12 @@ public class ArticleService(
             readingLevel.HasValue ? (int)readingLevel.Value : null,
             NormalizeTag(tag), q, page, pageSize, ct);
 
-        var lang = NormalizeLanguage(language);
+        var reader = ArticleReader.For(language, isAuthenticated);
         var list = new List<ArticleListItemDto>(items.Count);
 
         foreach (var article in items)
-        {
-            var translation = ResolveTranslation(article, lang);
-            if (translation is null) continue; // bài chưa có bản dịch nào — không có gì để hiển thị
-
-            list.Add(new ArticleListItemDto(
-                article.Id,
-                article.Slug,
-                (ArticleType)article.Type,
-                (ReadingLevel)article.ReadingLevel,
-                article.TemplateKey,
-                article.Tags,
-                translation.Language,
-                translation.Title,
-                translation.Summary,
-                await UrlAsync(article.CoverObjectKey, ct),
-                article.AuthorName,
-                translation.ReadingMinutes,
-                article.ViewCount,
-                article.IsFeatured,
-                !isAuthenticated && NeedsAuth(article),
-                article.PublishedAt));
-        }
+            if (await publicView.ToListItemAsync(article, reader, ct) is { } item)
+                list.Add(item);
 
         return new PagedResult<ArticleListItemDto>
         {
@@ -117,44 +87,9 @@ public class ArticleService(
         string slug, string? language, bool isAuthenticated, CancellationToken ct = default)
     {
         var article = await articleRepo.GetBySlugAsync(slug, publishedOnly: true, ct);
-        if (article is null) return null;
-
-        var requested = NormalizeLanguage(language);
-        var translation = ResolveTranslation(article, requested);
-        if (translation is null) return null;
-
-        // Bài khóa: không phát presigned URL của content.json lẫn của ảnh trong bài. Chặn ở đây
-        // chứ không chỉ ẩn trên giao diện — URL đã phát ra là ai cầm cũng đọc được.
-        var locked = !isAuthenticated && NeedsAuth(article);
-
-        var assets = new List<ArticleAssetDto>(locked ? 0 : article.Assets.Count);
-        if (!locked)
-            foreach (var asset in article.Assets)
-                assets.Add(new ArticleAssetDto(
-                    asset.Id, await UrlAsync(asset.ObjectKey, ct), asset.FileName, asset.ContentType, asset.Bytes));
-
-        return new ArticleDetailDto(
-            article.Id,
-            article.Slug,
-            (ArticleType)article.Type,
-            (ReadingLevel)article.ReadingLevel,
-            article.TemplateKey,
-            article.Tags,
-            translation.Language,
-            requested,
-            article.Translations.Select(t => t.Language).OrderBy(l => l).ToList(),
-            translation.Title,
-            translation.Summary,
-            await UrlAsync(article.CoverObjectKey, ct),
-            article.AuthorName,
-            translation.ReadingMinutes,
-            translation.WordCount,
-            article.ViewCount,
-            article.PublishedAt,
-            translation.UpdatedAt,
-            locked ? null : await UrlAsync(translation.ContentObjectKey, ct),
-            locked,
-            assets);
+        return article is null
+            ? null
+            : await publicView.ToDetailAsync(article, ArticleReader.For(language, isAuthenticated), ct);
     }
 
     public async Task<IReadOnlyList<ArticleListItemDto>> GetRelatedAsync(
@@ -170,7 +105,7 @@ public class ArticleService(
         var candidates = await articleRepo.GetRelatedCandidatesAsync(
             article.Id, article.Type, article.Tags, take: 24, ct);
 
-        var lang = NormalizeLanguage(language);
+        var reader = ArticleReader.For(language, isAuthenticated);
         var ranked = candidates
             .Select(a => new
             {
@@ -186,16 +121,8 @@ public class ArticleService(
 
         var list = new List<ArticleListItemDto>(limit);
         foreach (var candidate in ranked)
-        {
-            var translation = ResolveTranslation(candidate, lang);
-            if (translation is null) continue;
-
-            list.Add(new ArticleListItemDto(
-                candidate.Id, candidate.Slug, (ArticleType)candidate.Type, (ReadingLevel)candidate.ReadingLevel,
-                candidate.TemplateKey, candidate.Tags, translation.Language, translation.Title, translation.Summary,
-                await UrlAsync(candidate.CoverObjectKey, ct), candidate.AuthorName, translation.ReadingMinutes,
-                candidate.ViewCount, candidate.IsFeatured, !isAuthenticated && NeedsAuth(candidate), candidate.PublishedAt));
-        }
+            if (await publicView.ToListItemAsync(candidate, reader, ct) is { } item)
+                list.Add(item);
 
         return list;
     }
@@ -540,36 +467,12 @@ public class ArticleService(
         return !string.IsNullOrEmpty(normalized) && TemplateKeys.Contains(normalized) ? normalized : fallback;
     }
 
-    private static ArticleTranslation? ResolveTranslation(Article article, string language)
-    {
-        var exact = article.Translations.FirstOrDefault(t => t.Language == language);
-        if (exact is not null) return exact;
-
-        foreach (var fallback in FallbackLanguages)
-        {
-            var match = article.Translations.FirstOrDefault(t => t.Language == fallback);
-            if (match is not null) return match;
-        }
-
-        return article.Translations.OrderBy(t => t.Language).FirstOrDefault();
-    }
-
-    private static string NormalizeLanguage(string? language)
-    {
-        var trimmed = language?.Trim();
-        if (string.IsNullOrEmpty(trimmed)) return "vi";
-
-        // FE có thể gửi "vi-VN" / "en-US" — chỉ lấy phần ngôn ngữ.
-        var code = trimmed[..Math.Min(2, trimmed.Length)].ToLowerInvariant();
-        return SupportedLanguages.Contains(code) ? code : "vi";
-    }
-
     private static string RequireSupportedLanguage(string? language)
     {
         var code = language?.Trim().ToLowerInvariant();
-        if (string.IsNullOrEmpty(code) || !SupportedLanguages.Contains(code))
+        if (string.IsNullOrEmpty(code) || !ArticleLanguages.Supported.Contains(code))
             throw new ArticleValidationException(
-                [$"Ngôn ngữ '{language}' không hỗ trợ (chỉ nhận {string.Join(", ", SupportedLanguages)})"]);
+                [$"Ngôn ngữ '{language}' không hỗ trợ (chỉ nhận {string.Join(", ", ArticleLanguages.Supported)})"]);
         return code;
     }
 

@@ -35,6 +35,7 @@ public static class AquaHomeServiceExtensions
         services.AddScoped<ISnapshotService, SnapshotService>();
         services.AddScoped<IContestService, ContestService>();
         services.AddScoped<IArticleService, ArticleService>();
+        services.AddScoped<AquaHome.Domain.Articles.PublicArticleView>();
         services.Configure<YouTubeSettings>(configuration.GetSection(YouTubeSettings.SectionName));
         services.AddScoped<IYouTubeUploadService, YouTubeUploadService>();
         services.AddHttpClient(); // dùng cho YouTubeUploadService download video từ R2 presigned URL

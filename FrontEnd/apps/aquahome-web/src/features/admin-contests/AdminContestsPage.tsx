@@ -8,6 +8,12 @@ import type { ContestDto, ContestEntryDto, CreateContestRequest } from '@fishlov
 import { Trophy, Plus, Pencil, Youtube, Check, X, Loader2, ClipboardCheck, Settings2, ChevronUp, ExternalLink } from 'lucide-react';
 import ContestManagePanel from './ContestManagePanel';
 
+/** 422 từ BE luôn kèm lý do cụ thể (vd còn bài chờ đăng/chờ duyệt) — trả lý do đó, lỗi khác trả null. */
+function validationMessage(err: unknown): string | null {
+  const res = (err as { response?: { status?: number; data?: { message?: string } } })?.response;
+  return res?.status === 422 ? (res.data?.message ?? null) : null;
+}
+
 function formatDate(iso: string, locale: string) {
   return new Date(iso).toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
@@ -38,14 +44,14 @@ function ContestFormModal({ contest, onClose, onSaved, t }: {
   const [endAt, setEndAt] = useState(toDateInputValue(contest?.endAt ?? null));
   const [status, setStatus] = useState<ContestStatus>(contest?.status ?? ContestStatus.Draft);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const canSave = title.trim() && startAt && endAt;
 
   const handleSave = async () => {
     if (!canSave) return;
     setSaving(true);
-    setError(false);
+    setError(null);
     try {
       const payload: CreateContestRequest = {
         title: title.trim(),
@@ -61,8 +67,8 @@ function ContestFormModal({ contest, onClose, onSaved, t }: {
       }
       onSaved();
       onClose();
-    } catch {
-      setError(true);
+    } catch (err) {
+      setError(validationMessage(err) ?? t('adminContests.saveError'));
     } finally {
       setSaving(false);
     }
@@ -91,7 +97,7 @@ function ContestFormModal({ contest, onClose, onSaved, t }: {
           <div className="p-5 space-y-4">
             {error && (
               <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
-                {t('adminContests.saveError')}
+                {error}
               </div>
             )}
 

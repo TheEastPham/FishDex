@@ -163,7 +163,7 @@ export default function ContestEntryFormModal({ contest, onClose, onSubmitted }:
         : t('contests.errSubmit'),
       );
       setStep('form');
-      // Bài đã tạo (vd hết lượt đăng YouTube lúc confirm) → load lại để "Bài dự thi của tôi" hiện nút xác nhận lại.
+      // Bài đã tạo mà xác nhận lỗi (mất mạng, file không đạt) → load lại để "Bài dự thi của tôi" hiện trạng thái và nút xác nhận lại.
       if (entryCreated) onSubmitted();
     }
   };

@@ -136,10 +136,11 @@ function SponsorSection({ sponsors, t }: { sponsors: ContestSponsorDto[]; t: Ret
 function EntryStatusBadge({ status, t }: { status: ContestEntryStatus; t: ReturnType<typeof useTranslation>['t'] }) {
   const [label, cls] = {
     [ContestEntryStatus.Pending]:       [t('contests.stPending'),   'bg-slate-500/15 text-slate-400 border-slate-500/30'],
-    [ContestEntryStatus.Validating]:    [t('contests.stValidating'),'bg-sky-500/15 text-sky-400 border-sky-500/30'],
+    [ContestEntryStatus.Queued]:        [t('contests.stQueued'),    'bg-sky-500/15 text-sky-400 border-sky-500/30'],
     [ContestEntryStatus.UploadedDraft]: [t('contests.stReview'),    'bg-amber-500/15 text-amber-300 border-amber-500/30'],
     [ContestEntryStatus.Published]:     [t('contests.stPublished'), 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'],
     [ContestEntryStatus.Rejected]:      [t('contests.stRejected'),  'bg-red-500/10 text-red-400 border-red-500/30'],
+    [ContestEntryStatus.Failed]:        [t('contests.stFailed'),    'bg-orange-500/10 text-orange-300 border-orange-500/30'],
   }[status] ?? [t('contests.stPending'), 'bg-slate-500/15 text-slate-400 border-slate-500/30'];
 
   return <span className={cn('shrink-0 px-2 py-0.5 rounded-full border text-[10px] font-bold', cls)}>{label}</span>;
@@ -158,7 +159,7 @@ function MyEntriesSection({ contestId, entries, t, onChanged }: {
 
   if (entries.length === 0) return null;
 
-  // Bài Pending = video đã lên R2 nhưng chưa đăng YouTube (hết lượt trong ngày, hoặc lần trước bị ngắt giữa chừng).
+  // Bài Pending = đã nộp nhưng bước xác nhận chưa xong (mất mạng, R2 trục trặc). Hết lượt YouTube thì bài ở hàng chờ, không cần bấm lại.
   const handleRetry = async (entryId: string) => {
     setRetryingId(entryId);
     setRetryError(null);
@@ -194,8 +195,11 @@ function MyEntriesSection({ contestId, entries, t, onChanged }: {
             {e.aquariumName && e.title && (
               <p className="text-xs text-slate-600 mt-0.5 truncate">{e.aquariumName}</p>
             )}
-            {e.status === ContestEntryStatus.Rejected && e.rejectionReason && (
+            {(e.status === ContestEntryStatus.Rejected || e.status === ContestEntryStatus.Failed) && e.rejectionReason && (
               <p className="text-xs text-red-400/90 mt-1.5 leading-relaxed">{e.rejectionReason}</p>
+            )}
+            {e.status === ContestEntryStatus.Queued && (
+              <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">{t('contests.queuedHint')}</p>
             )}
             {e.status === ContestEntryStatus.Pending && (
               <div className="mt-2">

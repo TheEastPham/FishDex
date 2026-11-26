@@ -24,12 +24,14 @@ export enum ContestStatus {
   Ended  = 2,
 }
 
+/** Khớp số với BE (AquaHome.Common.Enums.ContestEntryStatus) — không đổi số cũ. */
 export enum ContestEntryStatus {
-  Pending       = 0,
-  Validating    = 1,
+  Pending       = 0, // đã nộp, chưa xác nhận xong
+  Queued        = 1, // chờ hệ thống đăng lên YouTube
   UploadedDraft = 2,
   Published     = 3,
-  Rejected      = 4,
+  Rejected      = 4, // ban tổ chức từ chối
+  Failed        = 5, // hệ thống không đăng được — nộp lại được
 }
 
 // ── Snapshot Types ────────────────────────────────────────

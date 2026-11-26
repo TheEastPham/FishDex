@@ -11,6 +11,12 @@ import type {
 } from '@fishlover/shared';
 import { Plus, Trash2, Loader2, Upload, ImageIcon, ExternalLink, Trophy, Building2 } from 'lucide-react';
 
+/** 422 từ BE luôn kèm lý do cụ thể (vd còn bài chờ đăng/chờ duyệt) — trả lý do đó, lỗi khác trả null. */
+function validationMessage(err: unknown): string | null {
+  const res = (err as { response?: { status?: number; data?: { message?: string } } })?.response;
+  return res?.status === 422 ? (res.data?.message ?? null) : null;
+}
+
 type T = ReturnType<typeof useTranslation>['t'];
 
 const TIER_LEVEL_KEYS: Record<PrizeTierLevel, string> = {
@@ -420,7 +426,7 @@ function FinalizeSection({ contest, tiers, onChanged, t }: {
   const [loading, setLoading] = useState(true);
   const [assignments, setAssignments] = useState<Record<string, string | null>>({});
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
@@ -446,15 +452,15 @@ function FinalizeSection({ contest, tiers, onChanged, t }: {
   const submit = async () => {
     if (!window.confirm(t('adminContests.finalizeConfirm'))) return;
     setSubmitting(true);
-    setError(false);
+    setError(null);
     try {
       await finalizeContest(contest.id, {
         assignments: entries.map(e => ({ entryId: e.entryId, prizeTierId: assignments[e.entryId] ?? null })),
       });
       setSuccess(true);
       onChanged();
-    } catch {
-      setError(true);
+    } catch (err) {
+      setError(validationMessage(err) ?? t('adminContests.finalizeError'));
     } finally {
       setSubmitting(false);
     }
@@ -481,7 +487,7 @@ function FinalizeSection({ contest, tiers, onChanged, t }: {
       )}
       {error && (
         <div className="mb-3 rounded-lg bg-red-500/10 border border-red-500/30 px-3 py-2 text-xs text-red-400">
-          {t('adminContests.finalizeError')}
+          {error}
         </div>
       )}
 

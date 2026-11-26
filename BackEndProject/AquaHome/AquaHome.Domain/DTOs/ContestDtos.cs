@@ -1,3 +1,4 @@
+using AquaHome.Common.Enums;
 using AquaHome.Domain.Enums;
 
 namespace AquaHome.Domain.DTOs;

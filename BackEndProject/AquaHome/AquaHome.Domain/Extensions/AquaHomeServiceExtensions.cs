@@ -7,6 +7,7 @@ using AquaHome.EFCore.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
 namespace AquaHome.Domain.Extensions;
@@ -38,6 +39,9 @@ public static class AquaHomeServiceExtensions
         services.AddScoped<AquaHome.Domain.Articles.PublicArticleView>();
         services.Configure<YouTubeSettings>(configuration.GetSection(YouTubeSettings.SectionName));
         services.AddScoped<IYouTubeUploadService, YouTubeUploadService>();
+        services.TryAddSingleton(TimeProvider.System);
+        services.AddScoped<AquaHome.Domain.Contests.YouTubeUploadAllowance>();
+        services.AddScoped<AquaHome.Domain.Contests.ContestUploadQueue>();
         services.AddHttpClient(); // dùng cho YouTubeUploadService download video từ R2 presigned URL
 
         var umBaseUrl = configuration["UserManagement:BaseUrl"] ?? "http://localhost:8080";

@@ -102,7 +102,7 @@ ApiGateway/          – Ocelot gateway (route: xem "API Gateway Routing" bên d
 UserManagement/      – Identity + OpenIddict (OAuth2/OIDC PKCE), đăng ký OTP, Web Push — PostgreSQL + Redis
 FishDex/             – Tra cứu loài (FishBase + Community species), market layer, media-access — PostgreSQL + pgvector
 AquaHome/            – Bể nuôi, snapshot công khai, contest (YouTube), bài viết, quota — PostgreSQL + Redis
-                       AquaHome.Worker: job nền (contest staging cleanup, sync viewCount, sync market species, nhắc việc)
+                       AquaHome.Worker: job nền (đăng video contest lên YouTube, dọn staging, sync viewCount, sync market species, nhắc việc) — chỉ một instance
 Share/               – FishLover.Shared: JWT/resource-server bootstrap, internal API key auth, OpenTelemetry, CurrentUserSession, PagedResult
                        FishLover.Storage: IStorageService (S3/R2 + in-memory), upload verifier, media-access signer
 ../Pipeline/         – Docker Compose local + production (OracleVM) + 4 pipeline Azure DevOps (repo root)

@@ -24,6 +24,7 @@ builder.Services.AddHostedService<TaskReminderBackgroundService>();
 builder.Services.AddHostedService<SyncContestViewCountsBackgroundService>();
 builder.Services.AddHostedService<SyncMarketSpeciesBackgroundService>();
 builder.Services.AddHostedService<CleanupContestStagingBackgroundService>();
+builder.Services.AddHostedService<PostContestVideosBackgroundService>();
 
 var host = builder.Build();
 

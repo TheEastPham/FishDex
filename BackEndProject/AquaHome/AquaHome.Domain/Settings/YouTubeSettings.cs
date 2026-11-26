@@ -12,6 +12,10 @@ public class YouTubeSettings
 
     public string ChannelId { get; set; } = string.Empty;
 
+    /// <summary>Đủ credential để gọi YouTube. Thiếu thì Worker không đăng (bài ở lại hàng chờ) thay vì đánh hỏng cả hàng.</summary>
+    public bool IsConfigured =>
+        !string.IsNullOrWhiteSpace(ClientId) && !string.IsNullOrWhiteSpace(ClientSecret) && !string.IsNullOrWhiteSpace(RefreshToken);
+
     /// <summary>
     /// Trần số video contest upload lên YouTube mỗi ngày (giờ Pacific — lúc quota Google reset), toàn hệ thống.
     /// Mỗi lần upload ≈ 1.600/10.000 unit; 5 lần chừa ~2.000 unit cho approve, xoá video và sync lượt xem.

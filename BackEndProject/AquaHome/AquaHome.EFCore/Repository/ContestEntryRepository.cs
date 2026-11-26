@@ -1,3 +1,4 @@
+using AquaHome.Common.Enums;
 using AquaHome.EFCore.Data;
 using AquaHome.EFCore.Entity;
 using AquaHome.EFCore.Repository.Interface;
@@ -16,16 +17,16 @@ public class ContestEntryRepository(AquaHomeDbContext db) : IContestEntryReposit
             .OrderByDescending(e => e.YouTubeViewCount)
             .ToListAsync(ct);
 
-    public async Task<IReadOnlyList<ContestEntry>> GetByStatusAsync(int status, CancellationToken ct = default)
+    public async Task<IReadOnlyList<ContestEntry>> GetByStatusAsync(ContestEntryStatus status, CancellationToken ct = default)
         => await db.ContestEntries
-            .Where(e => e.Status == status)
+            .Where(e => e.Status == (int)status)
             .OrderBy(e => e.SubmittedAt)
             .ToListAsync(ct);
 
     // Sync viewCount mỗi 6h — chỉ entries thuộc contest đang Active
     public async Task<IReadOnlyList<ContestEntry>> GetByActiveContestsAsync(CancellationToken ct = default)
         => await db.ContestEntries
-            .Where(e => e.Contest.Status == 1 && e.YouTubeVideoId != null) // ContestStatus.Active
+            .Where(e => e.Contest.Status == (int)ContestStatus.Active && e.YouTubeVideoId != null)
             .ToListAsync(ct);
 
     public async Task<IReadOnlyList<ContestEntry>> GetByUserAndContestAsync(
@@ -35,42 +36,33 @@ public class ContestEntryRepository(AquaHomeDbContext db) : IContestEntryReposit
             .OrderByDescending(e => e.SubmittedAt)
             .ToListAsync(ct);
 
-    public Task<bool> HasActiveEntryForSnapshotAsync(
-        Guid userId, Guid contestId, Guid snapshotId, CancellationToken ct = default)
-        => db.ContestEntries.AnyAsync(
-            e => e.UserId == userId
-                 && e.ContestId == contestId
-                 && e.AquariumSnapshotId == snapshotId
-                 && e.Status != 4, // ContestEntryStatus.Rejected — bài trượt thì cho nộp lại
-            ct);
-
-    public Task<int> CountActiveEntriesAsync(Guid userId, Guid contestId, CancellationToken ct = default)
-        => db.ContestEntries.CountAsync(
-            e => e.UserId == userId
-                 && e.ContestId == contestId
-                 && e.Status != 4, // ContestEntryStatus.Rejected
-            ct);
-
-    public async Task<bool> TryClaimForUploadAsync(Guid entryId, CancellationToken ct = default)
+    public async Task<IReadOnlyList<ContestEntry>> GetUploadQueueAsync(CancellationToken ct = default)
         => await db.ContestEntries
-            .Where(e => e.Id == entryId && e.Status == 0) // ContestEntryStatus.Pending
-            .ExecuteUpdateAsync(s => s.SetProperty(e => e.Status, 1), ct) == 1; // → Validating
-
-    public async Task<IReadOnlyList<ContestEntry>> GetStaleStagingAsync(
-        DateTime verifiedSubmittedBefore, DateTime unverifiedSubmittedBefore, CancellationToken ct = default)
-        => await db.ContestEntries.AsNoTracking()
-            .Where(e => (e.Status == 0 || e.Status == 1) // ContestEntryStatus.Pending / Validating
+            .Include(e => e.Contest)
+            .Where(e => e.Status == (int)ContestEntryStatus.Queued
                         && e.VideoR2Key != null
-                        && (e.VideoVerifiedAt != null
-                            ? e.SubmittedAt < verifiedSubmittedBefore
-                            : e.SubmittedAt < unverifiedSubmittedBefore))
+                        && e.VideoVerifiedAt != null)
+            .OrderBy(e => e.VideoVerifiedAt)
             .ToListAsync(ct);
 
-    public async Task<bool> TryExpireStagingAsync(Guid entryId, int expectedStatus, string reason, CancellationToken ct = default)
+    public async Task<bool> TryClaimForCheckAsync(Guid entryId, CancellationToken ct = default)
         => await db.ContestEntries
-            .Where(e => e.Id == entryId && e.Status == expectedStatus)
+            .Where(e => e.Id == entryId && e.Status == (int)ContestEntryStatus.Pending)
             .ExecuteUpdateAsync(s => s
-                .SetProperty(e => e.Status, 4) // → ContestEntryStatus.Rejected
+                .SetProperty(e => e.Status, (int)ContestEntryStatus.Queued)
+                .SetProperty(e => e.VideoVerifiedAt, (DateTime?)null), ct) == 1;
+
+    public async Task<IReadOnlyList<ContestEntry>> GetWithStagingVideoAsync(DateTime submittedBefore, CancellationToken ct = default)
+        => await db.ContestEntries.AsNoTracking()
+            .Where(e => e.VideoR2Key != null && e.SubmittedAt < submittedBefore)
+            .ToListAsync(ct);
+
+    public async Task<bool> TryExpireStagingAsync(
+        Guid entryId, ContestEntryStatus expected, string reason, CancellationToken ct = default)
+        => await db.ContestEntries
+            .Where(e => e.Id == entryId && e.Status == (int)expected)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(e => e.Status, (int)ContestEntryStatus.Failed)
                 .SetProperty(e => e.RejectionReason, reason)
                 .SetProperty(e => e.VideoR2Key, (string?)null), ct) == 1;
 

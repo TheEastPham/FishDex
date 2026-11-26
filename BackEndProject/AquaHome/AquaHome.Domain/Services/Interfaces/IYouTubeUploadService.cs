@@ -5,6 +5,7 @@ public interface IYouTubeUploadService
     /// <summary>
     /// Download video từ R2 (objectKey) → upload lên YouTube channel dạng Unlisted. Trả về YouTubeVideoId,
     /// null nếu lỗi. Kênh hết quota / hết lượt upload trong ngày → ném <c>YouTubeQuotaExceededException</c>.
+    /// <paramref name="ct"/> bị huỷ → ném <see cref="OperationCanceledException"/> (không trả null).
     /// </summary>
     Task<string?> UploadUnlistedAsync(string objectKey, string title, string description, CancellationToken ct = default);
 

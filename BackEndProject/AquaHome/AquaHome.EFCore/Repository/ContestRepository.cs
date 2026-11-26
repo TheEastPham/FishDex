@@ -1,3 +1,4 @@
+using AquaHome.Common.Enums;
 using AquaHome.EFCore.Data;
 using AquaHome.EFCore.Entity;
 using AquaHome.EFCore.Repository.Interface;
@@ -15,7 +16,7 @@ public class ContestRepository(AquaHomeDbContext db) : IContestRepository
 
     public async Task<IReadOnlyList<Contest>> GetActiveAsync(CancellationToken ct = default)
         => await db.Contests
-            .Where(c => c.Status == 1) // ContestStatus.Active
+            .Where(c => c.Status == (int)ContestStatus.Active)
             .OrderByDescending(c => c.StartAt)
             .ToListAsync(ct);
 

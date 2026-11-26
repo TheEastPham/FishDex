@@ -29,7 +29,7 @@ public class ContestEntry
     public long YouTubeViewCount { get; set; }
 
     public Guid? PrizeTierId { get; set; } // null = chưa finalize / không đoạt giải — set lúc admin finalize contest
-    public int Status { get; set; } // ContestEntryStatus: Pending/Validating/UploadedDraft/Published/Rejected
+    public int Status { get; set; } // ContestEntryStatus — chỉ đổi qua ContestEntryLifecycle
     public DateTime SubmittedAt { get; set; }
 
     public Contest Contest { get; set; } = null!;

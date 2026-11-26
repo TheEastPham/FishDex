@@ -1,15 +1,15 @@
 using System.Diagnostics;
-using AquaHome.Domain.Services.Interfaces;
+using AquaHome.Common.Enums;
+using AquaHome.Domain.Contests;
 using AquaHome.EFCore.Repository.Interface;
 using FishLover.Storage;
 
 namespace AquaHome.Worker.Services;
 
 /// <summary>
-/// Dọn video contest kẹt trên R2 staging. Video chỉ được xoá lúc confirm-upload xong, nên bài nào dừng giữa
-/// chừng (tải lên rồi bỏ, hết lượt YouTube mà không bấm "Xác nhận lại", process chết lúc đang upload) thì video
-/// nằm R2 mãi. Mỗi 6 giờ: bài Pending/Validating quá hạn → xoá video + chuyển Rejected kèm lý do để user biết
-/// mà nộp lại.
+/// Dọn video contest kẹt trên R2 staging: bài tải lên rồi không xác nhận, hoặc kẹt giữa lúc kiểm file. Mỗi 6 giờ,
+/// bài nào quá hạn theo <see cref="ContestEntryLifecycle.StagingExpiry"/> → chuyển Failed kèm lý do rồi xoá video.
+/// Bài trong hàng chờ đã kiểm file không bị dọn — Worker sẽ đăng khi có lượt.
 /// </summary>
 public class CleanupContestStagingBackgroundService(
     IServiceScopeFactory scopeFactory,
@@ -19,16 +19,6 @@ public class CleanupContestStagingBackgroundService(
     private static readonly ActivitySource ActivitySource = new(ActivitySourceName);
 
     private static readonly TimeSpan Interval = TimeSpan.FromHours(6);
-
-    // Đã HEAD-verify (bị hoãn vì hết lượt YouTube): đủ để user quay lại bấm "Xác nhận lại" vào hôm sau.
-    private static readonly TimeSpan MaxVerifiedAge = TimeSpan.FromDays(3);
-
-    // Chưa verify (upload rồi bỏ, hoặc chưa upload gì): trần staging đã thôi tính sau 30 phút, nhưng file thật
-    // (dung lượng không ai kiểm) vẫn nằm R2 → dọn sớm.
-    private static readonly TimeSpan MaxUnverifiedAge = TimeSpan.FromDays(1);
-
-    private const string ExpiredReason = "Quá 3 ngày chưa đăng được lên YouTube nên video đã bị xoá. Bạn hãy nộp lại bài.";
-    private const string AbandonedReason = "Video chưa được xác nhận sau khi tải lên nên đã bị xoá. Bạn hãy nộp lại bài.";
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -59,7 +49,11 @@ public class CleanupContestStagingBackgroundService(
 
             var entryRepo = scope.ServiceProvider.GetRequiredService<IContestEntryRepository>();
             var now = DateTime.UtcNow;
-            var stale = await entryRepo.GetStaleStagingAsync(now - MaxVerifiedAge, now - MaxUnverifiedAge, ct);
+            var candidates = await entryRepo.GetWithStagingVideoAsync(now - ContestEntryLifecycle.UnconfirmedStagingLifetime, ct);
+            var stale = candidates
+                .Select(e => (Entry: e, Reason: ContestEntryLifecycle.StagingExpiry(e, now)))
+                .Where(x => x.Reason is not null)
+                .ToList();
             activity?.SetTag("contest.stale_entries", stale.Count);
 
             if (stale.Count == 0)
@@ -69,11 +63,10 @@ public class CleanupContestStagingBackgroundService(
             }
 
             var cleaned = 0;
-            foreach (var entry in stale)
+            foreach (var (entry, reason) in stale)
             {
                 // Chuyển trạng thái trước rồi mới xoá: user vừa bấm "Xác nhận lại" thì bài đã đổi trạng thái → để yên video.
-                var reason = entry.VideoVerifiedAt is null ? AbandonedReason : ExpiredReason;
-                if (!await entryRepo.TryExpireStagingAsync(entry.Id, entry.Status, reason, ct)) continue;
+                if (!await entryRepo.TryExpireStagingAsync(entry.Id, (ContestEntryStatus)entry.Status, reason!, ct)) continue;
 
                 await storage.DeleteAsync(entry.VideoR2Key!, ct);
                 cleaned++;

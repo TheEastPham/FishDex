@@ -1,21 +1,19 @@
-using AquaHome.Domain.Enums;
+using AquaHome.Common.Enums;
 using AquaHome.Domain.Exceptions;
 using AquaHome.Domain.Services;
 using AquaHome.Domain.Services.Interfaces;
-using AquaHome.Domain.Settings;
 using AquaHome.Domain.Storage;
 using AquaHome.EFCore.Entity;
 using AquaHome.EFCore.Repository.Interface;
 using AquaHome.Tests.Infrastructure;
 using FishLover.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
 
 namespace AquaHome.Tests;
 
 /// <summary>
-/// Khoá hành vi nhánh kiểm dung lượng của ContestService.ConfirmUploadAsync (không test phần YouTube/quota phía sau,
-/// trừ việc file hợp lệ thì đi tiếp tới YouTube). Repo là fake viết tay vì TryClaimForUploadAsync dùng
+/// Khoá hành vi ContestService.ConfirmUploadAsync: kiểm file thật rồi đưa vào hàng chờ, không gọi YouTube (Worker
+/// đăng sau, xem ContestUploadQueueTests). Repo là fake viết tay vì TryClaimForCheckAsync dùng
 /// ExecuteUpdateAsync — EF InMemory không hỗ trợ. Storage là fake báo dung lượng tuỳ ý để khỏi cấp phát 500 MB.
 /// </summary>
 public sealed class ContestConfirmUploadTests
@@ -50,10 +48,8 @@ public sealed class ContestConfirmUploadTests
             _storage,
             new UploadVerifier(_storage),
             _youTube,
-            new FakeQuotaRepo(),
             new FakeUser(UserId),
             new AquaHomeObjectKeys("test"),
-            Options.Create(new YouTubeSettings { DailyUploadLimit = 5 }),
             NullLogger<ContestService>.Instance);
     }
 
@@ -80,21 +76,21 @@ public sealed class ContestConfirmUploadTests
     }
 
     [Fact]
-    public async Task No_file_is_rejected_as_not_found()
+    public async Task No_file_fails_the_entry_as_not_found()
     {
         var entry = SeedEntry(declaredBytes: 100, actualBytes: null);
 
         var ok = await Service().ConfirmUploadAsync(_contest.Id, entry.Id);
 
         Assert.False(ok);
-        Assert.Equal((int)ContestEntryStatus.Rejected, entry.Status);
+        Assert.Equal((int)ContestEntryStatus.Failed, entry.Status);
         Assert.Contains("Không tìm thấy video", entry.RejectionReason);
         Assert.Null(entry.VideoR2Key);
         Assert.Empty(_storage.Deleted); // không có gì để xoá
     }
 
     [Fact]
-    public async Task Size_different_from_declared_is_rejected_and_object_deleted()
+    public async Task Size_different_from_declared_fails_the_entry_and_object_deleted()
     {
         var entry = SeedEntry(declaredBytes: 100, actualBytes: 50);
         var key = entry.VideoR2Key!;
@@ -102,14 +98,14 @@ public sealed class ContestConfirmUploadTests
         var ok = await Service().ConfirmUploadAsync(_contest.Id, entry.Id);
 
         Assert.False(ok);
-        Assert.Equal((int)ContestEntryStatus.Rejected, entry.Status);
+        Assert.Equal((int)ContestEntryStatus.Failed, entry.Status);
         Assert.Contains("không khớp dung lượng", entry.RejectionReason);
         Assert.Null(entry.VideoR2Key);
         Assert.Equal([key], _storage.Deleted);
     }
 
     [Fact]
-    public async Task Size_over_the_limit_is_rejected_with_the_same_reason_and_object_deleted()
+    public async Task Size_over_the_limit_fails_with_the_same_reason_and_object_deleted()
     {
         var entry = SeedEntry(declaredBytes: MaxVideoBytes + 1, actualBytes: MaxVideoBytes + 1);
         var key = entry.VideoR2Key!;
@@ -117,7 +113,7 @@ public sealed class ContestConfirmUploadTests
         var ok = await Service().ConfirmUploadAsync(_contest.Id, entry.Id);
 
         Assert.False(ok);
-        Assert.Equal((int)ContestEntryStatus.Rejected, entry.Status);
+        Assert.Equal((int)ContestEntryStatus.Failed, entry.Status);
         Assert.Contains("không khớp dung lượng", entry.RejectionReason);
         Assert.Equal([key], _storage.Deleted);
     }
@@ -137,7 +133,7 @@ public sealed class ContestConfirmUploadTests
     }
 
     [Fact]
-    public async Task Matching_file_goes_on_to_YouTube_and_staging_copy_is_removed()
+    public async Task Matching_file_is_queued_for_the_worker_with_its_staging_copy_kept()
     {
         var entry = SeedEntry(declaredBytes: 100, actualBytes: 100);
         var key = entry.VideoR2Key!;
@@ -145,11 +141,20 @@ public sealed class ContestConfirmUploadTests
         var ok = await Service().ConfirmUploadAsync(_contest.Id, entry.Id);
 
         Assert.True(ok);
-        Assert.Equal(key, _youTube.UploadedKey);
-        Assert.Equal((int)ContestEntryStatus.UploadedDraft, entry.Status);
-        Assert.Equal("yt-video-id", entry.YouTubeVideoId);
-        Assert.Null(entry.VideoR2Key);
-        Assert.Equal([key], _storage.Deleted);
+        Assert.Equal((int)ContestEntryStatus.Queued, entry.Status);
+        Assert.NotNull(entry.VideoVerifiedAt);
+        Assert.Equal(key, entry.VideoR2Key);
+        Assert.Empty(_storage.Deleted);
+        Assert.Null(_youTube.UploadedKey); // request xác nhận không còn đăng YouTube
+    }
+
+    [Fact]
+    public async Task An_entry_already_in_the_queue_cannot_be_confirmed_again()
+    {
+        var entry = SeedEntry(declaredBytes: 100, actualBytes: 100);
+        entry.Status = (int)ContestEntryStatus.Queued;
+
+        Assert.False(await Service().ConfirmUploadAsync(_contest.Id, entry.Id));
     }
 
     // ── Logo sponsor / ảnh hạng giải: confirm kiểm file thật, trần 300 KB ───────
@@ -366,20 +371,19 @@ public sealed class ContestConfirmUploadTests
         public Task<ContestEntry?> GetByIdAsync(Guid id, CancellationToken ct = default)
             => Task.FromResult(Items.FirstOrDefault(e => e.Id == id));
 
-        // DB thật chỉ cho đúng một request chiếm được Pending → Validating; service tự đặt Status sau đó.
-        public Task<bool> TryClaimForUploadAsync(Guid entryId, CancellationToken ct = default)
+        // DB thật chỉ cho đúng một request chiếm được Pending → Queued; service tự phản chiếu vào entity sau đó.
+        public Task<bool> TryClaimForCheckAsync(Guid entryId, CancellationToken ct = default)
             => Task.FromResult(Items.Any(e => e.Id == entryId && e.Status == (int)ContestEntryStatus.Pending));
 
         public Task SaveChangesAsync(CancellationToken ct = default) => Task.CompletedTask;
 
         public Task<IReadOnlyList<ContestEntry>> GetByContestAsync(Guid contestId, CancellationToken ct = default) => throw new NotSupportedException();
-        public Task<IReadOnlyList<ContestEntry>> GetByStatusAsync(int status, CancellationToken ct = default) => throw new NotSupportedException();
+        public Task<IReadOnlyList<ContestEntry>> GetByStatusAsync(ContestEntryStatus status, CancellationToken ct = default) => throw new NotSupportedException();
         public Task<IReadOnlyList<ContestEntry>> GetByActiveContestsAsync(CancellationToken ct = default) => throw new NotSupportedException();
         public Task<IReadOnlyList<ContestEntry>> GetByUserAndContestAsync(Guid userId, Guid contestId, CancellationToken ct = default) => throw new NotSupportedException();
-        public Task<bool> HasActiveEntryForSnapshotAsync(Guid userId, Guid contestId, Guid snapshotId, CancellationToken ct = default) => throw new NotSupportedException();
-        public Task<int> CountActiveEntriesAsync(Guid userId, Guid contestId, CancellationToken ct = default) => throw new NotSupportedException();
-        public Task<IReadOnlyList<ContestEntry>> GetStaleStagingAsync(DateTime verifiedSubmittedBefore, DateTime unverifiedSubmittedBefore, CancellationToken ct = default) => throw new NotSupportedException();
-        public Task<bool> TryExpireStagingAsync(Guid entryId, int expectedStatus, string reason, CancellationToken ct = default) => throw new NotSupportedException();
+        public Task<IReadOnlyList<ContestEntry>> GetUploadQueueAsync(CancellationToken ct = default) => throw new NotSupportedException();
+        public Task<IReadOnlyList<ContestEntry>> GetWithStagingVideoAsync(DateTime submittedBefore, CancellationToken ct = default) => throw new NotSupportedException();
+        public Task<bool> TryExpireStagingAsync(Guid entryId, ContestEntryStatus expected, string reason, CancellationToken ct = default) => throw new NotSupportedException();
         public Task<long> SumStagingVideoBytesAsync(DateTime unverifiedSubmittedAfter, CancellationToken ct = default) => throw new NotSupportedException();
         public Task AddAsync(ContestEntry entry, CancellationToken ct = default) => throw new NotSupportedException();
     }
@@ -408,20 +412,6 @@ public sealed class ContestConfirmUploadTests
         public Task<(IReadOnlyList<AquariumSnapshot> Items, int TotalCount)> GetGalleryAsync(int? waterType, int? style, string? contest, string sort, int page, int pageSize, CancellationToken ct = default) => throw new NotSupportedException();
         public Task AddAsync(AquariumSnapshot snapshot, CancellationToken ct = default) => throw new NotSupportedException();
         public Task SaveChangesAsync(CancellationToken ct = default) => Task.CompletedTask;
-    }
-
-    /// <summary>Còn lượt YouTube: mỗi lần tăng counter trả 1 (≤ trần).</summary>
-    private sealed class FakeQuotaRepo : IQuotaRepository
-    {
-        public Task<int> IncrementDailyUsageAsync(Guid userId, int quotaType, DateOnly day, CancellationToken ct = default)
-            => Task.FromResult(1);
-
-        public Task<RoleQuota?> GetByRoleAsync(string role, CancellationToken ct = default) => throw new NotSupportedException();
-        public Task<IReadOnlyList<RoleQuota>> GetAllAsync(CancellationToken ct = default) => throw new NotSupportedException();
-        public Task UpdateAsync(RoleQuota quota, CancellationToken ct = default) => throw new NotSupportedException();
-        public Task<int> CountAquariumsAsync(Guid userId, CancellationToken ct = default) => throw new NotSupportedException();
-        public Task<int> CountFavoritesAsync(Guid userId, CancellationToken ct = default) => throw new NotSupportedException();
-        public Task<int> GetDailyUsageAsync(Guid userId, int quotaType, DateOnly day, CancellationToken ct = default) => throw new NotSupportedException();
     }
 
     private sealed class FakeYouTube : IYouTubeUploadService

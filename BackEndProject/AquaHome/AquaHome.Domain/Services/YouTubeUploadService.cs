@@ -84,6 +84,7 @@ public class YouTubeUploadService(
 
             if (uploadStatus.Status != UploadStatus.Completed)
             {
+                ct.ThrowIfCancellationRequested();
                 ThrowIfQuotaExceeded(uploadStatus.Exception, objectKey);
                 logger.LogError(uploadStatus.Exception, "YouTube upload failed for {ObjectKey}", objectKey);
                 return null;
@@ -91,7 +92,9 @@ public class YouTubeUploadService(
 
             return request.ResponseBody?.Id;
         }
-        catch (Exception ex) when (ex is not YouTubeQuotaExceededException)
+        // Huỷ do người gọi (Worker dừng) không phải lỗi đăng: để lọt ra ngoài, bài ở lại hàng chờ.
+        catch (Exception ex) when (ex is not YouTubeQuotaExceededException
+                                   && !(ex is OperationCanceledException && ct.IsCancellationRequested))
         {
             ThrowIfQuotaExceeded(ex, objectKey);
             logger.LogError(ex, "YouTube upload threw for {ObjectKey}", objectKey);

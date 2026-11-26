@@ -1,4 +1,4 @@
-namespace AquaHome.Domain.Enums;
+namespace AquaHome.Common.Enums;
 
 public enum ContestStatus
 {

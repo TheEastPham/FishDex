@@ -23,13 +23,19 @@ public static class AquaHomeServiceExtensions
         return services;
     }
 
+    /// <summary>
+    /// Toàn bộ domain service cho AquaHome.API: phần dùng chung với Worker (<see cref="AddAquaHomeBackgroundServices"/>)
+    /// cộng các service phục vụ request. Các service này cần <c>ICurrentUserSession</c>/<c>IHttpContextAccessor</c> —
+    /// chỉ có trong web host.
+    /// </summary>
     public static IServiceCollection AddAquaHomeDomainServices(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddAquaHomeBackgroundServices(configuration);
+
         services.AddScoped<IAquariumService, AquariumService>();
         services.AddScoped<IFavoriteService, FavoriteService>();
         services.AddScoped<IRecentlyViewedService, RecentlyViewedService>();
         services.AddScoped<IAquariumMediaService, AquariumMediaService>();
-        services.AddScoped<IWebPushNotifier, WebPushNotifier>();
         services.AddScoped<IReminderService, ReminderService>();
         services.AddScoped<IQuotaService, QuotaService>();
         services.AddScoped<IFishDexClient, FishDexClient>();
@@ -37,6 +43,18 @@ public static class AquaHomeServiceExtensions
         services.AddScoped<IContestService, ContestService>();
         services.AddScoped<IArticleService, ArticleService>();
         services.AddScoped<AquaHome.Domain.Articles.PublicArticleView>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Phần AquaHome.Worker cần: không phụ thuộc người dùng đang đăng nhập, nên dựng được ngoài web host. Worker chỉ gọi
+    /// hàm này — gọi <see cref="AddAquaHomeDomainServices"/> thì ở môi trường Development (bật ValidateOnBuild) host
+    /// không khởi động được vì thiếu <c>ICurrentUserSession</c>.
+    /// </summary>
+    public static IServiceCollection AddAquaHomeBackgroundServices(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddScoped<IWebPushNotifier, WebPushNotifier>();
         services.Configure<YouTubeSettings>(configuration.GetSection(YouTubeSettings.SectionName));
         services.AddScoped<IYouTubeUploadService, YouTubeUploadService>();
         services.TryAddSingleton(TimeProvider.System);

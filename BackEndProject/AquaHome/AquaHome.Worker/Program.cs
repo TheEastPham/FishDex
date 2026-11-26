@@ -14,7 +14,7 @@ Log.Logger = new LoggerConfiguration()
 builder.Services.AddSerilog();
 builder.Services.AddAquaHomeServices(builder.Configuration);
 builder.Services.AddAquaHomeRepositories();
-builder.Services.AddAquaHomeDomainServices(builder.Configuration);
+builder.Services.AddAquaHomeBackgroundServices(builder.Configuration); // không gồm service cần người dùng đăng nhập
 builder.Services.AddAquaHomeStorage(builder.Configuration);
 
 // OpenTelemetry tracing nhẹ (HttpClient + EFCore + OTLP) → trace vòng nhắc lịch end-to-end

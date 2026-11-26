@@ -31,7 +31,7 @@ FishLover is a microservices-based backend for a fish species management and aqu
 
 Run .NET commands from `BackEndProject/` (solution root).
 Run Docker commands from repo root `D:\Workspace\FishLover\FishDex\` — Pipeline/ nằm ngang hàng với BackEndProject/.
-Tài liệu cấp hệ thống (C4, roadmap AI, FE guide; mục lục ở `../docs/README.md`) nằm ở `../docs/`; ADR và GLOSSARY riêng của BE nằm trong `docs/adr/` và `GLOSSARY.md` của thư mục này.
+Tài liệu cấp hệ thống (C4, roadmap AI, BE/FE guide; mục lục ở `../docs/README.md`) nằm ở `../docs/`; ADR và GLOSSARY riêng của BE nằm trong `docs/adr/` và `GLOSSARY.md` của thư mục này.
 
 **Build the solution:**
 ```

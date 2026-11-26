@@ -1,6 +1,6 @@
 # The FishLover — Hướng dẫn Onboarding cho FE Developer
 
-> Viết 21/07/2026, kiểm lại với code ngày 25/11/2026 (stack, cấu trúc feature, component dùng chung, testing). Phía BE xem `BackEndProject/CLAUDE.md`; BE guide cũ đã lỗi thời và được gỡ.
+> Viết 21/07/2026, kiểm lại với code ngày 25/11/2026 (stack, cấu trúc feature, component dùng chung, testing). Phía BE xem [BE guide](be-developer-guide.md) và `BackEndProject/CLAUDE.md`.
 
 ## Mục lục
 
